@@ -38,7 +38,7 @@ Breedingrange <- tm_shape(shp = world, bbox = c(-180, 30, -30, 70)) + tm_borders
 #Blank map for the blackpoll warbler's overwintering range
 overwinteringrange <- tm_shape(shp = world, bbox = c(-180, -25, -30, 20)) + tm_borders()
 
-#map of the blackpoll warbler's breeding distribution 
+#map of the blackpoll warbler's relative abundance in the breeding range
 bpbbox = tmaptools::bb(matrix(c(
  -6000000, #xmin
  -2000000, #ymin  
@@ -46,14 +46,14 @@ bpbbox = tmaptools::bb(matrix(c(
  5000000  #ymax
 ),2,2))
 
-breedingraster <- raster("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Maps_&_Figures/Range_Map/bkpwar_abundance_seasonal_breeding_mean_2021.tif")
+breedingraster <- raster("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geo_spatial_data/bkpwar_abundance_seasonal_breeding_mean_2021.tif")
 breedingraster[breedingraster == 0] <- NA
 
 crs(breedingraster) <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=37.5 +lon_0=-96 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs"
 
 tm_shape(breedingraster, bbox = bpbbox,  raster.warp = FALSE) + 
   #tm_raster(palette = "-Spectral", alpha = 0.5, title = "relative abundance", legend.show = FALSE ) +
-  tm_raster(palette = "-Spectral", alpha = 0.5, title = "relative abundance", style = "cont") +
+  tm_raster(palette = "Reds", alpha = 1, title = "Relative abundance", style = "cont") +
   tm_shape(shp = world[(world$name_long %in% c("Canada", "United States")),]) +
  tm_borders(lwd = 1) # +
   #tm_grid()# + 
@@ -75,7 +75,7 @@ bpbbox_rangemap = tmaptools::bb(matrix(c(
   2000000  #ymax
 ),2,2))
 
-rangeraster <- raster("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Maps_&_Figures/Range_Map/bkpwar_abundance_seasonal_nonbreeding_mean_2021.tif")
+rangeraster <- raster("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geo_spatial_data/bkpwar_abundance_seasonal_nonbreeding_mean_2021.tif")
 rangeraster[rangeraster == 0] <- NA
 rangeraster[rangeraster > 0] <- 1
 
@@ -94,7 +94,7 @@ bpbbox_rangemap_breeding = tmaptools::bb(matrix(c(
   12000000  #ymax
 ),2,2))
 
-rangeraster_breeding <- raster("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Maps_&_Figures/Range_Map/bkpwar_abundance_seasonal_breeding_mean_2021.tif")
+rangeraster_breeding <- raster("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geo_spatial_data/bkpwar_abundance_seasonal_breeding_mean_2021.tif")
 rangeraster_breeding[rangeraster_breeding == 0] <- NA
 rangeraster_breeding[rangeraster_breeding > 0] <- 1
 
@@ -132,7 +132,7 @@ bpbbox_fullrangemap = tmaptools::bb(matrix(c(
 
 crs(rangeraster_breeding) <- "+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
 
-full_rangeraster <- raster("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Maps_&_Figures/Range_Map/bkpwar_abundance_seasonal_full-year_mean_2021.tif")
+full_rangeraster <- raster("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geo_spatial_data/bkpwar_abundance_seasonal_full-year_mean_2021.tif")
 full_rangeraster[full_rangeraster == 0] <- NA
 full_rangeraster[full_rangeraster > 0] <- 1
 
