@@ -75,11 +75,11 @@ twledit <- twilightEdit(twilights = protwl,
                         plot = TRUE)
 
 #save output (fill in the end of the filepaths)
-write.csv(twledit,"C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Blackpoll_twl_data/Twilight_times/Twilight_times_")
+write.csv(twledit,"C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_analysis_intermediate_data/Twilight_times/")
 
 # SGAT analysis Starts =========================================================
 twl<- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Blackpoll_twl_data/Twilight_times/Twilight_times_.csv")
-twl$Twilight <- as.POSIXct(twlNW$Twilight, tz = "UTC")
+twl$Twilight <- as.POSIXct(twl$Twilight, tz = "UTC")
 
 #inspect the data 
 offset <-  # adjusts the y-axis to put night (dark shades) in the middle
@@ -107,6 +107,12 @@ abline(v = tm.calib, lwd = 2, lty = 2, col = "orange")
 d_calib <- subset(twl, Twilight>=tm.calib[1] & Twilight<=tm.calib[2]) #subset of data used for the calibration 
 
 calib <- thresholdCalibration(d_calib$Twilight, d_calib$Rise, lon.calib, lat.calib, method = "gamma")
+
+#Zenith angle at the zero deviation, the median deviation and parameters of the error distribution 
+zenith  <- calib[1]
+zenith0 <- calib[2]
+
+alpha <- calib[3:4]
 
 #movement model
 beta  <- c(2.2, 0.08)
@@ -231,5 +237,19 @@ fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = chainLast(fit$x),
 sm <- locationSummary(fit$z, time=fit$model$time)
 head(sm)
 
-#stationary locations 
-MigSchedule(fit)
+#Plot the results ==============================================================
+# empty raster of the extent
+r <- raster(nrows = 2 * diff(ylim), ncols = 2 * diff(xlim), xmn = xlim[1]-5,
+            xmx = xlim[2]+5, ymn = ylim[1]-5, ymx = ylim[2]+5, crs = proj4string(wrld_simpl))
+
+s <- slices(type = "intermediate", breaks = "week", mcmc = fit, grid = r)
+sk <- slice(s, sliceIndices(s))
+
+plot(sk, useRaster = F,col = rev(viridis::viridis(50)))
+plot(wrld_simpl, xlim=xlim, ylim=ylim,add = T, bg = adjustcolor("black",alpha=0.1))
+
+lines(sm[,"Lon.50%"], sm[,"Lat.50%"], col = adjustcolor("firebrick", alpha.f = 0.6), type = "o", pch = 16)
+
+# MigSchedule ==================================================================
+s <- slices(type = "intermediate", breaks = "day", mcmc = fit, grid = r)
+sites <- MigSchedule(s, plot = FALSE)

@@ -52,7 +52,6 @@ breedingraster[breedingraster == 0] <- NA
 crs(breedingraster) <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=37.5 +lon_0=-96 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs"
 
 tm_shape(breedingraster, bbox = bpbbox,  raster.warp = FALSE) + 
-  #tm_raster(palette = "-Spectral", alpha = 0.5, title = "relative abundance", legend.show = FALSE ) +
   tm_raster(palette = "Reds", alpha = 1, title = "Relative abundance", style = "cont") +
   tm_shape(shp = world[(world$name_long %in% c("Canada", "United States")),]) +
  tm_borders(lwd = 1) # +
@@ -61,13 +60,26 @@ tm_shape(breedingraster, bbox = bpbbox,  raster.warp = FALSE) +
             #legend.text.size = 0.8,
             #legend.hist.size = 0.5,
             #legend.title.size = 1)
-            
 
+#map of the blackpoll warbler's abundance in the nonbreeding range 
+bpbbox_rangemap = tmaptools::bb(matrix(c(
+  -10000000, #xmin
+  -2500000, #ymin  
+  -2000000,#xmax
+  2000000  #ymax
+),2,2))
 
-tm_shape(shp = world, bbox = c(-100, 30, -30, 60)) + tm_borders()
+rangeraster <- raster("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geo_spatial_data/bkpwar_abundance_seasonal_nonbreeding_mean_2021.tif")
 
+crs(rangeraster) <- "+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
 
-#map of the blackpoll warbler's nonbreeding range 
+tm_shape(rangeraster, bbox = bpbbox_rangemap,  raster.warp = FALSE) +
+  tm_raster(palette = "Blues", alpha = 1, title = "Relative abundance", style = "cont") +
+  tm_shape(shp = world, bbox = c(-180, -25, -30, 70)) +
+  tm_borders(lwd = 1) +
+  tm_layout(legend.position = c("right","TOP"))
+          
+#map of the blackpoll warbler's nonbreeding range (gray)
 bpbbox_rangemap = tmaptools::bb(matrix(c(
   -10000000, #xmin
   -2500000, #ymin  
@@ -86,7 +98,7 @@ tm_shape(rangeraster, bbox = bpbbox_rangemap,  raster.warp = FALSE) +
   tm_shape(shp = world, bbox = c(-180, -25, -30, 70)) +
   tm_borders(lwd = 1)
 
-#map of the blackpoll warbler's nonbreeding range 
+#map of the blackpoll warbler's breeding range (gray)
 bpbbox_rangemap_breeding = tmaptools::bb(matrix(c(
   -20000000, #xmin
   5000000, #ymin  
@@ -106,7 +118,7 @@ tm_shape(rangeraster_breeding, bbox = bpbbox_rangemap_breeding,  raster.warp = F
   tm_borders(lwd = 1)
 
 
-#map of the blackpoll warbler's breeding and nonbreeding range 
+#map of the blackpoll warbler's breeding and nonbreeding range (red and blue)
 bpbbox_fullrangemap = tmaptools::bb(matrix(c(
   -20000000, #xmin
   -2500000, #ymin  
@@ -122,7 +134,7 @@ tm_shape(rangeraster_breeding, bbox = bpbbox_fullrangemap,  raster.warp = FALSE)
   tm_borders(lwd = 1)
 
 
-# map of the blackpoll warbler's breeding, nonbreeding and stopover range 
+# map of the blackpoll warbler's breeding, nonbreeding and stopover range ()
 bpbbox_fullrangemap = tmaptools::bb(matrix(c(
   -20000000, #xmin
   -2500000, #ymin  
