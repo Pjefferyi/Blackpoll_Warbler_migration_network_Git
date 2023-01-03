@@ -32,7 +32,7 @@ setupGeolocation()
 library(LLmig)
 
 #get data for ML6740 V8296 017 
-ligdata <- readLig("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/BLPW_geo_2020/breed/ML6740 V8296 017/ML6740 V8296 017 reconstructed_000.lig", skip = 0)
+ligdata <- readLig("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Data_raw/BLPW_geo_2020/breed/ML6740 V8296 017/ML6740 V8296 017 reconstructed_000.lig", skip = 0)
 
 ligdata <- ligdata[2:nrow(ligdata),]
 
@@ -76,10 +76,9 @@ tsimageDeploymentLines(ligdata$Date, lon = lon.calib, lat = lat.calib,
 
 #save output 
 #write.csv(twl,"C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Blackpoll_twl_data/Twilight_times/Twilight_times_ML6740_V8296_017.csv")
-twlV8296_017 <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Blackpoll_twl_data/Twilight_times/Twilight_times_ML6740_V8296_017.csv")
+twlV8296_017 <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_analysis_intermediate_data/Twilight_times/Twilight_times_ML6740_V8296_017.csv")
 
 # SGAT analysis ================================================================
-
 twlV8296_017$Twilight <- as.POSIXct(twlV8296_017$Twilight, tz = "UTC")
 
 #filtering twilight times

@@ -28,7 +28,7 @@ library(GeoLocTools)
 setupGeolocation()
 
 # Extract data for a single bird in the data set from Deluca et al. 2015 =======
-bpdata2015 <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Deluca_et_al_2015/Blackpoll Warbler eastern North America (data from DeLuca et al. 2015).csv")
+bpdata2015 <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Data_raw/Deluca_et_al_2015/Blackpoll Warbler eastern North America (data from DeLuca et al. 2015).csv")
 
 #remove rows with processed data
 bpdata2015 <- bpdata2015[(is.na(bpdata2015$comments) == TRUE),]
@@ -68,8 +68,8 @@ abline(v = savings.t, lwd = 2, lty = 2, col = "orange")
 #twl <- preprocessLight(tagdata = Aldata, threshold = threshold, offset = 15)
 
 #save output 
-#write.csv(twl, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Blackpoll_twl_data/Twilight_times/Twilight_times_Deluca_2015A.csv")
-twl <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Blackpoll_twl_data/Twilight_times/Twilight_times_Deluca_2015A.csv")
+#write.csv(twl, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_analysis_intermediate_data/Twilight_times/Twilight_times_Deluca_2015A.csv")
+twl <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_analysis_intermediate_data/Twilight_times/Twilight_times_Deluca_2015A.csv")
 
 
 # SGAT analysis ================================================================
@@ -248,6 +248,9 @@ sk <- slice(s, sliceIndices(s))
 plot(sk, useRaster = F,col = rev(viridis::viridis(50)))
 plot(wrld_simpl, xlim=xlim, ylim=ylim,add = T, bg = adjustcolor("black",alpha=0.1))
 
+#sm <- sm[(sm$Time1 < anytime("2013-09-08") | sm$Time1 > anytime("2013-10-6")),]
+sm <- sm[(sm$Time1 < anytime("2014-03-08") | sm$Time1 > anytime("2014-04-06")),]
+
 lines(sm[,"Lon.50%"], sm[,"Lat.50%"], col = adjustcolor("firebrick", alpha.f = 0.6), type = "o", pch = 16)
 
 # MigSchedule ==================================================================
@@ -282,15 +285,15 @@ cL <- changeLight(twl=geo_twl, quantile=0.86, summary = F, days = 2, plot = T)
 mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
 
 #========================== FlightR analysis ===================================
-twl <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Blackpoll_twl_data/Twilight_times/Twilight_times_Deluca_2015A.csv")
+twl <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_analysis_intermediate_data/Twilight_times/Twilight_times_Deluca_2015A.csv")
 
 twl$Twilight <- as.POSIXct(twl$Twilight, tz = "UTC")
 
 twl_export <- twGeos2TAGS(raw = Aldata[, c("Date", "Light")], twl = twl,
                           threshold = 3,
-                          filename = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Blackpoll_twl_data/TAGS_data/TAGS_Deluca2015_A.csv")
+                          filename = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_analysis_intermediate_data/TAGS_data/TAGS_Deluca2015_A.csv")
 
-twlA2015fr <- get.tags.data("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Blackpoll_twl_data/TAGS_data/TAGS_Deluca2015_A.csv")
+twlA2015fr <- get.tags.data("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_analysis_intermediate_data/TAGS_data/TAGS_Deluca2015_A.csv")
 
 #Identify calibration period 
 plot_slopes_by_location(Proc.data= twlA2015fr, location=c(lon.calib, lat.calib), ylim=c(-3, 3))
@@ -320,8 +323,8 @@ Grid <- make.grid(left = -120,
 all.obs <- make.prerun.object(twlA2015fr, Grid, start = c(lon.calib, lat.calib),
                               Calibration = Calibration,) 
 
-save(all.obs, file = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Blackpoll_twl_data/PreRunOb_Deluca2015_A.RData")
-load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Blackpoll_twl_data/FlightR_PreRunObs/PreRunOb_Deluca2015_A.RData")
+save(all.obs, file = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_analysis_intermediate_data/FlightR_PreRunObs/PreRunOb_Deluca2015_A.RData")
+load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_analysis_intermediate_data/FlightR_PreRunObs/PreRunOb_Deluca2015_A.RData")
 Results <- run.particle.filter(all.obs, threads = -1, nParticles = 1e4, b = 5000, known.last = TRUE, check.outliers=T)
 
 plot_lon_lat(Results)
@@ -332,7 +335,7 @@ ggmap::register_google("AIzaSyABANOgjTyVFpOuDOiyPlBL4geijIy6vPo")
 map.FLightR.ggmap(Results, zoom=3, save = FALSE)
 
 #identify stationary periods 
-Summary <- stationary.migration.summary(Results, min.stay = 14, prob.cutoff = 0.2)
+Summary <- stationary.migration.summary(Results, min.stay = 28, prob.cutoff = 0.2)
 
 # Now we want to plot the detected stationary periods on a map
 Summary$Stationary.periods$stopover_duration<-as.numeric(difftime(Summary$Stationary.periods$Departure.Q.50,Summary$Stationary.periods$Arrival.Q.50, units='days'))

@@ -28,7 +28,6 @@ loadpackages(c(
 if(!require("spDataLarge",character.only=T)){devtools::install_github("Nowosad/spDataLarge")}
 # devtools::install_github installs a package from its github directory
 
-
 #Blank map fpor the whole of the blackpoll warbler's range
 wholerange <- tm_shape(shp = world, bbox = c(-180, -25, -30, 70)) + tm_borders()
 
@@ -49,17 +48,27 @@ bpbbox = tmaptools::bb(matrix(c(
 breedingraster <- raster("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geo_spatial_data/bkpwar_abundance_seasonal_breeding_mean_2021.tif")
 breedingraster[breedingraster == 0] <- NA
 
-crs(breedingraster) <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=37.5 +lon_0=-96 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs"
+#"+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=37.5 +lon_0=-96 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs"
+#"+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"
+projcrs <- crs("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=37.5 +lon_0=-96 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs")
+
+crs(breedingraster) <- projcrs
+
+#convert dataframe of sampled sites to layer of points 
+sites_df <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Sampling_sites.csv")
+sites_points <- st_as_sf(sites_df, coords = c('Longitude', 'Latitude'), crs = "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
 
 tm_shape(breedingraster, bbox = bpbbox,  raster.warp = FALSE) + 
-  tm_raster(palette = "Reds", alpha = 1, title = "Relative abundance", style = "cont") +
+    tm_raster(palette = "Reds", alpha = 1, title = "Relative abundance", style = "cont", legend.show = FALSE) +
   tm_shape(shp = world[(world$name_long %in% c("Canada", "United States")),]) +
- tm_borders(lwd = 1) # +
-  #tm_grid()# + 
-  #tm_layout(legend.position = c("left","BOTTOM"),
-            #legend.text.size = 0.8,
-            #legend.hist.size = 0.5,
-            #legend.title.size = 1)
+  tm_borders(lwd = 1) +
+  tm_shape(sites_points) +
+  tm_dots(col = "black", size = 1.2)
+#tm_grid()# +
+#tm_layout(legend.position = c("left","BOTTOM"),
+#legend.text.size = 0.8,
+#legend.hist.size = 0.5,
+#legend.title.size = 1)
 
 #map of the blackpoll warbler's abundance in the nonbreeding range 
 bpbbox_rangemap = tmaptools::bb(matrix(c(
@@ -155,7 +164,5 @@ tm_shape(full_rangeraster, bbox = bpbbox_fullrangemap,  raster.warp = FALSE) +
   tm_shape(world, bbox = c(-180, -25, -30, 70)) +
   tm_borders(lwd = 1)
 
-
 #Range geopackage
 data <- st_read("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Maps_&_Figures/Range_Map/bkpwar_range_2021/bkpwar_range_2021.gpkg")
-
