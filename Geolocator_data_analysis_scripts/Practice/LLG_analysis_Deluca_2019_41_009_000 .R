@@ -29,7 +29,7 @@ setupGeolocation()
 
 # Twilight annotation ==========================================================
 
-#Export lig data and remove first row 
+#import lig data and remove first row 
 ligdata <- readLig("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Data_raw/Deluca_et_al_2019/churchill/Geo_41_009_000.lig")
 ligdata <- ligdata[2:nrow(ligdata),]
 

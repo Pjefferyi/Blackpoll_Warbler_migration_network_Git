@@ -63,7 +63,7 @@ tm_shape(breedingraster, bbox = bpbbox,  raster.warp = FALSE) +
   tm_shape(shp = world[(world$name_long %in% c("Canada", "United States")),]) +
   tm_borders(lwd = 1) +
   tm_shape(sites_points) +
-  tm_dots(col = "black", size = 1.2)
+  tm_dots(col = "black", size = 0.6)
 #tm_grid()# +
 #tm_layout(legend.position = c("left","BOTTOM"),
 #legend.text.size = 0.8,
