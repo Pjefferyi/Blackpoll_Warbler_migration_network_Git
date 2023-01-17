@@ -7,6 +7,7 @@ library(dplyr)
 library(tidyr)
 library(remotes)
 library(anytime)
+library(lubridate)
 
 #load spatial packages 
 library(ggmap)
@@ -28,7 +29,7 @@ setupGeolocation()
 #Function: visualize threshold in plot of light level   
 thresholdOverLight <- function(data, threshold, span = c()){
   
-  col = colorRampPalette(c('black',"purple",'orange'))(50)[as.numeric(cut(data[2000:5000,2],breaks = 50))]
+  col = colorRampPalette(c('black',"purple",'orange'))(50)[as.numeric(cut(data$Light[2000:5000],breaks = 50))]
   
   par(mfrow = c(1, 1), mar = c(2, 2, 2, 2) )
   with(data[span[1]:span[2],], plot(Date, Light, type = "o", pch=16,  col = col, cex = 0.5)) 

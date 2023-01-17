@@ -28,7 +28,7 @@ library(GeoLocTools)
 setupGeolocation()
 
 # Extract data for a single bird in the data set from Deluca et al. 2015 =======
-bpdata2015 <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Data_raw/Deluca_et_al_2015/Blackpoll Warbler eastern North America (data from DeLuca et al. 2015).csv")
+bpdata2015 <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/raw_data/Deluca_et_al_2015/Blackpoll Warbler eastern North America (data from DeLuca et al. 2015).csv")
 
 #remove rows with processed data
 bpdata2015 <- bpdata2015[(is.na(bpdata2015$comments) == TRUE),]
