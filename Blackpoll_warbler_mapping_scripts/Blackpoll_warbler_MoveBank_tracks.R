@@ -39,7 +39,7 @@ deluca_2019 <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University o
 
 # Plot tracks for bird with geolocator 4105-008 (Deluca et al. 2019)
 locs <- deluca_2019 %>%
-  filter(tag.local.identifier == "3254-003")
+  filter(tag.local.identifier == "4105-008")
 
 # some of the latitudes for this individuals are NA
 locs <- locs %>% 
@@ -59,5 +59,6 @@ tm_shape(world, bbox = c(-180, -25, -30, 70)) +
   tm_shape(track) +
   tm_dots(col = "black", size = 0.05)
 
-plot(wrld_simpl)
+plot(wrld_simpl,  xlim=xlim, ylim=ylim)
+points(locs$location.long, locs$location.lat, pch = 16, cex = 0.5, col = "firebrick")
 lines(locs$location.long, locs$location.lat)
