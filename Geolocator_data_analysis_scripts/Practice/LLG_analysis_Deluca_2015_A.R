@@ -324,7 +324,7 @@ all.obs <- make.prerun.object(twlA2015fr, Grid, start = c(lon.calib, lat.calib),
                               Calibration = Calibration,) 
 
 save(all.obs, file = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_analysis_intermediate_data/FlightR_PreRunObs/PreRunOb_Deluca2015_A.RData")
-load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_analysis_intermediate_data/FlightR_PreRunObs/PreRunOb_Deluca2015_A.RData")
+load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/intermediate_data/FlightR_PreRunObs/PreRunOb_Deluca2015_A.RData")
 Results <- run.particle.filter(all.obs, threads = -1, nParticles = 1e4, b = 5000, known.last = TRUE, check.outliers=T)
 
 plot_lon_lat(Results)
@@ -335,7 +335,7 @@ ggmap::register_google("AIzaSyABANOgjTyVFpOuDOiyPlBL4geijIy6vPo")
 map.FLightR.ggmap(Results, zoom=3, save = FALSE)
 
 #identify stationary periods 
-Summary <- stationary.migration.summary(Results, min.stay = 28, prob.cutoff = 0.2)
+Summary <- stationary.migration.summary(Results, min.stay = 14, prob.cutoff = 0.2)
 
 # Now we want to plot the detected stationary periods on a map
 Summary$Stationary.periods$stopover_duration<-as.numeric(difftime(Summary$Stationary.periods$Departure.Q.50,Summary$Stationary.periods$Arrival.Q.50, units='days'))

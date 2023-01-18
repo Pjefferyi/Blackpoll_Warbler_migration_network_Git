@@ -28,7 +28,7 @@ loadpackages(c(
 if(!require("spDataLarge",character.only=T)){devtools::install_github("Nowosad/spDataLarge")}
 # devtools::install_github installs a package from its github directory
 
-#Blank map fpor the whole of the blackpoll warbler's range
+#Blank map for the whole of the blackpoll warbler's range
 wholerange <- tm_shape(shp = world, bbox = c(-180, -25, -30, 70)) + tm_borders()
 
 #Blank map for the blackpoll warbler's breeding range
@@ -143,7 +143,7 @@ tm_shape(rangeraster_breeding, bbox = bpbbox_fullrangemap,  raster.warp = FALSE)
   tm_borders(lwd = 1)
 
 
-# map of the blackpoll warbler's breeding, nonbreeding and stopover range ()
+# map of the blackpoll warbler's breeding, nonbreeding and stopover range
 bpbbox_fullrangemap = tmaptools::bb(matrix(c(
   -20000000, #xmin
   -2500000, #ymin  

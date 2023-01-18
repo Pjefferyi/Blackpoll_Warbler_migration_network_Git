@@ -57,6 +57,9 @@ lig <- lig[(is.na(lig$comments) == TRUE),]  %>%
 #convert Dates to as.POXIct format
 lig$Date <- anytime(lig$Date, tz = "UTC")
 
+#adjust time 
+lig$Date <- lig$Date - 4*60*60
+
 ###############################################################################
 #TWILIGHT ANNOTATION ##########################################################
 ###############################################################################
@@ -64,16 +67,14 @@ lig$Date <- anytime(lig$Date, tz = "UTC")
 threshold <- 1.5 
 
 # visualize threshold over light levels  
-col = colorRampPalette(c('black',"purple",'orange'))(50)[as.numeric(cut(lig[2000:5000,2],breaks = 50))]
-
-thresholdOverLight(lig, threshold, span =c(30000, 35000))
+thresholdOverLight(lig, threshold, span =c(2000, 3000))
 
 # plot light levels over the deployment period 
-offset <- 12 # adjusts the y-axis to put night (dark shades) in the middle
+offset <- 16 # adjusts the y-axis to put night (dark shades) in the middle
 
 lightImage( tagdata = lig,
             offset = offset,     
-            zlim = c(0, 20))
+            zlim = c(0, 60))
 
 tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
                        offset = offset, lwd = 3, col = adjustcolor("orange", alpha.f = 0.5))

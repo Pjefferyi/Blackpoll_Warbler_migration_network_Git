@@ -58,7 +58,7 @@ lig$Date <- lig$Date - 1*60*60
 threshold <- 1.5 
 
 # visualize threshold over light levels  
-thresholdOverLight(lig, threshold, span =c(30000, 35000))
+thresholdOverLight(lig, threshold, span =c(30000, 32000))
 
 # plot light levels over the deployment period 
 offset <- 12 # adjusts the y-axis to put night (dark shades) in the middle
