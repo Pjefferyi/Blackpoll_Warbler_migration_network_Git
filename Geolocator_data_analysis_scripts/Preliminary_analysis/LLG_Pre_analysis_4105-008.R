@@ -1,6 +1,6 @@
 # source: Deluca et al. 2019
 # tag number: 4105-008
-# site: CHurchill Canada
+# site: Churchill Canada
 
 #load packages
 require(readr)
@@ -27,25 +27,34 @@ library(LLmig)
 library(GeoLocTools)
 setupGeolocation()
 
+geo.id <- "4105-008"
+
+# data directory
+dir <- paste0("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geolocator_data/", geo.id)
+
 # geo deployment location 
 lat.calib <- 58.72798
 lon.calib <- -93.8313
 
-# data directory
-dir <- "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data"
+# estimated time of deployment
+deploy.start <- anytime("2016-06-18", tz = "GMT")
 
-# time of deployment
-deploy <- anytime("2016-06-18", tz = "GMT")
+# estimated time of recovery 
+deploy.end <- anytime("2017-06-26", tz = "GMT")
+
+#Equinox times
+fall.equi <- anytime("2016-09-22", tz = "GMT")
+spring.equi <- anytime("2017-03-20", tz = "GMT")
 
 ###############################################################################
 #DATA EXTRACTION ##############################################################
 ###############################################################################
 
 # import lig data 
-lig <- readLig(paste0(dir,"/raw_data/Deluca_et_al_2019/churchill/Geo_4100_008_000.lig"), skip = 1)
+lig <- readLig(paste0(dir,"/Geo_4100_008_000.lig"), skip = 1)
 
 #remove rows before and after deployment time 
-lig <- lig[(lig$Date > deploy),]
+lig <- lig[(lig$Date > deploy.start),]
 
 lig <- lig[(is.na(lig$Light) == FALSE),]
 
@@ -61,12 +70,17 @@ thresholdOverLight(lig, threshold, span =c(30000, 35000))
 # plot light levels 
 offset <- 20 # adjusts the y-axis to put night (dark shades) in the middle
 
+# open jpeg
+jpeg(paste0(dir, "/4105-008_light_plot.png"), width = 1024, height = 990)
+
 lightImage( tagdata = lig,
             offset = offset,     
             zlim = c(0, 64))
 
 tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
                        offset = offset, lwd = 3, col = adjustcolor("orange", alpha.f = 0.5))
+
+dev.off()
 
 #Detect twilight times, for now do not edit twilight times  
 # twl <- preprocessLight(lig, 
@@ -92,14 +106,14 @@ tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
 #               col = ifelse(twl$Rise, "dodgerblue", "firebrick"))
 
 # Save the twilight times 
-# write.csv(twl, paste0(dir,"/intermediate_data/Twilight_times/Pre_analysisis_ML6440_V4105_008_twl_times.csv"))
+# write.csv(twl, paste0(dir,"Pre_analysisis_ML6440_V4105_008_twl_times.csv"))
 
 ###############################################################################
 # SGAT ANALYSIS ###############################################################
 ###############################################################################
 
 # Import file with twilight times  
-twl <- read.csv(paste0(dir,"/intermediate_data/Twilight_times/Pre_analysisis_ML6440_V4105_008_twl_times.csv"))
+twl <- read.csv(paste0(dir,"/Pre_analysisis_V4105_008_twl_times.csv"))
 twl$Twilight <- as.POSIXct(twl$Twilight, tz = "UTC")
 
 # Calibration ##################################################################
@@ -141,6 +155,10 @@ path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol=0.01)
 x0 <- path$x
 z0 <- trackMidpts(x0)
 
+# open jpeg
+jpeg(paste0(dir, "/4105_008_Threshold_path.png"), width = 1024, height = 990)
+
+# plot of threshold path  
 data(wrld_simpl)
 plot(x0, type = "n", xlab = "", ylab = "")
 plot(wrld_simpl, col = "grey95", add = T)
@@ -148,6 +166,8 @@ plot(wrld_simpl, col = "grey95", add = T)
 points(path$x, pch=19, col="cornflowerblue", type = "o")
 points(lon.calib, lat.calib, pch = 16, cex = 2.5, col = "firebrick")
 box()
+
+dev.off()
 
 # Define known locations #######################################################
 
@@ -180,26 +200,28 @@ earthseaMask <- function(xlim, ylim, n = 2, pacific=FALSE) {
   
   abundance <- raster("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geo_spatial_data/bkpwar_abundance_seasonal_full-year_mean_2021.tif")
   abundance_resamp <- projectRaster(abundance, mask, method = "ngb")
-  abundance_resamp[abundance_resamp == 0 | is.nan(abundance_resamp)] <- NA
+  abundance_resamp[is.nan(abundance_resamp)] <- NA
+  abundance_resamp[abundance_resamp > 0 ] <- 1
   
-  mask <- abundance_resamp * mask
+  mask <- mask * abundance_resamp
   
   xbin = seq(xmin(mask),xmax(mask),length=ncol(mask)+1)
   ybin = seq(ymin(mask),ymax(mask),length=nrow(mask)+1)
   
-  
-  function(p) mask[cbind(.bincode(p[,2],ybin),.bincode(p[,1],xbin))]
+  function(p) mask[cbind(length(ybin) -.bincode(p[,2],ybin),.bincode(p[,1],xbin))]
 }
 
 xlim <- range(x0[,1]+c(-5,5))
 ylim <- range(x0[,2]+c(-5,5))
 
-mask <- earthseaMask(xlim, ylim, n = 1)
+mask <- earthseaMask(xlim, ylim, n = 4)
 
 ## Define the log prior for x and z
 log.prior <- function(p) {
   f <- mask(p)
-  ifelse(is.na(f), log(1), f) 
+  #ifelse(is.na(f), log(1), f)  # if f is the relative abundance within a grid square 
+  ifelse(is.na(f), log(1), log(2)) # if f indicates the distribution of the blackpoll warbler 
+  
 }
 
 # Run the Estelle model ########################################################
@@ -210,7 +232,7 @@ model <- thresholdModel(twilight = twl$Twilight,
                         twilight.model = "ModifiedGamma",
                         alpha = alpha,
                         beta = beta,
-                        logp.x = log.prior, logp.z = log.prior, 
+                        #logp.x = log.prior, logp.z = log.prior, 
                         x0 = x0,
                         z0 = z0,
                         zenith = zenith0,
@@ -231,7 +253,7 @@ model <- thresholdModel(twilight = twl$Twilight,
                         twilight.model = "Gamma",
                         alpha = alpha,
                         beta = beta,
-                        logp.x = log.prior, logp.z = log.prior, 
+                        #logp.x = log.prior, logp.z = log.prior, 
                         x0 = x0,
                         z0 = z0,
                         zenith = zenith0,
@@ -266,9 +288,11 @@ fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = chainLast(fit$x),
 sm <- locationSummary(fit$z, time=fit$model$time)
 head(sm)
 
+# open jpeg
+jpeg(paste0(dir, "/4105_008_Estelle_path.png"), width = 1024 , height = 990)
 
 #Plot the results
-
+par(mfrow=c(1,1))
 # empty raster of the extent
 r <- raster(nrows = 2 * diff(ylim), ncols = 2 * diff(xlim), xmn = xlim[1]-5,
             xmx = xlim[2]+5, ymn = ylim[1]-5, ymx = ylim[2]+5, crs = proj4string(wrld_simpl))
@@ -279,4 +303,35 @@ sk <- slice(s, sliceIndices(s))
 plot(sk, useRaster = F,col = rev(viridis::viridis(50)))
 plot(wrld_simpl, xlim=xlim, ylim=ylim,add = T, bg = adjustcolor("black",alpha=0.1))
 
-lines(sm[,"Lon.50%"], sm[,"Lat.50%"], col = adjustcolor("firebrick", alpha.f = 0.6), type = "o", pch = 16)
+#plot location track. Locations in blue occured during the fall equinox 
+lines(sm[,"Lon.50%"], sm[,"Lat.50%"], 
+      col = ifelse(sm$Time1 > spring.equi - days(10) & sm$Time1 < spring.equi + days(10), adjustcolor("blue", alpha.f = 0.6), adjustcolor("firebrick", alpha.f = 0.6)),
+      type = "o", pch = 16)
+
+#close jpeg
+dev.off()
+
+# Plot of mean longitude and latitude
+
+# open jpeg
+jpeg(paste0(dir, "/ML6440_V8296_005_mean_lon_lat.png"), width = 1024 , height = 990)
+
+par(mfrow=c(2,1),mar=c(4,4,1,1))
+
+plot(sm$Time1, sm$"Lon.50%", ylab = "Longitude", xlab = "", yaxt = "n", type = "n", ylim = c(min(sm$Lon.mean) - 10, max(sm$Lon.mean) + 10))
+axis(2, las = 2)
+polygon(x=c(sm$Time1,rev(sm$Time1)), y=c(sm$`Lon.2.5%`,rev(sm$`Lon.97.5%`)), border="gray", col="gray")
+lines(sm$Time1,sm$"Lon.50%", lwd = 2)
+abline(v = fall.equi, lwd = 2, lty = 2, col = "orange")
+abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
+
+plot(sm$Time1,sm$"Lat.50%", type="n", ylab = "Latitude", xlab = "", yaxt = "n", ylim = c(min(sm$Lat.mean) - 10, max(sm$Lat.mean) + 10))
+axis(2, las = 2)
+polygon(x=c(sm$Time1,rev(sm$Time1)), y=c(sm$`Lat.2.5%`,rev(sm$`Lat.97.5%`)), border="gray", col="gray")
+lines(sm$Time1, sm$"Lat.50%", lwd = 2)
+abline(v = fall.equi, lwd = 2, lty = 2, col = "orange")
+abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
+
+#close jpeg
+dev.off()
+

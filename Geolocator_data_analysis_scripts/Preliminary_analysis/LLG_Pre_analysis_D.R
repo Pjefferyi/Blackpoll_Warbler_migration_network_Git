@@ -1,6 +1,6 @@
 # source: Deluca et al. 2015 
-# tag number: A
-# site: Mount Mansfield, Vermont, USA
+# tag number: D
+# site: Seal Island, Nova Scotia, Canada
 
 #load packages
 require(readr)
@@ -27,15 +27,15 @@ library(LLmig)
 library(GeoLocTools)
 setupGeolocation()
 
-geo.id <- "A"
+geo.id <- "D"
 
 # geo deployment location 
-lat.calib <- 44.528354
-lon.calib <- -72.8165699
+lat.calib <- 43.408825
+lon.calib <- -66.014189
 
 # time of deployment
-deploy.start <- anytime("2013-06-13", tz = "GMT")
-deploy.end <- anytime("2014-06-04", tz = "GMT")
+deploy.start <- anytime("2013-08-25", tz = "GMT")
+deploy.end <- anytime("2014-04-15", tz = "GMT")
 
 # data directory
 dir <- paste0("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geolocator_data/", geo.id)
@@ -50,35 +50,34 @@ lig <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph
 #remove rows with processed data
 lig <- lig[(is.na(lig$comments) == TRUE),]  %>%
   #get data for individual D
-  filter(individual.local.identifier == "A") %>%
+    filter(individual.local.identifier == "D") %>%
   # rename columns  
-  rename(c("Date" = "timestamp", "Light" = "gls.light.level")) %>%
+    rename(c( "timestamp" = "Date", "gls.light.level" = "Light")) %>%
   #remove rows before and after deployment time 
-  filter(Date > deploy.start)# %>%
+    filter(Date > deploy.start) %>%
   #Convert light levels to log
-  #mutate(Light = log(Light + 0.0001) + abs(min(log(Light+0.0001)))) 
+    mutate(Light = log(Light + 0.0001) + abs(min(log(Light+0.0001)))) 
 
-# convert Dates to as.POXIct format
-# Note: the original recorded times on this geolocator were recorded with daylight savings
-lig$Date <- anytime(lig$Date, asUTC = T)
+#convert Dates to as.POXIct format
+lig$Date <- anytime(lig$Date, tz = "UTC")
 
 #adjust time 
-lig$Date <- lig$Date + 4*60*60
+lig$Date <- lig$Date - 4*60*60
 
 ###############################################################################
 #TWILIGHT ANNOTATION ##########################################################
 ###############################################################################
 
-threshold <- 1.5
+threshold <- 1
 
 # visualize threshold over light levels  
-thresholdOverLight(lig, threshold, span =c(2000, 10000))
+thresholdOverLight(lig, threshold, span =c(2000, 2500))
 
 # plot light levels over the deployment period 
 offset <- 18 # adjusts the y-axis to put night (dark shades) in the middle
 
 # open jpeg
-jpeg(paste0(dir, "/A_light_plot.png"), width = 1024, height = 990)
+jpeg(paste0(dir, "/D_light_plot.png"), width = 1024, height = 990)
 
 lightImage( tagdata = lig,
             offset = offset,     
@@ -93,9 +92,10 @@ dev.off()
 twl <- preprocessLight(lig, 
                        threshold = threshold,
                        offset = offset, 
-                       lmax = 64,         # max. light value
+                       lmax = 2,         # max. light value
                        gr.Device = "x11", # MacOS version (and windows)
                        dark.min = 60)
+
 
 # Automatically adjust or mark false twilights 
 twl <- twilightEdit(twilights = twl, 
@@ -109,29 +109,28 @@ lightImage(lig, offset = 19)
 tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
               col = ifelse(twl$Rise, "dodgerblue", "firebrick"))
 
-
 # Save the twilight times 
-#write.csv(twl, paste0(dir,"/Pre_analysis_A_twl_times.csv"))
+#write.csv(twl, paste0(dir,"/Pre_analysis_D_twl_times.csv"))
 
 ###############################################################################
 # SGAT ANALYSIS ###############################################################
 ###############################################################################
 
 # Import file with twilight times  
-twl <- read.csv(paste0(dir,"/Pre_analysis_A_twl_times.csv"))
+twl <- read.csv(paste0(dir,"/Pre_analysis_D_twl_times.csv"))
 twl$Twilight <- as.POSIXct(twl$Twilight, tz = "UTC")
 
 # Calibration ##################################################################
 
 # We start with calibration based on the stationary periods before and after the migration
 lightImage(tagdata = lig,
-           offset = offset,     
-           zlim = c(0, 2))
+            offset = offset,     
+            zlim = c(0, 2))
 
 tsimageDeploymentLines(twl$Twilight, lon.calib, lat.calib, offset, lwd = 2, col = "orange")
 
 #calibration period before the migration 
-tm.calib <- as.POSIXct(c(deploy.start, deploy.start + days(45)), tz = "UTC")
+tm.calib <- as.POSIXct(c(deploy.start, deploy.start + days(14)), tz = "UTC")
 
 abline(v = tm.calib, lwd = 2, lty = 2, col = "orange")
 
@@ -147,6 +146,16 @@ zenith0 <- calib[2]
 
 alpha <- calib[3:4]
 
+# Alternative calibration ######################################################
+
+startDate <- "2013-11-20"
+endDate   <- "2014-02-10"
+
+start = min(which(as.Date(twl$Twilight) == startDate))
+end = max(which(as.Date(twl$Twilight) == endDate))
+
+(zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
+
 # Movement model ###############################################################
 
 #this movement model should be based on the estimated migration speed of the blackpoll warbler 
@@ -155,13 +164,13 @@ matplot(0:100, dgamma(0:100, beta[1], beta[2]),
         type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol=0.01)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith_sd, tol=0.01)
 
 x0 <- path$x
 z0 <- trackMidpts(x0)
 
 # open jpeg
-jpeg(paste0(dir, "/A_Threshold_path.png"), width = 1024, height = 990)
+jpeg(paste0(dir, "/D_Threshold_path.png"), width = 1024, height = 990)
 
 data(wrld_simpl)
 plot(x0, type = "n", xlab = "", ylab = "")
