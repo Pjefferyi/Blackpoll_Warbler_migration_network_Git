@@ -10,6 +10,7 @@ library(tidyr)
 library(remotes)
 library(anytime)
 library(lubridate)
+library(parallel)
 
 #load spatial packages 
 library(ggmap)
@@ -39,12 +40,15 @@ lon.calib <- -93.8313
 # estimated time of deployment
 deploy.start <- anytime("2016-06-18", tz = "GMT")
 
-# estimated time of recovery 
+# estimated time of recovery (estimated based on light plot)
 deploy.end <- anytime("2017-06-26", tz = "GMT")
 
 #Equinox times
 fall.equi <- anytime("2016-09-22", tz = "GMT")
 spring.equi <- anytime("2017-03-20", tz = "GMT")
+
+#Find number of cores available for analysis
+Threads= detectCores()-1
 
 ###############################################################################
 #DATA EXTRACTION ##############################################################
@@ -83,22 +87,22 @@ tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
 dev.off()
 
 #Detect twilight times, for now do not edit twilight times  
-# twl <- preprocessLight(lig, 
-#                        threshold = threshold,
-#                        offset = offset, 
-#                        lmax = 64,         # max. light value
-#                        gr.Device = "x11", # MacOS version (and windows)
-#                        dark.min = 60)
+# twl <- preprocessLight(lig,
+#                         threshold = threshold,
+#                         offset = offset,
+#                         lmax = 64,         # max. light value
+#                         gr.Device = "x11", # MacOS version (and windows)
+#                         dark.min = 60)
 
 # Adjust sunset times by 120 second sampling interval
 # twl <- twilightAdjust(twilights = twl, interval = 120)
 
 # Automatically adjust or mark false twilights 
-# twl <- twilightEdit(twilights = twl, 
-#                     window = 6,           
-#                     outlier.mins = 90,    
-#                     stationary.mins = 45, 
-#                     plot = TRUE)
+# twl <- twilightEdit(twilights = twl,
+#                      window = 6,
+#                      outlier.mins = 90,
+#                      stationary.mins = 45,
+#                      plot = TRUE)
 
 # Visualize light and twilight time-series
 # lightImage(lig, offset = 19)
@@ -106,20 +110,20 @@ dev.off()
 #               col = ifelse(twl$Rise, "dodgerblue", "firebrick"))
 
 # Save the twilight times 
-# write.csv(twl, paste0(dir,"Pre_analysisis_ML6440_V4105_008_twl_times.csv"))
+#write.csv(twl, paste0(dir,"Pre_analysis_4105_008_twl_times.csv"))
 
 ###############################################################################
 # SGAT ANALYSIS ###############################################################
 ###############################################################################
 
 # Import file with twilight times  
-twl <- read.csv(paste0(dir,"/Pre_analysisis_V4105_008_twl_times.csv"))
+twl <- read.csv(paste0(dir,"/Pre_analysis_4105_008_twl_times.csv"))
 twl$Twilight <- as.POSIXct(twl$Twilight, tz = "UTC")
 
 # Calibration ##################################################################
 
 # We start with calibration based on the stationary periods before and after the migration
-lightImage( tagdata = lig,
+lightImage(tagdata = lig,
             offset = offset,     
             zlim = c(0, 20))
 
@@ -161,7 +165,6 @@ jpeg(paste0(dir, "/4105_008_Threshold_path.png"), width = 1024, height = 990)
 # plot of threshold path  
 data(wrld_simpl)
 plot(x0, type = "n", xlab = "", ylab = "")
-plot(wrld_simpl, col = "grey95", add = T)
 
 points(path$x, pch=19, col="cornflowerblue", type = "o")
 points(lon.calib, lat.calib, pch = 16, cex = 2.5, col = "firebrick")
@@ -232,7 +235,7 @@ model <- thresholdModel(twilight = twl$Twilight,
                         twilight.model = "ModifiedGamma",
                         alpha = alpha,
                         beta = beta,
-                        #logp.x = log.prior, logp.z = log.prior, 
+                        logp.x = log.prior, logp.z = log.prior, 
                         x0 = x0,
                         z0 = z0,
                         zenith = zenith0,
@@ -253,7 +256,7 @@ model <- thresholdModel(twilight = twl$Twilight,
                         twilight.model = "Gamma",
                         alpha = alpha,
                         beta = beta,
-                        #logp.x = log.prior, logp.z = log.prior, 
+                        logp.x = log.prior, logp.z = log.prior, 
                         x0 = x0,
                         z0 = z0,
                         zenith = zenith0,
@@ -335,3 +338,127 @@ abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
 #close jpeg
 dev.off()
 
+################################################################################
+# FLIGHTR ANALYSIS #############################################################
+################################################################################
+
+# Import file with twilight times  
+#twl <- read.csv(paste0(dir,"/Pre_analysis_4105_008_twl_times.csv"))
+#twl$Twilight <- as.POSIXct(twl$Twilight, tz = "UTC")
+
+#twlexp <- twGeos2TAGS(raw = lig[, c("Date", "Light")], twl = twl,
+#                      threshold = 1.5,
+#                      filename = paste0(dir, "/4105_008_TAGS_data.csv"))
+
+tags <- get.tags.data(paste0(dir, "/4105_008_TAGS_data.csv"))
+
+#Calibration ###################################################################
+
+# plot slopes of light transition over calibration period 
+plot_slopes_by_location(Proc.data=tags, location=c(lon.calib, lat.calib), ylim=c(-4, 4))
+
+abline(v=as.POSIXct(deploy.start + days(60)), col = "green") # end of first calibration period
+abline(v=as.POSIXct(deploy.end - days(14)), col = "green") # start of the second calibration period
+
+Calibration.periods<-data.frame(
+  calibration.start=as.POSIXct(c(NA, "2017-06-12")),
+  calibration.stop=as.POSIXct(c("2016-08-17", NA)),
+  lon=lon.calib, lat=lat.calib)
+print(Calibration.periods)
+
+Calibration<-make.calibration(tags, Calibration.periods, model.ageing=TRUE, plot.final = T)
+
+# Create grid for spatial extent ###############################################
+
+Grid <- make.grid(left=lon.calib -10, bottom=lat.calib-60, right=lon.calib+50, top= lat.calib + 10,
+                   distance.from.land.allowed.to.use=c(-Inf, 1100),
+                   distance.from.land.allowed.to.stay=c(-Inf, 50))
+
+# create the model prerun object ###############################################
+all.in <- make.prerun.object(tags, Grid, start=c(lon.calib, lat.calib),
+                             Calibration=Calibration, threads = min(Threads, 6))
+
+save(all.in, file = paste0(dir, "/4105_008_FlightRCalib.RData"))
+
+#run twilight filter ###########################################################
+
+#Load  model prerun object
+load(paste0(dir, "/4105_008_FlightRCalib.RData"))
+
+#run filter 
+nParticles=1e4 # start at 1e4 for initial run 
+Result < -run.particle.filter(all.in, threads= min(Threads, 1),
+                            nParticles=nParticles, known.last=TRUE,
+                            precision.sd=25, check.outliers= T, 
+                            b=2700)
+
+#save(Result, file = paste0(dir, "/4105_008_FLightRResult.RData"))
+
+# Plot results ################################################################# 
+load(paste0(dir, "/4105_008_FLightRResult.RData"))
+
+#longitude and latitude
+plot_lon_lat(Result)
+
+#simple map 
+library(ggmap)
+ggmap::register_google("AIzaSyABANOgjTyVFpOuDOiyPlBL4geijIy6vPo")
+map.FLightR.ggmap(Result, zoom=3, save = FALSE)
+
+# find Stationary sites #############################################################
+Summary <-stationary.migration.summary(Result, prob.cutoff = 0.05, min.stay = 14)
+view(Summary$Stationary.periods)
+
+# find longest stationary period 
+Summary$Potential_stat_periods
+
+# this is the period between 326-375
+Result$Results$Quantiles[c(326,375),]$time
+
+# The new calibration period ranges between "2016-11-28 10:24:42 GMT" and "2016-12-22 22:43:57 GMT"
+mean.lat <-   1.87218 
+mean.lon <-   -69.757
+
+# Calibration with new stationary period #######################################
+# plot slopes of light transition over calibration period 
+
+Calibration.periods<-data.frame(
+  calibration.start=as.POSIXct(c("2016-11-28 ")),
+  calibration.stop=as.POSIXct(c("2016-12-22")),
+  lon= mean.lon, lat= mean.lat) 
+print(Calibration.periods)
+
+NewCalibration <- make.calibration(tags, Calibration.periods, model.ageing=TRUE, plot.final = T)
+
+# create new model prerun object ###############################################
+all.in.adjusted <- make.prerun.object(tags, Grid, start=c(lon.calib, lat.calib),
+                             Calibration=NewCalibration)
+
+save(all.in.adjusted, file = paste0(dir, "/4105_008_FlightRCalib_nonbreed_calib.RData"))
+
+#run twilight filter again #####################################################
+nParticles=1e6 ##increase to 1e6 for final run 
+Result_adjusted <-run.particle.filter(all.in, threads= 6,
+                                      nParticles=nParticles, known.last=TRUE,
+                                      precision.sd=25, check.outliers= T, b=2700)
+
+save(Result_adjusted, file = paste0(dir, "/4105_008_FLightRResult_nonbreed_calib.RData"))
+
+# Plot new results ################################################################# 
+load(paste0(dir, "/4105_008_FLightRResult_nonbreed_calib.RData"))
+
+#longitude and latitude
+plot_lon_lat(Result_adjusted)
+
+#simple map 
+library(ggmap)
+ggmap::register_google("AIzaSyABANOgjTyVFpOuDOiyPlBL4geijIy6vPo")
+map.FLightR.ggmap(Result_adjusted, zoom=3, save = FALSE)
+
+# find Stationary sites #############################################################
+Summary <-stationary.migration.summary(Result_adjusted, prob.cutoff = 0.2)
+view(Summary$Stationary.periods)
+
+tmp <- plot_util_distr(Result_adjusted, 
+                       dates=data.frame(as.POSIXct('2016-06-20'), as.POSIXct('2017-06-20')),
+                       add.scale.bar=TRUE, percentiles=0.5, zoom=7, save = FALSE)

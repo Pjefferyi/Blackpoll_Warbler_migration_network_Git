@@ -10,6 +10,8 @@ library(tidyr)
 library(remotes)
 library(anytime)
 library(lubridate)
+library(parallel)
+
 
 #load spatial packages 
 library(ggmap)
@@ -29,6 +31,9 @@ setupGeolocation()
 
 geo.id <- "A"
 
+# data directory
+dir <- paste0("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geolocator_data/", geo.id)
+
 # geo deployment location 
 lat.calib <- 44.528354
 lon.calib <- -72.8165699
@@ -37,8 +42,8 @@ lon.calib <- -72.8165699
 deploy.start <- anytime("2013-06-13", tz = "GMT")
 deploy.end <- anytime("2014-06-04", tz = "GMT")
 
-# data directory
-dir <- paste0("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geolocator_data/", geo.id)
+#Find number of cores available for analysis
+Threads= detectCores()-1
 
 ###############################################################################
 #DATA EXTRACTION ##############################################################

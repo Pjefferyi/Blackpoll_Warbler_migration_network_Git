@@ -10,6 +10,8 @@ library(tidyr)
 library(remotes)
 library(anytime)
 library(lubridate)
+library(parallel)
+
 
 #load spatial packages 
 library(ggmap)
@@ -42,6 +44,9 @@ deploy.start <- anytime("2019-06-27", tz = "GMT")
 #Equinox times
 fall.equi <- anytime("2019-09-23", tz = "GMT")
 spring.equi <- anytime("2020-03-19", tz = "GMT")
+
+#Find number of cores available for analysis
+Threads= detectCores()-1
 
 ###############################################################################
 #DATA EXTRACTION ##############################################################
@@ -134,7 +139,7 @@ lightImage( tagdata = lig,
 tsimageDeploymentLines(twl$Twilight, lon.calib, lat.calib, offset, lwd = 2, col = "orange")
 
 #calibration period before the migration 
-tm.calib <- as.POSIXct(c("2019-08-05", "2019-09-01"), tz = "UTC")
+tm.calib <- as.POSIXct(c("2019-08-03", "2019-09-03"), tz = "UTC")
 
 abline(v = tm.calib, lwd = 2, lty = 2, col = "orange")
 
@@ -145,10 +150,13 @@ d_calib <- subset(twl, Twilight>=tm.calib[1] & Twilight<=tm.calib[2])
 calib <- thresholdCalibration(d_calib$Twilight, d_calib$Rise, lon.calib, lat.calib, method = "gamma")
 
 #parameters of the error distribution 
+#parameters of the error distribution 
 zenith  <- calib[1] 
 zenith0 <- calib[2]
 
-# Calibration in the breeding grounds is not possible here because of very brief nights and long periods of incomplete darkness
+alpha <- calib[3:4]
+
+# Calibration in the breeding grounds is difficult here because of very brief nights and long periods of incomplete darkness
 
 #alternative calibration #######################################################
 startDate <- "2019-11-15"
@@ -162,12 +170,12 @@ end = max(which(as.Date(twl$Twilight) == endDate))
 # Movement model ###############################################################
 
 #this movement model should be based on the estimated migration speed of the blackpoll warbler 
-beta  <- c(2.2, 0.08)
+beta  <- c(0.45, 0.05)
 matplot(0:100, dgamma(0:100, beta[1], beta[2]),
         type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith_sd, tol=0.01)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol=0.18)
 
 x0 <- path$x
 z0 <- trackMidpts(x0)
@@ -217,7 +225,7 @@ earthseaMask <- function(xlim, ylim, n = 2, pacific=FALSE) {
   
   abundance <- raster("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geo_spatial_data/bkpwar_abundance_seasonal_full-year_mean_2021.tif")
   abundance_resamp <- projectRaster(abundance, mask, method = "ngb")
-  abundance_resamp[is.nan(abundance_resamp)] <- NA
+  abundance_resamp[is.nan(abundance_resamp) | abundance_resamp == 0] <- NA
   abundance_resamp[abundance_resamp > 0 ] <- 1
   
   mask <- mask * abundance_resamp
@@ -252,7 +260,7 @@ model <- thresholdModel(twilight = twl$Twilight,
                         logp.x = log.prior, logp.z = log.prior, 
                         x0 = x0,
                         z0 = z0,
-                        zenith = zenith_sd,
+                        zenith = zenith,
                         fixedx = fixedx)
 
 #Define the error distribution around each location 
@@ -273,7 +281,7 @@ model <- thresholdModel(twilight = twl$Twilight,
                         logp.x = log.prior, logp.z = log.prior, 
                         x0 = x0,
                         z0 = z0,
-                        zenith = zenith_sd,
+                        zenith = zenith,
                         fixedx = fixedx)
 
 x.proposal <- mvnorm(S = diag(c(0.005, 0.005)), n = nrow(twl))
@@ -352,33 +360,136 @@ abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
 #close jpeg
 dev.off()
 
-###############################################################################
-# SGAT ANALYSIS ###############################################################
-# curve model #################################################################
-###############################################################################
+################################################################################
+# FLIGHTR ANALYSIS #############################################################
+################################################################################
 
-#Define the model
-model <- curveModel(time = lig$Date, 
-                    light = lig$Light, 
-                    segment = , 
-                    calibration = ,
-                    alpha = alpha,  
-                    beta = , 
-                    logp.x = ,
-                    logp.z,
-                    x0 =,
-                    z0 =,
-                    fixedx)
-                    
+# Import file with twilight times  
+twl <- read.csv(paste0(dir,"/Pre_analysis_V8757_055_twl_times.csv"))
+twl$Twilight <- as.POSIXct(twl$Twilight, tz = "UTC")
 
-l(twilight = twl$Twilight,
-  rise = twl$Rise,
-  twilight.model = "ModifiedGamma",
-  alpha = alpha,
-  beta = beta,
-  logp.x = log.prior, logp.z = log.prior, 
-  x0 = x0,
-  z0 = z0,
-  zenith = zenith_sd,
-  fixedx = fixedx)
-                    
+twlexp <- twGeos2TAGS(raw = lig[, c("Date", "Light")], twl = twl,
+                      threshold = 1.5,
+                      filename = paste0(dir, "/V8757_055_TAGS_data.csv"))
+
+tags <- get.tags.data(paste0(dir, "/V8757_055_TAGS_data.csv"))
+
+#Calibration ###################################################################
+
+# plot slopes of light transition over calibration period 
+plot_slopes_by_location(Proc.data=tags, location=c(lon.calib, lat.calib), ylim=c(-3, 3))
+
+abline(v=as.POSIXct(deploy.start + days(10)), col = "green") # start of first calibration period
+abline(v=as.POSIXct(deploy.start + days(60)), col = "green") # end of first calibration period
+abline(v=as.POSIXct("2020-06-25"), col = "green") # start of the second calibration period
+abline(v=as.POSIXct("2020-07-12"), col = "green") # end of the second calibration period
+
+Calibration.periods<-data.frame(
+  calibration.start=as.POSIXct(c(deploy.start + days(10), "2020-06-25")),
+  calibration.stop=as.POSIXct(c(deploy.start + days(60), "2020-07-02" )),
+  lon=lon.calib, lat=lat.calib) 
+print(Calibration.periods)
+
+Calibration<-make.calibration(tags, Calibration.periods, model.ageing=TRUE, plot.final = T)
+
+# Create grid for spatial extent ###############################################
+
+Grid <- make.grid(left=lon.calib -30, bottom=lat.calib-80, right=lon.calib+80, top= lat.calib + 5,
+                  distance.from.land.allowed.to.use=c(-Inf, 1100),
+                  distance.from.land.allowed.to.stay=c(-Inf, 50))
+
+# create the model prerun object ###############################################
+all.in <- make.prerun.object(tags, Grid, start=c(lon.calib, lat.calib),
+                             Calibration=Calibration, threads = min(Threads, 6))
+
+save(all.in, file = paste0(dir, "/V8757_055_FlightRCalib.RData"))
+
+#run twilight filter ###########################################################
+
+#Load  model prerun object
+load(paste0(dir, "/V8757_055_FlightRCalib.RData"))
+
+#run filter 
+nParticles=1e4 # start at 1e4 for initial run 
+Result<-run.particle.filter(all.in, threads= min(Threads, 6),
+                            nParticles=nParticles, known.last=TRUE,
+                            precision.sd=25, check.outliers= T, 
+                            b=2700)
+
+save(Result, file = paste0(dir, "/V8757_055_FLightRResult.RData"))
+
+# Plot results ################################################################# 
+load(paste0(dir, "/V8757_055_FLightRResult.RData"))
+
+#longitude and latitude
+plot_lon_lat(Result)
+
+#simple map 
+library(ggmap)
+ggmap::register_google("AIzaSyABANOgjTyVFpOuDOiyPlBL4geijIy6vPo")
+map.FLightR.ggmap(Result, zoom=3, save = FALSE)
+
+# find Stationary sites #############################################################
+Summary <-stationary.migration.summary(Result, prob.cutoff = 0.8)
+view(Summary$Stationary.periods)
+
+# find longest stationary period 
+Summary$Potential_stat_periods
+
+# this is the period between 357-485
+Result$Results$Quantiles[c(236,302),]$time
+
+# The new calibration period ranges between "2020-02-18" and "2020-04-22"
+new.calib.start <- "2019-11-10"
+new.calib.end  <- "2019-12-03"
+mean.lat <-  9.900000
+mean.lon <- -63.05692
+
+# Calibration with new stationary period #######################################
+# plot slopes of light transition over calibration period 
+
+Calibration.periods<-data.frame(
+  calibration.start=as.POSIXct(c(new.calib.start)),
+  calibration.stop=as.POSIXct(c(new.calib.end)),
+  lon= mean.lon, lat= mean.lat) 
+print(Calibration.periods)
+
+NewCalibration <- make.calibration(tags, Calibration.periods, model.ageing=TRUE, plot.final = T)
+
+# create new model prerun object ###############################################
+all.in.adjusted <- make.prerun.object(tags, Grid, start=c(lon.calib, lat.calib),
+                                      Calibration=NewCalibration)
+
+save(all.in.adjusted, file = paste0(dir, "/V8757_055_FlightRCalib_nonbreed_calib.RData"))
+
+#run twilight filter again #####################################################
+nParticles=1e4 #increase to 1e6 for final run  
+
+a <- Sys.time()
+Result_adjusted <-run.particle.filter(all.in, threads= -1,
+                                      nParticles=nParticles, known.last=TRUE,
+                                      precision.sd=25, check.outliers= T, 
+                                      b=2700)
+
+b <- Sys.time()
+d <- a-b
+
+save(Result_adjusted, file = paste0(dir, "/V8757_055_FLightRResult_nonbreed_calib.RData"))
+
+# Plot new results ################################################################# 
+load(paste0(dir, "/V8757_055_FLightRResult_nonbreed_calib.RData"))
+
+#longitude and latitude
+plot_lon_lat(Result_adjusted)
+
+#simple map 
+library(ggmap)
+ggmap::register_google("AIzaSyABANOgjTyVFpOuDOiyPlBL4geijIy6vPo")
+map.FLightR.ggmap(Result_adjusted, zoom=3, save = FALSE)
+
+# find Stationary sites #############################################################
+Summary <-stationary.migration.summary(Result_adjusted, prob.cutoff = 0.2)
+view(Summary$Stationary.periods)
+
+
+

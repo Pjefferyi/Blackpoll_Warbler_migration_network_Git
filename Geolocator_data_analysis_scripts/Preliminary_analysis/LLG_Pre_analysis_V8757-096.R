@@ -1,6 +1,6 @@
-# source: unpublished data 
-# tag number: V8296 005
-# site: Quebec
+# source: Unpublished data 
+# tag number: V8757-096
+# site: Newfoundland 
 
 #load packages
 require(readr)
@@ -11,6 +11,7 @@ library(remotes)
 library(anytime)
 library(lubridate)
 library(parallel)
+
 
 #load spatial packages 
 library(ggmap)
@@ -28,41 +29,40 @@ library(LLmig)
 library(GeoLocTools)
 setupGeolocation()
 
-geo.id <- "V8296-005"
+geo.id <- "V8757-096"
 
 # data directory
 dir <- paste0("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geolocator_data/", geo.id)
 
 # geo deployment location 
-lat.calib <- 47.38323	
-lon.calib <- -71.09479
+lat.calib <- 49.45833	
+lon.calib <- -56.225
 
-# time of deployment (from reference file)
-deploy.start <- anytime("2019-06-18	18:45:00", tz = "GMT")
+# time of deployment (estimated from light data)
+deploy.start <- anytime("2012-07-15", tz = "GMT")
 
-# time of recovery (estimate from light data)
-deploy.end <- anytime("2020-07-12 17:55:0", tz = "GMT")
+# time of recovery (estimated from light data)
+deploy.end <- anytime("2013-07-08", tz = "GMT")
 
 #Equinox times
-fall.equi <- anytime("2019-09-23", tz = "GMT")
-spring.equi <- anytime("2020-03-19", tz = "GMT")
+fall.equi <- anytime("2012-09-23", tz = "GMT")
+spring.equi <- anytime("2023-03-19", tz = "GMT")
 
 #Find number of cores available for analysis
 Threads= detectCores()-1
-  
+
 ###############################################################################
 #DATA EXTRACTION ##############################################################
 ###############################################################################
 
 # import lig data 
-lig <- readLig(paste0(dir,"/ML6740 V8296 005 reconstructed_000.lig"), skip = 1)
-
+lig <- readLig(paste0(dir,"/ML6740 V8757 096 reconstructed_000.lig"), skip = 1)
 
 #remove rows before and after deployment time 
-lig <- lig[(lig$Date > deploy.start),]
+#lig <- lig[(lig$Date > deploy.start),]
 
 #adjust time 
-lig$Date <- lig$Date - 1*60*60
+lig$Date <- lig$Date + 4*60*60
 
 ###############################################################################
 #TWILIGHT ANNOTATION ##########################################################
@@ -71,13 +71,13 @@ lig$Date <- lig$Date - 1*60*60
 threshold <- 1.5 
 
 # visualize threshold over light levels  
-thresholdOverLight(lig, threshold, span =c(50000, 100000))
+thresholdOverLight(lig, threshold, span =c(45000, 50000))
 
 # plot light levels over the deployment period 
 offset <- 12 # adjusts the y-axis to put night (dark shades) in the middle
 
 # open jpeg
-jpeg(paste0(dir, "/V8296-005_light_plot.png"), width = 1024, height = 990)
+jpeg(paste0(dir, "/V8757-010_light_plot.png"), width = 1024, height = 990)
 
 lightImage( tagdata = lig,
             offset = offset,     
@@ -100,31 +100,26 @@ twl <- twilightAdjust(twilights = twl, interval = 120)
 
 # Automatically adjust or mark false twilights 
 twl <- twilightEdit(twilights = twl, 
-               window = 4,           
-               outlier.mins = 90,    
-               stationary.mins = 45, 
-               plot = TRUE)
+                    window = 4,           
+                    outlier.mins = 90,    
+                    stationary.mins = 45, 
+                    plot = TRUE)
 
 # Visualize light and twilight time-series
 lightImage(lig, offset = 19)
 tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
               col = ifelse(twl$Rise, "dodgerblue", "firebrick"))
 
-
-# This twilight file has some duplicates between rows 655 and 664
-# No data appears to have been lost, so the duplicates can simply be removed 
-twl[655:667,]
-twl <- filter(twl, !duplicated(twl$Twilight))
-
 # Save the twilight times 
-#write.csv(twl, paste0(dir,"/Pre_analysis_V8296_005_twl_times.csv"))
+write.csv(twl, paste0(dir,"/Pre_analysis_V8757_0.96_twl_times.csv"))
+
 
 ###############################################################################
 # SGAT ANALYSIS ###############################################################
 ###############################################################################
 
 # Import file with twilight times  
-twl <- read.csv(paste0(dir,"/Pre_analysis_V8296_005_twl_times.csv"))
+twl <- read.csv(paste0(dir,"/Pre_analysis_V8757_096_twl_times.csv"))
 twl$Twilight <- as.POSIXct(twl$Twilight, tz = "UTC")
 
 # Calibration ##################################################################
@@ -137,10 +132,10 @@ lightImage( tagdata = lig,
 tsimageDeploymentLines(twl$Twilight, lon.calib, lat.calib, offset, lwd = 2, col = "orange")
 
 #calibration period before the migration 
-tm.calib <- as.POSIXct(c("2019-06-19", "2019-09-10"), tz = "UTC")
+tm.calib <- as.POSIXct(c("2012-07-15", "2012-09-30"), tz = "UTC")
 
 #calibration period after the migration 
-tm.calib2 <- as.POSIXct(c("2020-05-30", "2020-06-15"), tz = "UTC")
+tm.calib2 <- as.POSIXct(c("2013-06-20", "2013-07-08"), tz = "UTC")
 
 abline(v = tm.calib, lwd = 2, lty = 2, col = "orange")
 abline(v = tm.calib2, lwd = 2, lty = 2, col = "orange")
@@ -157,22 +152,41 @@ zenith0 <- calib[2]
 
 alpha <- calib[3:4]
 
+# "in-habitat" calibration does not provide a realistic migration track during the nonbreeding period 
+
+# Alternative calibration ######################################################
+startDate <- "2012-11-15"
+endDate   <- "2013-04-15"
+
+start = min(which(as.Date(twl$Twilight) == startDate))
+end = max(which(as.Date(twl$Twilight) == endDate))
+
+(zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
+
+# This zenith angle only provides good location estimates during the breeding period
+
+# I will use a different zentih angle for the breeding and nonbreeding periods 
+nonbreed.start <- "2012-10-08"
+nonbreed.end <-  "2013-05-23"
+
+zenith_twl <- data.frame(Date = twl$Twilight) %>%
+  mutate(zenith = ifelse( nonbreed.start < Date & nonbreed.end > Date, zenith_sd, zenith))
+
 # Movement model ###############################################################
 
 #this movement model should be based on the estimated migration speed of the blackpoll warbler 
-beta  <- c(2.2, 0.08)
+beta  <- c(0.45, 0.05)
 matplot(0:100, dgamma(0:100, beta[1], beta[2]),
         type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
 
 # Initial Path #################################################################
-
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol=0.01)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol=0.1)
 
 x0 <- path$x
 z0 <- trackMidpts(x0)
 
 # open jpeg
-jpeg(paste0(dir, "/ML6440_V8296_005_Threshold_path.png"), width = 1024, height = 990)
+jpeg(paste0(dir, "/ML6440_V8757-096_Threshold_path.png"), width = 1024, height = 990)
 
 data(wrld_simpl)
 plot(x0, type = "n", xlab = "", ylab = "")
@@ -215,11 +229,11 @@ earthseaMask <- function(xlim, ylim, n = 2, pacific=FALSE) {
   
   abundance <- raster("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geo_spatial_data/bkpwar_abundance_seasonal_full-year_mean_2021.tif")
   abundance_resamp <- projectRaster(abundance, mask, method = "ngb")
-  abundance_resamp[is.nan(abundance_resamp)] <- NA
+  abundance_resamp[is.nan(abundance_resamp) | abundance_resamp == 0] <- NA
   abundance_resamp[abundance_resamp > 0 ] <- 1
-   
+  
   mask <- mask * abundance_resamp
-   
+  
   xbin = seq(xmin(mask),xmax(mask),length=ncol(mask)+1)
   ybin = seq(ymin(mask),ymax(mask),length=nrow(mask)+1)
   
@@ -237,7 +251,7 @@ mask <- earthseaMask(xlim, ylim, n = 4)
 log.prior <- function(p) {
   f <- mask(p)
   #ifelse(is.na(f), log(1), f)  # if f is the relative abundance within a grid square 
-  ifelse(is.na(f), log(1), log(2)) # if f indicates the distribution of the blackpoll warbler 
+  ifelse(is.na(f), log(1), log(8)) # if f indicates the distribution of the blackpoll warbler 
   #ifelse(f | is.na(f), log(2), log(1)) #original function from Lisovski et al. 2020
 }
 
@@ -252,7 +266,7 @@ model <- thresholdModel(twilight = twl$Twilight,
                         logp.x = log.prior, logp.z = log.prior, 
                         x0 = x0,
                         z0 = z0,
-                        zenith = zenith0,
+                        zenith = zenith_twl$zenith,
                         fixedx = fixedx)
 
 #Define the error distribution around each location 
@@ -273,7 +287,7 @@ model <- thresholdModel(twilight = twl$Twilight,
                         logp.x = log.prior, logp.z = log.prior, 
                         x0 = x0,
                         z0 = z0,
-                        zenith = zenith0,
+                        zenith = zenith_twl$zenith,
                         fixedx = fixedx)
 
 x.proposal <- mvnorm(S = diag(c(0.005, 0.005)), n = nrow(twl))
@@ -308,13 +322,13 @@ head(sm)
 # Plot Results #################################################################
 
 # open jpeg
-jpeg(paste0(dir, "/ML6440_V8296_005_Estelle_path.png"), width = 1024 , height = 990)
+jpeg(paste0(dir, "/ML6440_V8757_096_Estelle_path.png"), width = 1024 , height = 990)
 
 #Plot the results
 par(mfrow=c(1,1))
 # empty raster of the extent
 r <- raster(nrows = 2 * diff(ylim), ncols = 2 * diff(xlim), xmn = xlim[1]-5,
-            xmx = xlim[2]+5, ymn = ylim[1]-5, ymx = ylim[2]+5, crs = proj4string(wrld_simpl))
+            xmx = xlim[2]+10, ymn = ylim[1]-10, ymx = ylim[2]+6, crs = proj4string(wrld_simpl))
 
 s <- slices(type = "intermediate", breaks = "week", mcmc = fit, grid = r)
 sk <- slice(s, sliceIndices(s))
@@ -333,7 +347,7 @@ dev.off()
 # Plot of mean longitude and latitude
 
 # open jpeg
-jpeg(paste0(dir, "/ML6440_V8296_005_mean_lon_lat.png"), width = 1024 , height = 990)
+jpeg(paste0(dir, "/ML6440_V8757_096_mean_lon_lat.png"), width = 1024 , height = 990)
 
 par(mfrow=c(2,1),mar=c(4,4,1,1))
 
@@ -353,141 +367,4 @@ abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
 
 #close jpeg
 dev.off()
-
-
-model <- thresholdModel(twilight = twl$Twilight,
-                        rise = twl$Rise,
-                        twilight.model = "Gamma",
-                        alpha = alpha,
-                        beta = beta,
-                        logp.x = log.prior, logp.z = log.prior, 
-                        x0 = x0,
-                        z0 = z0,
-                        zenith = zenith0,
-                        fixedx = fixedx)
-
-################################################################################
-# FLIGHTR ANALYSIS #############################################################
-################################################################################
-
-# Import file with twilight times  
-twl <- read.csv(paste0(dir,"/Pre_analysis_V8296_005_twl_times.csv"))
-twl$Twilight <- as.POSIXct(twl$Twilight, tz = "UTC")
-
-twlexp <- twGeos2TAGS(raw = lig[, c("Date", "Light")], twl = twl,
-                          threshold = 1.5,
-                          filename = paste0(dir, "/V8296_005_TAGS_data.csv"))
-
-tags <- get.tags.data(paste0(dir, "/V8296_005_TAGS_data.csv"))
-
-#Calibration ###################################################################
-
-# plot slopes of light transition over calibration period 
-plot_slopes_by_location(Proc.data=tags, location=c(lon.calib, lat.calib), ylim=c(-2, 2))
-
-abline(v=as.POSIXct("2019-09-02"), col = "green") # end of first calibration period
-abline(v=as.POSIXct("2020-05-20"), col = "green") # start of the second calibration period
-
-Calibration.periods<-data.frame(
-  calibration.start=as.POSIXct(c(NA)),
-  calibration.stop=as.POSIXct(c("2019-09-02")),
-  lon=lon.calib, lat=lat.calib) 
-print(Calibration.periods)
-
-Calibration<-make.calibration(tags, Calibration.periods, model.ageing=TRUE, plot.final = T)
-
-# Create grid for spatial extent ###############################################
-
-Grid <- make.grid(left=lon.calib -50, bottom=lat.calib-60, right=lon.calib+50, top= lat.calib + 10,
-                  distance.from.land.allowed.to.use=c(-Inf, 1100),
-                  distance.from.land.allowed.to.stay=c(-Inf, 50))
-
-# create the model prerun object ###############################################
-all.in <- make.prerun.object(tags, Grid, start=c(lon.calib, lat.calib),
-                             Calibration=Calibration)
-
-save(all.in, file = paste0(dir, "/V8296-005_FlightRCalib.RData"))
-
-#run twilight filter ###########################################################
-
-#Load  model prerun object
-load(paste0(dir, "/V8296-005_FlightRCalib.RData"))
-
-#run filter 
-nParticles=1e4 # start at 1e4 for initial run 
-Result<-run.particle.filter(all.in, threads= min(Threads, 6),
-                            nParticles=nParticles, known.last=TRUE,
-                            precision.sd=25, check.outliers= T, 
-                            b=2700)
-
-save(Result, file = paste0(dir, "/V8296-005_FLightRResult.RData"))
-
-# Plot results ################################################################# 
-load(paste0(dir, "/V8296-005_FLightRResult.RData"))
-
-#longitude and latitude
-plot_lon_lat(Result)
-
-#simple map 
-library(ggmap)
-ggmap::register_google("AIzaSyABANOgjTyVFpOuDOiyPlBL4geijIy6vPo")
-map.FLightR.ggmap(Result, zoom=3, save = FALSE)
-
-# find Stationary sites #############################################################
-Summary <-stationary.migration.summary(Result, prob.cutoff = 0.5)
-view(Summary$Stationary.periods)
-
-# find longest stationary period 
-Summary$Potential_stat_periods
-
-# this is the period between 357-485
-Result$Results$Quantiles[c(491,617),]$time
-
-# The new calibration period ranges between "2020-02-18" and "2020-04-22"
-new.calib.start <- "2020-02-18"
-new.calib.end  <- "2020-04-22"
-mean.lat <-  4.027995
-mean.lon <- -71.75948
-
-# Calibration with new stationary period #######################################
-# plot slopes of light transition over calibration period 
-
-Calibration.periods<-data.frame(
-  calibration.start=as.POSIXct(c(new.calib.start)),
-  calibration.stop=as.POSIXct(c(new.calib.end)),
-  lon= mean.lon, lat= mean.lat) 
-print(Calibration.periods)
-
-NewCalibration <- make.calibration(tags, Calibration.periods, model.ageing=TRUE, plot.final = T)
-
-# create new model prerun object ###############################################
-all.in.adjusted <- make.prerun.object(tags, Grid, start=c(lon.calib, lat.calib),
-                             Calibration=NewCalibration)
-
-save(all.in.adjusted, file = paste0(dir, "/V8296-005_FlightRCalib_nonbreed_calib.RData"))
-
-#run twilight filter again #####################################################
-nParticles=1e6 #increase to 1e6 for final run  
-Result_adjusted <-run.particle.filter(all.in, threads= min(Threads, 6),
-                            nParticles=nParticles, known.last=TRUE,
-                            precision.sd=25, check.outliers= T, 
-                            b=2700)
-
-save(Result_adjusted, file = paste0(dir, "/V8296-005_FLightRResult_nonbreed_calib.RData"))
-
-# Plot new results ################################################################# 
-load(paste0(dir, "/V8296-005_FLightRResult_nonbreed_calib.RData"))
-
-#longitude and latitude
-plot_lon_lat(Result_adjusted)
-
-#simple map 
-library(ggmap)
-ggmap::register_google("AIzaSyABANOgjTyVFpOuDOiyPlBL4geijIy6vPo")
-map.FLightR.ggmap(Result_adjusted, zoom=3, save = FALSE)
-
-# find Stationary sites #############################################################
-Summary <-stationary.migration.summary(Result_adjusted, prob.cutoff = 0.2)
-view(Summary$Stationary.periods)
-
 

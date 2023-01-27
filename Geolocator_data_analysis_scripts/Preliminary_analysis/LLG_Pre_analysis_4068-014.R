@@ -10,6 +10,8 @@ library(tidyr)
 library(remotes)
 library(anytime)
 library(lubridate)
+library(parallel)
+
 
 #load spatial packages 
 library(ggmap)
@@ -43,6 +45,9 @@ deploy.end <- anytime("2017-06-03", tz = "GMT")
 #Equinox times
 fall.equi <- anytime("2016-09-22", tz = "GMT")
 spring.equi <- anytime("2017-03-20", tz = "GMT")
+
+#Find number of cores available for analysis
+Threads= detectCores()-1
 
 ###############################################################################
 #DATA EXTRACTION ##############################################################

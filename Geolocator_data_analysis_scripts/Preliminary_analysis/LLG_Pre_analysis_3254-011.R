@@ -10,6 +10,8 @@ library(tidyr)
 library(remotes)
 library(anytime)
 library(lubridate)
+library(parallel)
+
 
 #load spatial packages 
 library(ggmap)
@@ -38,6 +40,9 @@ dir <- paste0("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/T
 
 # time of deployment
 deploy.start <- anytime("2016-06-18", tz = "GMT")
+
+#Find number of cores available for analysis
+Threads= detectCores()-1
 
 ###############################################################################
 #DATA EXTRACTION ##############################################################

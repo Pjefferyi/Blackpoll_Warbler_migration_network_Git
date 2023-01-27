@@ -22,7 +22,7 @@ loadpackages(c(
   "spData", # Spatial Datasets
   "terra",
   "tmap",
-  "scales"
+  "scales",
   "zoo"
 ))
 
@@ -64,3 +64,27 @@ tm_shape(world, bbox = c(-180, -25, -30, 70)) +
 plot(wrld_simpl,  xlim=xlim, ylim=ylim)
 points(locs$location.long, locs$location.lat, pch = 16, cex = 0.5, col = "firebrick")
 lines(locs$location.long, locs$location.lat)
+
+
+# Plot tracks for bird from Deluca et al. 2019 based on their Geolocator ID
+locs <- deluca_2015 %>%
+  filter(is.na(gls.light.level) & individual.local.identifier == "D")
+
+# some of the latitudes for this individuals are NA
+locs <- locs %>% 
+  mutate(location.lat = ifelse(is.na(location.lat), na.locf(location.lat), location.lat)) %>%
+  mutate(location.long = ifelse(is.na(location.long), na.locf(location.long), location.long))
+
+#create track of points 
+track <- st_as_sf(locs, coords = c('location.long', 'location.lat'), crs = "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
+
+#creare track as lines 
+trackline <- track %>%
+  st_coordinates() %>%
+  st_linestring()
+
+#plot points with lines 
+plot(wrld_simpl,  xlim=xlim, ylim=ylim)
+points(locs$location.long, locs$location.lat, pch = 16, cex = 0.5, col = "firebrick")
+lines(locs$location.long, locs$location.lat)
+
