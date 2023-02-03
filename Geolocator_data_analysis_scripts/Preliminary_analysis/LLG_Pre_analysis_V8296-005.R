@@ -10,7 +10,6 @@ library(tidyr)
 library(remotes)
 library(anytime)
 library(lubridate)
-library(parallel)
 
 #load spatial packages 
 library(ggmap)
@@ -46,9 +45,6 @@ deploy.end <- anytime("2020-07-12 17:55:0", tz = "GMT")
 #Equinox times
 fall.equi <- anytime("2019-09-23", tz = "GMT")
 spring.equi <- anytime("2020-03-19", tz = "GMT")
-
-#Find number of cores available for analysis
-Threads= detectCores()-1
   
 ###############################################################################
 #DATA EXTRACTION ##############################################################
@@ -111,13 +107,8 @@ tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
               col = ifelse(twl$Rise, "dodgerblue", "firebrick"))
 
 
-# This twilight file has some duplicates between rows 655 and 664
-# No data appears to have been lost, so the duplicates can simply be removed 
-twl[655:667,]
-twl <- filter(twl, !duplicated(twl$Twilight))
-
 # Save the twilight times 
-#write.csv(twl, paste0(dir,"/Pre_analysis_V8296_005_twl_times.csv"))
+write.csv(twl, paste0(dir,"/Pre_analysis_V8296_005_twl_times.csv"))
 
 ###############################################################################
 # SGAT ANALYSIS ###############################################################
@@ -213,18 +204,19 @@ earthseaMask <- function(xlim, ylim, n = 2, pacific=FALSE) {
                rasterize(wrld_simpl, r, 1, silent = TRUE), 
                rasterize(elide(wrld_simpl, shift = c(360, 0)), r, 1, silent = TRUE))
   
-  abundance <- raster("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geo_spatial_data/bkpwar_abundance_seasonal_full-year_mean_2021.tif")
-  abundance_resamp <- projectRaster(abundance, mask, method = "ngb")
-  abundance_resamp[is.nan(abundance_resamp)] <- NA
-  abundance_resamp[abundance_resamp > 0 ] <- 1
-   
-  mask <- mask * abundance_resamp
-   
+  #load polygon of blackpoll's range
+  load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Full_blackpoll_range_polygons.R")
+  
+  #rasterize the polygon 
+  range.raster <- rasterize(range.poly, mask)
+  
+  #Update the land mask 
+  mask <- range.raster * mask
+  
   xbin = seq(xmin(mask),xmax(mask),length=ncol(mask)+1)
   ybin = seq(ymin(mask),ymax(mask),length=nrow(mask)+1)
   
   function(p) mask[cbind(length(ybin) -.bincode(p[,2],ybin),.bincode(p[,1],xbin))]
-  #function(p) mask[cbind(.bincode(p[,2],ybin),.bincode(p[,1],xbin))]
   
 }
 
@@ -367,6 +359,215 @@ model <- thresholdModel(twilight = twl$Twilight,
                         fixedx = fixedx)
 
 ################################################################################
+#SGAT Groupe model analysis ####################################################
+################################################################################
+
+# group twilight times were birds were stationary, here this has to be done manually because 
+# export2geoLight will skip some days. 
+geo_twl <- export2GeoLight(twl)
+
+# Often it is necessary to play around with quantile and days
+# quantile defines how many stopovers there are. the higher, the fewer there are
+# days indicates the duration of the stopovers 
+cL <- changeLight(twl=geo_twl, quantile=0.86, summary = F, days = 2, plot = T)
+
+# merge site helps to put sites together that are separated by single outliers.
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
+
+#back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
+twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 
+                      Rise     = c(ifelse(geo_twl[,3]==1, TRUE, FALSE), ifelse(geo_twl[,3]==1, FALSE, TRUE)),
+                      Site     = rep(mS$site,2))
+twl.rev <- subset(twl.rev, !duplicated(Twilight), sort = Twilight)
+
+grouped <- rep(FALSE, nrow(twl.rev))
+grouped[twl.rev$Site>0] <- TRUE 
+grouped[c(1:3, (length(grouped)-2):length(grouped))] <- TRUE
+
+# Create a vector which indicates which numbers sites
+g <- makeGroups(grouped)
+
+# Add data to twl file
+twl$group <- c(g, g[length(g)])
+
+# Add behavior vector
+behaviour <- c()
+for (i in 1:max(g)){
+  behaviour<- c(behaviour, which(g==i)[1])
+}
+stationary <- grouped[behaviour]
+sitenum <- cumsum(stationary==T)
+sitenum[stationary==F] <- 0
+
+# Initiate the model ###########################################################
+
+#set initial path
+x0 <- cbind(tapply(path$x[,1],twl$group,median), 
+            tapply(path$x[,2],twl$group,median))
+
+
+#set fixed locations 
+fixedx <- rep_len(FALSE, length.out = nrow(x0))
+fixedx[1] <- TRUE
+fixedx[c(1, length(fixedx))] <- TRUE
+
+x0[fixedx,1] <- lon.calib
+x0[fixedx,2] <- lat.calib
+
+z0 <- trackMidpts(x0)
+
+# Movement model ###############################################################
+
+# Here the model only reflects speed during active flight 
+beta  <- c(2.2, 0.08)
+matplot(0:100, dgamma(0:100, beta[1], beta[2]),
+        type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
+
+# Create a Land mask for the group model #######################################
+earthseaMask <- function(xlim, ylim, n = 2, pacific=FALSE, index) {
+  
+  if (pacific) { wrld_simpl <- nowrapRecenter(wrld_simpl, avoidGEOS = TRUE)}
+  
+  # create empty raster with desired resolution
+  r = raster(nrows = n * diff(ylim), ncols = n * diff(xlim), xmn = xlim[1],
+             xmx = xlim[2], ymn = ylim[1], ymx = ylim[2], crs = proj4string(wrld_simpl))
+  
+  # create a raster for the stationary period, in this case by giving land a value of 1
+  rs = cover(rasterize(elide(wrld_simpl, shift = c(-360, 0)), r, 1, silent = TRUE),
+             rasterize(wrld_simpl, r, 1, silent = TRUE), 
+             rasterize(elide(wrld_simpl,shift = c(360, 0)), r, 1, silent = TRUE))
+  
+  #load polygon of blackpoll's range
+  load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Full_blackpoll_range_polygons.R")
+  
+  #rasterize the polygon 
+  range.raster <- rasterize(range.poly, rs)
+  
+  #Update the stationary mask 
+  rs <- range.raster * rs
+  
+  # make the movement raster the same resolution as the stationary raster, but allow the bird to go anywhere by giving all cells a value of 1
+  rm = rs; rm[] = 1
+  
+  # stack the movement and stationary rasters on top of each other
+  mask = stack(rs, rm)
+  
+  xbin = seq(xmin(mask),xmax(mask),length=ncol(mask)+1)
+  ybin = seq(ymin(mask),ymax(mask),length=nrow(mask)+1)
+  mask = as.array(mask)[nrow(mask):1,,sort(unique(index)),drop=FALSE]
+  
+  function(p) mask[cbind(length(ybin) -.bincode(p[,2],ybin), .bincode(p[,1],xbin), index)]
+}
+
+#create the mask using the function 
+
+xlim <- range(x0[,1])+c(-5,5)
+ylim <- range(x0[,2])+c(-5,5)
+
+index = ifelse(stationary, 1, 2)
+
+mask <- earthseaMask(xlim, ylim, n = 1, index=index)
+
+# We will give locations on land a higher prior 
+## Define the log prior for x and z
+logp <- function(p) {
+  f <- mask(p)
+  ifelse(is.na(f), -1000, log(1))
+}
+
+# Define the Estelle model ####################################################
+
+model <- groupedThresholdModel(twl$Twilight,
+                               twl$Rise,
+                               group = twl$group, #This is the group vector for each time the bird was at a point
+                               twilight.model = "ModifiedGamma",
+                               alpha = alpha,
+                               beta =  beta,
+                               x0 = x0, # median point for each group (defined by twl$group)
+                               z0 = z0, # middle points between the x0 points
+                               zenith = zenith0,
+                               logp.x = logp, # land sea mask
+                               fixedx = fixedx)
+
+
+# define the error shape
+x.proposal <- mvnorm(S = diag(c(0.005, 0.005)), n = nrow(x0))
+z.proposal <- mvnorm(S = diag(c(0.005, 0.005)), n = nrow(z0))
+
+# Fit the model
+fit <- estelleMetropolis(model, x.proposal, z.proposal, iters = 1000, thin = 20)
+
+#Tuning ########################################################################
+
+# use output from last run
+x0 <- chainLast(fit$x)
+z0 <- chainLast(fit$z)
+
+model <- groupedThresholdModel(twl$Twilight, 
+                               twl$Rise, 
+                               group = twl$group,
+                               twilight.model = "Gamma",
+                               alpha = alpha, 
+                               beta =  beta,
+                               x0 = x0, z0 = z0,
+                               logp.x = logp,
+                               missing= twl$Missing,
+                               zenith = zenith0,
+                               fixedx = fixedx)
+
+for (k in 1:3) {
+  x.proposal <- mvnorm(chainCov(fit$x), s = 0.3)
+  z.proposal <- mvnorm(chainCov(fit$z), s = 0.3)
+  fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = chainLast(fit$x),
+                           z0 = chainLast(fit$z), iters = 300, thin = 20)
+}
+
+## Check if chains mix
+opar <- par(mfrow = c(2, 1), mar = c(3, 5, 2, 1) + 0.1)
+matplot(t(fit$x[[1]][!fixedx, 1, ]), type = "l", lty = 1, col = "dodgerblue", ylab = "Lon")
+matplot(t(fit$x[[1]][!fixedx, 2, ]), type = "l", lty = 1, col = "firebrick", ylab = "Lat")
+par(opar)
+
+#Final model run ###############################################################
+x.proposal <- mvnorm(chainCov(fit$x), s = 0.3)
+z.proposal <- mvnorm(chainCov(fit$z), s = 0.3)
+
+fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = chainLast(fit$x),
+                         z0 = chainLast(fit$z), iters = 2000, thin = 20, chain = 1)
+
+#Summarize results #############################################################
+
+#Here we can ony use x-locations. 
+
+# sm <- locationSummary(fit$x, time=fit$model$time)
+sm <- SGAT2Movebank(fit$x, time = twl$Twilight, group = twl$group)
+
+
+#create a plot of the stationary locations #####################################
+colours <- c("black",colorRampPalette(c("blue","yellow","red"))(max(twl.rev$Site)))
+data(wrld_simpl)
+
+# empty raster of the extent
+r <- raster(nrows = 2 * diff(ylim), ncols = 2 * diff(xlim), xmn = xlim[1]-5,
+            xmx = xlim[2]+5, ymn = ylim[1]-5, ymx = ylim[2]+5, crs = proj4string(wrld_simpl))
+
+s <- slices(type = "intermediate", breaks = "week", mcmc = fit, grid = r)
+sk <- slice(s, sliceIndices(s))
+
+plot(sk, useRaster = F,col = c("transparent", rev(viridis::viridis(50))))
+plot(wrld_simpl, xlim=xlim, ylim=ylim,add = T, bg = adjustcolor("black",alpha=0.1))
+
+with(sm[sitenum>0,], arrows(`Lon.50.`, `Lat.2.5.`, `Lon.50.`, `Lat.97.5.`, length = 0, lwd = 2.5, col = "firebrick"))
+with(sm[sitenum>0,], arrows(`Lon.2.5.`, `Lat.50.`, `Lon.97.5.`, `Lat.50.`, length = 0, lwd = 2.5, col = "firebrick"))
+lines(sm[,"Lon.50."], sm[,"Lat.50."], col = "darkorchid4", lwd = 2)
+
+points(sm[,"Lon.50."], sm[,"Lat.50."], pch=21, bg=colours[sitenum+1], 
+       cex = ifelse(sitenum>0, 3, 0), col = "firebrick", lwd = 2.5)
+
+points(sm[,"Lon.50."], sm[,"Lat.50."], pch=as.character(sitenum),
+       cex = ifelse(sitenum>0, 1, 0))
+
+################################################################################
 # FLIGHTR ANALYSIS #############################################################
 ################################################################################
 
@@ -375,8 +576,8 @@ twl <- read.csv(paste0(dir,"/Pre_analysis_V8296_005_twl_times.csv"))
 twl$Twilight <- as.POSIXct(twl$Twilight, tz = "UTC")
 
 twlexp <- twGeos2TAGS(raw = lig[, c("Date", "Light")], twl = twl,
-                          threshold = 1.5,
-                          filename = paste0(dir, "/V8296_005_TAGS_data.csv"))
+                      threshold = 1.5,
+                      filename = paste0(dir, "/V8296_005_TAGS_data.csv"))
 
 tags <- get.tags.data(paste0(dir, "/V8296_005_TAGS_data.csv"))
 
@@ -392,6 +593,9 @@ Calibration.periods<-data.frame(
   calibration.start=as.POSIXct(c(NA)),
   calibration.stop=as.POSIXct(c("2019-09-02")),
   lon=lon.calib, lat=lat.calib) 
+# use c() also for the geographic coordinates, 
+# if you have more than one calibration location
+# (e. g.,  lon=c(5.43, 6.00), lat=c(52.93,52.94))
 print(Calibration.periods)
 
 Calibration<-make.calibration(tags, Calibration.periods, model.ageing=TRUE, plot.final = T)
@@ -403,24 +607,24 @@ Grid <- make.grid(left=lon.calib -50, bottom=lat.calib-60, right=lon.calib+50, t
                   distance.from.land.allowed.to.stay=c(-Inf, 50))
 
 # create the model prerun object ###############################################
-all.in <- make.prerun.object(tags, Grid, start=c(lon.calib, lat.calib),
-                             Calibration=Calibration)
+#all.in <- make.prerun.object(tags, Grid, start=c(lon.calib, lat.calib),
+#                             Calibration=Calibration, M.mean=750)
 
-save(all.in, file = paste0(dir, "/V8296-005_FlightRCalib.RData"))
+#save(all.in, file = paste0(dir, "/V8296-005_FlightRCalib.RData"))
 
 #run twilight filter ###########################################################
 
-#Load  model prerun object
+#Load results 
 load(paste0(dir, "/V8296-005_FlightRCalib.RData"))
 
 #run filter 
-nParticles=1e4 # start at 1e4 for initial run 
-Result<-run.particle.filter(all.in, threads= min(Threads, 6),
-                            nParticles=nParticles, known.last=TRUE,
-                            precision.sd=25, check.outliers= T, 
-                            b=2700)
+#nParticles=1e4 #increase to 1e6 for test 
+#Result<-run.particle.filter(all.in, threads=-1,
+#                            nParticles=nParticles, known.last=TRUE,
+#                            precision.sd=25, check.outliers= T, 
+#                            b=1700)
 
-save(Result, file = paste0(dir, "/V8296-005_FLightRResult.RData"))
+#save(Result, file = paste0(dir, "/V8296-005_FLightRResult.RData"))
 
 # Plot results ################################################################# 
 load(paste0(dir, "/V8296-005_FLightRResult.RData"))
@@ -441,39 +645,40 @@ view(Summary$Stationary.periods)
 Summary$Potential_stat_periods
 
 # this is the period between 357-485
-Result$Results$Quantiles[c(491,617),]$time
+Result$Results$Quantiles[c(357,485),]$time
 
-# The new calibration period ranges between "2020-02-18" and "2020-04-22"
-new.calib.start <- "2020-02-18"
-new.calib.end  <- "2020-04-22"
-mean.lat <-  4.027995
-mean.lon <- -71.75948
+# The new calibration period ranges between "2019-12-13 22:42:48 GMT" and "2020-02-15 23:07:30 GMT"
+# mean lat =  14.3838540
+# mean lon =  -67.71948
 
 # Calibration with new stationary period #######################################
 # plot slopes of light transition over calibration period 
 
 Calibration.periods<-data.frame(
-  calibration.start=as.POSIXct(c(new.calib.start)),
-  calibration.stop=as.POSIXct(c(new.calib.end)),
-  lon= mean.lon, lat= mean.lat) 
+  calibration.start=as.POSIXct(c("2019-12-13")),
+  calibration.stop=as.POSIXct(c("2020-02-15")),
+  lon=lon.calib, lat=lat.calib) 
+# use c() also for the geographic coordinates, 
+# if you have more than one calibration location
+# (e. g.,  lon=c(5.43, 6.00), lat=c(52.93,52.94))
 print(Calibration.periods)
 
 NewCalibration <- make.calibration(tags, Calibration.periods, model.ageing=TRUE, plot.final = T)
 
 # create new model prerun object ###############################################
-all.in.adjusted <- make.prerun.object(tags, Grid, start=c(lon.calib, lat.calib),
-                             Calibration=NewCalibration)
+#all.in.adjusted <- make.prerun.object(tags, Grid, start=c(lon.calib, lat.calib),
+#                             Calibration=NewCalibration, M.mean=750)
 
-save(all.in.adjusted, file = paste0(dir, "/V8296-005_FlightRCalib_nonbreed_calib.RData"))
+#save(all.in.adjusted, file = paste0(dir, "/V8296-005_FlightRCalib_nonbreed_calib.RData"))
 
 #run twilight filter again #####################################################
-nParticles=1e6 #increase to 1e6 for final run  
-Result_adjusted <-run.particle.filter(all.in, threads= min(Threads, 6),
-                            nParticles=nParticles, known.last=TRUE,
-                            precision.sd=25, check.outliers= T, 
-                            b=2700)
+#nParticles=1e6 #increase to 1e6 for test 
+Result_adjusted <-run.particle.filter(all.in, threads=-1,
+                                      nParticles=nParticles, known.last=TRUE,
+                                      precision.sd=25, check.outliers= T, 
+                                      b=1700)
 
-save(Result_adjusted, file = paste0(dir, "/V8296-005_FLightRResult_nonbreed_calib.RData"))
+#save(Result_adjusted, file = paste0(dir, "/V8296-005_FLightRResult_nonbreed_calib.RData"))
 
 # Plot new results ################################################################# 
 load(paste0(dir, "/V8296-005_FLightRResult_nonbreed_calib.RData"))
@@ -489,5 +694,3 @@ map.FLightR.ggmap(Result_adjusted, zoom=3, save = FALSE)
 # find Stationary sites #############################################################
 Summary <-stationary.migration.summary(Result_adjusted, prob.cutoff = 0.2)
 view(Summary$Stationary.periods)
-
-

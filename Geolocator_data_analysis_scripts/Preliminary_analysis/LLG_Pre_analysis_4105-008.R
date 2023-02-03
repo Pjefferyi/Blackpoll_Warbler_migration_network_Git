@@ -146,15 +146,42 @@ zenith0 <- calib[2]
 
 alpha <- calib[3:4]
 
+# Alternative calibration ######################################################
+startDate <- "2016-12-12"
+endDate   <- "2017-04-10"
+
+start = min(which(as.Date(twl$Twilight) == startDate))
+end = max(which(as.Date(twl$Twilight) == endDate))
+
+(zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
+
+#convert to geolight format
+geo_twl <- export2GeoLight(twl)
+
+# this is just to find places where birds have been for a long time, would not use these parameters for stopover identification, detailed can be found in grouped model section
+cL <- changeLight(twl=geo_twl, quantile=0.8, summary = F, days = 10, plot = T)
+# merge site helps to put sites together that are separated by single outliers.
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
+
+#specify which site is the stationary one
+site           <- mS$site[mS$site>0] # get rid of movement periods
+stationarySite <- which(table(site) == max(table(site))) # find the site where bird is the longest
+
+#find the dates that the bird arrives and leaves this stationary site
+start <- min(which(mS$site == stationarySite))
+end   <- max(which(mS$site == stationarySite))
+
+(zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
+
 # Movement model ###############################################################
 
 #this movement model should be based on the estimated migration speed of the blackpoll warbler 
-beta  <- c(2.2, 0.08)
+beta  <- c(0.45, 0.05)
 matplot(0:100, dgamma(0:100, beta[1], beta[2]),
         type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol=0.01)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol=0.18)
 
 x0 <- path$x
 z0 <- trackMidpts(x0)
@@ -165,6 +192,7 @@ jpeg(paste0(dir, "/4105_008_Threshold_path.png"), width = 1024, height = 990)
 # plot of threshold path  
 data(wrld_simpl)
 plot(x0, type = "n", xlab = "", ylab = "")
+plot(wrld_simpl, col = "grey95", add = T)
 
 points(path$x, pch=19, col="cornflowerblue", type = "o")
 points(lon.calib, lat.calib, pch = 16, cex = 2.5, col = "firebrick")
@@ -223,7 +251,7 @@ mask <- earthseaMask(xlim, ylim, n = 4)
 log.prior <- function(p) {
   f <- mask(p)
   #ifelse(is.na(f), log(1), f)  # if f is the relative abundance within a grid square 
-  ifelse(is.na(f), log(1), log(2)) # if f indicates the distribution of the blackpoll warbler 
+  ifelse(is.na(f), log(1), log(8)) # if f indicates the distribution of the blackpoll warbler 
   
 }
 
@@ -235,7 +263,7 @@ model <- thresholdModel(twilight = twl$Twilight,
                         twilight.model = "ModifiedGamma",
                         alpha = alpha,
                         beta = beta,
-                        logp.x = log.prior, logp.z = log.prior, 
+                        #logp.x = log.prior, logp.z = log.prior, 
                         x0 = x0,
                         z0 = z0,
                         zenith = zenith0,
@@ -256,7 +284,7 @@ model <- thresholdModel(twilight = twl$Twilight,
                         twilight.model = "Gamma",
                         alpha = alpha,
                         beta = beta,
-                        logp.x = log.prior, logp.z = log.prior, 
+                        #logp.x = log.prior, logp.z = log.prior, 
                         x0 = x0,
                         z0 = z0,
                         zenith = zenith0,
@@ -308,7 +336,7 @@ plot(wrld_simpl, xlim=xlim, ylim=ylim,add = T, bg = adjustcolor("black",alpha=0.
 
 #plot location track. Locations in blue occured during the fall equinox 
 lines(sm[,"Lon.50%"], sm[,"Lat.50%"], 
-      col = ifelse(sm$Time1 > spring.equi - days(10) & sm$Time1 < spring.equi + days(10), adjustcolor("blue", alpha.f = 0.6), adjustcolor("firebrick", alpha.f = 0.6)),
+      col = ifelse(sm$Time1 > fall.equi - days(10) & sm$Time1 < fall.equi + days(10), adjustcolor("blue", alpha.f = 0.6), adjustcolor("firebrick", alpha.f = 0.6)),
       type = "o", pch = 16)
 
 #close jpeg

@@ -134,12 +134,12 @@ twl$Twilight <- as.POSIXct(twl$Twilight, tz = "UTC")
 # We start with calibration based on the stationary periods before and after the migration
 lightImage( tagdata = lig,
             offset = offset,     
-            zlim = c(0, 20))
+            zlim = c(0, 64))
 
 tsimageDeploymentLines(twl$Twilight, lon.calib, lat.calib, offset, lwd = 2, col = "orange")
 
 #calibration period before the migration 
-tm.calib <- as.POSIXct(c("2019-08-03", "2019-09-03"), tz = "UTC")
+tm.calib <- as.POSIXct(c("2019-08-10", "2019-09-03"), tz = "UTC")
 
 abline(v = tm.calib, lwd = 2, lty = 2, col = "orange")
 
@@ -157,8 +157,9 @@ zenith0 <- calib[2]
 alpha <- calib[3:4]
 
 # Calibration in the breeding grounds is difficult here because of very brief nights and long periods of incomplete darkness
+# "in-habitat" calibration does not provide a realistic migration track during the nonbreeding period and spring migration 
 
-#alternative calibration #######################################################
+# Hill Ekstrom calibration ######################################################
 startDate <- "2019-11-15"
 endDate   <- "2020-04-15"
 
@@ -167,6 +168,14 @@ end = max(which(as.Date(twl$Twilight) == endDate))
 
 (zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
 
+#this zenith angle does not provide accurate location estimates in the breeding grounds
+
+# I will use a different zentih angle for the breeding and nonbreeding periods 
+zenith_twl <- data.frame(Date = twl$Twilight) %>%
+  mutate(zenith = case_when(Date < fall.equi ~ zenith0,
+                            Date > fall.equi ~ zenith_sd))
+
+zeniths <- zenith_twl$zenith
 # Movement model ###############################################################
 
 #this movement model should be based on the estimated migration speed of the blackpoll warbler 
@@ -175,7 +184,7 @@ matplot(0:100, dgamma(0:100, beta[1], beta[2]),
         type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol=0.18)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol=0.15)
 
 x0 <- path$x
 z0 <- trackMidpts(x0)
@@ -223,17 +232,20 @@ earthseaMask <- function(xlim, ylim, n = 2, pacific=FALSE) {
                rasterize(wrld_simpl, r, 1, silent = TRUE), 
                rasterize(elide(wrld_simpl, shift = c(360, 0)), r, 1, silent = TRUE))
   
-  abundance <- raster("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geo_spatial_data/bkpwar_abundance_seasonal_full-year_mean_2021.tif")
-  abundance_resamp <- projectRaster(abundance, mask, method = "ngb")
-  abundance_resamp[is.nan(abundance_resamp) | abundance_resamp == 0] <- NA
-  abundance_resamp[abundance_resamp > 0 ] <- 1
+  #load polygon of blackpoll's range
+  load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Full_blackpoll_range_polygons.R")
   
-  mask <- mask * abundance_resamp
+  #rasterize the polygon 
+  range.raster <- rasterize(range.poly, mask)
+  
+  #Update the land mask 
+  mask <- range.raster * mask
   
   xbin = seq(xmin(mask),xmax(mask),length=ncol(mask)+1)
   ybin = seq(ymin(mask),ymax(mask),length=nrow(mask)+1)
   
   function(p) mask[cbind(length(ybin) -.bincode(p[,2],ybin),.bincode(p[,1],xbin))]
+  
 }
 
 xlim <- range(x0[,1]+c(-5,5))
@@ -245,7 +257,7 @@ mask <- earthseaMask(xlim, ylim, n = 4)
 log.prior <- function(p) {
   f <- mask(p)
   #ifelse(is.na(f), log(1), f)  # if f is the relative abundance within a grid square 
-  ifelse(is.na(f), log(1), log(2)) # if f indicates the distribution of the blackpoll warbler 
+  ifelse(is.na(f), log(1), log(5)) # if f indicates the distribution of the blackpoll warbler 
   
 }
 
@@ -260,7 +272,7 @@ model <- thresholdModel(twilight = twl$Twilight,
                         logp.x = log.prior, logp.z = log.prior, 
                         x0 = x0,
                         z0 = z0,
-                        zenith = zenith,
+                        zenith = zenith0,
                         fixedx = fixedx)
 
 #Define the error distribution around each location 
@@ -281,7 +293,7 @@ model <- thresholdModel(twilight = twl$Twilight,
                         logp.x = log.prior, logp.z = log.prior, 
                         x0 = x0,
                         z0 = z0,
-                        zenith = zenith,
+                        zenith = zenith0,
                         fixedx = fixedx)
 
 x.proposal <- mvnorm(S = diag(c(0.005, 0.005)), n = nrow(twl))
@@ -330,7 +342,7 @@ plot(wrld_simpl, xlim=xlim, ylim=ylim,add = T, bg = adjustcolor("black",alpha=0.
 
 #plot location track. Locations in blue occured during the fall equinox 
 lines(sm[,"Lon.50%"], sm[,"Lat.50%"], 
-      col = ifelse(sm$Time1 > fall.equi - days(10) & sm$Time1 < fall.equi + days(10), adjustcolor("blue", alpha.f = 0.6), adjustcolor("firebrick", alpha.f = 0.6)),
+      col = ifelse(sm$Time1 > spring.equi - days(10) & sm$Time1 < spring.equi + days(10), adjustcolor("blue", alpha.f = 0.6), adjustcolor("firebrick", alpha.f = 0.6)),
       type = "o", pch = 16)
 
 #close jpeg

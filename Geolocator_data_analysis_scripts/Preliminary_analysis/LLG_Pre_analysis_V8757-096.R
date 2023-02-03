@@ -46,7 +46,7 @@ deploy.end <- anytime("2013-07-08", tz = "GMT")
 
 #Equinox times
 fall.equi <- anytime("2012-09-23", tz = "GMT")
-spring.equi <- anytime("2023-03-19", tz = "GMT")
+spring.equi <- anytime("2013-03-19", tz = "GMT")
 
 #Find number of cores available for analysis
 Threads= detectCores()-1
@@ -59,7 +59,7 @@ Threads= detectCores()-1
 lig <- readLig(paste0(dir,"/ML6740 V8757 096 reconstructed_000.lig"), skip = 1)
 
 #remove rows before and after deployment time 
-#lig <- lig[(lig$Date > deploy.start),]
+lig <- lig[(lig$Date > deploy.start),]
 
 #adjust time 
 lig$Date <- lig$Date + 4*60*60
@@ -77,11 +77,11 @@ thresholdOverLight(lig, threshold, span =c(45000, 50000))
 offset <- 12 # adjusts the y-axis to put night (dark shades) in the middle
 
 # open jpeg
-jpeg(paste0(dir, "/V8757-010_light_plot.png"), width = 1024, height = 990)
+jpeg(paste0(dir, "/V8757-096_light_plot.png"), width = 1024, height = 990)
 
 lightImage( tagdata = lig,
             offset = offset,     
-            zlim = c(0, 20))
+            zlim = c(0, 64))
 
 tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
                        offset = offset, lwd = 3, col = adjustcolor("orange", alpha.f = 0.5))
@@ -111,7 +111,7 @@ tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
               col = ifelse(twl$Rise, "dodgerblue", "firebrick"))
 
 # Save the twilight times 
-write.csv(twl, paste0(dir,"/Pre_analysis_V8757_0.96_twl_times.csv"))
+write.csv(twl, paste0(dir,"/Pre_analysis_V8757_096_twl_times.csv"))
 
 
 ###############################################################################
@@ -125,7 +125,7 @@ twl$Twilight <- as.POSIXct(twl$Twilight, tz = "UTC")
 # Calibration ##################################################################
 
 # We start with calibration based on the stationary periods before and after the migration
-lightImage( tagdata = lig,
+lightImage(tagdata = lig,
             offset = offset,     
             zlim = c(0, 20))
 
@@ -165,12 +165,14 @@ end = max(which(as.Date(twl$Twilight) == endDate))
 
 # This zenith angle only provides good location estimates during the breeding period
 
-# I will use a different zentih angle for the breeding and nonbreeding periods 
-nonbreed.start <- "2012-10-08"
-nonbreed.end <-  "2013-05-23"
+#We can adjust the initial breeding angles 
 
+# Or we can use a different zenith  during different parts of the tracking period 
 zenith_twl <- data.frame(Date = twl$Twilight) %>%
-  mutate(zenith = ifelse( nonbreed.start < Date & nonbreed.end > Date, zenith_sd, zenith))
+  mutate(zenith = case_when(Date < fall.equi ~ zenith0,
+                            Date > fall.equi ~ zenith_sd))
+
+zeniths <- zenith_twl$zenith
 
 # Movement model ###############################################################
 
@@ -180,7 +182,7 @@ matplot(0:100, dgamma(0:100, beta[1], beta[2]),
         type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol=0.1)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith_sd , tol=0.01)
 
 x0 <- path$x
 z0 <- trackMidpts(x0)
@@ -194,6 +196,7 @@ plot(wrld_simpl, col = "grey95", add = T)
 
 points(path$x, pch=19, col="cornflowerblue", type = "o")
 points(lon.calib, lat.calib, pch = 16, cex = 2.5, col = "firebrick")
+
 box()
 
 dev.off()
@@ -227,12 +230,14 @@ earthseaMask <- function(xlim, ylim, n = 2, pacific=FALSE) {
                rasterize(wrld_simpl, r, 1, silent = TRUE), 
                rasterize(elide(wrld_simpl, shift = c(360, 0)), r, 1, silent = TRUE))
   
-  abundance <- raster("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geo_spatial_data/bkpwar_abundance_seasonal_full-year_mean_2021.tif")
-  abundance_resamp <- projectRaster(abundance, mask, method = "ngb")
-  abundance_resamp[is.nan(abundance_resamp) | abundance_resamp == 0] <- NA
-  abundance_resamp[abundance_resamp > 0 ] <- 1
+  #load polygon of blackpoll's range
+  load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Full_blackpoll_range_polygons.R")
   
-  mask <- mask * abundance_resamp
+  #rasterize the polygon 
+  range.raster <- rasterize(range.poly, mask)
+  
+  #Update the land mask 
+  mask <- range.raster * mask
   
   xbin = seq(xmin(mask),xmax(mask),length=ncol(mask)+1)
   ybin = seq(ymin(mask),ymax(mask),length=nrow(mask)+1)
@@ -251,7 +256,7 @@ mask <- earthseaMask(xlim, ylim, n = 4)
 log.prior <- function(p) {
   f <- mask(p)
   #ifelse(is.na(f), log(1), f)  # if f is the relative abundance within a grid square 
-  ifelse(is.na(f), log(1), log(8)) # if f indicates the distribution of the blackpoll warbler 
+  ifelse(is.na(f), log(1), log(2)) # if f indicates the distribution of the blackpoll warbler 
   #ifelse(f | is.na(f), log(2), log(1)) #original function from Lisovski et al. 2020
 }
 
@@ -266,7 +271,7 @@ model <- thresholdModel(twilight = twl$Twilight,
                         logp.x = log.prior, logp.z = log.prior, 
                         x0 = x0,
                         z0 = z0,
-                        zenith = zenith_twl$zenith,
+                        zenith = zeniths,
                         fixedx = fixedx)
 
 #Define the error distribution around each location 
@@ -287,7 +292,7 @@ model <- thresholdModel(twilight = twl$Twilight,
                         logp.x = log.prior, logp.z = log.prior, 
                         x0 = x0,
                         z0 = z0,
-                        zenith = zenith_twl$zenith,
+                        zenith = zeniths,
                         fixedx = fixedx)
 
 x.proposal <- mvnorm(S = diag(c(0.005, 0.005)), n = nrow(twl))
@@ -338,7 +343,7 @@ plot(wrld_simpl, xlim=xlim, ylim=ylim,add = T, bg = adjustcolor("black",alpha=0.
 
 #plot location track. Locations in blue occured during the fall equinox 
 lines(sm[,"Lon.50%"], sm[,"Lat.50%"], 
-      col = ifelse(sm$Time1 > fall.equi - days(10) & sm$Time1 < fall.equi + days(10), adjustcolor("blue", alpha.f = 0.6), adjustcolor("firebrick", alpha.f = 0.6)),
+      col = ifelse(sm$Time1 > spring.equi - days(15) & sm$Time1 < spring.equi + days(15), adjustcolor("blue", alpha.f = 0.6), adjustcolor("firebrick", alpha.f = 0.6)),
       type = "o", pch = 16)
 
 #close jpeg

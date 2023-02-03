@@ -35,8 +35,8 @@ if(!require("spDataLarge",character.only=T)){devtools::install_github("Nowosad/s
 ################################################################################
 
 # import Movebank data  
-deluca_2015 <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/raw_data/Deluca_et_al_2015/Blackpoll Warbler eastern North America (data from DeLuca et al. 2015).csv")
-deluca_2019 <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/raw_data/Deluca_et_al_2019/Movebank/A boreal songbird's migration across North America and the Atlantic Ocean, Setophaga striata.csv")
+deluca_2015 <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Movebank_data/Blackpoll Warbler eastern North America (data from DeLuca et al. 2015).csv")
+deluca_2019 <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Movebank_data/A boreal songbird's migration across North America and the Atlantic Ocean, Setophaga striata.csv")
 
 # Plot tracks for bird from Deluca et al. 2019 based on their Geolocator ID
 locs <- deluca_2019 %>%
@@ -65,7 +65,6 @@ plot(wrld_simpl,  xlim=xlim, ylim=ylim)
 points(locs$location.long, locs$location.lat, pch = 16, cex = 0.5, col = "firebrick")
 lines(locs$location.long, locs$location.lat)
 
-
 # Plot tracks for bird from Deluca et al. 2019 based on their Geolocator ID
 locs <- deluca_2015 %>%
   filter(is.na(gls.light.level) & individual.local.identifier == "D")
@@ -78,7 +77,7 @@ locs <- locs %>%
 #create track of points 
 track <- st_as_sf(locs, coords = c('location.long', 'location.lat'), crs = "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
 
-#creare track as lines 
+#create track as lines 
 trackline <- track %>%
   st_coordinates() %>%
   st_linestring()
