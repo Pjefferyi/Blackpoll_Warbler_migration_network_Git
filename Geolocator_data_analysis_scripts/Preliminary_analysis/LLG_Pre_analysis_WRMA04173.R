@@ -188,7 +188,6 @@ x0[fixedx, 2] <- lat.calib
 z0 <- trackMidpts(x0) # we need to update the z0 locations
 
 # Land mask ####################################################################
-
 earthseaMask <- function(xlim, ylim, n = 2, pacific=FALSE) {
   
   if (pacific) { wrld_simpl <- nowrapRecenter(wrld_simpl, avoidGEOS = TRUE)}
@@ -404,6 +403,7 @@ z0 <- trackMidpts(x0)
 # plot stationary locations ####################################################
 dtx0 <- as.data.frame(x0)
 names(dtx0) <- c("x", "y")
+
 data(wrld_simpl)
 plot(dtx0, type = "n", xlab = "", ylab = "")
 plot(wrld_simpl, col = "grey95", add = T)
@@ -411,13 +411,6 @@ plot(wrld_simpl, col = "grey95", add = T)
 points(dtx0, pch=19, col="cornflowerblue", type = "o")
 points(lon.calib, lat.calib, pch = 16, cex = 2.5, col = "firebrick")
 box()
-
-# Movement model ###############################################################
-
-# Here the model only reflects speed during active flight 
-beta  <- c(2.2, 0.08)
-matplot(0:100, dgamma(0:100, beta[1], beta[2]),
-        type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
 
 # Movement model ###############################################################
 
@@ -459,8 +452,7 @@ earthseaMask <- function(xlim, ylim, n = 2, pacific=FALSE, index) {
   ybin = seq(ymin(mask),ymax(mask),length=nrow(mask)+1)
   mask = as.array(mask)[,,sort(unique(index)),drop=FALSE]
   
-function(p) mask[cbind(length(ybin)-.bincode(p[,2],ybin), .bincode(p[,1],xbin), index)] 
-
+function(p) mask[cbind(length(ybin)-.bincode(p[,2],ybin), .bincode(p[,1],xbin), index)]
 }
 
 #create the mask using the function 
@@ -468,7 +460,7 @@ function(p) mask[cbind(length(ybin)-.bincode(p[,2],ybin), .bincode(p[,1],xbin), 
 xlim <- range(x0[,1])+c(-5,5)
 ylim <- range(x0[,2])+c(-5,5)
 
-index = ifelse(stationary, 1, 2)
+index <- ifelse(stationary, 1, 2)
 
 # testing #################
 #  dtsm <- sm[,c("Lon.50.","Lat.50.")]
@@ -479,13 +471,13 @@ index = ifelse(stationary, 1, 2)
 #  logp(i) 
 ############################
 
-mask <- earthseaMask(xlim, ylim, n = 1, index=index)
+mask <- earthseaMask(xlim, ylim, n = 10, index=index)
 
 # We will give locations on land a higher prior 
 ## Define the log prior for x and z
 logp <- function(p) {
   f <- mask(p)
-  ifelse(is.na(f), -300, log(5))
+  ifelse(is.na(f), log(1), log(2))
   }
 
 # Define the Estelle model ####################################################
@@ -496,10 +488,10 @@ model <- groupedThresholdModel(twl$Twilight,
                                twilight.model = "ModifiedGamma",
                                alpha = alpha,
                                beta =  beta,
-                               x0 = x0, # meadian point for each greoup (defined by twl$group)
+                               x0 = x0, # median point for each greoup (defined by twl$group)
                                z0 = z0, # middle points between the x0 points
                                zenith = zenith0,
-                               logp.x = logp, # land sea mask
+                               logp.x = logp,# land sea mask
                                fixedx = fixedx)
 
 

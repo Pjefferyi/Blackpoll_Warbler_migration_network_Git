@@ -151,12 +151,11 @@ alpha <- calib[3:4]
 # Movement model ###############################################################
 
 #this movement model should be based on the estimated migration speed of the blackpoll warbler 
-beta  <- c(2.2, 0.08)
+beta  <- cc(0.7, 0.05)
 matplot(0:100, dgamma(0:100, beta[1], beta[2]),
         type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
 
 # Initial Path #################################################################
-
 path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol=0.01)
 
 x0 <- path$x
@@ -190,7 +189,6 @@ x0[fixedx, 2] <- lat.calib
 z0 <- trackMidpts(x0) # we need to update the z0 locations
 
 # Land mask ####################################################################
-
 earthseaMask <- function(xlim, ylim, n = 2, pacific=FALSE) {
   
   if (pacific) { wrld_simpl <- nowrapRecenter(wrld_simpl, avoidGEOS = TRUE)}
@@ -362,8 +360,7 @@ model <- thresholdModel(twilight = twl$Twilight,
 #SGAT Groupe model analysis ####################################################
 ################################################################################
 
-# group twilight times were birds were stationary, here this has to be done manually because 
-# export2geoLight will skip some days. 
+# group twilight times were birds were stationary 
 geo_twl <- export2GeoLight(twl)
 
 # Often it is necessary to play around with quantile and days
@@ -416,6 +413,18 @@ x0[fixedx,2] <- lat.calib
 
 z0 <- trackMidpts(x0)
 
+# plot stationary locations ####################################################
+dtx0 <- as.data.frame(x0)
+names(dtx0) <- c("x", "y")
+
+data(wrld_simpl)
+plot(dtx0, type = "n", xlab = "", ylab = "")
+plot(wrld_simpl, col = "grey95", add = T)
+
+points(dtx0, pch=19, col="cornflowerblue", type = "o")
+points(lon.calib, lat.calib, pch = 16, cex = 2.5, col = "firebrick")
+box()
+
 # Movement model ###############################################################
 
 # Here the model only reflects speed during active flight 
@@ -454,9 +463,9 @@ earthseaMask <- function(xlim, ylim, n = 2, pacific=FALSE, index) {
   
   xbin = seq(xmin(mask),xmax(mask),length=ncol(mask)+1)
   ybin = seq(ymin(mask),ymax(mask),length=nrow(mask)+1)
-  mask = as.array(mask)[nrow(mask):1,,sort(unique(index)),drop=FALSE]
+  mask = as.array(mask)[,,sort(unique(index)),drop=FALSE]
   
-  function(p) mask[cbind(length(ybin) -.bincode(p[,2],ybin), .bincode(p[,1],xbin), index)]
+  function(p) mask[cbind(length(ybin)-.bincode(p[,2],ybin), .bincode(p[,1],xbin), index)]
 }
 
 #create the mask using the function 
@@ -464,15 +473,24 @@ earthseaMask <- function(xlim, ylim, n = 2, pacific=FALSE, index) {
 xlim <- range(x0[,1])+c(-5,5)
 ylim <- range(x0[,2])+c(-5,5)
 
-index = ifelse(stationary, 1, 2)
+index <- ifelse(stationary, 1, 2)
 
-mask <- earthseaMask(xlim, ylim, n = 1, index=index)
+# testing #################
+#  dtsm <- sm[,c("Lon.50.","Lat.50.")]
+# # dtsm$index <- index
+# # dtx0$index <- index
+# # 
+#  i <- dtsm[,1:2]
+#  logp(i) 
+############################
+
+mask <- earthseaMask(xlim, ylim, n = 10, index=index)
 
 # We will give locations on land a higher prior 
 ## Define the log prior for x and z
 logp <- function(p) {
   f <- mask(p)
-  ifelse(is.na(f), -1000, log(1))
+  ifelse(is.na(f), -1000, log(2))
 }
 
 # Define the Estelle model ####################################################
@@ -483,10 +501,10 @@ model <- groupedThresholdModel(twl$Twilight,
                                twilight.model = "ModifiedGamma",
                                alpha = alpha,
                                beta =  beta,
-                               x0 = x0, # median point for each group (defined by twl$group)
+                               x0 = x0, # median point for each greoup (defined by twl$group)
                                z0 = z0, # middle points between the x0 points
                                zenith = zenith0,
-                               logp.x = logp, # land sea mask
+                               logp.x = logp,# land sea mask
                                fixedx = fixedx)
 
 
@@ -506,12 +524,12 @@ z0 <- chainLast(fit$z)
 model <- groupedThresholdModel(twl$Twilight, 
                                twl$Rise, 
                                group = twl$group,
-                               twilight.model = "Gamma",
+                               twilight.model = "ModifiedGamma",
                                alpha = alpha, 
                                beta =  beta,
                                x0 = x0, z0 = z0,
                                logp.x = logp,
-                               missing= twl$Missing,
+                               missing=twl$Missing,
                                zenith = zenith0,
                                fixedx = fixedx)
 
@@ -542,7 +560,6 @@ fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = chainLast(fit$x),
 # sm <- locationSummary(fit$x, time=fit$model$time)
 sm <- SGAT2Movebank(fit$x, time = twl$Twilight, group = twl$group)
 
-
 #create a plot of the stationary locations #####################################
 colours <- c("black",colorRampPalette(c("blue","yellow","red"))(max(twl.rev$Site)))
 data(wrld_simpl)
@@ -566,6 +583,9 @@ points(sm[,"Lon.50."], sm[,"Lat.50."], pch=21, bg=colours[sitenum+1],
 
 points(sm[,"Lon.50."], sm[,"Lat.50."], pch=as.character(sitenum),
        cex = ifelse(sitenum>0, 1, 0))
+
+
+
 
 ################################################################################
 # FLIGHTR ANALYSIS #############################################################
