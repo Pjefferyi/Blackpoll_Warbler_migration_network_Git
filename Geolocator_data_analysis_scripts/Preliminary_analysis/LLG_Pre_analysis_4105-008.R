@@ -424,9 +424,12 @@ x0[fixedx,2] <- lat.calib
 z0 <- trackMidpts(x0)
 
 # plot stationary locations ####################################################
+
+#Create a dataframe with stationary locations
 dtx0 <- as.data.frame(x0)
 names(dtx0) <- c("x", "y")
 
+par(mfrow=c(1,1))
 data(wrld_simpl)
 plot(dtx0, type = "n", xlab = "", ylab = "")
 plot(wrld_simpl, col = "grey95", add = T)
