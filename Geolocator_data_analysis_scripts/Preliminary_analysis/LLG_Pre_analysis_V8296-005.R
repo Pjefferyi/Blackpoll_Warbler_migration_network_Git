@@ -151,7 +151,7 @@ alpha <- calib[3:4]
 # Movement model ###############################################################
 
 #this movement model should be based on the estimated migration speed of the blackpoll warbler 
-beta  <- cc(0.7, 0.05)
+beta  <- c(0.7, 0.05)
 matplot(0:100, dgamma(0:100, beta[1], beta[2]),
         type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
 
@@ -555,12 +555,8 @@ fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = chainLast(fit$x),
 
 #Summarize results #############################################################
 
-#Here we can ony use x-locations. 
-
-# sm <- locationSummary(fit$x, time=fit$model$time)
-sm <- SGAT2Movebank(fit$x, time = twl$Twilight, group = twl$group)
-
 #create a plot of the stationary locations #####################################
+par(mfrow=c(1,1))
 colours <- c("black",colorRampPalette(c("blue","yellow","red"))(max(twl.rev$Site)))
 data(wrld_simpl)
 
@@ -576,14 +572,21 @@ plot(wrld_simpl, xlim=xlim, ylim=ylim,add = T, bg = adjustcolor("black",alpha=0.
 
 with(sm[sitenum>0,], arrows(`Lon.50.`, `Lat.2.5.`, `Lon.50.`, `Lat.97.5.`, length = 0, lwd = 2.5, col = "firebrick"))
 with(sm[sitenum>0,], arrows(`Lon.2.5.`, `Lat.50.`, `Lon.97.5.`, `Lat.50.`, length = 0, lwd = 2.5, col = "firebrick"))
-lines(sm[,"Lon.50."], sm[,"Lat.50."], col = "darkorchid4", lwd = 2)
+lines(sm[,"Lon.50."], sm[,"Lat.50."], col = adjustcolor("black", alpha = 0.6), lwd = 2)
+points(sm[,"Lon.50."], sm[,"Lat.50."], col = ifelse(sm$StartTime > fall.equi - days(10) & sm$StartTime < fall.equi + days(10), "blue", "darkorchid4"), lwd = 2)
 
 points(sm[,"Lon.50."], sm[,"Lat.50."], pch=21, bg=colours[sitenum+1], 
        cex = ifelse(sitenum>0, 3, 0), col = "firebrick", lwd = 2.5)
 
-points(sm[,"Lon.50."], sm[,"Lat.50."], pch=as.character(sitenum),
-       cex = ifelse(sitenum>0, 1, 0))
+# Use this to number the stationary locations in the order they were use by the bird 
+# points(sm[,"Lon.50."], sm[,"Lat.50."], pch=as.character(sitenum),
+#        cex = ifelse(sitenum>0, 1, 0))
 
+#The text in the symbols indicates the estimated number of days spent at each stopover location 
+text(sm[,"Lon.50."], sm[,"Lat.50."], ifelse(sitenum>0, as.integer(((sm$EndTime - sm$StartTime)/86400)), ""), col="black") 
+
+#Show dates
+#text(sm[,"Lon.50."], sm[,"Lat.50."], ifelse(sitenum>0, as.character(sm$StartTime), ""), col="red", pos = 1) 
 
 
 

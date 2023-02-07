@@ -145,7 +145,7 @@ zenith0 <- calib[2]
 alpha <- calib[3:4]
 
 # in-habitat calibration seems to provide a reliable zenith angle (based on the fit of the distribution)
-# results are not significantly different from those that are can be ontained with hill ekstrom calibration (angle of 94)
+# results are not significantly different from those that are can be obtained with hill ekstrom calibration (angle of 94)
 
 # Movement model ###############################################################
 
@@ -161,7 +161,7 @@ x0 <- path$x
 z0 <- trackMidpts(x0)
 
 # open jpeg
-jpeg(paste0(dir, "/V8757 010_Threshold_path.png"), width = 1024, height = 990)
+jpeg(paste0(dir, "/V8757 029_Threshold_path.png"), width = 1024, height = 990)
 
 data(wrld_simpl)
 plot(x0, type = "n", xlab = "", ylab = "")
@@ -402,9 +402,12 @@ x0[fixedx,2] <- lat.calib
 z0 <- trackMidpts(x0)
 
 # plot stationary locations ####################################################
+
+#Create a dataframe with stationary locations
 dtx0 <- as.data.frame(x0)
 names(dtx0) <- c("x", "y")
 
+par(mfrow=c(1,1))
 data(wrld_simpl)
 plot(dtx0, type = "n", xlab = "", ylab = "")
 plot(wrld_simpl, col = "grey95", add = T)
@@ -566,10 +569,18 @@ plot(wrld_simpl, xlim=xlim, ylim=ylim,add = T, bg = adjustcolor("black",alpha=0.
 
 with(sm[sitenum>0,], arrows(`Lon.50.`, `Lat.2.5.`, `Lon.50.`, `Lat.97.5.`, length = 0, lwd = 2.5, col = "firebrick"))
 with(sm[sitenum>0,], arrows(`Lon.2.5.`, `Lat.50.`, `Lon.97.5.`, `Lat.50.`, length = 0, lwd = 2.5, col = "firebrick"))
-lines(sm[,"Lon.50."], sm[,"Lat.50."], col = "darkorchid4", lwd = 2)
+lines(sm[,"Lon.50."], sm[,"Lat.50."], col = adjustcolor("black", alpha = 0.6), lwd = 2)
+points(sm[,"Lon.50."], sm[,"Lat.50."], col = ifelse(sm$StartTime > fall.equi - days(10) & sm$StartTime < fall.equi + days(10), "blue", "darkorchid4"), lwd = 2)
 
 points(sm[,"Lon.50."], sm[,"Lat.50."], pch=21, bg=colours[sitenum+1], 
        cex = ifelse(sitenum>0, 3, 0), col = "firebrick", lwd = 2.5)
 
-points(sm[,"Lon.50."], sm[,"Lat.50."], pch=as.character(sitenum),
-       cex = ifelse(sitenum>0, 1, 0))
+# Use this to number the stationary locations in the order they were use by the bird 
+# points(sm[,"Lon.50."], sm[,"Lat.50."], pch=as.character(sitenum),
+#        cex = ifelse(sitenum>0, 1, 0))
+
+#The text in the symbols indicates the estimated number of days spent at each stopover location 
+text(sm[,"Lon.50."], sm[,"Lat.50."], ifelse(sitenum>0, as.integer(((sm$EndTime - sm$StartTime)/86400)), ""), col="black") 
+
+#Show dates
+#text(sm[,"Lon.50."], sm[,"Lat.50."], ifelse(sitenum>0, as.character(sm$StartTime), ""), col="red", pos = 1) 

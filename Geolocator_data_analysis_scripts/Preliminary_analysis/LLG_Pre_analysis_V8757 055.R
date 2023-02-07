@@ -88,7 +88,8 @@ tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
 
 dev.off()
 
-#Detect twilight times, for now do not edit twilight times  
+# Detect twilight times, for now do not edit twilight times
+# However, there are some missing twilights that have to be inserted. One case of this seems to have occured due to a very short night (or artificial light)
 twl <- preprocessLight(lig, 
                        threshold = threshold,
                        offset = offset, 
@@ -113,9 +114,9 @@ tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
 
 # This twilight file has some duplicates between rows 456 and 707
 # No data appears to have been lost, so the duplicates can simply be removed 
-twl[duplicated(twl$Twilight),]
-twl[456:707,]
-twl <- filter(twl, !duplicated(twl$Twilight))
+#twl[duplicated(twl$Twilight),]
+#twl[456:707,]
+#twl <- filter(twl, !duplicated(twl$Twilight))
 
 # Save the twilight times 
 # write.csv(twl, paste0(dir,"/Pre_analysis_V8757_055_twl_times.csv"))
@@ -139,7 +140,7 @@ lightImage( tagdata = lig,
 tsimageDeploymentLines(twl$Twilight, lon.calib, lat.calib, offset, lwd = 2, col = "orange")
 
 #calibration period before the migration 
-tm.calib <- as.POSIXct(c("2019-08-10", "2019-09-03"), tz = "UTC")
+tm.calib <- as.POSIXct(c("2019-08-03", "2019-09-03"), tz = "UTC")
 
 abline(v = tm.calib, lwd = 2, lty = 2, col = "orange")
 
@@ -168,12 +169,32 @@ end = max(which(as.Date(twl$Twilight) == endDate))
 
 (zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
 
-#this zenith angle does not provide accurate location estimates in the breeding grounds
+# this zenith angle does not provide accurate location estimates in the breeding grounds
+# the method based on geolight yields the same results as above. 
+
+# #convert to geolight format
+# geo_twl <- export2GeoLight(twl)
+# 
+# # this is just to find places where birds have been for a long time, would not use these parameters for stopover identification, detailed can be found in grouped model section
+# cL <- changeLight(twl=geo_twl, quantile=0.8, summary = F, days = 10, plot = T)
+# # merge site helps to put sites together that are separated by single outliers.
+# mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
+# 
+# #specify which site is the stationary one
+# site           <- mS$site[mS$site>0] # get rid of movement periods
+# stationarySite <- which(table(site) == max(table(site))) # find the site where bird is the longest
+# 
+# #find the dates that the bird arrives and leaves this stationary site
+# start <- min(which(mS$site == stationarySite))
+# end   <- max(which(mS$site == stationarySite))
+# 
+# (zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
 
 # I will use a different zentih angle for the breeding and nonbreeding periods 
 zenith_twl <- data.frame(Date = twl$Twilight) %>%
-  mutate(zenith = case_when(Date < fall.equi ~ zenith0,
-                            Date > fall.equi ~ zenith_sd))
+   mutate(zenith = case_when(Date < fall.equi ~ zenith,
+                             Date > fall.equi ~ zenith_sd))
+  
 
 zeniths <- zenith_twl$zenith
 # Movement model ###############################################################
@@ -184,7 +205,7 @@ matplot(0:100, dgamma(0:100, beta[1], beta[2]),
         type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol=0.15)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith_sd, tol=0.01)
 
 x0 <- path$x
 z0 <- trackMidpts(x0)
@@ -257,7 +278,7 @@ mask <- earthseaMask(xlim, ylim, n = 4)
 log.prior <- function(p) {
   f <- mask(p)
   #ifelse(is.na(f), log(1), f)  # if f is the relative abundance within a grid square 
-  ifelse(is.na(f), log(1), log(5)) # if f indicates the distribution of the blackpoll warbler 
+  ifelse(is.na(f), log(1), log(4)) # if f indicates the distribution of the blackpoll warbler 
   
 }
 
@@ -371,6 +392,241 @@ abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
 
 #close jpeg
 dev.off()
+
+################################################################################
+#SGAT Groupe model analysis ####################################################
+################################################################################
+
+# group twilight times were birds were stationary 
+geo_twl <- export2GeoLight(twl)
+
+# Often it is necessary to play around with quantile and days
+# quantile defines how many stopovers there are. the higher, the fewer there are
+# days indicates the duration of the stopovers 
+cL <- changeLight(twl=geo_twl, quantile=0.86, summary = F, days = 2, plot = T)
+
+# merge site helps to put sites together that are separated by single outliers.
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = 500)
+
+#back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
+twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 
+                      Rise     = c(ifelse(geo_twl[,3]==1, TRUE, FALSE), ifelse(geo_twl[,3]==1, FALSE, TRUE)),
+                      Site     = rep(mS$site,2))
+twl.rev <- subset(twl.rev, !duplicated(Twilight), sort = Twilight)
+
+grouped <- rep(FALSE, nrow(twl.rev))
+grouped[twl.rev$Site>0] <- TRUE 
+grouped[c(1:3, (length(grouped)-2):length(grouped))] <- TRUE
+
+# Create a vector which indicates which numbers sites
+g <- makeGroups(grouped)
+
+# Add data to twl file
+twl$group <- c(g, g[length(g)])
+
+# Add behavior vector
+behaviour <- c()
+for (i in 1:max(g)){
+  behaviour<- c(behaviour, which(g==i)[1])
+}
+stationary <- grouped[behaviour]
+sitenum <- cumsum(stationary==T)
+sitenum[stationary==F] <- 0
+
+# Initiate the model ###########################################################
+
+#set initial path
+x0 <- cbind(tapply(path$x[,1],twl$group,median), 
+            tapply(path$x[,2],twl$group,median))
+
+
+#set fixed locations 
+fixedx <- rep_len(FALSE, length.out = nrow(x0))
+fixedx[1] <- TRUE
+fixedx[c(1, length(fixedx))] <- TRUE
+
+x0[fixedx,1] <- lon.calib
+x0[fixedx,2] <- lat.calib
+
+z0 <- trackMidpts(x0)
+
+# plot stationary locations ####################################################
+dtx0 <- as.data.frame(x0)
+names(dtx0) <- c("x", "y")
+
+data(wrld_simpl)
+plot(dtx0, type = "n", xlab = "", ylab = "")
+plot(wrld_simpl, col = "grey95", add = T)
+
+points(dtx0, pch=19, col="cornflowerblue", type = "o")
+points(lon.calib, lat.calib, pch = 16, cex = 2.5, col = "firebrick")
+box()
+
+# Movement model ###############################################################
+
+# Here the model only reflects speed during active flight 
+beta  <- c(2.2, 0.08)
+matplot(0:100, dgamma(0:100, beta[1], beta[2]),
+        type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
+
+# Create a Land mask for the group model #######################################
+earthseaMask <- function(xlim, ylim, n = 2, pacific=FALSE, index) {
+  
+  if (pacific) { wrld_simpl <- nowrapRecenter(wrld_simpl, avoidGEOS = TRUE)}
+  
+  # create empty raster with desired resolution
+  r = raster(nrows = n * diff(ylim), ncols = n * diff(xlim), xmn = xlim[1],
+             xmx = xlim[2], ymn = ylim[1], ymx = ylim[2], crs = proj4string(wrld_simpl))
+  
+  # create a raster for the stationary period, in this case by giving land a value of 1
+  rs = cover(rasterize(elide(wrld_simpl, shift = c(-360, 0)), r, 1, silent = TRUE),
+             rasterize(wrld_simpl, r, 1, silent = TRUE), 
+             rasterize(elide(wrld_simpl,shift = c(360, 0)), r, 1, silent = TRUE))
+  
+  #load polygon of blackpoll's range
+  load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Full_blackpoll_range_polygons.R")
+  
+  #rasterize the polygon 
+  range.raster <- rasterize(range.poly, rs)
+  
+  #Update the stationary mask 
+  rs <- range.raster * rs
+  
+  # make the movement raster the same resolution as the stationary raster, but allow the bird to go anywhere by giving all cells a value of 1
+  rm = rs; rm[] = 1
+  
+  # stack the movement and stationary rasters on top of each other
+  mask = stack(rs, rm)
+  
+  xbin = seq(xmin(mask),xmax(mask),length=ncol(mask)+1)
+  ybin = seq(ymin(mask),ymax(mask),length=nrow(mask)+1)
+  mask = as.array(mask)[,,sort(unique(index)),drop=FALSE]
+  
+  function(p) mask[cbind(length(ybin)-.bincode(p[,2],ybin), .bincode(p[,1],xbin), index)]
+}
+
+#create the mask using the function 
+
+xlim <- range(x0[,1])+c(-5,5)
+ylim <- range(x0[,2])+c(-5,5)
+
+index <- ifelse(stationary, 1, 2)
+
+# testing #################
+# dtsm <- sm[,c("Lon.50.","Lat.50.")]
+# dtsm$index <- index
+# i <- dtsm[,1:2]
+# logp(i)
+
+#dtx0$index <- index
+
+#logp(dtx0[,1:2])
+############################
+
+mask <- earthseaMask(xlim, ylim, n = 10, index=index)
+
+# We will give locations on land a higher prior 
+## Define the log prior for x and z
+logp <- function(p) {
+  f <- mask(p)
+  ifelse(is.na(f), -1000, log(2))
+}
+
+# Define the Estelle model ####################################################
+
+model <- groupedThresholdModel(twl$Twilight,
+                               twl$Rise,
+                               group = twl$group, #This is the group vector for each time the bird was at a point
+                               twilight.model = "ModifiedGamma",
+                               alpha = alpha,
+                               beta =  beta,
+                               x0 = x0, # median point for each greoup (defined by twl$group)
+                               z0 = z0, # middle points between the x0 points
+                               zenith = zenith0,
+                               logp.x = logp,# land sea mask
+                               fixedx = fixedx)
+
+
+# define the error shape
+x.proposal <- mvnorm(S = diag(c(0.005, 0.005)), n = nrow(x0))
+z.proposal <- mvnorm(S = diag(c(0.005, 0.005)), n = nrow(z0))
+
+# Fit the model
+fit <- estelleMetropolis(model, x.proposal, z.proposal, iters = 1000, thin = 20)
+
+#Tuning ########################################################################
+
+# use output from last run
+x0 <- chainLast(fit$x)
+z0 <- chainLast(fit$z)
+
+model <- groupedThresholdModel(twl$Twilight, 
+                               twl$Rise, 
+                               group = twl$group,
+                               twilight.model = "ModifiedGamma",
+                               alpha = alpha, 
+                               beta =  beta,
+                               x0 = x0, z0 = z0,
+                               logp.x = logp,
+                               missing=twl$Missing,
+                               zenith = zenith0,
+                               fixedx = fixedx)
+
+for (k in 1:3) {
+  x.proposal <- mvnorm(chainCov(fit$x), s = 0.3)
+  z.proposal <- mvnorm(chainCov(fit$z), s = 0.3)
+  fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = chainLast(fit$x),
+                           z0 = chainLast(fit$z), iters = 300, thin = 20)
+}
+
+## Check if chains mix
+opar <- par(mfrow = c(2, 1), mar = c(3, 5, 2, 1) + 0.1)
+matplot(t(fit$x[[1]][!fixedx, 1, ]), type = "l", lty = 1, col = "dodgerblue", ylab = "Lon")
+matplot(t(fit$x[[1]][!fixedx, 2, ]), type = "l", lty = 1, col = "firebrick", ylab = "Lat")
+par(opar)
+
+#Final model run ###############################################################
+x.proposal <- mvnorm(chainCov(fit$x), s = 0.3)
+z.proposal <- mvnorm(chainCov(fit$z), s = 0.3)
+
+fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = chainLast(fit$x),
+                         z0 = chainLast(fit$z), iters = 2000, thin = 20, chain = 1)
+
+#Summarize results #############################################################
+
+#Here we can ony use x-locations. 
+
+# sm <- locationSummary(fit$x, time=fit$model$time)
+sm <- SGAT2Movebank(fit$x, time = twl$Twilight, group = twl$group)
+
+#create a plot of the stationary locations #####################################
+colours <- c("black",colorRampPalette(c("blue","yellow","red"))(max(twl.rev$Site)))
+data(wrld_simpl)
+
+# empty raster of the extent
+r <- raster(nrows = 2 * diff(ylim), ncols = 2 * diff(xlim), xmn = xlim[1]-5,
+            xmx = xlim[2]+5, ymn = ylim[1]-5, ymx = ylim[2]+5, crs = proj4string(wrld_simpl))
+
+s <- slices(type = "intermediate", breaks = "week", mcmc = fit, grid = r)
+sk <- slice(s, sliceIndices(s))
+
+plot(sk, useRaster = F,col = c("transparent", rev(viridis::viridis(50))))
+plot(wrld_simpl, xlim=xlim, ylim=ylim,add = T, bg = adjustcolor("black",alpha=0.1))
+
+with(sm[sitenum>0,], arrows(`Lon.50.`, `Lat.2.5.`, `Lon.50.`, `Lat.97.5.`, length = 0, lwd = 2.5, col = "firebrick"))
+with(sm[sitenum>0,], arrows(`Lon.2.5.`, `Lat.50.`, `Lon.97.5.`, `Lat.50.`, length = 0, lwd = 2.5, col = "firebrick"))
+lines(sm[,"Lon.50."], sm[,"Lat.50."], col = adjustcolor("black", alpha = 0.6), lwd = 2)
+points(sm[,"Lon.50."], sm[,"Lat.50."], col = ifelse(sm$StartTime > fall.equi - days(10) & sm$StartTime < fall.equi + days(10), "blue", "darkorchid4"), lwd = 2)
+
+
+points(sm[,"Lon.50."], sm[,"Lat.50."], pch=21, bg=colours[sitenum+1], 
+       cex = ifelse(sitenum>0, 4, 0), col = "firebrick", lwd = 2.5)
+
+#The text in the symbols indicates the estimated number of days spent at each stopover location 
+text(sm[,"Lon.50."], sm[,"Lat.50."], ifelse(sitenum>0, as.integer(((sm$EndTime - sm$StartTime)/86400)), ""), col="black")
+
+#Show dates
+#text(sm[,"Lon.50."], sm[,"Lat.50."], ifelse(sitenum>0, as.character(sm$StartTime), ""), col="red", pos = 1) 
 
 ################################################################################
 # FLIGHTR ANALYSIS #############################################################
