@@ -38,7 +38,7 @@ lat.calib <- 58.16343635
 lon.calib <- -129.8574554
 
 # time of deployment (estimated from light data)
-deploy.start <- anytime("2019-06-27", tz = "GMT")
+deploy.start <- anytime("2019-06-16  15:30:00", tz = "GMT")
 
 #Equinox times
 fall.equi <- anytime("2019-09-23", tz = "GMT")
@@ -46,7 +46,7 @@ spring.equi <- anytime("2020-03-19", tz = "GMT")
 
 #Find number of cores available for analysis
 Threads= detectCores()-1
-
+z
 ###############################################################################
 #DATA EXTRACTION ##############################################################
 ###############################################################################
@@ -55,10 +55,10 @@ Threads= detectCores()-1
 lig <- readLig(paste0(dir, "/ML6740 V8757 010 reconstructed_000.lig"), skip = 1)
 
 #remove rows before and after deployment time 
-lig <- lig[(lig$Date > deploy.start),]
+#lig <- lig[(lig$Date > deploy.start),]
 
 #Adjust time
-lig$Date <- lig$Date - 4.5 *60*60
+#lig$Date <- lig$Date - 4.5 *60*60
 
 ###############################################################################
 #TWILIGHT ANNOTATION ##########################################################
@@ -67,7 +67,7 @@ lig$Date <- lig$Date - 4.5 *60*60
 threshold <- 1.5 
 
 # visualize threshold over light levels  
-thresholdOverLight(lig, threshold, span =c(45000, 50000))
+thresholdOverLight(lig, threshold, span =c(6000, 13000))
 
 # plot light levels over the deployment period 
 offset <- 18 # adjusts the y-axis to put night (dark shades) in the middle
@@ -85,7 +85,7 @@ tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
 dev.off()
 
 #Detect twilight times, for now do not edit twilight times  
-twl <- preprocessLight(lig, 
+twl2 <- preprocessLight(lig, 
                        threshold = threshold,
                        offset = offset, 
                        lmax = 64,         # max. light value
@@ -93,10 +93,10 @@ twl <- preprocessLight(lig,
                        dark.min = 60)
 
 # Adjust sunset times by 120 second sampling interval
-twl <- twilightAdjust(twilights = twl, interval = 120)
+twl2 <- twilightAdjust(twilights = twl, interval = 120)
 
 # Automatically adjust or mark false twilights 
-twl <- twilightEdit(twilights = twl, 
+twl2 <- twilightEdit(twilights = twl, 
                     window = 4,           
                     outlier.mins = 90,    
                     stationary.mins = 45, 
@@ -108,7 +108,7 @@ tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
               col = ifelse(twl$Rise, "dodgerblue", "firebrick"))
 
 # Save the twilight times 
-write.csv(twl, paste0(dir,"/Pre_analysis_V8757 010_twl_times.csv"))
+#write.csv(twl, paste0(dir,"/Pre_analysis_V8757 010_twl_times.csv"))
 
 ###############################################################################
 # SGAT ANALYSIS ###############################################################
@@ -125,7 +125,7 @@ lightImage(tagdata = lig,
            offset = offset,     
            zlim = c(0, 20))
 
-tsimageDeploymentLines(twl$Twilight, lon.calib, lat.calib, offset, lwd = 2, col = "orange")
+tsimageDeploymentLines(twl2$Twilight, lon.calib, lat.calib, offset, lwd = 2, col = "orange")
 
 #calibration period before the migration 
 tm.calib <- as.POSIXct(c(deploy.start, deploy.start + days(50)), tz = "UTC")

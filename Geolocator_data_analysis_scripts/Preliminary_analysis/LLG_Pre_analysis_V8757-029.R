@@ -58,7 +58,7 @@ lig <- readLig(paste0(dir, "/ML6740 V8757 029 reconstructed_000.lig"), skip = 1)
 #lig <- lig[(lig$Date > deploy.start),]
 
 #Adjust time
-lig$Date <- lig$Date - 4 *60*60
+#lig$Date <- lig$Date - 4 *60*60
 
 ###############################################################################
 #TWILIGHT ANNOTATION ##########################################################

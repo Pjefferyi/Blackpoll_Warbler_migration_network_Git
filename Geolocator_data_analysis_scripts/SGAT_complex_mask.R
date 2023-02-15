@@ -41,7 +41,7 @@ ebirdst_download("bkpwar", path = ebird.dir, tifs_only = TRUE)
 # Create an empty raster with the desired dimensions and resolutions ###########
 ################################################################################
 
-n = 10 # there will be n*n raster cells per grid squares of 1 degree of latitude and longitude 
+n = 20 # there will be n*n raster cells per grid squares of 1 degree of latitude and longitude 
 
 # Boundaries of the raster
 xlim = c(-120, -60) 
@@ -83,7 +83,7 @@ range.mask1 <- abundance_resamp * land.mask
 ################################################################################
 
 #load range data
-range.poly <- load_ranges(get_species_path("bkpwar", ebird.dir), smoothed = T)
+range.poly <- load_ranges(get_species_path("bkpwar", ebird.dir), resolution = "mr", smoothed = T)
 range.poly$prediction_year <- 1 
 range.poly$start_date <- 1 
 range.raster <- rasterize(range.poly, land.mask)

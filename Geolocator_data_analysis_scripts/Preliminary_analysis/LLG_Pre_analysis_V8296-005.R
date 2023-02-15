@@ -27,6 +27,9 @@ library(LLmig)
 library(GeoLocTools)
 setupGeolocation()
 
+#Set environment time to GMT
+Sys.setenv(TZ='GMT')
+
 geo.id <- "V8296-005"
 
 # data directory
@@ -37,22 +40,21 @@ lat.calib <- 47.38323
 lon.calib <- -71.09479
 
 # time of deployment (from reference file)
-deploy.start <- anytime("2019-06-18	18:45:00", tz = "GMT")
+deploy.start <- anytime("2019-06-18	06:45:00")
 
 # time of recovery (estimate from light data)
-deploy.end <- anytime("2020-07-12 17:55:0", tz = "GMT")
+deploy.end <- anytime("2020-07-12 17:55:00")
 
 #Equinox times
-fall.equi <- anytime("2019-09-23", tz = "GMT")
-spring.equi <- anytime("2020-03-19", tz = "GMT")
-  
+fall.equi <- anytime("2019-09-23")
+spring.equi <- anytime("2020-03-19")
+
 ###############################################################################
 #DATA EXTRACTION ##############################################################
 ###############################################################################
 
 # import lig data 
 lig <- readLig(paste0(dir,"/ML6740 V8296 005 reconstructed_000.lig"), skip = 1)
-
 
 #remove rows before and after deployment time 
 lig <- lig[(lig$Date > deploy.start),]
@@ -67,7 +69,7 @@ lig$Date <- lig$Date - 1*60*60
 threshold <- 1.5 
 
 # visualize threshold over light levels  
-thresholdOverLight(lig, threshold, span =c(50000, 100000))
+thresholdOverLight(lig, threshold, span =c(11500, 15000))
 
 # plot light levels over the deployment period 
 offset <- 12 # adjusts the y-axis to put night (dark shades) in the middle
@@ -108,7 +110,7 @@ tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
 
 
 # Save the twilight times 
-write.csv(twl, paste0(dir,"/Pre_analysis_V8296_005_twl_times.csv"))
+#write.csv(twl, paste0(dir,"/Pre_analysis_V8296_005_twl_times.csv"))
 
 ###############################################################################
 # SGAT ANALYSIS ###############################################################
@@ -369,7 +371,7 @@ geo_twl <- export2GeoLight(twl)
 cL <- changeLight(twl=geo_twl, quantile=0.86, summary = F, days = 2, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = 500)
 
 #back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 
@@ -554,6 +556,13 @@ fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = chainLast(fit$x),
                          z0 = chainLast(fit$z), iters = 2000, thin = 20, chain = 1)
 
 #Summarize results #############################################################
+
+# sm <- locationSummary(fit$x, time=fit$model$time)
+sm <- SGAT2Movebank(fit$x, time = twl$Twilight, group = twl$group)
+
+#Save the output of the model 
+#save(sm, file = paste0(dir,"/Pre_analysis_8296_005_SGAT_GroupedThreshold_summary.csv"))
+#save(fit, file = paste0(dir,"/Pre_analysis_8296_005_SGAT_GroupedThreshold_fit.R"))
 
 #create a plot of the stationary locations #####################################
 par(mfrow=c(1,1))

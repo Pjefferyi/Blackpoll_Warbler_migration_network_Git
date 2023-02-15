@@ -29,6 +29,9 @@ library(LLmig)
 library(GeoLocTools)
 setupGeolocation()
 
+#Set environment time to GMT
+Sys.setenv(TZ='GMT')
+
 geo.id <- "V8757-055"
 
 # geo deployment location 
@@ -39,11 +42,11 @@ lon.calib <- -114.699932
 dir <- paste0("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geolocator_data/", geo.id)
 
 # time of deployment
-deploy.start <- anytime("2019-06-27", tz = "GMT")
+deploy.start <- anytime("2019-06-27")
 
 #Equinox times
-fall.equi <- anytime("2019-09-23", tz = "GMT")
-spring.equi <- anytime("2020-03-19", tz = "GMT")
+fall.equi <- anytime("2019-09-23")
+spring.equi <- anytime("2020-03-19")
 
 #Find number of cores available for analysis
 Threads= detectCores()-1
@@ -62,7 +65,7 @@ lig$Date <- lig$Date %m+% years(7)
 lig <- lig[(lig$Date > deploy.start),]
 
 #adjust time 
-lig$Date <- lig$Date + 5.5 *60*60
+lig$Date <- lig$Date + 5.5*60*60
 
 ###############################################################################
 #TWILIGHT ANNOTATION ##########################################################
@@ -71,7 +74,7 @@ lig$Date <- lig$Date + 5.5 *60*60
 threshold <- 1.5 
 
 # visualize threshold over light levels  
-thresholdOverLight(lig, threshold, span =c(70000, 75000))
+thresholdOverLight(lig, threshold, span =c(0, 25000))
 
 # plot light levels 
 offset <- 20 # adjusts the y-axis to put night (dark shades) in the middle
@@ -128,7 +131,7 @@ tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
 
 # Import file with twilight times  
 twl <- read.csv(paste0(dir,"/Pre_analysis_V8757_055_twl_times.csv"))
-twl$Twilight <- as.POSIXct(twl$Twilight, tz = "UTC")
+twl2$Twilight <- as.POSIXct(twl$Twilight, tz = "UTC")
 
 # Calibration ##################################################################
 
@@ -137,7 +140,7 @@ lightImage( tagdata = lig,
             offset = offset,     
             zlim = c(0, 64))
 
-tsimageDeploymentLines(twl$Twilight, lon.calib, lat.calib, offset, lwd = 2, col = "orange")
+tsimageDeploymentLines(twl2$Twilight, lon.calib, lat.calib, offset, lwd = 2, col = "orange")
 
 #calibration period before the migration 
 tm.calib <- as.POSIXct(c("2019-08-03", "2019-09-03"), tz = "UTC")
