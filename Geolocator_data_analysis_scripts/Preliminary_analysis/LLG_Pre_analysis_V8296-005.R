@@ -27,9 +27,6 @@ library(LLmig)
 library(GeoLocTools)
 setupGeolocation()
 
-#Set environment time to GMT
-Sys.setenv(TZ='GMT')
-
 geo.id <- "V8296-005"
 
 # data directory
@@ -40,14 +37,14 @@ lat.calib <- 47.38323
 lon.calib <- -71.09479
 
 # time of deployment (from reference file)
-deploy.start <- anytime("2019-06-18	06:45:00")
+deploy.start <- anytime("2019-06-18	06:45:00", asUTC = T, tz = "GMT")
 
 # time of recovery (estimate from light data)
-deploy.end <- anytime("2020-07-12 17:55:00")
+deploy.end <- anytime("2020-07-12 17:55:00", asUTC = T, tz = "GMT")
 
 #Equinox times
-fall.equi <- anytime("2019-09-23")
-spring.equi <- anytime("2020-03-19")
+fall.equi <- anytime("2019-09-23", asUTC = T, tz = "GMT")
+spring.equi <- anytime("2020-03-19", asUTC = T, tz = "GMT")
 
 ###############################################################################
 #DATA EXTRACTION ##############################################################

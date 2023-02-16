@@ -28,14 +28,14 @@ loadpackages(c(
   "ebirdst" #Extract and process eBird status and trends data
 ))
 
-# Set eBird access key
-set_ebirdst_access_key("k187tqe2nh49")
+# Set eBird access key (key already set)
+#set_ebirdst_access_key("k187tqe2nh49")
 
 # Directory for eBird data 
 ebird.dir <- "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_imports"
 
-#Download eBird data for blackpoll warbler data
-ebirdst_download("bkpwar", path = ebird.dir, tifs_only = TRUE)
+#Download eBird data for blackpoll warbler data (already downloaded)
+#ebirdst_download("bkpwar", path = ebird.dir, tifs_only = TRUE)
 
 ################################################################################
 # Create an empty raster with the desired dimensions and resolutions ###########
@@ -46,7 +46,6 @@ n = 20 # there will be n*n raster cells per grid squares of 1 degree of latitude
 # Boundaries of the raster
 xlim = c(-120, -60) 
 ylim = c(-22, 65)
-
 
 # create empty raster with desired resolution
 r = raster(nrows = n * diff(ylim), ncols = n * diff(xlim), xmn = xlim[1],
@@ -81,34 +80,28 @@ range.mask1 <- abundance_resamp * land.mask
 # Create a range mask using the range polygons available in eBird status and 
 # trends 
 ################################################################################
-
 #load range data
-range.poly <- load_ranges(get_species_path("bkpwar", ebird.dir), resolution = "mr", smoothed = T)
-range.poly$prediction_year <- 1 
-range.poly$start_date <- 1 
-range.raster <- rasterize(range.poly, land.mask)
- 
-xbin = seq(xmin(maski),xmax(maski),length=ncol(maski)+1)
-ybin = seq(ymin(maski),ymax(maski),length=nrow(maski)+1)
+EB.data <- load_ranges(get_species_path("bkpwar", ebird.dir), resolution = "mr", smoothed = T)
 
-maskx <- as.matrix(maski)
+#Dissolve the polygons 
+EB.range <- EB.data %>%
+  group_by("species_code") %>% 
+  dplyr::summarise()
 
-## Define the log prior for x and z
-log.prior <- function(p) {
-  f <- mask(p)
-  ifelse(is.na(f), log(1), f) 
-}
+# this needs work 
 
-#modified matrix subset approach 
-maski[cbind(.bincode(lat.calib,ybin), .bincode(lon.calib,xbin))]
+################################################################################
+# Create a range mask using the data provided by Birdlife international
+################################################################################
 
-#original matrix subset approach
-maski[cbind(length(ybin) -.bincode(lat.calib,ybin), .bincode(lon.calib,xbin))]
+#load data 
+BLI.data <- st_read("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Birdlife_international_species_distribution/SppDataRequest.shp")
 
-#breeding site location 
-maski[cbind(length(ybin) -.bincode(x0[,2],ybin), .bincode(x0[,1],xbin))] <-2
-maski[cbind(.bincode(x0[,2],ybin), .bincode(x0[,1],xbin))] <- 1
+#Dissolve the polygons 
+BLI.range <- BLI.data %>%
+  group_by("sci_name") %>% 
+  dplyr::summarise()
 
-plot(maski)
+plot(BLI.range)
 
-getValues(mask)
+

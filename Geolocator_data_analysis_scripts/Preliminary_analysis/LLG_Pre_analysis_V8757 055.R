@@ -29,9 +29,6 @@ library(LLmig)
 library(GeoLocTools)
 setupGeolocation()
 
-#Set environment time to GMT
-Sys.setenv(TZ='GMT')
-
 geo.id <- "V8757-055"
 
 # geo deployment location 
@@ -42,18 +39,16 @@ lon.calib <- -114.699932
 dir <- paste0("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geolocator_data/", geo.id)
 
 # time of deployment
-deploy.start <- anytime("2019-06-27")
+deploy.start <- anytime("2019-06-27", asUTC = T, tz = "GMT")
 
 #Equinox times
-fall.equi <- anytime("2019-09-23")
-spring.equi <- anytime("2020-03-19")
+fall.equi <- anytime("2019-09-23", asUTC = T, tz = "GMT")
+spring.equi <- anytime("2020-03-19", asUTC = T, tz = "GMT")
 
 #Find number of cores available for analysis
 Threads= detectCores()-1
 
-###############################################################################
-#DATA EXTRACTION ##############################################################
-###############################################################################
+#DATA EXTRACTION AND PREPARATION FOR TWILIGHT ANNOTATION#######################
 
 # import lig data 
 lig <- readLig(paste0(dir,"/ML6740 V8757 055 reconstructed_000.lig"), skip = 1)
@@ -64,21 +59,58 @@ lig$Date <- lig$Date %m+% years(7)
 #remove rows before and after deployment time 
 lig <- lig[(lig$Date > deploy.start),]
 
-#adjust time 
-lig$Date <- lig$Date + 5.5*60*60
+#parameter to visualize the data 
+offset <- 20 # adjusts the y-axis to put night (dark shades) in the middle
 
-###############################################################################
-#TWILIGHT ANNOTATION ##########################################################
-###############################################################################
-
+#Threshold light level 
 threshold <- 1.5 
 
 # visualize threshold over light levels  
 thresholdOverLight(lig, threshold, span =c(0, 25000))
 
-# plot light levels 
-offset <- 20 # adjusts the y-axis to put night (dark shades) in the middle
+# FIND TIME SHIFT ##############################################################
 
+#This geolocator has a a time shift visible on this plot
+lightImage( tagdata = lig,
+            offset = offset,     
+            zlim = c(0, 64))
+
+tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
+                       offset = offset, lwd = 3, col = adjustcolor("orange", alpha.f = 0.5))
+
+# we will do an initial twilight annotation to find identify the time interval
+# by which we need to shift time
+# There should be not need to edit, delete or insert twilights for this
+# twl_in <- preprocessLight(lig, 
+#                        threshold = threshold,
+#                        offset = offset, 
+#                        lmax = 64,         # max. light value
+#                        gr.Device = "x11", # MacOS version (and windows)
+#                        dark.min = 60)
+
+#write.csv(twl_in, paste0(dir,"/Pre_analysis_V8757_055_twl_times_initial.csv"))
+twl <- read.csv(paste0(dir,"/Pre_analysis_V8757_055_twl_times_initial.csv"))
+
+# Period over which to calculate the time shift. It should be while the bird is 
+# still in the breeding grounds 
+period <- as.POSIXct(c("2019-08-04", "2019-08-10"), tz = "UTC")
+
+# calculate the time shift
+shift <- shiftSpan(twl = twl_in, lig = lig, period = period, est.zenith = 92,
+                   dep.lon = lon.calib,
+                   dep.lat = lat.calib)
+
+# verify the output 
+# shift 
+
+#adjust time 
+lig$Date <- lig$Date - (shift$shift)
+
+###############################################################################
+#TWILIGHT ANNOTATION ##########################################################
+###############################################################################
+
+# plot light levels 
 # open jpeg
 jpeg(paste0(dir, "/V8757_055_light_plot.png"), width = 1024, height = 990)
 
@@ -93,33 +125,27 @@ dev.off()
 
 # Detect twilight times, for now do not edit twilight times
 # However, there are some missing twilights that have to be inserted. One case of this seems to have occured due to a very short night (or artificial light)
-twl <- preprocessLight(lig, 
-                       threshold = threshold,
-                       offset = offset, 
-                       lmax = 64,         # max. light value
-                       gr.Device = "x11", # MacOS version (and windows)
-                       dark.min = 60)
-
-# Adjust sunset times by 120 second sampling interval
-twl <- twilightAdjust(twilights = twl, interval = 120)
+# twl <- preprocessLight(lig, 
+#                        threshold = threshold,
+#                        offset = offset, 
+#                        lmax = 64,         # max. light value
+#                        gr.Device = "x11", # MacOS version (and windows)
+#                        dark.min = 60)
 
 # Automatically adjust or mark false twilights 
-twl <- twilightEdit(twilights = twl, 
-                    window = 6,           
-                    outlier.mins = 90,    
-                    stationary.mins = 45, 
-                    plot = TRUE)
+# twl <- twilightEdit(twilights = twl, 
+#                     window = 6,           
+#                     outlier.mins = 90,    
+#                     stationary.mins = 45, 
+#                     plot = TRUE)
 
 # Visualize light and twilight time-series
-lightImage(lig, offset = 19)
-tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
-              col = ifelse(twl$Rise, "dodgerblue", "firebrick"))
+# lightImage(lig, offset = 19)
+# tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
+#               col = ifelse(twl$Rise, "dodgerblue", "firebrick"))
 
-# This twilight file has some duplicates between rows 456 and 707
-# No data appears to have been lost, so the duplicates can simply be removed 
-#twl[duplicated(twl$Twilight),]
-#twl[456:707,]
-#twl <- filter(twl, !duplicated(twl$Twilight))
+# Check for duplicates 
+# twl[duplicated(twl$Twilight),]
 
 # Save the twilight times 
 # write.csv(twl, paste0(dir,"/Pre_analysis_V8757_055_twl_times.csv"))
@@ -131,7 +157,7 @@ tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
 
 # Import file with twilight times  
 twl <- read.csv(paste0(dir,"/Pre_analysis_V8757_055_twl_times.csv"))
-twl2$Twilight <- as.POSIXct(twl$Twilight, tz = "UTC")
+twl$Twilight <- as.POSIXct(twl$Twilight, tz = "UTC")
 
 # Calibration ##################################################################
 
@@ -140,7 +166,7 @@ lightImage( tagdata = lig,
             offset = offset,     
             zlim = c(0, 64))
 
-tsimageDeploymentLines(twl2$Twilight, lon.calib, lat.calib, offset, lwd = 2, col = "orange")
+tsimageDeploymentLines(twl$Twilight, lon.calib, lat.calib, offset, lwd = 2, col = "orange")
 
 #calibration period before the migration 
 tm.calib <- as.POSIXct(c("2019-08-03", "2019-09-03"), tz = "UTC")
@@ -172,8 +198,8 @@ end = max(which(as.Date(twl$Twilight) == endDate))
 
 (zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
 
-# this zenith angle does not provide accurate location estimates in the breeding grounds
-# the method based on geolight yields the same results as above. 
+# this zenith angle provides plausible location estimates in the non-breeding grounds but not in the breeding grounds
+# the method based on geolight yields the same Zenith angle as above. 
 
 # #convert to geolight format
 # geo_twl <- export2GeoLight(twl)
@@ -197,8 +223,6 @@ end = max(which(as.Date(twl$Twilight) == endDate))
 zenith_twl <- data.frame(Date = twl$Twilight) %>%
    mutate(zenith = case_when(Date < fall.equi ~ zenith,
                              Date > fall.equi ~ zenith_sd))
-  
-
 zeniths <- zenith_twl$zenith
 # Movement model ###############################################################
 
@@ -208,7 +232,7 @@ matplot(0:100, dgamma(0:100, beta[1], beta[2]),
         type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith_sd, tol=0.01)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol=0.15)
 
 x0 <- path$x
 z0 <- trackMidpts(x0)
