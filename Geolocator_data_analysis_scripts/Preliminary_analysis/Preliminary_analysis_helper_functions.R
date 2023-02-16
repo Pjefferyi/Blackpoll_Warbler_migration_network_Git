@@ -26,7 +26,10 @@ library(GeoLocTools)
 setupGeolocation()
 
 
-# Function: visualize threshold in plot of light level   
+# thresholdOverLight############################################################
+
+#Function to visualize the threshold in a plot of light level over time 
+
 thresholdOverLight <- function(data, threshold, span = c()){
   
   col = colorRampPalette(c('black',"purple",'orange'))(50)[as.numeric(cut(data$Light[2000:5000],breaks = 50))]
@@ -35,9 +38,20 @@ thresholdOverLight <- function(data, threshold, span = c()){
   with(data[span[1]:span[2],], plot(Date, Light, type = "o", pch=16,  col = col, cex = 0.5)) 
   abline(h=threshold, col="orange", lty = 2, lwd = 2)
 }
+################################################################################
 
 
-# Function Identify the span of a time shift in a geolocator relative to the expect Greenwich Meam time
+# shiftSpan ####################################################################
+
+# Function to identify the span of a time shift in a geolocator relative to the 
+# expect Greenwich Mean time
+
+# This function works by finding the difference between noon (or midnight) 
+# in the times recorded by the geolocator in the breeding grounds, and the expected times
+# based on the output of TwGeos' twilight() function
+
+# Noon and midnight occur when the sun crosses the meridian, so at the halfway point 
+# of every day and night, respectively. 
 
 shiftSpan <- function(twl, lig, period, est.zenith, dep.lon, dep.lat){
 
@@ -60,33 +74,15 @@ shiftSpan <- function(twl, lig, period, est.zenith, dep.lon, dep.lat){
   #Get a subset of the expected twilight times 
   exp_twl_sub <- subset(exp_twl, exp_twl$twilight > period[1] & exp_twl$twilight < period[2])
   
-  #measure the time shift 
+  #measure the time shift: the time between the observed and expected noons or midnights 
   shift <- mean(ob_twl_sub$Twilight) - mean(exp_twl_sub$twilight)
   
   #return a list with the time shift, expected time, and observed time
   return(list(shift = shift, observed_times = ob_twl_sub,
               expected_times = exp_twl_sub,
-              mean_observed_noon = mean(ob_twl_sub$Twilight),
-              mean_expected_noon = mean(exp_twl_sub$twilight)))
+              mean_observed_meridian_time = mean(ob_twl_sub$Twilight),
+              mean_expected_meridian_time = mean(exp_twl_sub$twilight)))
 }
 
-# This function returns a difference of 54.03504 mins for V8296-005
-# This function returns a difference of 
-
-
-shiftSpan(twl = twl2,
-          lig = lig,
-          period = as.POSIXct(c("2019-06-19", "2019-06-22"), tz = "UTC"),
-          est.zenith = 92,
-          dep.lon = lon.calib,
-          dep.lat = lat.calib)
-
-
-shiftSpan(twl = twl2,
-          lig = lig,
-          period = as.POSIXct(c("2019-08-01", "2019-08-03"), tz = "UTC"),
-          est.zenith = 92,
-          dep.lon = lon.calib,
-          dep.lat = lat.calib)
-
+################################################################################
 
