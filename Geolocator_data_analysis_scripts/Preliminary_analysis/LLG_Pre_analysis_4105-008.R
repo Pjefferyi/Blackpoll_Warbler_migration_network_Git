@@ -229,12 +229,16 @@ earthseaMask <- function(xlim, ylim, n = 2, pacific=FALSE) {
                rasterize(wrld_simpl, r, 1, silent = TRUE), 
                rasterize(elide(wrld_simpl, shift = c(360, 0)), r, 1, silent = TRUE))
   
-  abundance <- raster("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geo_spatial_data/bkpwar_abundance_seasonal_full-year_mean_2021.tif")
-  abundance_resamp <- projectRaster(abundance, mask, method = "ngb")
-  abundance_resamp[is.nan(abundance_resamp)] <- NA
-  abundance_resamp[abundance_resamp > 0 ] <- 1
+  #load polygon of blackpoll's range
+  #load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_Full_blackpoll_range_polygon.R.R")
+  load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Birdlife_int_Full_blackpoll_range_polygon.R")
   
-  mask <- mask * abundance_resamp
+  #rasterize the polygon 
+  #range.raster <- rasterize(range.poly, mask)
+  range.raster <- rasterize(BLI.range.poly, mask)
+  
+  #Update the land mask 
+  mask <- range.raster * mask
   
   xbin = seq(xmin(mask),xmax(mask),length=ncol(mask)+1)
   ybin = seq(ymin(mask),ymax(mask),length=nrow(mask)+1)

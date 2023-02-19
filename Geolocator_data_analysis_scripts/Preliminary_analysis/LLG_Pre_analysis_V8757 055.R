@@ -89,7 +89,8 @@ tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
 #                        dark.min = 60)
 
 #write.csv(twl_in, paste0(dir,"/Pre_analysis_V8757_055_twl_times_initial.csv"))
-twl <- read.csv(paste0(dir,"/Pre_analysis_V8757_055_twl_times_initial.csv"))
+twl_in <- read.csv(paste0(dir,"/Pre_analysis_V8757_055_twl_times_initial.csv"))
+twl_in$Twilight <- as.POSIXct(twl_in$Twilight, tz = "UTC")
 
 # Period over which to calculate the time shift. It should be while the bird is 
 # still in the breeding grounds 
@@ -106,9 +107,7 @@ shift <- shiftSpan(twl = twl_in, lig = lig, period = period, est.zenith = 92,
 #adjust time 
 lig$Date <- lig$Date - (shift$shift)
 
-###############################################################################
 #TWILIGHT ANNOTATION ##########################################################
-###############################################################################
 
 # plot light levels 
 # open jpeg
@@ -125,19 +124,19 @@ dev.off()
 
 # Detect twilight times, for now do not edit twilight times
 # However, there are some missing twilights that have to be inserted. One case of this seems to have occured due to a very short night (or artificial light)
-# twl <- preprocessLight(lig, 
-#                        threshold = threshold,
-#                        offset = offset, 
-#                        lmax = 64,         # max. light value
-#                        gr.Device = "x11", # MacOS version (and windows)
-#                        dark.min = 60)
+twl <- preprocessLight(lig,
+                       threshold = threshold,
+                       offset = offset,
+                       lmax = 64,         # max. light value
+                       gr.Device = "x11", # MacOS version (and windows)
+                       dark.min = 60)
 
 # Automatically adjust or mark false twilights 
-# twl <- twilightEdit(twilights = twl, 
-#                     window = 6,           
-#                     outlier.mins = 90,    
-#                     stationary.mins = 45, 
-#                     plot = TRUE)
+twl <- twilightEdit(twilights = twl,
+                    window = 6,
+                    outlier.mins = 90,
+                    stationary.mins = 45,
+                    plot = TRUE)
 
 # Visualize light and twilight time-series
 # lightImage(lig, offset = 19)
@@ -196,7 +195,7 @@ endDate   <- "2020-04-15"
 start = min(which(as.Date(twl$Twilight) == startDate))
 end = max(which(as.Date(twl$Twilight) == endDate))
 
-(zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
+(zenith_sd <- findHEZenith(twl, tol=0.08, range=c(start,end)))
 
 # this zenith angle provides plausible location estimates in the non-breeding grounds but not in the breeding grounds
 # the method based on geolight yields the same Zenith angle as above. 
@@ -219,11 +218,16 @@ end = max(which(as.Date(twl$Twilight) == endDate))
 # 
 # (zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
 
-# I will use a different zentih angle for the breeding and nonbreeding periods 
+# use a different zentih angle for the breeding and nonbreeding periods 
 zenith_twl <- data.frame(Date = twl$Twilight) %>%
-   mutate(zenith = case_when(Date < fall.equi ~ zenith,
-                             Date > fall.equi ~ zenith_sd))
+   mutate(zenith = case_when(Date < fall.equi ~ zenith0,
+                             Date > fall.equi ~ zenith0_ad))
 zeniths <- zenith_twl$zenith
+
+#or alternatively adjust the zenith angles calculated from the breeding sites 
+#zenith0_ad <- zenith0 + abs(zenith-zenith_sd)
+#zenith_ad  <- zenith_sd
+
 # Movement model ###############################################################
 
 #this movement model should be based on the estimated migration speed of the blackpoll warbler 
@@ -232,7 +236,7 @@ matplot(0:100, dgamma(0:100, beta[1], beta[2]),
         type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol=0.15)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol=0.18)
 
 x0 <- path$x
 z0 <- trackMidpts(x0)
@@ -281,10 +285,10 @@ earthseaMask <- function(xlim, ylim, n = 2, pacific=FALSE) {
                rasterize(elide(wrld_simpl, shift = c(360, 0)), r, 1, silent = TRUE))
   
   #load polygon of blackpoll's range
-  load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Full_blackpoll_range_polygons.R")
+  load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Birdlife_int_Full_blackpoll_range_polygon.R")
   
   #rasterize the polygon 
-  range.raster <- rasterize(range.poly, mask)
+  range.raster <- rasterize(BLI.range.poly, mask)
   
   #Update the land mask 
   mask <- range.raster * mask
@@ -305,7 +309,7 @@ mask <- earthseaMask(xlim, ylim, n = 4)
 log.prior <- function(p) {
   f <- mask(p)
   #ifelse(is.na(f), log(1), f)  # if f is the relative abundance within a grid square 
-  ifelse(is.na(f), log(1), log(4)) # if f indicates the distribution of the blackpoll warbler 
+  ifelse(is.na(f), log(1), log(2)) # if f indicates the distribution of the blackpoll warbler 
   
 }
 
@@ -350,7 +354,7 @@ z.proposal <- mvnorm(S = diag(c(0.005, 0.005)), n = nrow(twl) - 1)
 # Fit multiple runs to tune the proposals
 for (k in 1:3) {
   fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = chainLast(fit$x), 
-                           z0 = chainLast(fit$z), iters = 300, thin = 20)
+                           z0 = chainLast(fit$z), iters = 600, thin = 20)
   
   x.proposal <- mvnorm(chainCov(fit$x), s = 0.2)
   z.proposal <- mvnorm(chainCov(fit$z), s = 0.2)
@@ -373,6 +377,14 @@ fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = chainLast(fit$x),
 sm <- locationSummary(fit$z, time=fit$model$time)
 head(sm)
 
+#Save the output of the estelle model 
+#save(sm, file = paste0(dir,"/Pre_analysis_V8757_055_SGAT_estelle_summary.csv"))
+#save(fit, file = paste0(dir,"/Pre_analysis_V8757_055_SGAT_estelle_fit.R"))
+
+#load the output of the estelle model 
+#load(paste0(dir,"/Pre_analysis_V8757_055_SGAT_estelle_summary.csv"))
+#load(paste0(dir,"/Pre_analysis_V8757_055_SGAT_estelle_fit.R"))
+
 # open jpeg
 jpeg(paste0(dir, "/V8757_055__Estelle_path.png"), width = 1024 , height = 990)
 
@@ -390,7 +402,7 @@ plot(wrld_simpl, xlim=xlim, ylim=ylim,add = T, bg = adjustcolor("black",alpha=0.
 
 #plot location track. Locations in blue occured during the fall equinox 
 lines(sm[,"Lon.50%"], sm[,"Lat.50%"], 
-      col = ifelse(sm$Time1 > spring.equi - days(10) & sm$Time1 < spring.equi + days(10), adjustcolor("blue", alpha.f = 0.6), adjustcolor("firebrick", alpha.f = 0.6)),
+      col = ifelse(sm$Time1 > spring.equi - days(15) & sm$Time1 < spring.equi + days(15), adjustcolor("blue", alpha.f = 0.6), adjustcolor("firebrick", alpha.f = 0.6)),
       type = "o", pch = 16)
 
 #close jpeg
@@ -420,9 +432,46 @@ abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
 #close jpeg
 dev.off()
 
-################################################################################
+
+# Identify stopover areas using median longitude and latitude
+sm <- sm %>% mutate(stationary = ifelse(abs(lead(Lon.mean) - Lon.mean) < 2 & abs(lead(Lat.mean) - Lat.mean) < 2, 1, 0)) 
+
+par(mfrow=c(2,1))
+
+plot(sm$Time1, sm$"Lon.50%", ylab = "Longitude", xlab = "", yaxt = "n", type = "n", ylim = c(min(sm$Lon.mean) - 10, max(sm$Lon.mean) + 10))
+axis(2, las = 2)
+polygon(x=c(sm$Time1,rev(sm$Time1)), y=c(sm$`Lon.2.5%`,rev(sm$`Lon.97.5%`)), border="gray", col="gray")
+lines(sm$Time1,sm$"Lon.50%", lwd = 2)
+abline(v = fall.equi, lwd = 2, lty = 2, col = "orange")
+abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
+points(sm$Time1, sm$"Lon.50%", col = ifelse(sm$stationary == 1, "blue", "red"), cex = 1.2)
+grid()
+
+plot(sm$Time1,sm$"Lat.50%", type="n", ylab = "Latitude", xlab = "", yaxt = "n", ylim = c(min(sm$Lat.mean) - 10, max(sm$Lat.mean) + 10))
+axis(2, las = 2)
+polygon(x=c(sm$Time1,rev(sm$Time1)), y=c(sm$`Lat.2.5%`,rev(sm$`Lat.97.5%`)), border="gray", col="gray")
+lines(sm$Time1, sm$"Lat.50%", lwd = 2)
+abline(v = fall.equi, lwd = 2, lty = 2, col = "orange")
+abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
+points(sm$Time1, sm$"Lat.50%", col = ifelse(sm$stationary == 1, "blue", "red"), cex = 1.2)
+grid()
+
+par(mfrow=c(1,1))
+# empty raster of the extent
+r <- raster(nrows = 2 * diff(ylim), ncols = 2 * diff(xlim), xmn = xlim[1]-5,
+            xmx = xlim[2]+5, ymn = ylim[1]-5, ymx = ylim[2]+5, crs = proj4string(wrld_simpl))
+
+s <- slices(type = "intermediate", breaks = "week", mcmc = fit, grid = r)
+sk <- slice(s, sliceIndices(s))
+
+plot(sk, useRaster = F,col = rev(viridis::viridis(50)))
+plot(wrld_simpl, xlim=xlim, ylim=ylim,add = T, bg = adjustcolor("black",alpha=0.1))
+
+lines(sm[,"Lon.50%"], sm[,"Lat.50%"], 
+      col = ifelse(sm$stationary == 1, "blue", "red"),
+      type = "o", pch = 16)
+
 #SGAT Groupe model analysis ####################################################
-################################################################################
 
 # group twilight times were birds were stationary 
 geo_twl <- export2GeoLight(twl)
@@ -433,7 +482,7 @@ geo_twl <- export2GeoLight(twl)
 cL <- changeLight(twl=geo_twl, quantile=0.86, summary = F, days = 2, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = 500)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = 800)
 
 #back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 
@@ -511,10 +560,10 @@ earthseaMask <- function(xlim, ylim, n = 2, pacific=FALSE, index) {
              rasterize(elide(wrld_simpl,shift = c(360, 0)), r, 1, silent = TRUE))
   
   #load polygon of blackpoll's range
-  load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Full_blackpoll_range_polygons.R")
+  load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Birdlife_int_Full_blackpoll_range_polygon.R")
   
   #rasterize the polygon 
-  range.raster <- rasterize(range.poly, rs)
+  range.raster <- rasterize(BLI.range.poly, rs)
   
   #Update the stationary mask 
   rs <- range.raster * rs
@@ -545,7 +594,7 @@ index <- ifelse(stationary, 1, 2)
 # i <- dtsm[,1:2]
 # logp(i)
 
-#dtx0$index <- index
+# dtx0$index <- index
 
 #logp(dtx0[,1:2])
 ############################
@@ -556,7 +605,7 @@ mask <- earthseaMask(xlim, ylim, n = 10, index=index)
 ## Define the log prior for x and z
 logp <- function(p) {
   f <- mask(p)
-  ifelse(is.na(f), -1000, log(2))
+  ifelse(is.na(f), -1000, log(5))
 }
 
 # Define the Estelle model ####################################################
@@ -570,7 +619,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                x0 = x0, # median point for each greoup (defined by twl$group)
                                z0 = z0, # middle points between the x0 points
                                zenith = zenith0,
-                               logp.x = logp,# land sea mask
+                               logp.x = logp,#land sea mask
                                fixedx = fixedx)
 
 
@@ -626,9 +675,15 @@ fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = chainLast(fit$x),
 # sm <- locationSummary(fit$x, time=fit$model$time)
 sm <- SGAT2Movebank(fit$x, time = twl$Twilight, group = twl$group)
 
+#Save the output of the group model 
+#save(sm, file = paste0(dir,"/Pre_analysis_8296_005_SGAT_GroupedThreshold_summary.csv"))
+#save(fit, file = paste0(dir,"/Pre_analysis_8296_005_SGAT_GroupedThreshold_fit.R"))
+
 #create a plot of the stationary locations #####################################
 colours <- c("black",colorRampPalette(c("blue","yellow","red"))(max(twl.rev$Site)))
 data(wrld_simpl)
+
+par(mfrow=c(1,1))
 
 # empty raster of the extent
 r <- raster(nrows = 2 * diff(ylim), ncols = 2 * diff(xlim), xmn = xlim[1]-5,
@@ -643,7 +698,7 @@ plot(wrld_simpl, xlim=xlim, ylim=ylim,add = T, bg = adjustcolor("black",alpha=0.
 with(sm[sitenum>0,], arrows(`Lon.50.`, `Lat.2.5.`, `Lon.50.`, `Lat.97.5.`, length = 0, lwd = 2.5, col = "firebrick"))
 with(sm[sitenum>0,], arrows(`Lon.2.5.`, `Lat.50.`, `Lon.97.5.`, `Lat.50.`, length = 0, lwd = 2.5, col = "firebrick"))
 lines(sm[,"Lon.50."], sm[,"Lat.50."], col = adjustcolor("black", alpha = 0.6), lwd = 2)
-points(sm[,"Lon.50."], sm[,"Lat.50."], col = ifelse(sm$StartTime > fall.equi - days(10) & sm$StartTime < fall.equi + days(10), "blue", "darkorchid4"), lwd = 2)
+points(sm[,"Lon.50."], sm[,"Lat.50."], col = ifelse(sm$StartTime > fall.equi - days(21) & sm$StartTime < fall.equi + days(21), "blue", "darkorchid4"), lwd = 2)
 
 
 points(sm[,"Lon.50."], sm[,"Lat.50."], pch=21, bg=colours[sitenum+1], 
@@ -654,6 +709,23 @@ text(sm[,"Lon.50."], sm[,"Lat.50."], ifelse(sitenum>0, as.integer(((sm$EndTime -
 
 #Show dates
 #text(sm[,"Lon.50."], sm[,"Lat.50."], ifelse(sitenum>0, as.character(sm$StartTime), ""), col="red", pos = 1) 
+
+#plot of longitude and latitude
+par(mfrow=c(2,1))
+
+plot(sm$StartTime, sm$"Lon.50.", ylab = "Longitude", xlab = "", yaxt = "n", type = "n", ylim = c(min(sm$Lon.50.) - 10, max(sm$Lon.50.) + 10))
+axis(2, las = 2)
+polygon(x=c(sm$StartTime,rev(sm$StartTime)), y=c(sm$`Lon.2.5.`,rev(sm$`Lon.97.5.`)), border="gray", col="gray")
+lines(sm$StartTim,sm$"Lon.50.", lwd = 2)
+abline(v = fall.equi, lwd = 2, lty = 2, col = "orange")
+abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
+
+plot(sm$StartTime, sm$"Lat.50.", ylab = "Latitude", xlab = "", yaxt = "n", type = "n", ylim = c(min(sm$Lat.50.) - 10, max(sm$Lat.50.) + 10))
+axis(2, las = 2)
+polygon(x=c(sm$StartTime,rev(sm$StartTime)), y=c(sm$`Lat.2.5.`,rev(sm$`Lat.97.5.`)), border="gray", col="gray")
+lines(sm$StartTim,sm$"Lat.50.", lwd = 2)
+abline(v = fall.equi, lwd = 2, lty = 2, col = "orange")
+abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
 
 ################################################################################
 # FLIGHTR ANALYSIS #############################################################

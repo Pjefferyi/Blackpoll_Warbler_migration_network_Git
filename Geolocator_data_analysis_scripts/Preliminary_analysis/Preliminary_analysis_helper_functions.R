@@ -54,7 +54,7 @@ thresholdOverLight <- function(data, threshold, span = c()){
 # of every day and night, respectively. 
 
 shiftSpan <- function(twl, lig, period, est.zenith, dep.lon, dep.lat){
-
+  
   # Get a subset of the observed twilights 
   ob_twl_sub <- subset(twl, twl$Twilight > period[1] & twl$Twilight < period[2])
   

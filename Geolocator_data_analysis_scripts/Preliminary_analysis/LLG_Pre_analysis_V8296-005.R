@@ -46,9 +46,7 @@ deploy.end <- anytime("2020-07-12 17:55:00", asUTC = T, tz = "GMT")
 fall.equi <- anytime("2019-09-23", asUTC = T, tz = "GMT")
 spring.equi <- anytime("2020-03-19", asUTC = T, tz = "GMT")
 
-###############################################################################
 #DATA EXTRACTION ##############################################################
-###############################################################################
 
 # import lig data 
 lig <- readLig(paste0(dir,"/ML6740 V8296 005 reconstructed_000.lig"), skip = 1)
@@ -59,9 +57,7 @@ lig <- lig[(lig$Date > deploy.start),]
 #adjust time 
 lig$Date <- lig$Date - 1*60*60
 
-###############################################################################
 #TWILIGHT ANNOTATION ##########################################################
-###############################################################################
 
 threshold <- 1.5 
 
@@ -147,6 +143,32 @@ zenith0 <- calib[2]
 
 alpha <- calib[3:4]
 
+#convert to geolight format
+geo_twl <- export2GeoLight(twl)
+
+# Alternative calibration #######################################################
+
+# this is just to find places where birds have been for a long time, would not use these parameters for stopover identification, detailed can be found in grouped model section
+cL <- changeLight(twl=geo_twl, quantile=0.8, summary = F, days = 10, plot = T)
+# merge site helps to put sites together that are separated by single outliers.
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
+
+#specify which site is the stationary one
+site           <- mS$site[mS$site>0] # get rid of movement periods
+stationarySite <- which(table(site) == max(table(site))) # find the site where bird is the longest
+
+#find the dates that the bird arrives and leaves this stationary site
+start <- min(which(mS$site == stationarySite))
+end   <- max(which(mS$site == stationarySite))
+
+(zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
+
+# Vector with different zentih angle for the breeding and nonbreeding periods 
+zenith_twl <- data.frame(Date = twl$Twilight) %>%
+  mutate(zenith = case_when(Date < fall.equi ~ zenith0,
+                            Date > fall.equi ~ zenith_sd))
+zeniths <- zenith_twl$zenith
+
 # Movement model ###############################################################
 
 #this movement model should be based on the estimated migration speed of the blackpoll warbler 
@@ -202,10 +224,12 @@ earthseaMask <- function(xlim, ylim, n = 2, pacific=FALSE) {
                rasterize(elide(wrld_simpl, shift = c(360, 0)), r, 1, silent = TRUE))
   
   #load polygon of blackpoll's range
-  load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Full_blackpoll_range_polygons.R")
+  load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Birdlife_int_Full_blackpoll_range_polygon.R")
+  #load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_Full_blackpoll_range_polygon.R")
   
   #rasterize the polygon 
-  range.raster <- rasterize(range.poly, mask)
+  range.raster <- rasterize(BLI.range.poly, mask)
+  #range.raster <- rasterize(range.poly, mask)
   
   #Update the land mask 
   mask <- range.raster * mask
@@ -355,12 +379,17 @@ model <- thresholdModel(twilight = twl$Twilight,
                         zenith = zenith0,
                         fixedx = fixedx)
 
-################################################################################
+
 #SGAT Groupe model analysis ####################################################
-################################################################################
 
 # group twilight times were birds were stationary 
 geo_twl <- export2GeoLight(twl)
+
+# Vector with different zentih angle for the breeding and nonbreeding periods 
+zenith_twl2 <- data.frame(Date = geo_twl$tFirst) %>%
+  mutate(zenith = case_when(Date < fall.equi ~ zenith0,
+                            Date > fall.equi ~ zenith_sd))
+zeniths2 <- zenith_twl2$zenith
 
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
@@ -368,7 +397,7 @@ geo_twl <- export2GeoLight(twl)
 cL <- changeLight(twl=geo_twl, quantile=0.86, summary = F, days = 2, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = 500)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths2, distThreshold = 500)
 
 #back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 
@@ -446,10 +475,13 @@ earthseaMask <- function(xlim, ylim, n = 2, pacific=FALSE, index) {
              rasterize(elide(wrld_simpl,shift = c(360, 0)), r, 1, silent = TRUE))
   
   #load polygon of blackpoll's range
-  load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Full_blackpoll_range_polygons.R")
+  load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Birdlife_int_Full_blackpoll_range_polygon.R")
+  #load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_Full_blackpoll_range_polygon.R")
+  
   
   #rasterize the polygon 
-  range.raster <- rasterize(range.poly, rs)
+  range.raster <- rasterize(BLI.range.poly, rs)
+  #range.raster <- rasterize(range.poly, rs)
   
   #Update the stationary mask 
   rs <- range.raster * rs
@@ -493,7 +525,6 @@ logp <- function(p) {
 }
 
 # Define the Estelle model ####################################################
-
 model <- groupedThresholdModel(twl$Twilight,
                                twl$Rise,
                                group = twl$group, #This is the group vector for each time the bird was at a point
@@ -502,7 +533,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                beta =  beta,
                                x0 = x0, # median point for each greoup (defined by twl$group)
                                z0 = z0, # middle points between the x0 points
-                               zenith = zenith0,
+                               zenith = zeniths2,
                                logp.x = logp,# land sea mask
                                fixedx = fixedx)
 
@@ -529,7 +560,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                x0 = x0, z0 = z0,
                                logp.x = logp,
                                missing=twl$Missing,
-                               zenith = zenith0,
+                               zenith = zeniths2,
                                fixedx = fixedx)
 
 for (k in 1:3) {
@@ -593,7 +624,6 @@ text(sm[,"Lon.50."], sm[,"Lat.50."], ifelse(sitenum>0, as.integer(((sm$EndTime -
 
 #Show dates
 #text(sm[,"Lon.50."], sm[,"Lat.50."], ifelse(sitenum>0, as.character(sm$StartTime), ""), col="red", pos = 1) 
-
 
 
 ################################################################################

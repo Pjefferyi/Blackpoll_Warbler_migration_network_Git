@@ -84,9 +84,9 @@ range.mask1 <- abundance_resamp * land.mask
 EB.data <- load_ranges(get_species_path("bkpwar", ebird.dir), resolution = "mr", smoothed = T)
 
 #Dissolve the polygons 
-EB.range <- EB.data %>%
-  group_by("species_code") %>% 
-  dplyr::summarise()
+#EB.range <- EB.data %>%
+#  group_by("species_code") %>% 
+#  dplyr::summarise()
 
 # this needs work 
 
@@ -98,10 +98,19 @@ EB.range <- EB.data %>%
 BLI.data <- st_read("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Birdlife_international_species_distribution/SppDataRequest.shp")
 
 #Dissolve the polygons 
-BLI.range <- BLI.data %>%
+BLI.range.poly <- BLI.data %>%
   group_by("sci_name") %>% 
   dplyr::summarise()
 
+#Save the polygon
+save(BLI.range.poly, file = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Birdlife_int_Full_blackpoll_range_polygon.R")
+
+#Plot the range polygon 
 plot(BLI.range)
 
+# convert the range to a raster
+BI.mask <- rasterize(BLI.range, land.mask)
+
+# plot the mask
+plot(BI.mask)
 

@@ -51,9 +51,7 @@ spring.equi <- anytime("2013-03-19", asUTC = T, tz = "GMT")
 #Find number of cores available for analysis
 Threads= detectCores()-1
 
-###############################################################################
-#DATA EXTRACTION ##############################################################
-###############################################################################
+#DATA EXTRACTION AND PREPARATION FOR TWILIGHT ANNOTATION#######################
 
 # import lig data 
 lig <- readLig(paste0(dir,"/ML6740 V8757 096 reconstructed_000.lig"), skip = 1)
@@ -61,21 +59,55 @@ lig <- readLig(paste0(dir,"/ML6740 V8757 096 reconstructed_000.lig"), skip = 1)
 #remove rows before and after deployment time 
 lig <- lig[(lig$Date > deploy.start),]
 
-#adjust time 
-lig$Date <- lig$Date + 4*60*60
-
-###############################################################################
-#TWILIGHT ANNOTATION ##########################################################
-###############################################################################
-
+#Threshold light level 
 threshold <- 1.5 
 
 # visualize threshold over light levels  
-thresholdOverLight(lig, threshold, span =c(45000, 50000))
+thresholdOverLight(lig, threshold, span =c(0, 25000))
+
+
+# FIND TIME SHIFT ##############################################################
+
+#This geolocator has a a time shift visible on this plot
+lightImage( tagdata = lig,
+            offset = offset,     
+            zlim = c(0, 64))
+
+tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
+                       offset = offset, lwd = 3, col = adjustcolor("orange", alpha.f = 0.5))
+
+# we will do an initial twilight annotation to find identify the time interval
+# by which we need to shift time
+# There should be not need to edit, delete or insert twilights for this
+# twl_in <- preprocessLight(lig, 
+#                        threshold = threshold,
+#                        offset = offset, 
+#                        lmax = 64,         # max. light value
+#                        gr.Device = "x11", # MacOS version (and windows)
+#                        dark.min = 60)
+
+#write.csv(twl_in, paste0(dir,"/Pre_analysis_V8757_055_twl_times_initial.csv"))
+twl_in <- read.csv(paste0(dir,"/Pre_analysis_V8757_055_twl_times_initial.csv"))
+twl_in$Twilight <- as.POSIXct(twl_in$Twilight, tz = "UTC")
+
+# Period over which to calculate the time shift. It should be while the bird is 
+# still in the breeding grounds 
+period <- as.POSIXct(c("2019-08-04", "2019-08-10"), tz = "UTC")
+
+# calculate the time shift
+shift <- shiftSpan(twl = twl_in, lig = lig, period = period, est.zenith = 92,
+                   dep.lon = lon.calib,
+                   dep.lat = lat.calib)
+
+# verify the output 
+# shift 
+
+#adjust time 
+lig$Date <- lig$Date - (shift$shift)
+
+#TWILIGHT ANNOTATION ##########################################################
 
 # plot light levels over the deployment period 
-offset <- 12 # adjusts the y-axis to put night (dark shades) in the middle
-
 # open jpeg
 jpeg(paste0(dir, "/V8757-096_light_plot.png"), width = 1024, height = 990)
 
@@ -112,7 +144,6 @@ tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
 
 # Save the twilight times 
 #write.csv(twl, paste0(dir,"/Pre_analysis_V8757_096_twl_times.csv"))
-
 
 ###############################################################################
 # SGAT ANALYSIS ###############################################################
@@ -230,10 +261,12 @@ earthseaMask <- function(xlim, ylim, n = 2, pacific=FALSE) {
                rasterize(elide(wrld_simpl, shift = c(360, 0)), r, 1, silent = TRUE))
   
   #load polygon of blackpoll's range
-  load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Full_blackpoll_range_polygons.R")
+  #load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_Full_blackpoll_range_polygon.R.R")
+  load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Birdlife_int_Full_blackpoll_range_polygon.R")
   
   #rasterize the polygon 
-  range.raster <- rasterize(range.poly, mask)
+  #range.raster <- rasterize(range.poly, mask)
+  range.raster <- rasterize(BLI.range.poly, mask)
   
   #Update the land mask 
   mask <- range.raster * mask
@@ -242,7 +275,6 @@ earthseaMask <- function(xlim, ylim, n = 2, pacific=FALSE) {
   ybin = seq(ymin(mask),ymax(mask),length=nrow(mask)+1)
   
   function(p) mask[cbind(length(ybin) -.bincode(p[,2],ybin),.bincode(p[,1],xbin))]
-  #function(p) mask[cbind(.bincode(p[,2],ybin),.bincode(p[,1],xbin))]
   
 }
 
