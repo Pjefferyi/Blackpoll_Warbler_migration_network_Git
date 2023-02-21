@@ -89,7 +89,7 @@ tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
 #                        dark.min = 60)
 
 #write.csv(twl_in, paste0(dir,"/Pre_analysis_V8757_055_twl_times_initial.csv"))
-twl_in <- read.csv(paste0(dir,"/Pre_analysis_V8757_055_twl_times_initial.csv"))
+#twl_in <- read.csv(paste0(dir,"/Pre_analysis_V8757_055_twl_times_initial.csv"))
 twl_in$Twilight <- as.POSIXct(twl_in$Twilight, tz = "UTC")
 
 # Period over which to calculate the time shift. It should be while the bird is 
@@ -197,11 +197,11 @@ end = max(which(as.Date(twl$Twilight) == endDate))
 
 (zenith_sd <- findHEZenith(twl, tol=0.08, range=c(start,end)))
 
-# this zenith angle provides plausible location estimates in the non-breeding grounds but not in the breeding grounds
-# the method based on geolight yields the same Zenith angle as above. 
-
+# # this zenith angle provides plausible location estimates in the non-breeding grounds but not in the breeding grounds
+# # the method based on geolight yields the same Zenith angle as above.
+# 
 # #convert to geolight format
-# geo_twl <- export2GeoLight(twl)
+#  geo_twl <- export2GeoLight(twl)
 # 
 # # this is just to find places where birds have been for a long time, would not use these parameters for stopover identification, detailed can be found in grouped model section
 # cL <- changeLight(twl=geo_twl, quantile=0.8, summary = F, days = 10, plot = T)
@@ -216,7 +216,12 @@ end = max(which(as.Date(twl$Twilight) == endDate))
 # start <- min(which(mS$site == stationarySite))
 # end   <- max(which(mS$site == stationarySite))
 # 
-# (zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
+# (zenith_sd <- findHEZenith(twl, tol=0.08, range=c(start,end)))
+
+
+# adjust the zenith angles calculated from the breeding sites 
+zenith0_ad <- zenith0 + abs(zenith - zenith_sd)
+zenith_ad  <- zenith_sd
 
 # use a different zentih angle for the breeding and nonbreeding periods 
 zenith_twl <- data.frame(Date = twl$Twilight) %>%
@@ -224,9 +229,6 @@ zenith_twl <- data.frame(Date = twl$Twilight) %>%
                              Date > fall.equi ~ zenith0_ad))
 zeniths <- zenith_twl$zenith
 
-#or alternatively adjust the zenith angles calculated from the breeding sites 
-#zenith0_ad <- zenith0 + abs(zenith-zenith_sd)
-#zenith_ad  <- zenith_sd
 
 # Movement model ###############################################################
 
@@ -432,7 +434,6 @@ abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
 #close jpeg
 dev.off()
 
-
 # Identify stopover areas using median longitude and latitude
 sm <- sm %>% mutate(stationary = ifelse(abs(lead(Lon.mean) - Lon.mean) < 2 & abs(lead(Lat.mean) - Lat.mean) < 2, 1, 0)) 
 
@@ -471,7 +472,7 @@ lines(sm[,"Lon.50%"], sm[,"Lat.50%"],
       col = ifelse(sm$stationary == 1, "blue", "red"),
       type = "o", pch = 16)
 
-#SGAT Groupe model analysis ####################################################
+#SGAT Group model analysis ####################################################
 
 # group twilight times were birds were stationary 
 geo_twl <- export2GeoLight(twl)
@@ -479,10 +480,10 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-cL <- changeLight(twl=geo_twl, quantile=0.86, summary = F, days = 2, plot = T)
+cL <- changeLight(twl=geo_twl, quantile=0.86, summary = F, days = 3, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = 800)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = 500)
 
 #back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 
@@ -595,7 +596,6 @@ index <- ifelse(stationary, 1, 2)
 # logp(i)
 
 # dtx0$index <- index
-
 #logp(dtx0[,1:2])
 ############################
 
@@ -676,8 +676,8 @@ fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = chainLast(fit$x),
 sm <- SGAT2Movebank(fit$x, time = twl$Twilight, group = twl$group)
 
 #Save the output of the group model 
-#save(sm, file = paste0(dir,"/Pre_analysis_8296_005_SGAT_GroupedThreshold_summary.csv"))
-#save(fit, file = paste0(dir,"/Pre_analysis_8296_005_SGAT_GroupedThreshold_fit.R"))
+#save(sm, file = paste0(dir,"/Pre_analysis_8757_055_SGAT_GroupedThreshold_summary.csv"))
+#save(fit, file = paste0(dir,"/Pre_analysis_8757_055_SGAT_GroupedThreshold_fit.R"))
 
 #create a plot of the stationary locations #####################################
 colours <- c("black",colorRampPalette(c("blue","yellow","red"))(max(twl.rev$Site)))
@@ -720,12 +720,27 @@ lines(sm$StartTim,sm$"Lon.50.", lwd = 2)
 abline(v = fall.equi, lwd = 2, lty = 2, col = "orange")
 abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
 
+#Add points for stopovers 
+points(sm$StartTime, sm$"Lon.50.", pch=21, bg=colours[sitenum+1], 
+       cex = ifelse(sitenum>0, 3, 0), col = "firebrick", lwd = 2.5)
+
+#The text in the symbols indicates the estimated number of days spent at each stopover location 
+text(sm$StartTime, sm$"Lon.50.", ifelse(sitenum>0, as.integer(((sm$EndTime - sm$StartTime)/86400)), ""), col="black") 
+
 plot(sm$StartTime, sm$"Lat.50.", ylab = "Latitude", xlab = "", yaxt = "n", type = "n", ylim = c(min(sm$Lat.50.) - 10, max(sm$Lat.50.) + 10))
 axis(2, las = 2)
 polygon(x=c(sm$StartTime,rev(sm$StartTime)), y=c(sm$`Lat.2.5.`,rev(sm$`Lat.97.5.`)), border="gray", col="gray")
 lines(sm$StartTim,sm$"Lat.50.", lwd = 2)
 abline(v = fall.equi, lwd = 2, lty = 2, col = "orange")
 abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
+
+#Add points for stopovers 
+points(sm$StartTime, sm$"Lat.50.", pch=21, bg=colours[sitenum+1], 
+       cex = ifelse(sitenum>0, 3, 0), col = "firebrick", lwd = 2.5)
+
+#The text in the symbols indicates the estimated number of days spent at each stopover location 
+text(sm$StartTime, sm$"Lat.50.", ifelse(sitenum>0, as.integer(((sm$EndTime - sm$StartTime)/86400)), ""), col="black") 
+
 
 ################################################################################
 # FLIGHTR ANALYSIS #############################################################

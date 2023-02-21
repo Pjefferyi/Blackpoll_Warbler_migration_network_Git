@@ -498,10 +498,13 @@ earthseaMask <- function(xlim, ylim, n = 2, pacific=FALSE, index) {
              rasterize(elide(wrld_simpl,shift = c(360, 0)), r, 1, silent = TRUE))
   
   #load polygon of blackpoll's range
-  load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Full_blackpoll_range_polygons.R")
+  load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Birdlife_int_Full_blackpoll_range_polygon.R")
+  #load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_Full_blackpoll_range_polygon.R")
+  
   
   #rasterize the polygon 
-  range.raster <- rasterize(range.poly, rs)
+  range.raster <- rasterize(BLI.range.poly, rs)
+  #range.raster <- rasterize(range.poly, rs)
   
   #Update the stationary mask 
   rs <- range.raster * rs
@@ -554,7 +557,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                twilight.model = "ModifiedGamma",
                                alpha = alpha,
                                beta =  beta,
-                               x0 = x0, # median point for each greoup (defined by twl$group)
+                               x0 = x0, # median point for each group (defined by twl$group)
                                z0 = z0, # middle points between the x0 points
                                zenith = zeniths,
                                logp.x = logp,# land sea mask

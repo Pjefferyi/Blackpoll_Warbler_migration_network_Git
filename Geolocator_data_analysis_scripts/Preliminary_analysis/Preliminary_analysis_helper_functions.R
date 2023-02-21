@@ -38,7 +38,6 @@ thresholdOverLight <- function(data, threshold, span = c()){
   with(data[span[1]:span[2],], plot(Date, Light, type = "o", pch=16,  col = col, cex = 0.5)) 
   abline(h=threshold, col="orange", lty = 2, lwd = 2)
 }
-################################################################################
 
 
 # shiftSpan ####################################################################
@@ -84,5 +83,5 @@ shiftSpan <- function(twl, lig, period, est.zenith, dep.lon, dep.lat){
               mean_expected_meridian_time = mean(exp_twl_sub$twilight)))
 }
 
-################################################################################
+
 
