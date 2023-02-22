@@ -751,5 +751,56 @@ ggmap::register_google("AIzaSyABANOgjTyVFpOuDOiyPlBL4geijIy6vPo")
 map.FLightR.ggmap(Result_adjusted, zoom=3, save = FALSE)
 
 # find Stationary sites #############################################################
-Summary <-stationary.migration.summary(Result_adjusted, prob.cutoff = 0.2)
+Summary <-stationary.migration.summary(Result_adjusted, prob.cutoff = 0.3)
 view(Summary$Stationary.periods)
+
+
+# Now we want to plot the detected stationary periods on a map
+Summary$Stationary.periods$stopover_duration<-as.numeric(difftime(Summary$Stationary.periods$Departure.Q.50,Summary$Stationary.periods$Arrival.Q.50, units='days'))
+# Now I want to select the periods which were >=2 days and 
+Main_stopovers<-Summary$Stationary.periods[is.na(Summary$Stationary.periods$stopover_duration) | Summary$Stationary.periods$stopover_duration>=2,]
+# delete breeding season
+Main_stopovers<-Main_stopovers[-which(is.na(Main_stopovers$stopover_duration)),]
+
+Coords2plot<-cbind(Result$Results$Quantiles$Medianlat, Result$Results$Quantiles$Medianlon)
+
+for (i in 1:nrow(Summary$Potential_stat_periods)) {
+  Coords2plot[Summary$Potential_stat_periods[i,1]:
+                Summary$Potential_stat_periods[i,2],1] =  
+    Summary$Stationary.periods$Medianlat[i]
+  
+  Coords2plot[Summary$Potential_stat_periods[i,1]:
+                Summary$Potential_stat_periods[i,2],2] =  
+    Summary$Stationary.periods$Medianlon[i]
+}
+Coords2plot<-Coords2plot[!duplicated(Coords2plot),]
+
+#pdf('FLightR_shrike_migration_with_stopovers.pdf', width=6, height=9)
+par(mar=c(0,0,0,0))
+map('worldHires', ylim=c(-20, 60), xlim=c(-120, -50), col=grey(0.7),
+    fill=TRUE, border=grey(0.9), mar=rep(0.5, 4), myborder=0)
+
+lines(Coords2plot[,1]~Coords2plot[,2], col='red', lwd=2)
+points(Coords2plot[,1]~Coords2plot[,2], ,lwd=2, col='red', pch=19)
+
+# Here we assign the colours to represent time of the year
+Seasonal_palette<-grDevices::colorRampPalette(grDevices::hsv(1-((1:365)+(365/4))%%365/365,
+                                                             s=0.8, v=0.8), space="Lab")
+Seasonal_colors<-Seasonal_palette(12)
+
+Main_stopovers$Main_month<-as.numeric(format(Main_stopovers$Arrival.Q.50+
+                                               Main_stopovers$stopover_duration/2, format='%m'))
+
+points(Main_stopovers$Medianlat~Main_stopovers$Medianlon, pch=21, 
+       cex=log(as.numeric(Main_stopovers$stopover_duration)),
+       bg=Seasonal_colors[Main_stopovers$Main_month])
+
+# Now, for each of these points we plot the uncertainties
+# Horizontal
+segments(y0=Main_stopovers$Medianlat, x0=Main_stopovers$FstQu.lon,
+         x1=Main_stopovers$TrdQu.lon, lwd=2)
+# Vertical
+segments(x0=Main_stopovers$Medianlon, y0=Main_stopovers$FstQu.lat,
+         y1=Main_stopovers$TrdQu.lat, lwd=2)
+
+# dev.off()

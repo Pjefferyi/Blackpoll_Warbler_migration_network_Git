@@ -41,6 +41,9 @@ dir <- paste0("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/T
 # time of deployment
 deploy.start <- anytime("2016-06-18", tz = "GMT")
 
+#Equinox time
+fall.equi <- anytime("2016-09-22", tz = "GMT")
+
 #Find number of cores available for analysis
 Threads= detectCores()-1
 
@@ -81,30 +84,39 @@ tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
 dev.off()
 
 #Detect twilight times, for now do not edit twilight times  
-#twl <- preprocessLight(lig, 
+# twl <- preprocessLight(lig,
 #                       threshold = threshold,
-#                       offset = offset, 
+#                       offset = offset,
 #                       lmax = 64,         # max. light value
 #                       gr.Device = "x11", # MacOS version (and windows)
 #                       dark.min = 60)
 
-# Adjust sunset times by 120 second sampling interval
-#twl <- twilightAdjust(twilights = twl, interval = 120)
-
 # Automatically adjust or mark false twilights 
-#twl <- twilightEdit(twilights = twl, 
-#                    window = 6,           
-#                    outlier.mins = 90,    
-#                    stationary.mins = 45, 
+# twl <- twilightEdit(twilights = twl,
+#                    window = 6,
+#                    outlier.mins = 90,
+#                    stationary.mins = 45,
 #                    plot = TRUE)
 
+# Check for duplicate twilight times 
+#twl[duplicated(twl$Twilight),]
+
+# Check that each day is present and that there are no additional days 
+#dates <- seq(date(min(twl$Twilight)), date(max(twl$Twilight)), by = "day")
+#date(twl$Twilight) == rep(dates, each = 2)
+#date(twl$Twilight0) == rep(dates, each = 2)
+
+# A shift is needed at 2016-09-7
+#date(twl[107:nrow(twl),]$Twilight) <- rep(seq(date(twl$Twilight[108]), date(max(twl$Twilight)), by = "day"), each  = 2)
+#date(twl[107:nrow(twl),]$Twilight0) <- rep(seq(date(twl$Twilight0[108]), date(max(twl$Twilight)), by = "day"), each  = 2)
+
 # Visualize light and twilight time-series
-#lightImage(lig, offset = 19)
-#tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
-#              col = ifelse(twl$Rise, "dodgerblue", "firebrick"))
+lightImage(lig, offset = 19)
+tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
+             col = ifelse(twl$Rise, "dodgerblue", "firebrick"))
 
 # Save the twilight times 
-#write.csv(twl, paste0(dir,"/Pre_analysisis_ML6440_V3254_011_twl_times.csv"))
+# write.csv(twl, paste0(dir,"/Pre_analysis_V3254_011_twl_times.csv"))
 
 ###############################################################################
 # SGAT ANALYSIS ###############################################################
@@ -138,14 +150,6 @@ calib <- thresholdCalibration(d_calib$Twilight, d_calib$Rise, lon.calib, lat.cal
 
 # Alternative calibration approach =============================================
 
-startDate <- "2016-11-01"
-endDate   <- "2017-01-12"
-
-start = min(which(as.Date(twl$Twilight) == startDate))
-end = max(which(as.Date(twl$Twilight) == endDate))
-
-(zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
-
 #convert to geolight format
 geo_twl <- export2GeoLight(twl)
 
@@ -163,6 +167,10 @@ start <- min(which(mS$site == stationarySite))
 end   <- max(which(mS$site == stationarySite))
 
 (zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
+
+# adjust the zenith angles calculated from the breeding sites 
+zenith0_ad <- zenith0 + abs(zenith - zenith_sd)
+zenith_ad  <- zenith_sd
 
 # Movement model ###############################################################
 
@@ -193,12 +201,10 @@ dev.off()
 
 # Define known locations #######################################################
 
-#we set the location of geolocator deployment and recovery as fixed locations for the MCMC sampler 
+#we set the location of geolocator deploymentlocation for the MCMC sampler (there is no recovery location) 
 
 fixedx <- rep(F, nrow(x0))
 fixedx[1:2] <- T # first two location estimates
-
-fixedx[(nrow(x0) - 1):nrow(x0)] <- T # last two location estimates
 
 x0[fixedx, 1] <- lon.calib
 x0[fixedx, 2] <- lat.calib
@@ -247,7 +253,7 @@ mask <- earthseaMask(xlim, ylim, n = 4)
 log.prior <- function(p) {
   f <- mask(p)
   #ifelse(is.na(f), log(1), f)  # if f is the relative abundance within a grid square 
-  ifelse(is.na(f), log(1), log(5)) # if f indicates the distribution of the blackpoll warbler 
+  ifelse(is.na(f), log(1), log(2)) # if f indicates the distribution of the blackpoll warbler 
   
 }
 
@@ -259,10 +265,10 @@ model <- thresholdModel(twilight = twl$Twilight,
                         twilight.model = "ModifiedGamma",
                         alpha = alpha,
                         beta = beta,
-                        logp.x = log.prior, logp.z = log.prior, 
+                        #logp.x = log.prior, logp.z = log.prior, 
                         x0 = x0,
                         z0 = z0,
-                        zenith = zeniths,
+                        zenith = zenith0_ad,
                         fixedx = fixedx)
 
 #Define the error distribution around each location 
@@ -280,10 +286,10 @@ model <- thresholdModel(twilight = twl$Twilight,
                         twilight.model = "ModifiedGamma",
                         alpha = alpha,
                         beta = beta,
-                        logp.x = log.prior, logp.z = log.prior, 
+                        #logp.x = log.prior, logp.z = log.prior, 
                         x0 = x0,
                         z0 = z0,
-                        zenith = zeniths,
+                        zenith = zenith0_ad,
                         fixedx = fixedx)
 
 x.proposal <- mvnorm(S = diag(c(0.005, 0.005)), n = nrow(twl))
@@ -369,6 +375,45 @@ abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
 
 #close jpeg
 dev.off()
+
+# Identify stopover areas using median longitude and latitude
+sm <- sm %>% mutate(stationary = ifelse(abs(lead(Lon.mean) - Lon.mean) < 2 & abs(lead(Lat.mean) - Lat.mean) < 2, 1, 0)) 
+
+par(mfrow=c(2,1))
+
+plot(sm$Time1, sm$"Lon.50%", ylab = "Longitude", xlab = "", yaxt = "n", type = "n", ylim = c(min(sm$Lon.mean) - 10, max(sm$Lon.mean) + 10))
+axis(2, las = 2)
+polygon(x=c(sm$Time1,rev(sm$Time1)), y=c(sm$`Lon.2.5%`,rev(sm$`Lon.97.5%`)), border="gray", col="gray")
+lines(sm$Time1,sm$"Lon.50%", lwd = 2)
+abline(v = fall.equi, lwd = 2, lty = 2, col = "orange")
+abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
+points(sm$Time1, sm$"Lon.50%", col = ifelse(sm$stationary == 1, "blue", "red"), cex = 1.2)
+grid()
+
+plot(sm$Time1,sm$"Lat.50%", type="n", ylab = "Latitude", xlab = "", yaxt = "n", ylim = c(min(sm$Lat.mean) - 10, max(sm$Lat.mean) + 10))
+axis(2, las = 2)
+polygon(x=c(sm$Time1,rev(sm$Time1)), y=c(sm$`Lat.2.5%`,rev(sm$`Lat.97.5%`)), border="gray", col="gray")
+lines(sm$Time1, sm$"Lat.50%", lwd = 2)
+abline(v = fall.equi, lwd = 2, lty = 2, col = "orange")
+abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
+points(sm$Time1, sm$"Lat.50%", col = ifelse(sm$stationary == 1, "blue", "red"), cex = 1.2)
+grid()
+
+par(mfrow=c(1,1))
+# empty raster of the extent
+r <- raster(nrows = 2 * diff(ylim), ncols = 2 * diff(xlim), xmn = xlim[1]-5,
+            xmx = xlim[2]+5, ymn = ylim[1]-5, ymx = ylim[2]+5, crs = proj4string(wrld_simpl))
+
+s <- slices(type = "intermediate", breaks = "week", mcmc = fit, grid = r)
+sk <- slice(s, sliceIndices(s))
+
+plot(sk, useRaster = F,col = rev(viridis::viridis(50)))
+plot(wrld_simpl, xlim=xlim, ylim=ylim,add = T, bg = adjustcolor("black",alpha=0.1))
+
+lines(sm[,"Lon.50%"], sm[,"Lat.50%"], 
+      col = ifelse(sm$stationary == 1, "blue", "red"),
+      type = "o", pch = 16)
+
 
 ################################################################################
 #SGAT Groupe model analysis ####################################################
@@ -463,10 +508,13 @@ earthseaMask <- function(xlim, ylim, n = 2, pacific=FALSE, index) {
              rasterize(elide(wrld_simpl,shift = c(360, 0)), r, 1, silent = TRUE))
   
   #load polygon of blackpoll's range
-  load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Full_blackpoll_range_polygons.R")
+  load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Birdlife_int_Full_blackpoll_range_polygon.R")
+  #load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_Full_blackpoll_range_polygon.R")
+  
   
   #rasterize the polygon 
-  range.raster <- rasterize(range.poly, rs)
+  range.raster <- rasterize(BLI.range.poly, rs)
+  #range.raster <- rasterize(range.poly, rs)
   
   #Update the stationary mask 
   rs <- range.raster * rs
@@ -476,6 +524,7 @@ earthseaMask <- function(xlim, ylim, n = 2, pacific=FALSE, index) {
   
   # stack the movement and stationary rasters on top of each other
   mask = stack(rs, rm)
+  
   
   xbin = seq(xmin(mask),xmax(mask),length=ncol(mask)+1)
   ybin = seq(ymin(mask),ymax(mask),length=nrow(mask)+1)
@@ -519,7 +568,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                beta =  beta,
                                x0 = x0, # median point for each greoup (defined by twl$group)
                                z0 = z0, # middle points between the x0 points
-                               zenith = zenith0,
+                               zenith = zenith0_ad,
                                logp.x = logp,# land sea mask
                                fixedx = fixedx)
 
@@ -546,7 +595,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                x0 = x0, z0 = z0,
                                logp.x = logp,
                                missing=twl$Missing,
-                               zenith = zenith0,
+                               zenith = zenith0_ad,
                                fixedx = fixedx)
 
 for (k in 1:3) {
@@ -578,7 +627,7 @@ sm <- SGAT2Movebank(fit$x, time = twl$Twilight, group = twl$group)
 
 #Save the output of the model 
 #save(sm, file = paste0(dir,"/Pre_analysis_3254_011_SGAT_GroupedThreshold_summary.csv"))
-#save(fit, file = paste0(dir,"/Pre_analysis_3254_014_SGAT_GroupedThreshold_fit.R"))
+#save(fit, file = paste0(dir,"/Pre_analysis_3254_011_SGAT_GroupedThreshold_fit.R"))
 
 #create a plot of the stationary locations #####################################
 colours <- c("black",colorRampPalette(c("blue","yellow","red"))(max(twl.rev$Site)))
@@ -597,7 +646,7 @@ plot(wrld_simpl, xlim=xlim, ylim=ylim,add = T, bg = adjustcolor("black",alpha=0.
 with(sm[sitenum>0,], arrows(`Lon.50.`, `Lat.2.5.`, `Lon.50.`, `Lat.97.5.`, length = 0, lwd = 2.5, col = "firebrick"))
 with(sm[sitenum>0,], arrows(`Lon.2.5.`, `Lat.50.`, `Lon.97.5.`, `Lat.50.`, length = 0, lwd = 2.5, col = "firebrick"))
 lines(sm[,"Lon.50."], sm[,"Lat.50."], col = adjustcolor("black", alpha = 0.6), lwd = 2)
-points(sm[,"Lon.50."], sm[,"Lat.50."], col = ifelse(sm$StartTime > fall.equi - days(10) & sm$StartTime < fall.equi + days(10), "blue", "darkorchid4"), lwd = 2)
+points(sm[,"Lon.50."], sm[,"Lat.50."], col = ifelse(sm$StartTime > fall.equi - days(21) & sm$StartTime < fall.equi + days(21), "blue", "darkorchid4"), lwd = 2)
 
 points(sm[,"Lon.50."], sm[,"Lat.50."], pch=21, bg=colours[sitenum+1], 
        cex = ifelse(sitenum>0, 3, 0), col = "firebrick", lwd = 2.5)

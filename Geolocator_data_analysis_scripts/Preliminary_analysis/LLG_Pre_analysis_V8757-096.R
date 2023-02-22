@@ -79,20 +79,30 @@ tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
 # we will do an initial twilight annotation to find identify the time interval
 # by which we need to shift time
 # There should be not need to edit, delete or insert twilights for this
-# twl_in <- preprocessLight(lig, 
+# twl_in <- preprocessLight(lig,
 #                        threshold = threshold,
-#                        offset = offset, 
+#                        offset = offset,
 #                        lmax = 64,         # max. light value
 #                        gr.Device = "x11", # MacOS version (and windows)
 #                        dark.min = 60)
 
-#write.csv(twl_in, paste0(dir,"/Pre_analysis_V8757_055_twl_times_initial.csv"))
-twl_in <- read.csv(paste0(dir,"/Pre_analysis_V8757_055_twl_times_initial.csv"))
+#write.csv(twl_in, paste0(dir,"/Pre_analysis_V8757_096_twl_times_initial.csv"))
+twl_in <- read.csv(paste0(dir,"/Pre_analysis_V8757_096_twl_times_initial.csv"))
 twl_in$Twilight <- as.POSIXct(twl_in$Twilight, tz = "UTC")
 
 # Period over which to calculate the time shift. It should be while the bird is 
 # still in the breeding grounds 
-period <- as.POSIXct(c("2019-08-04", "2019-08-10"), tz = "UTC")
+period <- as.POSIXct(c("2012-08-04", "2012-09-06"), tz = "UTC")
+
+#plot the period over the light image 
+lightImage( tagdata = lig,
+            offset = offset,     
+            zlim = c(0, 64))
+
+tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
+                       offset = offset, lwd = 3, col = adjustcolor("orange", alpha.f = 0.5))
+
+abline(v = period, lwd = 2, lty = 2, col = "orange")
 
 # calculate the time shift
 shift <- shiftSpan(twl = twl_in, lig = lig, period = period, est.zenith = 92,
@@ -127,9 +137,6 @@ twl <- preprocessLight(lig,
                        gr.Device = "x11", # MacOS version (and windows)
                        dark.min = 60)
 
-# Adjust sunset times by 120 second sampling interval
-twl <- twilightAdjust(twilights = twl, interval = 120)
-
 # Automatically adjust or mark false twilights 
 twl <- twilightEdit(twilights = twl, 
                     window = 4,           
@@ -143,7 +150,7 @@ tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
               col = ifelse(twl$Rise, "dodgerblue", "firebrick"))
 
 # Save the twilight times 
-#write.csv(twl, paste0(dir,"/Pre_analysis_V8757_096_twl_times.csv"))
+# write.csv(twl, paste0(dir,"/Pre_analysis_V8757_096_twl_times.csv"))
 
 ###############################################################################
 # SGAT ANALYSIS ###############################################################
@@ -194,14 +201,15 @@ end = max(which(as.Date(twl$Twilight) == endDate))
 
 (zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
 
-# This zenith angle only provides good location estimates during the breeding period
+# adjust the zenith angles calculated from the breeding sites 
+zenith0_ad <- zenith0 + abs(zenith - zenith_sd)
+zenith_ad  <- zenith_sd
 
-#We can adjust the initial breeding angles 
-
-# Or we can use a different zenith  during different parts of the tracking period 
+# use a different zentih angle for the breeding and nonbreeding periods 
 zenith_twl <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < fall.equi ~ zenith0,
-                            Date > fall.equi ~ zenith_sd))
+                            Date > fall.equi ~ zenith0_ad))
+zeniths <- zenith_twl$zenith
 
 zeniths <- zenith_twl$zenith
 
@@ -213,7 +221,7 @@ matplot(0:100, dgamma(0:100, beta[1], beta[2]),
         type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith_sd , tol=0.01)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith_sd, tol=0.01)
 
 x0 <- path$x
 z0 <- trackMidpts(x0)
@@ -355,6 +363,14 @@ fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = chainLast(fit$x),
 sm <- locationSummary(fit$z, time=fit$model$time)
 head(sm)
 
+#Save the output of the estelle model 
+#save(sm, file = paste0(dir,"/Pre_analysis_V8757_096_SGAT_estelle_summary.csv"))
+#save(fit, file = paste0(dir,"/Pre_analysis_V8757_096_SGAT_estelle_fit.R"))
+
+#load the output of the estelle model 
+#load(paste0(dir,"/Pre_analysis_V8757_096_SGAT_estelle_summary.csv"))
+#load(paste0(dir,"/Pre_analysis_V8757_096_SGAT_estelle_fit.R"))
+
 # Plot Results #################################################################
 
 # open jpeg
@@ -403,6 +419,44 @@ abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
 
 #close jpeg
 dev.off()
+
+# Identify stopover areas using median longitude and latitude
+sm <- sm %>% mutate(stationary = ifelse(abs(lead(Lon.mean) - Lon.mean) < 1 & abs(lead(Lat.mean) - Lat.mean) < 1, 1, 0)) 
+
+par(mfrow=c(2,1))
+
+plot(sm$Time1, sm$"Lon.50%", ylab = "Longitude", xlab = "", yaxt = "n", type = "n", ylim = c(min(sm$Lon.mean) - 10, max(sm$Lon.mean) + 10))
+axis(2, las = 2)
+polygon(x=c(sm$Time1,rev(sm$Time1)), y=c(sm$`Lon.2.5%`,rev(sm$`Lon.97.5%`)), border="gray", col="gray")
+lines(sm$Time1,sm$"Lon.50%", lwd = 2)
+abline(v = fall.equi, lwd = 2, lty = 2, col = "orange")
+abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
+points(sm$Time1, sm$"Lon.50%", col = ifelse(sm$stationary == 1, "blue", "red"), cex = 1.2)
+grid()
+
+plot(sm$Time1,sm$"Lat.50%", type="n", ylab = "Latitude", xlab = "", yaxt = "n", ylim = c(min(sm$Lat.mean) - 10, max(sm$Lat.mean) + 10))
+axis(2, las = 2)
+polygon(x=c(sm$Time1,rev(sm$Time1)), y=c(sm$`Lat.2.5%`,rev(sm$`Lat.97.5%`)), border="gray", col="gray")
+lines(sm$Time1, sm$"Lat.50%", lwd = 2)
+abline(v = fall.equi, lwd = 2, lty = 2, col = "orange")
+abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
+points(sm$Time1, sm$"Lat.50%", col = ifelse(sm$stationary == 1, "blue", "red"), cex = 1.2)
+grid()
+
+par(mfrow=c(1,1))
+# empty raster of the extent
+r <- raster(nrows = 2 * diff(ylim), ncols = 2 * diff(xlim), xmn = xlim[1]-5,
+            xmx = xlim[2]+5, ymn = ylim[1]-5, ymx = ylim[2]+5, crs = proj4string(wrld_simpl))
+
+s <- slices(type = "intermediate", breaks = "week", mcmc = fit, grid = r)
+sk <- slice(s, sliceIndices(s))
+
+plot(sk, useRaster = F,col = rev(viridis::viridis(50)))
+plot(wrld_simpl, xlim=xlim, ylim=ylim,add = T, bg = adjustcolor("black",alpha=0.1))
+
+lines(sm[,"Lon.50%"], sm[,"Lat.50%"], 
+      col = ifelse(sm$stationary == 1, "blue", "red"),
+      type = "o", pch = 16)
 
 ################################################################################
 #SGAT Groupe model analysis ####################################################

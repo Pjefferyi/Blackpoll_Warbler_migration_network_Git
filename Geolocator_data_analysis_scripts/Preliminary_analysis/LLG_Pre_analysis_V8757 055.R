@@ -89,12 +89,12 @@ tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
 #                        dark.min = 60)
 
 #write.csv(twl_in, paste0(dir,"/Pre_analysis_V8757_055_twl_times_initial.csv"))
-#twl_in <- read.csv(paste0(dir,"/Pre_analysis_V8757_055_twl_times_initial.csv"))
+twl_in <- read.csv(paste0(dir,"/Pre_analysis_V8757_055_twl_times_initial.csv"))
 twl_in$Twilight <- as.POSIXct(twl_in$Twilight, tz = "UTC")
 
 # Period over which to calculate the time shift. It should be while the bird is 
 # still in the breeding grounds 
-period <- as.POSIXct(c("2019-08-04", "2019-08-10"), tz = "UTC")
+period <- as.POSIXct(c("2019-08-04", "2019-08-05"), tz = "UTC")
 
 # calculate the time shift
 shift <- shiftSpan(twl = twl_in, lig = lig, period = period, est.zenith = 92,

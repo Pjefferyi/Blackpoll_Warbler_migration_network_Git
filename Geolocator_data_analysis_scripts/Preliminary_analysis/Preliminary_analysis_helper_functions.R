@@ -69,9 +69,26 @@ shiftSpan <- function(twl, lig, period, est.zenith, dep.lon, dep.lat){
                                     zenith = est.zenith, # adjust zenith to match observed and known twilights
                                     rise = rise),
                          rise = rise)
+
+  # If the observed sunrise and sunset occur during a single calendar day (based on GMT)
+  # We will calculate the shift based on the timing of noon
+  if (ob_twl_sub$Rise[1] == TRUE & exp_twl$twilight[1] > exp_twl$twilight[2]){ 
   
-  #Get a subset of the expected twilight times 
+  # expected twilights must be adjusted 
   exp_twl_sub <- subset(exp_twl, exp_twl$twilight > period[1] & exp_twl$twilight < period[2])
+
+  exp_twl_sub <- exp_twl_sub[-1,]
+
+  exp_twl_sub[nrow(exp_twl_sub) +1,] <- exp_twl[(exp_twl$twilight > period[2]),][1,]
+
+  # Else, if sunrise and sunset occur within the span of a single calendar day (based on GMT), 
+  # we will calculate the shift using the timing of midnight  
+  } else {
+  
+  # expected twilights do not have to be adjusted 
+  exp_twl_sub <- subset(exp_twl, exp_twl$twilight > period[1] & exp_twl$twilight < period[2])
+  
+  }
   
   #measure the time shift: the time between the observed and expected noons or midnights 
   shift <- mean(ob_twl_sub$Twilight) - mean(exp_twl_sub$twilight)

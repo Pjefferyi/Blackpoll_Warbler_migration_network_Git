@@ -94,8 +94,6 @@ dev.off()
 #                         gr.Device = "x11", # MacOS version (and windows)
 #                         dark.min = 60)
 
-# Adjust sunset times by 120 second sampling interval
-# twl <- twilightAdjust(twilights = twl, interval = 120)
 
 # Automatically adjust or mark false twilights 
 # twl <- twilightEdit(twilights = twl,
@@ -155,23 +153,15 @@ end = max(which(as.Date(twl$Twilight) == endDate))
 
 (zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
 
-#convert to geolight format
-geo_twl <- export2GeoLight(twl)
+# adjust the zenith angles calculated from the breeding sites 
+zenith0_ad <- zenith0 + abs(zenith - zenith_sd)
+zenith_ad  <- zenith_sd
 
-# this is just to find places where birds have been for a long time, would not use these parameters for stopover identification, detailed can be found in grouped model section
-cL <- changeLight(twl=geo_twl, quantile=0.8, summary = F, days = 10, plot = T)
-# merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
-
-#specify which site is the stationary one
-site           <- mS$site[mS$site>0] # get rid of movement periods
-stationarySite <- which(table(site) == max(table(site))) # find the site where bird is the longest
-
-#find the dates that the bird arrives and leaves this stationary site
-start <- min(which(mS$site == stationarySite))
-end   <- max(which(mS$site == stationarySite))
-
-(zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
+# use a different zentih angle for the breeding and nonbreeding periods 
+zenith_twl <- data.frame(Date = twl$Twilight) %>%
+  mutate(zenith = case_when(Date < fall.equi ~ zenith0,
+                            Date > fall.equi ~ zenith0_ad))
+zeniths <- zenith_twl$zenith
 
 # Movement model ###############################################################
 
@@ -255,7 +245,7 @@ mask <- earthseaMask(xlim, ylim, n = 4)
 log.prior <- function(p) {
   f <- mask(p)
   #ifelse(is.na(f), log(1), f)  # if f is the relative abundance within a grid square 
-  ifelse(is.na(f), log(1), log(8)) # if f indicates the distribution of the blackpoll warbler 
+  ifelse(is.na(f), log(1), log(2)) # if f indicates the distribution of the blackpoll warbler 
   
 }
 
@@ -267,7 +257,7 @@ model <- thresholdModel(twilight = twl$Twilight,
                         twilight.model = "ModifiedGamma",
                         alpha = alpha,
                         beta = beta,
-                        #logp.x = log.prior, logp.z = log.prior, 
+                        logp.x = log.prior, logp.z = log.prior, 
                         x0 = x0,
                         z0 = z0,
                         zenith = zenith0,
@@ -288,7 +278,7 @@ model <- thresholdModel(twilight = twl$Twilight,
                         twilight.model = "Gamma",
                         alpha = alpha,
                         beta = beta,
-                        #logp.x = log.prior, logp.z = log.prior, 
+                        logp.x = log.prior, logp.z = log.prior, 
                         x0 = x0,
                         z0 = z0,
                         zenith = zenith0,
@@ -322,6 +312,14 @@ fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = chainLast(fit$x),
 #Summarize the results
 sm <- locationSummary(fit$z, time=fit$model$time)
 head(sm)
+
+#Save the output of the estelle model 
+#save(sm, file = paste0(dir,"/Pre_analysis_4105_008_SGAT_estelle_summary.csv"))
+#save(fit, file = paste0(dir,"/Pre_analysis_4105_008_estelle_fit.R"))
+
+#load the output of the estelle model 
+#load(paste0(dir,"/Pre_analysis_4105_008_estelle_summary.csv"))
+#load(paste0(dir,"/Pre_analysis_4105_008_estelle_fit.R"))
 
 # open jpeg
 jpeg(paste0(dir, "/4105_008_Estelle_path.png"), width = 1024 , height = 990)
@@ -369,6 +367,44 @@ abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
 
 #close jpeg
 dev.off()
+
+# Identify stopover areas using median longitude and latitude
+sm <- sm %>% mutate(stationary = ifelse(abs(lead(Lon.mean) - Lon.mean) < 2 & abs(lead(Lat.mean) - Lat.mean) < 2, 1, 0)) 
+
+par(mfrow=c(2,1))
+
+plot(sm$Time1, sm$"Lon.50%", ylab = "Longitude", xlab = "", yaxt = "n", type = "n", ylim = c(min(sm$Lon.mean) - 10, max(sm$Lon.mean) + 10))
+axis(2, las = 2)
+polygon(x=c(sm$Time1,rev(sm$Time1)), y=c(sm$`Lon.2.5%`,rev(sm$`Lon.97.5%`)), border="gray", col="gray")
+lines(sm$Time1,sm$"Lon.50%", lwd = 2)
+abline(v = fall.equi, lwd = 2, lty = 2, col = "orange")
+abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
+points(sm$Time1, sm$"Lon.50%", col = ifelse(sm$stationary == 1, "blue", "red"), cex = 1.2)
+grid()
+
+plot(sm$Time1,sm$"Lat.50%", type="n", ylab = "Latitude", xlab = "", yaxt = "n", ylim = c(min(sm$Lat.mean) - 10, max(sm$Lat.mean) + 10))
+axis(2, las = 2)
+polygon(x=c(sm$Time1,rev(sm$Time1)), y=c(sm$`Lat.2.5%`,rev(sm$`Lat.97.5%`)), border="gray", col="gray")
+lines(sm$Time1, sm$"Lat.50%", lwd = 2)
+abline(v = fall.equi, lwd = 2, lty = 2, col = "orange")
+abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
+points(sm$Time1, sm$"Lat.50%", col = ifelse(sm$stationary == 1, "blue", "red"), cex = 1.2)
+grid()
+
+par(mfrow=c(1,1))
+# empty raster of the extent
+r <- raster(nrows = 2 * diff(ylim), ncols = 2 * diff(xlim), xmn = xlim[1]-5,
+            xmx = xlim[2]+5, ymn = ylim[1]-5, ymx = ylim[2]+5, crs = proj4string(wrld_simpl))
+
+s <- slices(type = "intermediate", breaks = "week", mcmc = fit, grid = r)
+sk <- slice(s, sliceIndices(s))
+
+plot(sk, useRaster = F,col = rev(viridis::viridis(50)))
+plot(wrld_simpl, xlim=xlim, ylim=ylim,add = T, bg = adjustcolor("black",alpha=0.1))
+
+lines(sm[,"Lon.50%"], sm[,"Lat.50%"], 
+      col = ifelse(sm$stationary == 1, "blue", "red"),
+      type = "o", pch = 16)
 
 ################################################################################
 #SGAT Groupe model analysis ####################################################
@@ -525,7 +561,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                beta =  beta,
                                x0 = x0, # median point for each greoup (defined by twl$group)
                                z0 = z0, # middle points between the x0 points
-                               zenith = zenith0,
+                               zenith = zeniths,
                                logp.x = logp,# land sea mask
                                fixedx = fixedx)
 
@@ -552,7 +588,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                x0 = x0, z0 = z0,
                                logp.x = logp,
                                missing=twl$Missing,
-                               zenith = zenith0,
+                               zenith = zeniths,
                                fixedx = fixedx)
 
 for (k in 1:3) {
@@ -574,6 +610,10 @@ z.proposal <- mvnorm(chainCov(fit$z), s = 0.3)
 
 fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = chainLast(fit$x),
                          z0 = chainLast(fit$z), iters = 2000, thin = 20, chain = 1)
+
+#Save the output of the group model 
+#save(sm, file = paste0(dir,"/Pre_analysis_4105_008_SGAT_GroupedThreshold_summary.csv"))
+#save(fit, file = paste0(dir,"/Pre_analysis_4015_008_SGAT_GroupedThreshold_fit.R"))
 
 #Summarize results #############################################################
 
@@ -617,6 +657,37 @@ text(sm[,"Lon.50."], sm[,"Lat.50."], ifelse(sitenum>0, as.integer(((sm$EndTime -
 
 #Show dates
 #text(sm[,"Lon.50."], sm[,"Lat.50."], ifelse(sitenum>0, as.character(sm$StartTime), ""), col="red", pos = 1) 
+
+#plot of longitude and latitude
+par(mfrow=c(2,1))
+
+plot(sm$StartTime, sm$"Lon.50.", ylab = "Longitude", xlab = "", yaxt = "n", type = "n", ylim = c(min(sm$Lon.50.) - 10, max(sm$Lon.50.) + 10))
+axis(2, las = 2)
+polygon(x=c(sm$StartTime,rev(sm$StartTime)), y=c(sm$`Lon.2.5.`,rev(sm$`Lon.97.5.`)), border="gray", col="gray")
+lines(sm$StartTim,sm$"Lon.50.", lwd = 2)
+abline(v = fall.equi, lwd = 2, lty = 2, col = "orange")
+abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
+
+#Add points for stopovers 
+points(sm$StartTime, sm$"Lon.50.", pch=21, bg=colours[sitenum+1], 
+       cex = ifelse(sitenum>0, 3, 0), col = "firebrick", lwd = 2.5)
+
+#The text in the symbols indicates the estimated number of days spent at each stopover location 
+text(sm$StartTime, sm$"Lon.50.", ifelse(sitenum>0, as.integer(((sm$EndTime - sm$StartTime)/86400)), ""), col="black") 
+
+plot(sm$StartTime, sm$"Lat.50.", ylab = "Latitude", xlab = "", yaxt = "n", type = "n", ylim = c(min(sm$Lat.50.) - 10, max(sm$Lat.50.) + 10))
+axis(2, las = 2)
+polygon(x=c(sm$StartTime,rev(sm$StartTime)), y=c(sm$`Lat.2.5.`,rev(sm$`Lat.97.5.`)), border="gray", col="gray")
+lines(sm$StartTim,sm$"Lat.50.", lwd = 2)
+abline(v = fall.equi, lwd = 2, lty = 2, col = "orange")
+abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
+
+#Add points for stopovers 
+points(sm$StartTime, sm$"Lat.50.", pch=21, bg=colours[sitenum+1], 
+       cex = ifelse(sitenum>0, 3, 0), col = "firebrick", lwd = 2.5)
+
+#The text in the symbols indicates the estimated number of days spent at each stopover location 
+text(sm$StartTime, sm$"Lat.50.", ifelse(sitenum>0, as.integer(((sm$EndTime - sm$StartTime)/86400)), ""), col="black") 
 
 ################################################################################
 # FLIGHTR ANALYSIS #############################################################
