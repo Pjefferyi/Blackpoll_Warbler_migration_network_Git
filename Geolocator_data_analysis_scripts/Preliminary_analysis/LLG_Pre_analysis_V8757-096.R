@@ -170,7 +170,7 @@ lightImage(tagdata = lig,
 tsimageDeploymentLines(twl$Twilight, lon.calib, lat.calib, offset, lwd = 2, col = "orange")
 
 #calibration period before the migration 
-tm.calib <- as.POSIXct(c("2012-07-15", "2012-09-30"), tz = "UTC")
+tm.calib <- as.POSIXct(c("2012-07-18", "2012-09-30"), tz = "UTC")
 
 #calibration period after the migration 
 tm.calib2 <- as.POSIXct(c("2013-06-20", "2013-07-08"), tz = "UTC")
@@ -182,7 +182,7 @@ abline(v = tm.calib2, lwd = 2, lty = 2, col = "orange")
 d_calib <- subset(twl, Twilight>=tm.calib[1] & Twilight<=tm.calib[2] | Twilight>=tm.calib2[1] & Twilight<=tm.calib2[2])
 
 # perform the calibration and verify the fit with the gamma or log distribution
-calib <- thresholdCalibration(d_calib$Twilight, d_calib$Rise, lon.calib, lat.calib, method = "gamma")
+calib <- thresholdCalibration(d_calib$Twilight, d_calib$Rise, lon.calib, lat.calib, method = "log-norm")
 
 #parameters of the error distribution 
 zenith  <- calib[1] 
@@ -194,7 +194,7 @@ alpha <- calib[3:4]
 
 # Alternative calibration ######################################################
 startDate <- "2012-11-15"
-endDate   <- "2013-04-15"
+endDate   <- "2013-04-20"
 
 start = min(which(as.Date(twl$Twilight) == startDate))
 end = max(which(as.Date(twl$Twilight) == endDate))
@@ -207,10 +207,8 @@ zenith_ad  <- zenith_sd
 
 # use a different zentih angle for the breeding and nonbreeding periods 
 zenith_twl <- data.frame(Date = twl$Twilight) %>%
-  mutate(zenith = case_when(Date < fall.equi ~ zenith0,
-                            Date > fall.equi ~ zenith0_ad))
-zeniths <- zenith_twl$zenith
-
+  mutate(zenith = case_when(Date < fall.equi ~ zenith,
+                            Date > fall.equi ~ zenith_sd))
 zeniths <- zenith_twl$zenith
 
 # Movement model ###############################################################
@@ -221,7 +219,7 @@ matplot(0:100, dgamma(0:100, beta[1], beta[2]),
         type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith_sd, tol=0.01)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith_sd, tol=0.18)
 
 x0 <- path$x
 z0 <- trackMidpts(x0)
@@ -307,7 +305,7 @@ model <- thresholdModel(twilight = twl$Twilight,
                         twilight.model = "ModifiedGamma",
                         alpha = alpha,
                         beta = beta,
-                        logp.x = log.prior, logp.z = log.prior, 
+                        #logp.x = log.prior, logp.z = log.prior, 
                         x0 = x0,
                         z0 = z0,
                         zenith = zeniths,
@@ -328,7 +326,7 @@ model <- thresholdModel(twilight = twl$Twilight,
                         twilight.model = "Gamma",
                         alpha = alpha,
                         beta = beta,
-                        logp.x = log.prior, logp.z = log.prior, 
+                        #logp.x = log.prior, logp.z = log.prior, 
                         x0 = x0,
                         z0 = z0,
                         zenith = zeniths,
@@ -390,7 +388,7 @@ plot(wrld_simpl, xlim=xlim, ylim=ylim,add = T, bg = adjustcolor("black",alpha=0.
 
 #plot location track. Locations in blue occured during the fall equinox 
 lines(sm[,"Lon.50%"], sm[,"Lat.50%"], 
-      col = ifelse(sm$Time1 > spring.equi - days(15) & sm$Time1 < spring.equi + days(15), adjustcolor("blue", alpha.f = 0.6), adjustcolor("firebrick", alpha.f = 0.6)),
+      col = ifelse(sm$Time1 > fall.equi - days(21) & sm$Time1 < fall.equi + days(21), adjustcolor("blue", alpha.f = 0.6), adjustcolor("firebrick", alpha.f = 0.6)),
       type = "o", pch = 16)
 
 #close jpeg
@@ -421,7 +419,7 @@ abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
 dev.off()
 
 # Identify stopover areas using median longitude and latitude
-sm <- sm %>% mutate(stationary = ifelse(abs(lead(Lon.mean) - Lon.mean) < 1 & abs(lead(Lat.mean) - Lat.mean) < 1, 1, 0)) 
+sm <- sm %>% mutate(stationary = ifelse(abs(lead(Lon.mean) - Lon.mean) < 2 & abs(lead(Lat.mean) - Lat.mean) < 2, 1, 0)) 
 
 par(mfrow=c(2,1))
 
@@ -468,10 +466,10 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-cL <- changeLight(twl=geo_twl, quantile=0.86, summary = F, days = 7, plot = T)
+cL <- changeLight(twl=geo_twl, quantile=0.80, summary = F, days = 7, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith_sd, distThreshold = 500)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths[1:length(zeniths)-1], distThreshold = 500)
 
 #back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 
@@ -589,9 +587,9 @@ index <- ifelse(stationary, 1, 2)
 # i <- dtsm[,1:2]
 # logp(i)
 
-dtx0$index <- index
+#dtx0$index <- index
 
-logp(dtx0[,1:2])
+#logp(dtx0[,1:2])
 ############################
 
 mask <- earthseaMask(xlim, ylim, n = 10, index=index)
@@ -675,7 +673,7 @@ sm <- SGAT2Movebank(fit$x, time = twl$Twilight, group = twl$group)
 #save(fit, file = paste0(dir,"/Pre_analysis_8557_096_SGAT_GroupedThreshold_fit.R"))
 
 #create a plot of the stationary locations #####################################
-par(mfrow=c(1,1))
+par(mfrow=c(1,1), mar=c(1,1,1,1))
 colours <- c("black",colorRampPalette(c("blue","yellow","red"))(max(twl.rev$Site)))
 data(wrld_simpl)
 
@@ -692,7 +690,7 @@ plot(wrld_simpl, xlim=xlim, ylim=ylim,add = T, bg = adjustcolor("black",alpha=0.
 with(sm[sitenum>0,], arrows(`Lon.50.`, `Lat.2.5.`, `Lon.50.`, `Lat.97.5.`, length = 0, lwd = 2.5, col = "firebrick"))
 with(sm[sitenum>0,], arrows(`Lon.2.5.`, `Lat.50.`, `Lon.97.5.`, `Lat.50.`, length = 0, lwd = 2.5, col = "firebrick"))
 lines(sm[,"Lon.50."], sm[,"Lat.50."], col = adjustcolor("black", alpha = 0.6), lwd = 2)
-points(sm[,"Lon.50."], sm[,"Lat.50."], col = ifelse(sm$StartTime > fall.equi - days(10) & sm$StartTime < fall.equi + days(10), "blue", "darkorchid4"), lwd = 2)
+points(sm[,"Lon.50."], sm[,"Lat.50."], col = ifelse(sm$StartTime > spring.equi - days(10) & sm$StartTime < spring.equi + days(10), "blue", "darkorchid4"), lwd = 2)
 
 points(sm[,"Lon.50."], sm[,"Lat.50."], pch=21, bg=colours[sitenum+1], 
        cex = ifelse(sitenum>0, 3, 0), col = "firebrick", lwd = 2.5)
@@ -706,3 +704,34 @@ text(sm[,"Lon.50."], sm[,"Lat.50."], ifelse(sitenum>0, as.integer(((sm$EndTime -
 
 #Show dates
 #text(sm[,"Lon.50."], sm[,"Lat.50."], ifelse(sitenum>0, as.character(sm$StartTime), ""), col="red", pos = 1) 
+
+#plot of longitude and latitude
+par(mfrow=c(2,1))
+
+plot(sm$StartTime, sm$"Lon.50.", ylab = "Longitude", xlab = "", yaxt = "n", type = "n", ylim = c(min(sm$Lon.50.) - 10, max(sm$Lon.50.) + 10))
+axis(2, las = 2)
+polygon(x=c(sm$StartTime,rev(sm$StartTime)), y=c(sm$`Lon.2.5.`,rev(sm$`Lon.97.5.`)), border="gray", col="gray")
+lines(sm$StartTim,sm$"Lon.50.", lwd = 2)
+abline(v = fall.equi, lwd = 2, lty = 2, col = "orange")
+abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
+
+#Add points for stopovers 
+points(sm$StartTime, sm$"Lon.50.", pch=21, bg=colours[sitenum+1], 
+       cex = ifelse(sitenum>0, 3, 0), col = "firebrick", lwd = 2.5)
+
+#The text in the symbols indicates the estimated number of days spent at each stopover location 
+text(sm$StartTime, sm$"Lon.50.", ifelse(sitenum>0, as.integer(((sm$EndTime - sm$StartTime)/86400)), ""), col="black") 
+
+plot(sm$StartTime, sm$"Lat.50.", ylab = "Latitude", xlab = "", yaxt = "n", type = "n", ylim = c(min(sm$Lat.50.) - 10, max(sm$Lat.50.) + 10))
+axis(2, las = 2)
+polygon(x=c(sm$StartTime,rev(sm$StartTime)), y=c(sm$`Lat.2.5.`,rev(sm$`Lat.97.5.`)), border="gray", col="gray")
+lines(sm$StartTim,sm$"Lat.50.", lwd = 2)
+abline(v = fall.equi, lwd = 2, lty = 2, col = "orange")
+abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
+
+#Add points for stopovers 
+points(sm$StartTime, sm$"Lat.50.", pch=21, bg=colours[sitenum+1], 
+       cex = ifelse(sitenum>0, 3, 0), col = "firebrick", lwd = 2.5)
+
+#The text in the symbols indicates the estimated number of days spent at each stopover location 
+text(sm$StartTime, sm$"Lat.50.", ifelse(sitenum>0, as.integer(((sm$EndTime - sm$StartTime)/86400)), ""), col="black") 

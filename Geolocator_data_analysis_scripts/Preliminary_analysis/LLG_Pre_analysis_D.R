@@ -66,12 +66,8 @@ lig <- lig[(is.na(lig$comments) == TRUE),]  %>%
 #convert Dates to as.POXIct format
 lig$Date <- anytime(lig$Date, tz = "UTC")
 
-#adjust time 
-lig$Date <- lig$Date - 4*60*60
-
-###############################################################################
 #TWILIGHT ANNOTATION ##########################################################
-###############################################################################
+
 
 threshold <- 1
 

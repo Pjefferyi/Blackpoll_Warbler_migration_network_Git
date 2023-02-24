@@ -189,34 +189,34 @@ alpha <- calib[3:4]
 # "in-habitat" calibration does not provide a realistic migration track during the nonbreeding period and spring migration 
 
 # Hill Ekstrom calibration ######################################################
-startDate <- "2019-11-15"
-endDate   <- "2020-04-15"
-
-start = min(which(as.Date(twl$Twilight) == startDate))
-end = max(which(as.Date(twl$Twilight) == endDate))
-
-(zenith_sd <- findHEZenith(twl, tol=0.08, range=c(start,end)))
-
-# # this zenith angle provides plausible location estimates in the non-breeding grounds but not in the breeding grounds
-# # the method based on geolight yields the same Zenith angle as above.
+# startDate <- "2019-11-15"
+# endDate   <- "2020-04-15"
 # 
-# #convert to geolight format
-#  geo_twl <- export2GeoLight(twl)
-# 
-# # this is just to find places where birds have been for a long time, would not use these parameters for stopover identification, detailed can be found in grouped model section
-# cL <- changeLight(twl=geo_twl, quantile=0.8, summary = F, days = 10, plot = T)
-# # merge site helps to put sites together that are separated by single outliers.
-# mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
-# 
-# #specify which site is the stationary one
-# site           <- mS$site[mS$site>0] # get rid of movement periods
-# stationarySite <- which(table(site) == max(table(site))) # find the site where bird is the longest
-# 
-# #find the dates that the bird arrives and leaves this stationary site
-# start <- min(which(mS$site == stationarySite))
-# end   <- max(which(mS$site == stationarySite))
+# start = min(which(as.Date(twl$Twilight) == startDate))
+# end = max(which(as.Date(twl$Twilight) == endDate))
 # 
 # (zenith_sd <- findHEZenith(twl, tol=0.08, range=c(start,end)))
+
+# this zenith angle provides plausible location estimates in the non-breeding grounds but not in the breeding grounds
+# the method based on geolight yields the same Zenith angle as above.
+
+#convert to geolight format
+ geo_twl <- export2GeoLight(twl)
+
+# this is just to find places where birds have been for a long time, would not use these parameters for stopover identification, detailed can be found in grouped model section
+cL <- changeLight(twl=geo_twl, quantile=0.8, summary = F, days = 10, plot = T)
+# merge site helps to put sites together that are separated by single outliers.
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
+
+#specify which site is the stationary one
+site           <- mS$site[mS$site>0] # get rid of movement periods
+stationarySite <- which(table(site) == max(table(site))) # find the site where bird is the longest
+
+#find the dates that the bird arrives and leaves this stationary site
+start <- min(which(mS$site == stationarySite))
+end   <- max(which(mS$site == stationarySite))
+
+(zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
 
 
 # adjust the zenith angles calculated from the breeding sites 
@@ -326,7 +326,7 @@ model <- thresholdModel(twilight = twl$Twilight,
                         logp.x = log.prior, logp.z = log.prior, 
                         x0 = x0,
                         z0 = z0,
-                        zenith = zenith0,
+                        zenith = zeniths,
                         fixedx = fixedx)
 
 #Define the error distribution around each location 
@@ -347,7 +347,7 @@ model <- thresholdModel(twilight = twl$Twilight,
                         logp.x = log.prior, logp.z = log.prior, 
                         x0 = x0,
                         z0 = z0,
-                        zenith = zenith0,
+                        zenith = zeniths,
                         fixedx = fixedx)
 
 x.proposal <- mvnorm(S = diag(c(0.005, 0.005)), n = nrow(twl))
@@ -480,7 +480,7 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-cL <- changeLight(twl=geo_twl, quantile=0.86, summary = F, days = 3, plot = T)
+cL <- changeLight(twl=geo_twl, quantile=0.86, summary = F, days = 5, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
 mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = 500)
@@ -605,7 +605,7 @@ mask <- earthseaMask(xlim, ylim, n = 10, index=index)
 ## Define the log prior for x and z
 logp <- function(p) {
   f <- mask(p)
-  ifelse(is.na(f), -1000, log(5))
+  ifelse(is.na(f), -1000, log(2))
 }
 
 # Define the Estelle model ####################################################
@@ -618,7 +618,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                beta =  beta,
                                x0 = x0, # median point for each greoup (defined by twl$group)
                                z0 = z0, # middle points between the x0 points
-                               zenith = zenith0,
+                               zeniths = zeniths,
                                logp.x = logp,#land sea mask
                                fixedx = fixedx)
 
@@ -639,13 +639,13 @@ z0 <- chainLast(fit$z)
 model <- groupedThresholdModel(twl$Twilight, 
                                twl$Rise, 
                                group = twl$group,
-                               twilight.model = "ModifiedGamma",
+                               twilight.model = "Gamma",
                                alpha = alpha, 
                                beta =  beta,
                                x0 = x0, z0 = z0,
                                logp.x = logp,
                                missing=twl$Missing,
-                               zenith = zenith0,
+                               zenith = zeniths,
                                fixedx = fixedx)
 
 for (k in 1:3) {
