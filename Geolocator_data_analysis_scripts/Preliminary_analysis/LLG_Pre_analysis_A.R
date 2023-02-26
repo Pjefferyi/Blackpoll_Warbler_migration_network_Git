@@ -230,7 +230,7 @@ matplot(0:100, dgamma(0:100, beta[1], beta[2]),
         type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol=0.10)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol=0.18)
 
 x0 <- path$x
 z0 <- trackMidpts(x0)
@@ -477,7 +477,7 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-cL <- changeLight(twl=geo_twl, quantile=0.80, summary = F, days = 3, plot = T)
+cL <- changeLight(twl=geo_twl, quantile=0.86, summary = F, days = 3, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
 mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = 1000)
@@ -621,7 +621,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                x0 = x0, # median point for each group (defined by twl$group)
                                z0 = z0, # middle points between the x0 points
                                zenith = zeniths,
-                               #logp.x = logp,# land sea mask
+                               logp.x = logp,# land sea mask
                                fixedx = fixedx)
 
 
@@ -647,7 +647,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                x0 = x0, z0 = z0,
                                logp.x = logp,
                                missing=twl$Missing,
-                               #zenith = zeniths,
+                               zenith = zeniths,
                                fixedx = fixedx)
 
 for (k in 1:3) {

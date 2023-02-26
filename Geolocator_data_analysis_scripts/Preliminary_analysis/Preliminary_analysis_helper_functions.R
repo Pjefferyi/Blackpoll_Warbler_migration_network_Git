@@ -56,6 +56,10 @@ shiftSpan <- function(twl, lig, period, est.zenith, dep.lon, dep.lat){
   
   # Get a subset of the observed twilights 
   ob_twl_sub <- subset(twl, twl$Twilight > period[1] & twl$Twilight < period[2])
+
+  # # Sort the subset of data so that sunsrise is always reported before sunrise
+  # # otherwise they may not match with the expected data 
+  # ob_twl_sub <- ob_twl_sub[order(date(ob_twl_sub$Twilight), -ob_twl_sub$Rise),]
   
   # Convert the lig file import to a series of days and rises  
   dates <- seq(from = min(lig$Date), to = max(lig$Date), by = "day")
@@ -70,19 +74,19 @@ shiftSpan <- function(twl, lig, period, est.zenith, dep.lon, dep.lat){
                                     rise = rise),
                          rise = rise)
 
-  # If the observed sunrise and sunset occur during a single calendar day (based on GMT)
-  # We will calculate the shift based on the timing of noon
-  if (ob_twl_sub$Rise[1] == TRUE & exp_twl$twilight[1] > exp_twl$twilight[2]){ 
-  
-  # expected twilights must be adjusted 
+  #There are some cases where we must change the subset of observed times
+  if ((ob_twl_sub$Rise[1] == exp_twl$rise[1] & exp_twl$twilight[1] > exp_twl$twilight[2])|
+    (ob_twl_sub$Rise[1] != exp_twl$rise[1] & exp_twl$twilight[1] < exp_twl$twilight[2])){
+
+  # expected twilights must be adjusted
   exp_twl_sub <- subset(exp_twl, exp_twl$twilight > period[1] & exp_twl$twilight < period[2])
 
   exp_twl_sub <- exp_twl_sub[-1,]
 
   exp_twl_sub[nrow(exp_twl_sub) +1,] <- exp_twl[(exp_twl$twilight > period[2]),][1,]
 
-  # Else, if sunrise and sunset occur within the span of a single calendar day (based on GMT), 
-  # we will calculate the shift using the timing of midnight  
+  # Else, if sunrise and sunset occur within the span of a single calendar day (based on GMT),
+  # we will calculate the shift using the timing of midnight
   } else {
   
   # expected twilights do not have to be adjusted 
@@ -90,8 +94,11 @@ shiftSpan <- function(twl, lig, period, est.zenith, dep.lon, dep.lat){
   
   }
   
+  t1 <- mean(ob_twl_sub$Twilight)
+  t2 <- mean(exp_twl_sub$twilight)
+  
   #measure the time shift: the time between the observed and expected noons or midnights 
-  shift <- mean(ob_twl_sub$Twilight) - mean(exp_twl_sub$twilight)
+  shift <- t1 - t2
   
   #return a list with the time shift, expected time, and observed time
   return(list(shift = shift, observed_times = ob_twl_sub,

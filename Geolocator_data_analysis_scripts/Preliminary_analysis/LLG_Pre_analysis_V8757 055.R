@@ -72,7 +72,7 @@ thresholdOverLight(lig, threshold, span =c(0, 25000))
 
 #This geolocator has a a time shift visible on this plot
 lightImage( tagdata = lig,
-            offset = offset,     
+            offset = offset,
             zlim = c(0, 64))
 
 tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
@@ -81,9 +81,9 @@ tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
 # we will do an initial twilight annotation to find identify the time interval
 # by which we need to shift time
 # There should be not need to edit, delete or insert twilights for this
-# twl_in <- preprocessLight(lig, 
+# twl_in <- preprocessLight(lig,
 #                        threshold = threshold,
-#                        offset = offset, 
+#                        offset = offset,
 #                        lmax = 64,         # max. light value
 #                        gr.Device = "x11", # MacOS version (and windows)
 #                        dark.min = 60)
@@ -92,23 +92,35 @@ tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
 twl_in <- read.csv(paste0(dir,"/Pre_analysis_V8757_055_twl_times_initial.csv"))
 twl_in$Twilight <- as.POSIXct(twl_in$Twilight, tz = "UTC")
 
-# Period over which to calculate the time shift. It should be while the bird is 
-# still in the breeding grounds 
-period <- as.POSIXct(c("2019-08-04", "2019-08-05"), tz = "UTC")
+# Period over which to calculate the time shift. It should be while the bird is
+# still in the breeding grounds
+period <- as.POSIXct(c("2019-08-01", "2019-08-30"), tz = "UTC")
+
+#plot the period over the light image
+lightImage( tagdata = lig,
+            offset = offset,
+            zlim = c(0, 64))
+
+tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
+                       offset = offset, lwd = 3, col = adjustcolor("orange", alpha.f = 0.5))
+
+abline(v = period, lwd = 2, lty = 2, col = "orange")
+
 
 # calculate the time shift
 shift <- shiftSpan(twl = twl_in, lig = lig, period = period, est.zenith = 92,
                    dep.lon = lon.calib,
                    dep.lat = lat.calib)
 
-# verify the output 
-# shift 
+# verify the output
+# shift
 
-#adjust time 
+#adjust time
 lig$Date <- lig$Date - (shift$shift)
 
-#TWILIGHT ANNOTATION ##########################################################
+#lig$Date <- lig$Date + 5.5 *60*60
 
+#TWILIGHT ANNOTATION ##########################################################
 # plot light levels 
 # open jpeg
 jpeg(paste0(dir, "/V8757_055_light_plot.png"), width = 1024, height = 990)
@@ -218,7 +230,6 @@ end   <- max(which(mS$site == stationarySite))
 
 (zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
 
-
 # adjust the zenith angles calculated from the breeding sites 
 zenith0_ad <- zenith0 + abs(zenith - zenith_sd)
 zenith_ad  <- zenith_sd
@@ -228,7 +239,6 @@ zenith_twl <- data.frame(Date = twl$Twilight) %>%
    mutate(zenith = case_when(Date < fall.equi ~ zenith0,
                              Date > fall.equi ~ zenith0_ad))
 zeniths <- zenith_twl$zenith
-
 
 # Movement model ###############################################################
 
@@ -618,7 +628,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                beta =  beta,
                                x0 = x0, # median point for each greoup (defined by twl$group)
                                z0 = z0, # middle points between the x0 points
-                               zeniths = zeniths,
+                               zenith = zeniths,
                                logp.x = logp,#land sea mask
                                fixedx = fixedx)
 
@@ -639,7 +649,7 @@ z0 <- chainLast(fit$z)
 model <- groupedThresholdModel(twl$Twilight, 
                                twl$Rise, 
                                group = twl$group,
-                               twilight.model = "Gamma",
+                               twilight.model = "ModifiedGamma",
                                alpha = alpha, 
                                beta =  beta,
                                x0 = x0, z0 = z0,

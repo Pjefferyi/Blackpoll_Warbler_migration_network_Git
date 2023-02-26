@@ -1,6 +1,6 @@
 # source: Deluca et al. 2015 
-# tag number: D
-# site: Seal Island, Nova Scotia, Canada
+# tag number: C
+# site: Bon Portage Island, Nova Scotia, Canada
 
 #load packages
 require(readr)
@@ -28,18 +28,22 @@ library(LLmig)
 library(GeoLocTools)
 setupGeolocation()
 
-geo.id <- "D"
+geo.id <- "C"
 
 # data directory
 dir <- paste0("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geolocator_data/", geo.id)
 
 # geo deployment location 
-lat.calib <- 43.408825
-lon.calib <- -66.014189
+lat.calib <- 49.45833
+lon.calib <- -56.225
 
 # time of deployment
-deploy.start <- anytime("2013-08-25", tz = "GMT")
+deploy.start <- anytime("2013-06-16", tz = "GMT")
 deploy.end <- anytime("2014-04-15", tz = "GMT")
+
+#Equinox times
+fall.equi <- anytime("2013-09-22", asUTC = T, tz = "GMT")
+spring.equi <- anytime("2014-03-20", asUTC = T, tz = "GMT")
 
 #Find number of cores available for analysis
 Threads= detectCores()-1
@@ -53,14 +57,14 @@ lig <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph
 
 #remove rows with processed data
 lig <- lig[(is.na(lig$comments) == TRUE),]  %>%
-  #get data for individual D
-    filter(individual.local.identifier == "D") %>%
+  #get data for individual C
+  filter(individual.local.identifier == "C") %>%
   # rename columns  
-    rename(c( Date = timestamp, Light = gls.light.level)) %>%
+  rename(c( Date = timestamp, Light = gls.light.level)) %>%
   #remove rows before and after deployment time 
-    filter(Date > deploy.start) %>%
+  filter(Date > deploy.start) %>%
   #Convert light levels to log
-    mutate(Light = log(Light + 0.0001) + abs(min(log(Light+0.0001)))) 
+  mutate(Light = log(Light + 0.0001) + abs(min(log(Light+0.0001)))) 
 
 #convert Dates to as.POXIct format
 lig$Date <- anytime(lig$Date, tz = "UTC")
@@ -88,19 +92,19 @@ tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
 # by which we need to shift time
 # There should be not need to edit, delete or insert twilights for this
 twl_in <- preprocessLight(lig,
-                       threshold = threshold,
-                       offset = offset,
-                       lmax = 64,         # max. light value
-                       gr.Device = "x11", # MacOS version (and windows)
-                       dark.min = 60)
+                          threshold = threshold,
+                          offset = offset,
+                          lmax = 2,         # max. light value
+                          gr.Device = "x11", # MacOS version (and windows)
+                          dark.min = 60)
 
-#write.csv(twl_in, paste0(dir,"/Pre_analysis_D_twl_times_initial.csv"))
-twl_in <- read.csv(paste0(dir,"/Pre_analysis_D_twl_times_initial.csv"))
+#write.csv(twl_in, paste0(dir,"/Pre_analysis_C_twl_times_initial.csv"))
+twl_in <- read.csv(paste0(dir,"/Pre_analysis_C_twl_times_initial.csv"))
 twl_in$Twilight <- as.POSIXct(twl_in$Twilight, tz = "UTC")
 
 # Period over which to calculate the time shift. It should be while the bird is 
 # still in the breeding grounds 
-period <- as.POSIXct(c("2013-08-28", "2013-09-28"), tz = "UTC")
+period <- as.POSIXct(c("2013-06-28", "2013-07-19"), tz = "UTC")
 
 #plot the period over the light image 
 lightImage( tagdata = lig,
@@ -173,8 +177,8 @@ twl$Twilight <- as.POSIXct(twl$Twilight, tz = "UTC")
 
 # We start with calibration based on the stationary periods before and after the migration
 lightImage(tagdata = lig,
-            offset = offset,     
-            zlim = c(0, 2))
+           offset = offset,     
+           zlim = c(0, 2))
 
 tsimageDeploymentLines(twl$Twilight, lon.calib, lat.calib, offset, lwd = 2, col = "orange")
 
@@ -246,3 +250,5 @@ box()
 dev.off()
 
 
+
+twl_in2 <- twl_in[order(date(twl_in$Twilight), -twl_in$Rise),]

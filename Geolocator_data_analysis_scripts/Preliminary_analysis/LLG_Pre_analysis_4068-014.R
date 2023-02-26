@@ -69,7 +69,7 @@ threshold <- 1.5
 thresholdOverLight(lig, threshold, span =c(70000, 75000))
 
 # plot light levels 
-offset <- 21 # adjusts the y-axis to put night (dark shades) in the middle
+offset <- 14 # adjusts the y-axis to put night (dark shades) in the middle
 
 # open jpeg
 jpeg(paste0(dir, "/4068-014_light_plot.png"), width = 1024, height = 990)
@@ -127,7 +127,7 @@ lightImage( tagdata = lig,
 tsimageDeploymentLines(twl$Twilight, lon.calib, lat.calib, offset, lwd = 2, col = "orange")
 
 #calibration period before the migration 
-tm.calib <- as.POSIXct(c("2016-07-20", "2016-08-05"), tz = "UTC")
+tm.calib <- as.POSIXct(c("2016-07-25", "2016-08-15"), tz = "UTC")
 
 abline(v = tm.calib, lwd = 2, lty = 2, col = "orange")
 
@@ -143,12 +143,43 @@ zenith0 <- calib[2]
 
 alpha <- calib[3:4]
 
-#in this case, alternative calibration leads to a similar zenith 
+#Alternative calibration #######################################################
+
+# this zenith angle provides plausible location estimates in the non-breeding grounds but not in the breeding grounds
+# the method based on geolight yields the same Zenith angle as above.
+
+#convert to geolight format
+ geo_twl <- export2GeoLight(twl)
+
+# this is just to find places where birds have been for a long time, would not use these parameters for stopover identification, detailed can be found in grouped model section
+cL <- changeLight(twl=geo_twl, quantile=0.8, summary = F, days = 10, plot = T)
+# merge site helps to put sites together that are separated by single outliers.
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
+
+#specify which site is the stationary one
+site           <- mS$site[mS$site>0] # get rid of movement periods
+stationarySite <- which(table(site) == max(table(site))) # find the site where bird is the longest
+
+#find the dates that the bird arrives and leaves this stationary site
+start <- min(which(mS$site == stationarySite))
+end   <- max(which(mS$site == stationarySite))
+
+(zenith_sd <- findHEZenith(twl, tol=0.08, range=c(start,end)))
+
+# adjust the zenith angles calculated from the breeding sites 
+zenith0_ad <- zenith0 + abs(zenith - zenith_sd)
+zenith_ad  <- zenith_sd
+
+# use a different zentih angle for the breeding and nonbreeding periods 
+zenith_twl <- data.frame(Date = twl$Twilight) %>%
+  mutate(zenith = case_when(Date < fall.equi ~ zenith0,
+                            Date > fall.equi ~ zenith0_ad))
+zeniths <- zenith_twl$zenith
 
 # Movement model ###############################################################
 
 #this movement model should be based on the estimated migration speed of the blackpoll warbler 
-beta  <- c(2.2, 0.08)
+beta  <- c(0.7, 0.08)
 matplot(0:100, dgamma(0:100, beta[1], beta[2]),
         type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
 
@@ -166,7 +197,8 @@ plot(x0, type = "n", xlab = "", ylab = "")
 plot(wrld_simpl, col = "grey95", add = T)
 
 #points(path$x[300:nrow(path$x),], pch=19, col="cornflowerblue", type = "o")
-points(path$x[1:300,], pch=19, col="cornflowerblue", type = "o")
+#points(path$x[1:300,], pch=19, col="cornflowerblue", type = "o")
+points(path$x, pch=19, col="cornflowerblue", type = "o")
 
 points(lon.calib, lat.calib, pch = 16, cex = 2.5, col = "firebrick")
 box()
@@ -242,7 +274,7 @@ model <- thresholdModel(twilight = twl$Twilight,
                         logp.x = log.prior, logp.z = log.prior, 
                         x0 = x0,
                         z0 = z0,
-                        zenith = zenith0,
+                        zenith = zeniths,
                         fixedx = fixedx)
 
 #Define the error distribution around each location 
@@ -257,13 +289,13 @@ z0 <- chainLast(fit$z)
 
 model <- thresholdModel(twilight = twl$Twilight,
                         rise = twl$Rise,
-                        twilight.model = "ModifiedGamma",
+                        twilight.model = "Gamma",
                         alpha = alpha,
                         beta = beta,
                         logp.x = log.prior, logp.z = log.prior, 
                         x0 = x0,
                         z0 = z0,
-                        zenith = zenith0,
+                        zenith = zeniths,
                         fixedx = fixedx)
 
 x.proposal <- mvnorm(S = diag(c(0.005, 0.005)), n = nrow(twl))
@@ -300,8 +332,8 @@ head(sm)
 #save(fit, file = paste0(dir,"/Pre_analysis_3254_011_SGAT_estelle_fit.R"))
 
 #load the output of the estelle model 
-#load(sm, file = paste0(dir,"/Pre_analysis_3254_011_SGAT_estelle_summary.csv"))
-#load(fit, file = paste0(dir,"/Pre_analysis_3254_011_SGAT_estelle_fit.R"))
+#load(file = paste0(dir,"/Pre_analysis_3254_011_SGAT_estelle_summary.csv"))
+#load(file = paste0(dir,"/Pre_analysis_3254_011_SGAT_estelle_fit.R"))
 
 # open jpeg
 jpeg(paste0(dir, "/3254_011__Estelle_path.png"), width = 1024 , height = 990)
@@ -320,7 +352,7 @@ plot(wrld_simpl, xlim=xlim, ylim=ylim,add = T, bg = adjustcolor("black",alpha=0.
 
 #plot location track. Locations in blue occured during the fall equinox 
 lines(sm[,"Lon.50%"], sm[,"Lat.50%"], 
-      col = ifelse(sm$Time1 > fall.equi - days(15) & sm$Time1 < fall.equi + days(15), adjustcolor("blue", alpha.f = 0.6), adjustcolor("firebrick", alpha.f = 0.6)),
+      col = ifelse(sm$Time1 > spring.equi - days(15) & sm$Time1 < spring.equi + days(15), adjustcolor("blue", alpha.f = 0.6), adjustcolor("firebrick", alpha.f = 0.6)),
       type = "o", pch = 16)
 
 #close jpeg
@@ -351,11 +383,11 @@ abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
 dev.off()
 
 # Identify stopover areas using median longitude and latitude
-sm <- sm %>% mutate(stationary = ifelse(abs(lead(Lon.mean) - Lon.mean) < 2 & abs(lead(Lat.mean) - Lat.mean) < 2, 1, 0)) 
+sm <- sm %>% mutate(stationary = ifelse(abs(lead(Lon.mean) - Lon.mean) < 2 & abs(lead(Lat.mean) - Lat.mean) < 4, 1, 0)) 
 
 par(mfrow=c(2,1))
 
-plot(sm$Time1, sm$"Lon.50%", ylab = "Longitude", xlab = "", yaxt = "n", type = "n", ylim = c(min(sm$Lon.mean) - 10, max(sm$Lon.mean) + 10))
+plot(sm[(sm$Time1 > "2016-09-01" & sm$Time1 < "2016-12-01"),]$Time1, sm[(sm$Time1 > "2016-09-01" & sm$Time1 < "2016-12-01"),]$"Lon.50%", ylab = "Longitude", xlab = "", yaxt = "n", type = "n", ylim = c(min(sm$Lon.mean) - 10, max(sm$Lon.mean) + 10))
 axis(2, las = 2)
 polygon(x=c(sm$Time1,rev(sm$Time1)), y=c(sm$`Lon.2.5%`,rev(sm$`Lon.97.5%`)), border="gray", col="gray")
 lines(sm$Time1,sm$"Lon.50%", lwd = 2)
@@ -389,7 +421,6 @@ lines(sm[,"Lon.50%"], sm[,"Lat.50%"],
       type = "o", pch = 16)
 
 #SGAT Groupe model analysis ####################################################
-
 
 # group twilight times were birds were stationary 
 geo_twl <- export2GeoLight(twl)
@@ -540,7 +571,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                beta =  beta,
                                x0 = x0, # median point for each greoup (defined by twl$group)
                                z0 = z0, # middle points between the x0 points
-                               zenith = zenith0,
+                               zenith = zeniths,
                                logp.x = logp,# land sea mask
                                fixedx = fixedx)
 
@@ -567,7 +598,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                x0 = x0, z0 = z0,
                                logp.x = logp,
                                missing=twl$Missing,
-                               zenith = zenith0,
+                               zenith = zeniths,
                                fixedx = fixedx)
 
 for (k in 1:3) {
@@ -590,7 +621,7 @@ z.proposal <- mvnorm(chainCov(fit$z), s = 0.3)
 fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = chainLast(fit$x),
                          z0 = chainLast(fit$z), iters = 2000, thin = 20, chain = 1)
 
-#Summarize results #############################################################
+#Summarize results ############################################################
 
 #Here we can ony use x-locations. 
 
@@ -633,3 +664,39 @@ text(sm[,"Lon.50."], sm[,"Lat.50."], ifelse(sitenum>0, as.integer(((sm$EndTime -
 #Show dates
 #text(sm[,"Lon.50."], sm[,"Lat.50."], ifelse(sitenum>0, as.character(sm$StartTime), ""), col="red", pos = 1) 
 
+#plot of longitude and latitude
+par(mfrow=c(2,1))
+
+plot(sm$StartTime, sm$"Lon.50.", ylab = "Longitude", xlab = "", yaxt = "n", type = "n", ylim = c(min(sm$Lon.50.) - 10, max(sm$Lon.50.) + 10))
+axis(2, las = 2)
+polygon(x=c(sm$StartTime,rev(sm$StartTime)), y=c(sm$`Lon.2.5.`,rev(sm$`Lon.97.5.`)), border="gray", col="gray")
+lines(sm$StartTim,sm$"Lon.50.", lwd = 2)
+abline(v = fall.equi, lwd = 2, lty = 2, col = "orange")
+abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
+
+#Add points for stopovers 
+points(sm$StartTime, sm$"Lon.50.", pch=21, bg=colours[sitenum+1], 
+       cex = ifelse(sitenum>0, 3, 0), col = "firebrick", lwd = 2.5)
+
+#The text in the symbols indicates the estimated number of days spent at each stopover location 
+text(sm$StartTime, sm$"Lon.50.", ifelse(sitenum>0, as.integer(((sm$EndTime - sm$StartTime)/86400)), ""), col="black") 
+
+plot(sm$StartTime, sm$"Lat.50.", ylab = "Latitude", xlab = "", yaxt = "n", type = "n", ylim = c(min(sm$Lat.50.) - 10, max(sm$Lat.50.) + 10))
+axis(2, las = 2)
+polygon(x=c(sm$StartTime,rev(sm$StartTime)), y=c(sm$`Lat.2.5.`,rev(sm$`Lat.97.5.`)), border="gray", col="gray")
+lines(sm$StartTim,sm$"Lat.50.", lwd = 2)
+abline(v = fall.equi, lwd = 2, lty = 2, col = "orange")
+abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
+
+#Add points for stopovers 
+points(sm$StartTime, sm$"Lat.50.", pch=21, bg=colours[sitenum+1], 
+       cex = ifelse(sitenum>0, 3, 0), col = "firebrick", lwd = 2.5)
+
+#The text in the symbols indicates the estimated number of days spent at each stopover location 
+text(sm$StartTime, sm$"Lat.50.", ifelse(sitenum>0, as.integer(((sm$EndTime - sm$StartTime)/86400)), ""), col="black") 
+
+
+#View stationary locations
+sm$sitenum <- sitenum
+sm$duration <- as.numeric(difftime(sm$EndTime, sm$StartTime), unit = "days")
+sm[sitenum > 0, ]
