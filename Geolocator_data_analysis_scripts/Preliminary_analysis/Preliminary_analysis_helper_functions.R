@@ -56,6 +56,11 @@ shiftSpan <- function(twl, lig, period, est.zenith, dep.lon, dep.lat){
   
   # Get a subset of the observed twilights 
   ob_twl_sub <- subset(twl, twl$Twilight > period[1] & twl$Twilight < period[2])
+  
+  dates <- rep(seq(from = min(twl$Twilight), to = max(twl$Twilight), by = "day"), each = 2)
+  
+  # Check that there are no missing days 
+  if days(ob_twl_sub$Twilight) == rep()
 
   # # Sort the subset of data so that sunsrise is always reported before sunrise
   # # otherwise they may not match with the expected data 

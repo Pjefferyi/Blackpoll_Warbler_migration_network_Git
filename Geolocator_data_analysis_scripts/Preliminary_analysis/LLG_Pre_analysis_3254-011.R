@@ -201,7 +201,7 @@ dev.off()
 
 # Define known locations #######################################################
 
-#we set the location of geolocator deploymentlocation for the MCMC sampler (there is no recovery location) 
+#we set the location of geolocator deploymentlocation for the MCMC sampler 
 
 fixedx <- rep(F, nrow(x0))
 fixedx[1:2] <- T # first two location estimates
@@ -438,7 +438,8 @@ twl.rev <- subset(twl.rev, !duplicated(Twilight), sort = Twilight)
 
 grouped <- rep(FALSE, nrow(twl.rev))
 grouped[twl.rev$Site>0] <- TRUE 
-grouped[c(1:3, (length(grouped)-2):length(grouped))] <- TRUE
+#grouped[c(1:3, (length(grouped)-2):length(grouped))] <- TRUE
+grouped[c(1:3)] <- TRUE # the track does not end at the breeding site 
 
 # Create a vector which indicates which numbers sites
 g <- makeGroups(grouped)
@@ -630,6 +631,7 @@ sm <- SGAT2Movebank(fit$x, time = twl$Twilight, group = twl$group)
 #save(fit, file = paste0(dir,"/Pre_analysis_3254_011_SGAT_GroupedThreshold_fit.R"))
 
 #create a plot of the stationary locations #####################################
+par(mfrow=c(1,1), mar=c(1,1,1,1))
 colours <- c("black",colorRampPalette(c("blue","yellow","red"))(max(twl.rev$Site)))
 data(wrld_simpl)
 
@@ -661,3 +663,39 @@ text(sm[,"Lon.50."], sm[,"Lat.50."], ifelse(sitenum>0, as.integer(((sm$EndTime -
 #Show dates
 #text(sm[,"Lon.50."], sm[,"Lat.50."], ifelse(sitenum>0, as.character(sm$StartTime), ""), col="red", pos = 1) 
 
+#plot of longitude and latitude
+par(mfrow=c(2,1))
+
+plot(sm$StartTime, sm$"Lon.50.", ylab = "Longitude", xlab = "", yaxt = "n", type = "n", ylim = c(min(sm$Lon.50.) - 10, max(sm$Lon.50.) + 10))
+axis(2, las = 2)
+polygon(x=c(sm$StartTime,rev(sm$StartTime)), y=c(sm$`Lon.2.5.`,rev(sm$`Lon.97.5.`)), border="gray", col="gray")
+lines(sm$StartTim,sm$"Lon.50.", lwd = 2)
+abline(v = fall.equi, lwd = 2, lty = 2, col = "orange")
+abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
+
+#Add points for stopovers 
+points(sm$StartTime, sm$"Lon.50.", pch=21, bg=colours[sitenum+1], 
+       cex = ifelse(sitenum>0, 3, 0), col = "firebrick", lwd = 2.5)
+
+#The text in the symbols indicates the estimated number of days spent at each stopover location 
+text(sm$StartTime, sm$"Lon.50.", ifelse(sitenum>0, as.integer(((sm$EndTime - sm$StartTime)/86400)), ""), col="black") 
+
+plot(sm$StartTime, sm$"Lat.50.", ylab = "Latitude", xlab = "", yaxt = "n", type = "n", ylim = c(min(sm$Lat.50.) - 10, max(sm$Lat.50.) + 10))
+axis(2, las = 2)
+polygon(x=c(sm$StartTime,rev(sm$StartTime)), y=c(sm$`Lat.2.5.`,rev(sm$`Lat.97.5.`)), border="gray", col="gray")
+lines(sm$StartTim,sm$"Lat.50.", lwd = 2)
+abline(v = fall.equi, lwd = 2, lty = 2, col = "orange")
+abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
+
+#Add points for stopovers 
+points(sm$StartTime, sm$"Lat.50.", pch=21, bg=colours[sitenum+1], 
+       cex = ifelse(sitenum>0, 3, 0), col = "firebrick", lwd = 2.5)
+
+#The text in the symbols indicates the estimated number of days spent at each stopover location 
+text(sm$StartTime, sm$"Lat.50.", ifelse(sitenum>0, as.integer(((sm$EndTime - sm$StartTime)/86400)), ""), col="black") 
+
+
+#View stationary locations
+sm$sitenum <- sitenum
+sm$duration <- as.numeric(difftime(sm$EndTime, sm$StartTime), unit = "days")
+sm[sitenum > 0, ]
