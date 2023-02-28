@@ -219,7 +219,7 @@ matplot(0:100, dgamma(0:100, beta[1], beta[2]),
         type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith_sd, tol=0.18)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith_sd, tol=0.25)
 
 x0 <- path$x
 z0 <- trackMidpts(x0)
@@ -466,7 +466,7 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-cL <- changeLight(twl=geo_twl, quantile=0.80, summary = F, days = 7, plot = T)
+cL <- changeLight(twl=geo_twl, quantile=0.90, summary = F, days = 7, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
 mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths[1:length(zeniths)-1], distThreshold = 500)
@@ -735,3 +735,74 @@ points(sm$StartTime, sm$"Lat.50.", pch=21, bg=colours[sitenum+1],
 
 #The text in the symbols indicates the estimated number of days spent at each stopover location 
 text(sm$StartTime, sm$"Lat.50.", ifelse(sitenum>0, as.integer(((sm$EndTime - sm$StartTime)/86400)), ""), col="black") 
+
+################################################################################
+# FLIGHTR ANALYSIS #############################################################
+################################################################################
+
+# Import file with twilight times  
+twl <- read.csv(paste0(dir,"/Pre_analysis_V8757_096_twl_times.csv"))
+twl$Twilight <- as.POSIXct(twl$Twilight, tz = "UTC")
+
+
+twlexp <- twGeos2TAGS(raw = lig[, c("Date", "Light")], twl = twl,
+                      threshold = 1.5,
+                      filename = paste0(dir, "/V8757_096_TAGS_data.csv"))
+
+tags <- get.tags.data(paste0(dir, "/V8757_096_TAGS_data.csv"))
+
+#Calibration ###################################################################
+
+# plot slopes of light transition over calibration period 
+plot_slopes_by_location(Proc.data=tags, location=c(lon.calib, lat.calib), ylim=c(-5, 5))
+
+abline(v=as.POSIXct("2012-10-30"), col = "green") # end of first calibration period
+abline(v=as.POSIXct("2013-07-01"), col = "green") # start of the second calibration period
+
+Calibration.periods<-data.frame(
+  calibration.start=as.POSIXct(c(NA,"2013-07-01")),
+  calibration.stop=as.POSIXct(c("2012-10-30",NA)),
+  lon=lon.calib, lat=lat.calib) 
+# use c() also for the geographic coordinates, 
+# if you have more than one calibration location
+# (e. g.,  lon=c(5.43, 6.00), lat=c(52.93,52.94))
+print(Calibration.periods)
+
+Calibration<-make.calibration(tags, Calibration.periods, model.ageing=TRUE, plot.final = T)
+
+# Create grid for spatial extent ###############################################
+
+Grid <- make.grid(left=lon.calib-30, bottom=lat.calib-60, right=lon.calib+10, top= lat.calib + 10,
+                  distance.from.land.allowed.to.use=c(-Inf, 1100),
+                  distance.from.land.allowed.to.stay=c(-Inf, 50))
+
+# create the model prerun object ###############################################
+all.in <- make.prerun.object(tags, Grid, start=c(lon.calib, lat.calib),
+                             Calibration=Calibration, M.mean=750)
+
+#save(all.in, file = paste0(dir, "/V8757_096_FlightRCalib.RData"))
+
+#run twilight filter ###########################################################
+
+#Load results 
+load(paste0(dir, "/V8757_096_FlightRCalib.RData"))
+
+#run filter 
+nParticles=1e4 #increase to 1e6 for test
+Result<-run.particle.filter(all.in, threads=-1,
+                            nParticles=nParticles, known.last=TRUE,
+                            precision.sd=25, check.outliers= T,
+                            b=1700)
+
+#save(Result, file = paste0(dir, "/V8757_096_FLightRResult.RData"))
+
+# Plot results ################################################################# 
+load(paste0(dir, "/V8757_096_FLightRResult.RData"))
+
+#longitude and latitude
+plot_lon_lat(Result)
+
+#simple map 
+library(ggmap)
+ggmap::register_google("AIzaSyABANOgjTyVFpOuDOiyPlBL4geijIy6vPo")
+map.FLightR.ggmap(Result, zoom=3, save = FALSE)

@@ -77,7 +77,7 @@ offset <- 18 # adjusts the y-axis to put night (dark shades) in the middle
 threshold <- 1.5
 
 # visualize threshold over light levels  
-thresholdOverLight(lig, threshold, span =c(2000, 10000))
+thresholdOverLight(lig, threshold, span =c(85000, 91000))
 
 # FIND TIME SHIFT ##############################################################
 
@@ -128,7 +128,8 @@ shift <- shiftSpan(twl = twl_in, lig = lig, period = period, est.zenith = 92,
 # shift 
 
 #adjust time 
-lig$Date <- lig$Date - (shift$shift)
+#lig$Date <- lig$Date - (shift$shift)
+lig$Date <- lig$Date + 4*60*60
 
 #TWILIGHT ANNOTATION ##########################################################
 
@@ -164,7 +165,6 @@ twl <- twilightEdit(twilights = twl,
 lightImage(lig, offset = 19)
 tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
               col = ifelse(twl$Rise, "dodgerblue", "firebrick"))
-
 
 # Save the twilight times 
 # write.csv(twl, paste0(dir,"/Pre_analysis_A_twl_times.csv"))
@@ -477,7 +477,7 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-cL <- changeLight(twl=geo_twl, quantile=0.86, summary = F, days = 3, plot = T)
+cL <- changeLight(twl=geo_twl, quantile=0.86, summary = F, days = 7, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
 mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = 1000)

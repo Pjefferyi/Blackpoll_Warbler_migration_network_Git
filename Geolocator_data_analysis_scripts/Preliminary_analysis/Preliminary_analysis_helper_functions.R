@@ -57,10 +57,14 @@ shiftSpan <- function(twl, lig, period, est.zenith, dep.lon, dep.lat){
   # Get a subset of the observed twilights 
   ob_twl_sub <- subset(twl, twl$Twilight > period[1] & twl$Twilight < period[2])
   
-  dates <- rep(seq(from = min(twl$Twilight), to = max(twl$Twilight), by = "day"), each = 2)
+  check.dates <- rep(seq(from = date(min(ob_twl_sub$Twilight)), to = date(max(ob_twl_sub$Twilight)), by = "day"), each = 2)
   
   # Check that there are no missing days 
-  if days(ob_twl_sub$Twilight) == rep()
+  if (F %in% (date(ob_twl_sub$Twilight) == check.dates)) {
+    
+    print("One or more days twilights are missing in twl")
+    
+  }
 
   # # Sort the subset of data so that sunsrise is always reported before sunrise
   # # otherwise they may not match with the expected data 
@@ -78,7 +82,6 @@ shiftSpan <- function(twl, lig, period, est.zenith, dep.lon, dep.lat){
                                     zenith = est.zenith, # adjust zenith to match observed and known twilights
                                     rise = rise),
                          rise = rise)
-
   #There are some cases where we must change the subset of observed times
   if ((ob_twl_sub$Rise[1] == exp_twl$rise[1] & exp_twl$twilight[1] > exp_twl$twilight[2])|
     (ob_twl_sub$Rise[1] != exp_twl$rise[1] & exp_twl$twilight[1] < exp_twl$twilight[2])){
@@ -97,6 +100,11 @@ shiftSpan <- function(twl, lig, period, est.zenith, dep.lon, dep.lat){
   # expected twilights do not have to be adjusted 
   exp_twl_sub <- subset(exp_twl, exp_twl$twilight > period[1] & exp_twl$twilight < period[2])
   
+  }
+  
+  # Check that the two list of twilights are the same length 
+  if (nrow(ob_twl_sub) != nrow(exp_twl_sub)) {
+    warning("The observed and predicted lists of twilights have different lengths")
   }
   
   t1 <- mean(ob_twl_sub$Twilight)
