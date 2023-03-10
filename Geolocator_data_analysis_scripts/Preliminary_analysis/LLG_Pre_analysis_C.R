@@ -80,7 +80,7 @@ thresholdOverLight(lig, threshold, span =c(28000, 31000))
 #TWILIGHT ANNOTATION ##########################################################
 
 # open jpeg
-jpeg(paste0(dir, "/D_light_plot.png"), width = 1024, height = 990)
+jpeg(paste0(dir, "/C_light_plot.png"), width = 1024, height = 990)
 
 lightImage( tagdata = lig,
             offset = offset,     
@@ -467,7 +467,7 @@ x0 <- cbind(tapply(path$x[,1],twl$group,median),
 
 #set fixed locations 
 fixedx <- rep_len(FALSE, length.out = nrow(x0))
-fixedx[1] <- TRUE #we only know the geolocator deployment location 
+fixedx[1] <- TRUE #We only fix the geolocator deployment location because we have no info on the fall migration 
 
 x0[fixedx,1] <- lon.calib
 x0[fixedx,2] <- lat.calib

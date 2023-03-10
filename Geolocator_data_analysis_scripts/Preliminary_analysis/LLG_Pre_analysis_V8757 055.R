@@ -66,7 +66,7 @@ offset <- 20 # adjusts the y-axis to put night (dark shades) in the middle
 threshold <- 1.5 
 
 # visualize threshold over light levels  
-thresholdOverLight(lig, threshold, span =c(0, 25000))
+thresholdOverLight(lig, threshold, span =c(190000, 200000))
 
 # FIND TIME SHIFT ##############################################################
 
@@ -81,12 +81,12 @@ tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
 # we will do an initial twilight annotation to find identify the time interval
 # by which we need to shift time
 # There should be not need to edit, delete or insert twilights for this
-# twl_in <- preprocessLight(lig,
-#                        threshold = threshold,
-#                        offset = offset,
-#                        lmax = 64,         # max. light value
-#                        gr.Device = "x11", # MacOS version (and windows)
-#                        dark.min = 60)
+twl_in <- preprocessLight(lig,
+                       threshold = threshold,
+                       offset = offset,
+                       lmax = 64,         # max. light value
+                       gr.Device = "x11", # MacOS version (and windows)
+                       dark.min = 60)
 
 #write.csv(twl_in, paste0(dir,"/Pre_analysis_V8757_055_twl_times_initial.csv"))
 twl_in <- read.csv(paste0(dir,"/Pre_analysis_V8757_055_twl_times_initial.csv"))
@@ -116,8 +116,7 @@ shift <- shiftSpan(twl = twl_in, lig = lig, period = period, est.zenith = 92,
 # shift
 
 #adjust time
-lig$Date <- lig$Date - (shift$shift)
-
+#lig$Date <- lig$Date - (shift$shift)
 #lig$Date <- lig$Date + 5.5 *60*60
 
 #TWILIGHT ANNOTATION ##########################################################
@@ -142,6 +141,9 @@ twl <- preprocessLight(lig,
                        lmax = 64,         # max. light value
                        gr.Device = "x11", # MacOS version (and windows)
                        dark.min = 60)
+
+# Adjust sunset times by 120 second sampling interval
+twl <- twilightAdjust(twilights = twl, interval = 120)
 
 # Automatically adjust or mark false twilights 
 twl <- twilightEdit(twilights = twl,
@@ -180,7 +182,7 @@ lightImage( tagdata = lig,
 tsimageDeploymentLines(twl$Twilight, lon.calib, lat.calib, offset, lwd = 2, col = "orange")
 
 #calibration period before the migration 
-tm.calib <- as.POSIXct(c("2019-08-03", "2019-09-03"), tz = "UTC")
+tm.calib <- as.POSIXct(c("2019-08-01", "2019-08-27"), tz = "UTC")
 
 abline(v = tm.calib, lwd = 2, lty = 2, col = "orange")
 
@@ -201,40 +203,40 @@ alpha <- calib[3:4]
 # "in-habitat" calibration does not provide a realistic migration track during the nonbreeding period and spring migration 
 
 # Hill Ekstrom calibration ######################################################
-# startDate <- "2019-11-15"
+# startDate <- "2019-10-15"
 # endDate   <- "2020-04-15"
 # 
 # start = min(which(as.Date(twl$Twilight) == startDate))
 # end = max(which(as.Date(twl$Twilight) == endDate))
 # 
-# (zenith_sd <- findHEZenith(twl, tol=0.08, range=c(start,end)))
+# (zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
 
 # this zenith angle provides plausible location estimates in the non-breeding grounds but not in the breeding grounds
 # the method based on geolight yields the same Zenith angle as above.
 
 #convert to geolight format
- geo_twl <- export2GeoLight(twl)
+  geo_twl <- export2GeoLight(twl)
 
 # this is just to find places where birds have been for a long time, would not use these parameters for stopover identification, detailed can be found in grouped model section
 cL <- changeLight(twl=geo_twl, quantile=0.8, summary = F, days = 10, plot = T)
-# merge site helps to put sites together that are separated by single outliers.
+#merge site helps to put sites together that are separated by single outliers.
 mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
 
 #specify which site is the stationary one
 site           <- mS$site[mS$site>0] # get rid of movement periods
 stationarySite <- which(table(site) == max(table(site))) # find the site where bird is the longest
 
-#find the dates that the bird arrives and leaves this stationary site
+# find the dates that the bird arrives and leaves this stationary site
 start <- min(which(mS$site == stationarySite))
 end   <- max(which(mS$site == stationarySite))
 
 (zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
 
-# adjust the zenith angles calculated from the breeding sites 
+# adjust the zenith angles calculated from the breeding sites
 zenith0_ad <- zenith0 + abs(zenith - zenith_sd)
 zenith_ad  <- zenith_sd
 
-# use a different zentih angle for the breeding and nonbreeding periods 
+# use a different zentih angle for the breeding and nonbreeding periods
 zenith_twl <- data.frame(Date = twl$Twilight) %>%
    mutate(zenith = case_when(Date < fall.equi ~ zenith0,
                              Date > fall.equi ~ zenith0_ad))
@@ -243,7 +245,7 @@ zeniths <- zenith_twl$zenith
 # Movement model ###############################################################
 
 #this movement model should be based on the estimated migration speed of the blackpoll warbler 
-beta  <- c(0.45, 0.05)
+beta  <- c(0.7, 0.08)
 matplot(0:100, dgamma(0:100, beta[1], beta[2]),
         type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
 
@@ -490,10 +492,10 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-cL <- changeLight(twl=geo_twl, quantile=0.86, summary = F, days = 5, plot = T)
+cL <- changeLight(twl=geo_twl, quantile=0.86, summary = F, days = 7, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = 500)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith_sd, distThreshold = 500)
 
 #back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 
@@ -615,7 +617,7 @@ mask <- earthseaMask(xlim, ylim, n = 10, index=index)
 ## Define the log prior for x and z
 logp <- function(p) {
   f <- mask(p)
-  ifelse(is.na(f), -1000, log(2))
+  ifelse(is.na(f), -1000, log(1))
 }
 
 # Define the Estelle model ####################################################
@@ -628,7 +630,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                beta =  beta,
                                x0 = x0, # median point for each greoup (defined by twl$group)
                                z0 = z0, # middle points between the x0 points
-                               zenith = zeniths,
+                               zenith = zenith0,
                                logp.x = logp,#land sea mask
                                fixedx = fixedx)
 
@@ -655,7 +657,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                x0 = x0, z0 = z0,
                                logp.x = logp,
                                missing=twl$Missing,
-                               zenith = zeniths,
+                               zenith = zenith0,
                                fixedx = fixedx)
 
 for (k in 1:3) {
@@ -688,6 +690,10 @@ sm <- SGAT2Movebank(fit$x, time = twl$Twilight, group = twl$group)
 #Save the output of the group model 
 #save(sm, file = paste0(dir,"/Pre_analysis_8757_055_SGAT_GroupedThreshold_summary.csv"))
 #save(fit, file = paste0(dir,"/Pre_analysis_8757_055_SGAT_GroupedThreshold_fit.R"))
+
+#load(file = paste0(dir,"/Pre_analysis_8757_055_SGAT_GroupedThreshold_summary.csv"))
+#load(file = paste0(dir,"/Pre_analysis_8757_055_SGAT_GroupedThreshold_fit.R"))
+
 
 #create a plot of the stationary locations #####################################
 colours <- c("black",colorRampPalette(c("blue","yellow","red"))(max(twl.rev$Site)))

@@ -164,7 +164,7 @@ stationarySite <- which(table(site) == max(table(site))) # find the site where b
 start <- min(which(mS$site == stationarySite))
 end   <- max(which(mS$site == stationarySite))
 
-(zenith_sd <- findHEZenith(twl, tol=0.08, range=c(start,end)))
+(zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
 
 # adjust the zenith angles calculated from the breeding sites 
 zenith0_ad <- zenith0 + abs(zenith - zenith_sd)
@@ -184,7 +184,7 @@ matplot(0:100, dgamma(0:100, beta[1], beta[2]),
         type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol=0.01)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol=0.05)
 
 x0 <- path$x
 z0 <- trackMidpts(x0)
@@ -274,7 +274,7 @@ model <- thresholdModel(twilight = twl$Twilight,
                         logp.x = log.prior, logp.z = log.prior, 
                         x0 = x0,
                         z0 = z0,
-                        zenith = zeniths,
+                        zenith = zenith0,
                         fixedx = fixedx)
 
 #Define the error distribution around each location 
@@ -295,7 +295,7 @@ model <- thresholdModel(twilight = twl$Twilight,
                         logp.x = log.prior, logp.z = log.prior, 
                         x0 = x0,
                         z0 = z0,
-                        zenith = zeniths,
+                        zenith = zenith0,
                         fixedx = fixedx)
 
 x.proposal <- mvnorm(S = diag(c(0.005, 0.005)), n = nrow(twl))
@@ -428,7 +428,7 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-cL <- changeLight(twl=geo_twl, quantile=0.86, summary = F, days = 2, plot = T)
+cL <- changeLight(twl=geo_twl, quantile=0.86, summary = F, days = 3, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
 mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = 500)
@@ -558,7 +558,7 @@ mask <- earthseaMask(xlim, ylim, n = 10, index=index)
 ## Define the log prior for x and z
 logp <- function(p) {
   f <- mask(p)
-  ifelse(is.na(f), -1000, log(2))
+  ifelse(is.na(f), -1000, log(1))
 }
 
 # Define the Estelle model ####################################################
@@ -569,7 +569,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                twilight.model = "ModifiedGamma",
                                alpha = alpha,
                                beta =  beta,
-                               x0 = x0, # median point for each greoup (defined by twl$group)
+                               x0 = x0, # median point for each group (defined by twl$group)
                                z0 = z0, # middle points between the x0 points
                                zenith = zeniths,
                                logp.x = logp,# land sea mask
@@ -599,7 +599,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                logp.x = logp,
                                missing=twl$Missing,
                                zenith = zeniths,
-                               fixedx = fixedx)
+                              fixedx = fixedx)
 
 for (k in 1:3) {
   x.proposal <- mvnorm(chainCov(fit$x), s = 0.3)
@@ -632,6 +632,10 @@ sm <- SGAT2Movebank(fit$x, time = twl$Twilight, group = twl$group)
 #save(sm, file = paste0(dir,"/Pre_analysis_4068_014_SGAT_GroupedThreshold_summary.csv"))
 #save(fit, file = paste0(dir,"/Pre_analysis_4068_014_SGAT_GroupedThreshold_fit.R"))
 
+#load(file = paste0(dir,"/Pre_analysis_4068_014_SGAT_GroupedThreshold_summary.csv"))
+#load(file = paste0(dir,"/Pre_analysis_4068_014_SGAT_GroupedThreshold_fit.R"))
+
+
 #create a plot of the stationary locations #####################################
 colours <- c("black",colorRampPalette(c("blue","yellow","red"))(max(twl.rev$Site)))
 data(wrld_simpl)
@@ -649,7 +653,7 @@ plot(wrld_simpl, xlim=xlim, ylim=ylim,add = T, bg = adjustcolor("black",alpha=0.
 with(sm[sitenum>0,], arrows(`Lon.50.`, `Lat.2.5.`, `Lon.50.`, `Lat.97.5.`, length = 0, lwd = 2.5, col = "firebrick"))
 with(sm[sitenum>0,], arrows(`Lon.2.5.`, `Lat.50.`, `Lon.97.5.`, `Lat.50.`, length = 0, lwd = 2.5, col = "firebrick"))
 lines(sm[,"Lon.50."], sm[,"Lat.50."], col = adjustcolor("black", alpha = 0.6), lwd = 2)
-points(sm[,"Lon.50."], sm[,"Lat.50."], col = ifelse(sm$StartTime > fall.equi - days(10) & sm$StartTime < fall.equi + days(10), "blue", "darkorchid4"), lwd = 2)
+points(sm[,"Lon.50."], sm[,"Lat.50."], col = ifelse(sm$StartTime > fall.equi - days(21) & sm$StartTime < fall.equi + days(21), "blue", "darkorchid4"), lwd = 2)
 
 points(sm[,"Lon.50."], sm[,"Lat.50."], pch=21, bg=colours[sitenum+1], 
        cex = ifelse(sitenum>0, 3, 0), col = "firebrick", lwd = 2.5)
@@ -671,8 +675,14 @@ plot(sm$StartTime, sm$"Lon.50.", ylab = "Longitude", xlab = "", yaxt = "n", type
 axis(2, las = 2)
 polygon(x=c(sm$StartTime,rev(sm$StartTime)), y=c(sm$`Lon.2.5.`,rev(sm$`Lon.97.5.`)), border="gray", col="gray")
 lines(sm$StartTim,sm$"Lon.50.", lwd = 2)
-abline(v = fall.equi, lwd = 2, lty = 2, col = "orange")
-abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
+
+# Fall equinox
+abline(v = fall.equi + days(14), lwd = 2, lty = 2, col = "orange")
+abline(v = fall.equi - days(14), lwd = 2, lty = 2, col = "orange")
+
+# Spring equinox 
+abline(v = spring.equi + days(14), lwd = 2, lty = 2, col = "orange")
+abline(v = spring.equi - days(14), lwd = 2, lty = 2, col = "orange")
 
 #Add points for stopovers 
 points(sm$StartTime, sm$"Lon.50.", pch=21, bg=colours[sitenum+1], 
@@ -685,8 +695,15 @@ plot(sm$StartTime, sm$"Lat.50.", ylab = "Latitude", xlab = "", yaxt = "n", type 
 axis(2, las = 2)
 polygon(x=c(sm$StartTime,rev(sm$StartTime)), y=c(sm$`Lat.2.5.`,rev(sm$`Lat.97.5.`)), border="gray", col="gray")
 lines(sm$StartTim,sm$"Lat.50.", lwd = 2)
-abline(v = fall.equi, lwd = 2, lty = 2, col = "orange")
-abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
+
+# Fall equinox
+abline(v = fall.equi + days(14), lwd = 2, lty = 2, col = "orange")
+abline(v = fall.equi - days(14), lwd = 2, lty = 2, col = "orange")
+
+# Spring equinox 
+abline(v = spring.equi + days(14), lwd = 2, lty = 2, col = "orange")
+abline(v = spring.equi - days(14), lwd = 2, lty = 2, col = "orange")
+
 
 #Add points for stopovers 
 points(sm$StartTime, sm$"Lat.50.", pch=21, bg=colours[sitenum+1], 
@@ -700,3 +717,73 @@ text(sm$StartTime, sm$"Lat.50.", ifelse(sitenum>0, as.integer(((sm$EndTime - sm$
 sm$sitenum <- sitenum
 sm$duration <- as.numeric(difftime(sm$EndTime, sm$StartTime), unit = "days")
 sm[sitenum > 0, ]
+
+################################################################################
+# FLIGHTR ANALYSIS #############################################################
+################################################################################
+
+# Import file with twilight times  
+twl <- read.csv(paste0(dir,"/Pre_analysis_4068-014_twl_times.csv"))
+twl$Twilight <- as.POSIXct(twl$Twilight, tz = "UTC")
+
+twlexp <- twGeos2TAGS(raw = lig[, c("Date", "Light")], twl = twl,
+                      threshold = 1.5,
+                      filename = paste0(dir, "/4068-014_TAGS_data.csv"))
+
+tags <- get.tags.data(paste0(dir, "/4068-014_TAGS_data.csv"))
+
+#Calibration ###################################################################
+
+# plot slopes of light transition over calibration period 
+plot_slopes_by_location(Proc.data=tags, location=c(lon.calib, lat.calib), ylim=c(-5, 5))
+
+abline(v=as.POSIXct("2016-07-25"), col = "green") # start of first calibration period
+abline(v=as.POSIXct("2016-08-20"), col = "green") # end of first calibration period
+#abline(v=as.POSIXct("2016-08-18"), col = "green") # start of the second calibration period
+#abline(v=as.POSIXct("2017-06-20"), col = "green") # end of the second calibration period
+
+Calibration.periods<-data.frame(
+  calibration.start=as.POSIXct(c("2016-07-25")),
+  calibration.stop=as.POSIXct(c("2016-08-15")),
+  lon=lon.calib, lat=lat.calib) 
+print(Calibration.periods)
+
+Calibration<-make.calibration(tags, Calibration.periods, model.ageing=TRUE, plot.final = T)
+
+# Create grid for spatial extent ###############################################
+
+Grid <- make.grid(left=lon.calib -10, bottom=lat.calib-100, right=lon.calib+120, top= lat.calib + 5,
+                  distance.from.land.allowed.to.use=c(-Inf, 1100),
+                  distance.from.land.allowed.to.stay=c(-Inf, 50))
+
+# create the model prerun object ###############################################
+all.in <- make.prerun.object(tags, Grid, start=c(lon.calib, lat.calib),
+                             Calibration=Calibration, threads = min(Threads, 6))
+
+save(all.in, file = paste0(dir, "/4068-014_FlightRCalib.RData"))
+
+#run twilight filter ###########################################################
+
+#Load  model prerun object
+load(paste0(dir, "/4068-014_FlightRCalib.RData"))
+
+#run filter 
+nParticles=1e4 # start at 1e4 for initial run 
+Result<-run.particle.filter(all.in, threads= min(Threads, 6),
+                            nParticles=nParticles, known.last=TRUE,
+                            precision.sd=25, check.outliers= T, 
+                            b=2700)
+
+save(Result, file = paste0(dir, "/4068-014_FLightRResult.RData"))
+
+# Plot results ################################################################# 
+load(paste0(dir, "/4068-014_FLightRResult.RData"))
+
+#longitude and latitude
+plot_lon_lat(Result)
+
+#simple map 
+library(ggmap)
+ggmap::register_google("AIzaSyABANOgjTyVFpOuDOiyPlBL4geijIy6vPo")
+map.FLightR.ggmap(Result, zoom=3, save = FALSE)
+

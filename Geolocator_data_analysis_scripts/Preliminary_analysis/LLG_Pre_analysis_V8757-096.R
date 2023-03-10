@@ -219,7 +219,7 @@ matplot(0:100, dgamma(0:100, beta[1], beta[2]),
         type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith_sd, tol=0.25)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith_sd, tol=0.18)
 
 x0 <- path$x
 z0 <- trackMidpts(x0)
@@ -466,10 +466,10 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-cL <- changeLight(twl=geo_twl, quantile=0.90, summary = F, days = 7, plot = T)
+cL <- changeLight(twl=geo_twl, quantile=0.86, summary = F, days = 2, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths[1:length(zeniths)-1], distThreshold = 500)
+#mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths[1:length(zeniths)-1], distThreshold = 500)
 
 #back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 
@@ -690,7 +690,7 @@ plot(wrld_simpl, xlim=xlim, ylim=ylim,add = T, bg = adjustcolor("black",alpha=0.
 with(sm[sitenum>0,], arrows(`Lon.50.`, `Lat.2.5.`, `Lon.50.`, `Lat.97.5.`, length = 0, lwd = 2.5, col = "firebrick"))
 with(sm[sitenum>0,], arrows(`Lon.2.5.`, `Lat.50.`, `Lon.97.5.`, `Lat.50.`, length = 0, lwd = 2.5, col = "firebrick"))
 lines(sm[,"Lon.50."], sm[,"Lat.50."], col = adjustcolor("black", alpha = 0.6), lwd = 2)
-points(sm[,"Lon.50."], sm[,"Lat.50."], col = ifelse(sm$StartTime > spring.equi - days(10) & sm$StartTime < spring.equi + days(10), "blue", "darkorchid4"), lwd = 2)
+points(sm[,"Lon.50."], sm[,"Lat.50."], col = ifelse(sm$StartTime > fall.equi - days(10) & sm$StartTime < fall.equi + days(10), "blue", "darkorchid4"), lwd = 2)
 
 points(sm[,"Lon.50."], sm[,"Lat.50."], pch=21, bg=colours[sitenum+1], 
        cex = ifelse(sitenum>0, 3, 0), col = "firebrick", lwd = 2.5)
@@ -756,12 +756,12 @@ tags <- get.tags.data(paste0(dir, "/V8757_096_TAGS_data.csv"))
 # plot slopes of light transition over calibration period 
 plot_slopes_by_location(Proc.data=tags, location=c(lon.calib, lat.calib), ylim=c(-5, 5))
 
-abline(v=as.POSIXct("2012-10-30"), col = "green") # end of first calibration period
-abline(v=as.POSIXct("2013-07-01"), col = "green") # start of the second calibration period
+abline(v=as.POSIXct("2012-9-15"), col = "green") # end of first calibration period
+abline(v=as.POSIXct("2012-10-30"), col = "green") # start of the second calibration period
 
 Calibration.periods<-data.frame(
-  calibration.start=as.POSIXct(c(NA,"2013-07-01")),
-  calibration.stop=as.POSIXct(c("2012-10-30",NA)),
+  calibration.start=as.POSIXct(c("2012-09-10")),
+  calibration.stop=as.POSIXct(c("2012-10-30")),
   lon=lon.calib, lat=lat.calib) 
 # use c() also for the geographic coordinates, 
 # if you have more than one calibration location

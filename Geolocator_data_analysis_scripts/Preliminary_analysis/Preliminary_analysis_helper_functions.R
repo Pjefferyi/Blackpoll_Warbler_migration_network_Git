@@ -40,7 +40,7 @@ thresholdOverLight <- function(data, threshold, span = c()){
 }
 
 
-# shiftSpan ####################################################################
+# Shift time recordings  #######################################################
 
 # Function to identify the span of a time shift in a geolocator relative to the 
 # expect Greenwich Mean time
@@ -122,3 +122,4 @@ shiftSpan <- function(twl, lig, period, est.zenith, dep.lon, dep.lat){
 
 
 
+  

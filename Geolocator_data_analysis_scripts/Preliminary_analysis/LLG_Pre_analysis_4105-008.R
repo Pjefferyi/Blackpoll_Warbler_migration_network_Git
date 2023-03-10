@@ -188,6 +188,8 @@ points(path$x, pch=19, col="cornflowerblue", type = "o")
 points(lon.calib, lat.calib, pch = 16, cex = 2.5, col = "firebrick")
 box()
 
+
+
 dev.off()
 
 # Define known locations #######################################################

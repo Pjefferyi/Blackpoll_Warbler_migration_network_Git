@@ -21,7 +21,6 @@ loadpackages(c(
   "devtools", # Download custom R packages
   "spData", # Spatial Datasets
   "terra",
-  "tmap",
   "scales"
 ))
 

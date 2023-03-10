@@ -55,7 +55,7 @@ lig <- readLig(paste0(dir,"/ML6740 V8296 005 reconstructed_000.lig"), skip = 1)
 lig <- lig[(lig$Date > deploy.start),]
 
 #parameter to visualize the data 
-offset <- 12 # adjusts the y-axis to put night (dark shades) in the middle
+offset <- 16 # adjusts the y-axis to put night (dark shades) in the middle
 
 #Threshold light level 
 threshold <- 1.5 
@@ -460,8 +460,6 @@ plot(wrld_simpl, xlim=xlim, ylim=ylim,add = T, bg = adjustcolor("black",alpha=0.
 lines(sm[,"Lon.50%"], sm[,"Lat.50%"], 
       col = ifelse(sm$stationary == 1, "blue", "red"),
       type = "o", pch = 16)
-
-
 
 #SGAT Groupe model analysis ####################################################
 

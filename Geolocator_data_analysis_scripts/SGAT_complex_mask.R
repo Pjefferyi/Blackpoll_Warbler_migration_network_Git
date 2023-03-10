@@ -95,7 +95,7 @@ EB.data <- load_ranges(get_species_path("bkpwar", ebird.dir), resolution = "mr",
 ################################################################################
 
 #load data 
-BLI.data <- st_read("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Birdlife_international_species_distribution/SppDataRequest.shp")
+BLI.data <- st_read("C:/Users/Jelan/OneDrive/Desktop/Universi# ty/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Birdlife_international_species_distribution/SppDataRequest.shp")
 
 #Dissolve the polygons 
 BLI.range.poly <- BLI.data %>%

@@ -77,12 +77,12 @@ tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
 # we will do an initial twilight annotation to find identify the time interval
 # by which we need to shift time
 # There should be not need to edit, delete or insert twilights for this
-twl_in <- preprocessLight(lig,
-                       threshold = threshold,
-                       offset = offset,
-                       lmax = 64,         # max. light value
-                       gr.Device = "x11", # MacOS version (and windows)
-                       dark.min = 60)
+# twl_in <- preprocessLight(lig,
+#                        threshold = threshold,
+#                        offset = offset,
+#                        lmax = 64,         # max. light value
+#                        gr.Device = "x11", # MacOS version (and windows)
+#                        dark.min = 60)
 
 #write.csv(twl_in, paste0(dir,"/Pre_analysis_V8757_029_twl_times_initial.csv"))
 twl_in <- read.csv(paste0(dir,"/Pre_analysis_V8757_029_twl_times_initial.csv"))
@@ -152,7 +152,7 @@ tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
               col = ifelse(twl$Rise, "dodgerblue", "firebrick"))
 
 # Save the twilight times 
-#write.csv(twl, paste0(dir,"/Pre_analysis_V8757 029_twl_times.csv"))
+# write.csv(twl, paste0(dir,"/Pre_analysis_V8757 029_twl_times.csv"))
 
 ###############################################################################
 # SGAT ANALYSIS ###############################################################
@@ -193,9 +193,9 @@ alpha <- calib[3:4]
 geo_twl <- export2GeoLight(twl)
 
 # this is just to find places where birds have been for a long time, would not use these parameters for stopover identification, detailed can be found in grouped model section
-cL <- changeLight(twl=geo_twl, quantile=0.86, summary = F, days = 7, plot = T)
+cL <- changeLight(twl=geo_twl, quantile=0.8, summary = F, days = 10, plot = T)
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith_ad, distThreshold = 500)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
 
 #specify which site is the stationary one
 site           <- mS$site[mS$site>0] # get rid of movement periods
@@ -207,21 +207,22 @@ end   <- max(which(mS$site == stationarySite))
 
 (zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
 
-# the zenith angle obtained with the Hill Ekstrom method is higher
+# Vector with different zenith angle for the breeding and nonbreeding periods 
+zenith_twl <- data.frame(Date = twl$Twilight) %>%
+  mutate(zenith = case_when(Date < fall.equi ~ zenith0,
+                            Date > fall.equi ~ zenith_sd))
+zeniths <- zenith_twl$zenith
 
-#adjust the angles
-zenith0_ad <- zenith0 + abs(zenith-zenith_sd)
+# adjust the zenith angles calculated from the breeding sites 
+zenith0_ad <- zenith0 + abs(zenith - zenith_sd)
 zenith_ad  <- zenith_sd
 
-# use a different zentih angle for the breeding and nonbreeding periods 
+# use a different zenith angle for the breeding and nonbreeding periods 
 zenith_twl <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < fall.equi ~ zenith0,
                             Date > fall.equi ~ zenith0_ad))
-zeniths <- zenith_twl$zenith
 
-#or alternatively adjust the zenith angles calculated from the breeding sites 
-#zenith0_ad <- zenith0 + abs(zenith-zenith_sd)
-#zenith_ad  <- zenith_sd
+zeniths <- zenith_twl$zenith
 
 # Movement model ###############################################################
 
@@ -231,7 +232,7 @@ matplot(0:100, dgamma(0:100, beta[1], beta[2]),
         type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol=0.12)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith_sd, tol=0.12)
 
 x0 <- path$x
 z0 <- trackMidpts(x0)
@@ -685,8 +686,8 @@ sm <- SGAT2Movebank(fit$x, time = twl$Twilight, group = twl$group)
 #save(fit, file = paste0(dir,"/Pre_analysis_8757_029_SGAT_GroupedThreshold_fit.R"))
 
 #Load data from previous model run 
-#load(paste0(dir,"/Pre_analysis_8757_029_SGAT_GroupedThreshold_summary.csv")
-#load(paste0(dir,"/Pre_analysis_8757_029_SGAT_GroupedThreshold_fit.R")
+#load(paste0(dir,"/Pre_analysis_8757_029_SGAT_GroupedThreshold_summary.csv"))
+#load(paste0(dir,"/Pre_analysis_8757_029_SGAT_GroupedThreshold_fit.R"))
 
 #create a plot of the stationary locations #####################################
 colours <- c("black",colorRampPalette(c("blue","yellow","red"))(max(twl.rev$Site)))
