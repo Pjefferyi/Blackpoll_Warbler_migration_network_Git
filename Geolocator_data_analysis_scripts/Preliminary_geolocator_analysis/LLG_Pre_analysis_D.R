@@ -77,22 +77,22 @@ thresholdOverLight(lig, threshold, span =c(0, 25000))
 # FIND TIME SHIFT ##############################################################
 
 #This geolocator has a a time shift visible on this plot
-lightImage( tagdata = lig,
-            offset = offset,     
-            zlim = c(0, 2))
-
-tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
-                       offset = offset, lwd = 3, col = adjustcolor("orange", alpha.f = 0.5))
+# lightImage( tagdata = lig,
+#             offset = offset,     
+#             zlim = c(0, 2))
+# 
+# tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
+#                        offset = offset, lwd = 3, col = adjustcolor("orange", alpha.f = 0.5))
 
 # we will do an initial twilight annotation to find identify the time interval
 # by which we need to shift time
 # There should be not need to edit, delete or insert twilights for this
-twl_in <- preprocessLight(lig,
-                       threshold = threshold,
-                       offset = offset,
-                       lmax = 64,         # max. light value
-                       gr.Device = "x11", # MacOS version (and windows)
-                       dark.min = 60)
+# twl_in <- preprocessLight(lig,
+#                        threshold = threshold,
+#                        offset = offset,
+#                        lmax = 64,         # max. light value
+#                        gr.Device = "x11", # MacOS version (and windows)
+#                        dark.min = 60)
 
 #write.csv(twl_in, paste0(dir,"/Pre_analysis_D_twl_times_initial.csv"))
 twl_in <- read.csv(paste0(dir,"/Pre_analysis_D_twl_times_initial.csv"))
@@ -102,13 +102,13 @@ twl_in$Twilight <- as.POSIXct(twl_in$Twilight, tz = "UTC")
 # still in the breeding grounds 
 period <- as.POSIXct(c("2013-08-28", "2013-09-28"), tz = "UTC")
 
-#plot the period over the light image 
-lightImage( tagdata = lig,
-            offset = offset,     
-            zlim = c(0, 2))
-
-tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
-                       offset = offset, lwd = 3, col = adjustcolor("orange", alpha.f = 0.5))
+# #plot the period over the light image 
+# lightImage( tagdata = lig,
+#             offset = offset,     
+#             zlim = c(0, 2))
+# 
+# tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
+#                        offset = offset, lwd = 3, col = adjustcolor("orange", alpha.f = 0.5))
 
 abline(v = period, lwd = 2, lty = 2, col = "orange")
 
@@ -126,37 +126,37 @@ lig$Date <- lig$Date - (shift$shift)
 #TWILIGHT ANNOTATION ##########################################################
 
 # open jpeg
-jpeg(paste0(dir, "/D_light_plot.png"), width = 1024, height = 990)
-
-lightImage( tagdata = lig,
-            offset = offset,     
-            zlim = c(0, 2))
-
-tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
-                       offset = offset, lwd = 3, col = adjustcolor("orange", alpha.f = 0.5))
-
-dev.off()
+# jpeg(paste0(dir, "/D_light_plot.png"), width = 1024, height = 990)
+# 
+# lightImage( tagdata = lig,
+#             offset = offset,     
+#             zlim = c(0, 2))
+# 
+# tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
+#                        offset = offset, lwd = 3, col = adjustcolor("orange", alpha.f = 0.5))
+# 
+# dev.off()
 
 #Detect twilight times, for now do not edit twilight times  
-twl <- preprocessLight(lig, 
-                       threshold = threshold,
-                       offset = offset, 
-                       lmax = 2,         # max. light value
-                       gr.Device = "x11", # MacOS version (and windows)
-                       dark.min = 60)
+# twl <- preprocessLight(lig, 
+#                        threshold = threshold,
+#                        offset = offset, 
+#                        lmax = 2,         # max. light value
+#                        gr.Device = "x11", # MacOS version (and windows)
+#                        dark.min = 60)
 
 
 # Automatically adjust or mark false twilights 
-twl <- twilightEdit(twilights = twl, 
-                    window = 4,           
-                    outlier.mins = 90,    
-                    stationary.mins = 45, 
-                    plot = TRUE)
+# twl <- twilightEdit(twilights = twl, 
+#                     window = 4,           
+#                     outlier.mins = 90,    
+#                     stationary.mins = 45, 
+#                     plot = TRUE)
 
 # Visualize light and twilight time-series
-lightImage(lig, offset = offset)
-tsimagePoints(twl$Twilight, offset = offset, pch = 16, cex = 0.5,
-              col = ifelse(twl$Rise, "dodgerblue", "firebrick"))
+# lightImage(lig, offset = offset)
+# tsimagePoints(twl$Twilight, offset = offset, pch = 16, cex = 0.5,
+#               col = ifelse(twl$Rise, "dodgerblue", "firebrick"))
 
 # Save the twilight times 
 #write.csv(twl, paste0(dir,"/Pre_analysis_D_twl_times.csv"))
@@ -201,7 +201,7 @@ alpha <- calib[3:4]
 geo_twl <- export2GeoLight(twl)
 
 # this is just to find places where birds have been for a long time, would not use these parameters for stopover identification, detailed can be found in grouped model section
-cL <- changeLight(twl=geo_twl, quantile=0.8, summary = F, days = 10, plot = T)
+cL <- changeLight(twl=geo_twl, quantile=0.6, summary = F, days = 20, plot = T)
 # merge site helps to put sites together that are separated by single outliers.
 mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
 
