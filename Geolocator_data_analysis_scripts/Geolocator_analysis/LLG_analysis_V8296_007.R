@@ -240,13 +240,13 @@ matplot(0:100, dgamma(0:100, beta[1], beta[2]),
         type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith_sd, tol=0.10)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith_sd, tol=0.18)
 
 x0 <- path$x
 z0 <- trackMidpts(x0)
 
 # open jpeg
-jpeg(paste0(dir, "/ML6440_", geo.id, "_Threshold_path.png"), width = 1024, height = 990)
+jpeg(paste0(dir, "/", geo.id, "_Threshold_path.png"), width = 1024, height = 990)
 
 par(mfrow=c(1,1))
 data(wrld_simpl)
@@ -269,7 +269,7 @@ save(x0, file = paste0(dir,"/", geo.id, "_initial_path.csv"))
 fixedx <- rep(F, nrow(x0))
 fixedx[1:2] <- T # first two location estimates
 
-fixedx[(nrow(x0) - 1):nrow(x0)] <- T # last two location estimates
+#we don't fix the last location because this track is incomplete 
 
 x0[fixedx, 1] <- lon.calib
 x0[fixedx, 2] <- lat.calib
@@ -392,7 +392,7 @@ head(sm)
 # Plot Results #################################################################
 
 # open jpeg
-jpeg(paste0(dir, "/ML6440_V", geo.id,"_Estelle_path.png"), width = 1024 , height = 990)
+jpeg(paste0(dir, "/", geo.id,"_Estelle_path.png"), width = 1024 , height = 990)
 
 #Plot the results
 par(mfrow=c(1,1))
@@ -417,7 +417,7 @@ dev.off()
 # Plot of mean longitude and latitude
 
 # open jpeg
-jpeg(paste0(dir, "/ML6440_V", geo.id,"_mean_lon_lat.png"), width = 1024 , height = 990)
+jpeg(paste0(dir, "/", geo.id,"_mean_lon_lat.png"), width = 1024 , height = 990)
 
 par(mfrow=c(2,1),mar=c(4,4,1,1))
 
@@ -484,7 +484,7 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-cL <- changeLight(twl=geo_twl, quantile=0.86, summary = F, days = 3, plot = T)
+cL <- changeLight(twl=geo_twl, quantile=0.86, summary = F, days = 2, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
 mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = 500)
@@ -677,18 +677,10 @@ fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = chainLast(fit$x),
 # sm <- locationSummary(fit$x, time=fit$model$time)
 sm <- SGAT2Movebank(fit$x, time = twl$Twilight, group = twl$group)
 
-#Save the output of the model 
-#save(sm, file = paste0(dir,"/Pre_analysis_", geo.id,"_SGAT_GroupedThreshold_summary.csv"))
-#save(fit, file = paste0(dir,"/Pre_analysis_", geo.id,"_SGAT_GroupedThreshold_fit.R"))
-
-#load the output of the model 
-#load(file = paste0(dir,"/Pre_analysis_", geo.id,"_SGAT_GroupedThreshold_summary.csv"))
-#load(file = paste0(dir,"/Pre_analysis_", geo.id,"_SGAT_GroupedThreshold_fit.R"))
-
 #create a plot of the stationary locations #####################################
 
 # open jpeg
-jpeg(paste0(dir, "/ML6440_V", geo.id,"_grouped_threshold_model_map.png"), width = 1024 , height = 990)
+jpeg(paste0(dir, "/", geo.id,"_grouped_threshold_model_map.png"), width = 1024 , height = 990)
 
 par(mfrow=c(1,1))
 colours <- c("black",colorRampPalette(c("blue","yellow","red"))(max(twl.rev$Site)))
@@ -728,7 +720,7 @@ dev.off()
 #plot of longitude and latitude ################################################
 
 # open jpeg
-jpeg(paste0(dir, "/ML6440_V", geo.id,"_grouped_threshold_model_lon_lat.png"), width = 1024 , height = 990)
+jpeg(paste0(dir, "/", geo.id,"_grouped_threshold_model_lon_lat.png"), width = 1024 , height = 990)
 
 par(mfrow=c(2,1))
 
@@ -768,14 +760,22 @@ sm$sitenum <- sitenum
 sm$duration <- as.numeric(difftime(sm$EndTime, sm$StartTime), unit = "days")
 stat.loc <- sm[sitenum > 0, ]
 
-
 #plot only stationary locations
 par(mfrow=c(1,1))
 
 data(wrld_simpl)
 plot(wrld_simpl, xlim=xlim, ylim=ylim, col = "grey95")
 points(sm$Lon.50., sm$Lat.50., pch = 16, cex = 0, col = "firebrick", type = "o")
-points(stat.loc$Lon.50., stat.loc$Lat.50., pch = 16, cex = 2.5, col = "firebrick")
+points(stat.loc$Lon.50., stat.loc$Lat.50., pch = 16, cex = 1.5, col = "firebrick")
+
+#Save the output of the model 
+#save(sm, file = paste0(dir,"/Pre_analysis_", geo.id,"_SGAT_GroupedThreshold_summary.csv"))
+#save(fit, file = paste0(dir,"/Pre_analysis_", geo.id,"_SGAT_GroupedThreshold_fit.R"))
+
+#load the output of the model 
+#load(file = paste0(dir,"/Pre_analysis_", geo.id,"_SGAT_GroupedThreshold_summary.csv"))
+#load(file = paste0(dir,"/Pre_analysis_", geo.id,"_SGAT_GroupedThreshold_fit.R"))
+
 
 # Examine twilights ############################################################
 

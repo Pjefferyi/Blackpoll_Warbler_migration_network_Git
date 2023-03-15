@@ -66,22 +66,22 @@ thresholdOverLight(lig, threshold, span =c(0, 25000))
 # FIND TIME SHIFT ##############################################################
 
 #This geolocator has a a time shift visible on this plot
-lightImage( tagdata = lig,
-            offset = offset,
-            zlim = c(0, 64))
-
-tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
-                       offset = offset, lwd = 3, col = adjustcolor("orange", alpha.f = 0.5))
+# lightImage( tagdata = lig,
+#             offset = offset,
+#             zlim = c(0, 64))
+# 
+# tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
+#                        offset = offset, lwd = 3, col = adjustcolor("orange", alpha.f = 0.5))
 
 # we will do an initial twilight annotation to find identify the time interval
 # by which we need to shift time
 # There should be not need to edit, delete or insert twilights for this
-twl_in <- preprocessLight(lig,
-                          threshold = threshold,
-                          offset = offset,
-                          lmax = 64,         # max. light value
-                          gr.Device = "x11", # MacOS version (and windows)
-                          dark.min = 60)
+# twl_in <- preprocessLight(lig,
+#                           threshold = threshold,
+#                           offset = offset,
+#                           lmax = 64,         # max. light value
+#                           gr.Device = "x11", # MacOS version (and windows)
+#                           dark.min = 60)
 
 #write.csv(twl_in, paste0(dir,"/Pre_analysis_", geo.id,"_twl_times_initial.csv"))
 twl_in <- read.csv(paste0(dir,"/Pre_analysis_", geo.id,"_twl_times_initial.csv"))
@@ -127,7 +127,7 @@ tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
                        offset = offset, lwd = 3, col = adjustcolor("orange", alpha.f = 0.5))
 dev.off()
 
-# #Detect twilight times, for now do not edit twilight times
+#Detect twilight times, for now do not edit twilight times
 twl <- preprocessLight(lig,
                        threshold = threshold,
                        offset = offset,
@@ -136,20 +136,22 @@ twl <- preprocessLight(lig,
                        dark.min = 60)
 
 # # Adjust sunset times by 120 second sampling interval
-# twl <- twilightAdjust(twilights = twl, interval = 120)
-#
-# # Automatically adjust or mark false twilights
-# twl <- twilightEdit(twilights = twl,
-#                     window = 4,
-#                     outlier.mins = 45,
-#                     stationary.mins = 25,
-#                     plot = TRUE)
+twl <- twilightAdjust(twilights = twl, interval = 120)
+
+# Automatically adjust or mark false twilights
+twl <- twilightEdit(twilights = twl,
+                    window = 4,
+                    outlier.mins = 30,
+                    stationary.mins = 10,
+                    plot = TRUE)
+
+# Check for duplicates 
+twl[duplicated(twl$Twilight),]
 
 # # Visualize light and twilight time-series
-# lightImage(lig, offset = 19)
-# tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
-#               col = ifelse(twl$Rise, "dodgerblue", "firebrick"))
-
+lightImage(lig, offset = 19)
+tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
+              col = ifelse(twl$Rise, "dodgerblue", "firebrick"))
 
 # Save the twilight times 
 # write.csv(twl, paste0(dir,"/Pre_analysis_",geo.id , "_twl_times.csv"))
@@ -240,13 +242,13 @@ matplot(0:100, dgamma(0:100, beta[1], beta[2]),
         type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith_sd, tol=0.08)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol=0.18)
 
 x0 <- path$x
 z0 <- trackMidpts(x0)
 
 # open jpeg
-jpeg(paste0(dir, "/ML6440_", geo.id, "_Threshold_path.png"), width = 1024, height = 990)
+jpeg(paste0(dir, "/", geo.id, "_Threshold_path.png"), width = 1024, height = 990)
 
 par(mfrow=c(1,1))
 data(wrld_simpl)
@@ -392,7 +394,7 @@ head(sm)
 # Plot Results #################################################################
 
 # open jpeg
-jpeg(paste0(dir, "/ML6440_V", geo.id,"_Estelle_path.png"), width = 1024 , height = 990)
+jpeg(paste0(dir,"/", geo.id,"_Estelle_path.png"), width = 1024 , height = 990)
 
 #Plot the results
 par(mfrow=c(1,1))
@@ -417,7 +419,7 @@ dev.off()
 # Plot of mean longitude and latitude
 
 # open jpeg
-jpeg(paste0(dir, "/ML6440_V", geo.id,"_mean_lon_lat.png"), width = 1024 , height = 990)
+jpeg(paste0(dir, "/", geo.id,"_mean_lon_lat.png"), width = 1024 , height = 990)
 
 par(mfrow=c(2,1),mar=c(4,4,1,1))
 
@@ -484,10 +486,10 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-cL <- changeLight(twl=geo_twl, quantile=0.86, summary = F, days = 3, plot = T)
+cL <- changeLight(twl=geo_twl, quantile=0.90, summary = F, days = 2, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = 1000)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
 
 #back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 
@@ -535,6 +537,7 @@ z0 <- trackMidpts(x0)
 dtx0 <- as.data.frame(x0)
 names(dtx0) <- c("x", "y")
 
+par(mfrow=c(1,1))
 data(wrld_simpl)
 plot(dtx0, type = "n", xlab = "", ylab = "")
 plot(wrld_simpl, col = "grey95", add = T)
@@ -623,7 +626,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                beta =  beta,
                                x0 = x0, # median point for each greoup (defined by twl$group)
                                z0 = z0, # middle points between the x0 points
-                               zenith = zenith0,
+                               zenith = zeniths,
                                logp.x = logp,# land sea mask
                                fixedx = fixedx)
 
@@ -644,13 +647,13 @@ z0 <- chainLast(fit$z)
 model <- groupedThresholdModel(twl$Twilight, 
                                twl$Rise, 
                                group = twl$group,
-                               twilight.model = "Gamma",
+                               twilight.model = "ModifiedGamma",
                                alpha = alpha, 
                                beta =  beta,
                                x0 = x0, z0 = z0,
                                logp.x = logp,
                                missing=twl$Missing,
-                               zenith = zenith0,
+                               zenith = zeniths,
                                fixedx = fixedx)
 
 for (k in 1:3) {
@@ -681,7 +684,7 @@ sm <- SGAT2Movebank(fit$x, time = twl$Twilight, group = twl$group)
 #create a plot of the stationary locations #####################################
 
 # open jpeg
-jpeg(paste0(dir, "/ML6440_V", geo.id,"_grouped_threshold_model_map.png"), width = 1024 , height = 990)
+jpeg(paste0(dir, "/", geo.id,"_grouped_threshold_model_map.png"), width = 1024 , height = 990)
 
 par(mfrow=c(1,1))
 colours <- c("black",colorRampPalette(c("blue","yellow","red"))(max(twl.rev$Site)))
@@ -700,7 +703,7 @@ plot(wrld_simpl, xlim=xlim, ylim=ylim,add = T, bg = adjustcolor("black",alpha=0.
 with(sm[sitenum>0,], arrows(`Lon.50.`, `Lat.2.5.`, `Lon.50.`, `Lat.97.5.`, length = 0, lwd = 2.5, col = "firebrick"))
 with(sm[sitenum>0,], arrows(`Lon.2.5.`, `Lat.50.`, `Lon.97.5.`, `Lat.50.`, length = 0, lwd = 2.5, col = "firebrick"))
 lines(sm[,"Lon.50."], sm[,"Lat.50."], col = adjustcolor("black", alpha = 0.6), lwd = 2)
-points(sm[,"Lon.50."], sm[,"Lat.50."], col = ifelse(sm$StartTime > fall.equi - days(10) & sm$StartTime < fall.equi + days(10), "blue", "darkorchid4"), lwd = 2)
+points(sm[,"Lon.50."], sm[,"Lat.50."], col = ifelse(sm$StartTime > spring.equi - days(10) & sm$StartTime < spring.equi + days(10), "blue", "darkorchid4"), lwd = 2)
 
 points(sm[,"Lon.50."], sm[,"Lat.50."], pch=21, bg=colours[sitenum+1], 
        cex = ifelse(sitenum>0, 3, 0), col = "firebrick", lwd = 2.5)
@@ -721,7 +724,7 @@ dev.off()
 #plot of longitude and latitude ################################################
 
 # open jpeg
-jpeg(paste0(dir, "/ML6440_V", geo.id,"_grouped_threshold_model_lon_lat.png"), width = 1024 , height = 990)
+jpeg(paste0(dir, "/", geo.id,"_grouped_threshold_model_lon_lat.png"), width = 1024 , height = 990)
 
 par(mfrow=c(2,1))
 
@@ -761,6 +764,7 @@ dev.off()
 # Add information on stationary site to the summary of the output from the threshold group model
 sm$sitenum <- sitenum
 sm$duration <- as.numeric(difftime(sm$EndTime, sm$StartTime), unit = "days")
+stat.loc <- sm[(sm$sitenum > 0),]
 
 #plot only stationary locations
 par(mfrow=c(1,1))
@@ -768,7 +772,7 @@ par(mfrow=c(1,1))
 data(wrld_simpl)
 plot(wrld_simpl, xlim=xlim, ylim=ylim, col = "grey95")
 points(sm$Lon.50., sm$Lat.50., pch = 16, cex = 0, col = "firebrick", type = "o")
-points(stat.loc$Lon.50., stat.loc$Lat.50., pch = 16, cex = 2.5, col = "firebrick")
+points(stat.loc$Lon.50., stat.loc$Lat.50., pch = 16, cex = 1.5, col = "firebrick")
 
 # Save the output of the SGAT group threshold model 
 # save(sm, file = paste0(dir,"/Pre_analysis_", geo.id,"_SGAT_GroupedThreshold_summary.csv"))
@@ -783,31 +787,9 @@ points(stat.loc$Lon.50., stat.loc$Lat.50., pch = 16, cex = 2.5, col = "firebrick
 #load initial path x0
 load(file = paste0(dir,"/", geo.id, "_initial_path.csv"))
 
-#plot for after the 11 day stopover 
 par(mfrow=c(3,1))
-plot(lig$Date[lig$Date < "2019-10-21" & lig$Date > "2019-10-05"], lig$Light[lig$Date < "2019-10-21" & lig$Date > "2019-10-05"], type = "o",
-     ylab = "Light level")
-plot(twl$Twilight[twl$Twilight < "2019-10-21" & twl$Twilight > "2019-10-05"], x0[,1][twl$Twilight< "2019-10-21" & twl$Twilight > "2019-10-05"], 
-     ylab = "Longitude")
-plot(twl$Twilight[twl$Twilight < "2019-10-21" & twl$Twilight > "2019-10-05"], x0[,2][twl$Twilight < "2019-10-21" & twl$Twilight > "2019-10-05"],
-     ylab = "Latitude")
-
-#plot for before the 11 day stopover 
-par(mfrow=c(3,1))
-plot(lig$Date[lig$Date > "2019-09-15" & lig$Date < "2019-09-30"], lig$Light[lig$Date > "2019-09-15" & lig$Date <"2019-09-30"], type = "o",
-     ylab = "Light level")
-plot(twl$Twilight[twl$Twilight > "2019-09-15" & twl$Twilight < "2019-09-30"], x0[,1][twl$Twilight > "2019-09-15" & twl$Twilight < "2019-09-30"], 
-     ylab = "Longitude")
-plot(twl$Twilight[twl$Twilight > "2019-09-15" & twl$Twilight < "2019-09-30"], x0[,2][twl$Twilight > "2019-09-15" & twl$Twilight < "2019-09-30"],
-     ylab = "Latitude")
-
-#plot with light data before and after the stopover
-par(mfrow=c(3,1))
-plot(lig$Date[lig$Date > "2019-09-15" & lig$Date < "2019-10-21"], lig$Light[lig$Date > "2019-09-15" & lig$Date <"2019-10-21"], type = "o",
-     ylab = "Light level")
-plot(twl$Twilight[twl$Twilight > "2019-09-15" & twl$Twilight < "2019-10-21"], x0[,1][twl$Twilight > "2019-09-15" & twl$Twilight < "2019-10-21"], 
-     ylab = "Longitude")
-plot(twl$Twilight[twl$Twilight > "2019-09-15" & twl$Twilight < "2019-10-21"], x0[,2][twl$Twilight > "2019-09-15" & twl$Twilight < "2019-10-21"],
-     ylab = "Latitude")
+plot(lig$Date[lig$Date < "2019-10-21" & lig$Date > "2019-10-05"], lig$Light[lig$Date < "2019-10-21" & lig$Date > "2019-10-05"], type = "o")
+plot(twl$Twilight[twl$Twilight< "2019-10-21" & twl$Twilight > "2019-10-05"], x0[,1][twl$Twilight< "2019-10-21" & twl$Twilight > "2019-10-05"])
+plot(twl$Twilight[twl$Twilight< "2019-10-21" & twl$Twilight > "2019-10-05"], x0[,2][twl$Twilight< "2019-10-21" & twl$Twilight > "2019-10-05"])
 
 

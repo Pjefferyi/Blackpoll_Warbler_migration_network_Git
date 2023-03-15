@@ -34,13 +34,15 @@ if(!require("spDataLarge",character.only=T)){devtools::install_github("Nowosad/s
 # MAPPING MOVEBANK MIGRATION TRACKS ############################################
 ################################################################################
 
+par(mfrow = c(1,1))
+
 # import Movebank data  
 deluca_2015 <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Movebank_data/Blackpoll Warbler eastern North America (data from DeLuca et al. 2015).csv")
 deluca_2019 <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Movebank_data/A boreal songbird's migration across North America and the Atlantic Ocean, Setophaga striata.csv")
 
 # Plot tracks for bird from Deluca et al. 2019 based on their Geolocator ID
 locs <- deluca_2019 %>%
-  filter(tag.local.identifier == "4210-010")
+  filter(tag.local.identifier == "3254-011")
 
 # some of the latitudes for this individuals are NA
 locs <- locs %>% 
