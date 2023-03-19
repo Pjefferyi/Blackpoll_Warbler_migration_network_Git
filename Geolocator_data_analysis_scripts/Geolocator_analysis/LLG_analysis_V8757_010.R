@@ -1,6 +1,6 @@
 # source: unpublished data 
-# tag number: V8296-017
-# site: Quebec
+# tag number: V8757-010
+# site: British Columbia
 
 #load packages
 require(readr)
@@ -27,17 +27,17 @@ library(LLmig)
 library(GeoLocTools)
 setupGeolocation()
 
-geo.id <- "V8296_017"
+geo.id <- "V8757_010"
 
 # data directory
 dir <- paste0("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geolocator_data/", geo.id)
 
 # geo deployment location 
-lat.calib <- 47.38355
-lon.calib <- -71.08777
+lat.calib <- 58.16343635
+lon.calib <- -129.8574554
 
 # time of deployment (from reference file)
-deploy.start <- anytime("2019-07-11", asUTC = T, tz = "GMT")
+#deploy.start <- anytime("", asUTC = T, tz = "GMT")
 
 # time of recovery (estimate from light data)
 deploy.end <- anytime("", asUTC = T, tz = "GMT")
@@ -52,10 +52,10 @@ spring.equi <- anytime("2020-03-19", asUTC = T, tz = "GMT")
 lig <- readLig(paste0(dir,"/Raw_light_data_", geo.id, ".lig"), skip = 1)
 
 #remove rows before and after deployment time 
-lig <- lig[(lig$Date > deploy.start),]
+#lig <- lig[(lig$Date > deploy.start),]
 
 #parameter to visualize the data 
-offset <- 16 # adjusts the y-axis to put night (dark shades) in the middle
+offset <- 18 # adjusts the y-axis to put night (dark shades) in the middle
 
 #Threshold light level 
 threshold <- 1.5 
@@ -150,7 +150,6 @@ lightImage(lig, offset = 19)
 tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
               col = ifelse(twl$Rise, "dodgerblue", "firebrick"))
 
-
 # Save the twilight times 
 # write.csv(twl, paste0(dir,"/Pre_analysis_",geo.id , "_twl_times.csv"))
 
@@ -172,13 +171,12 @@ lightImage( tagdata = lig,
 tsimageDeploymentLines(twl$Twilight, lon.calib, lat.calib, offset, lwd = 2, col = "orange")
 
 #calibration period before the migration 
-tm.calib <- as.POSIXct(c("2019-07-17", "2019-09-10"), tz = "UTC")
+tm.calib <- as.POSIXct(c("2019-06-25", "2019-08-15"), tz = "UTC")
 
 abline(v = tm.calib, lwd = 2, lty = 2, col = "orange")
-abline(v = tm.calib2, lwd = 2, lty = 2, col = "orange")
 
 # subset of twilight times that are within the calibration period
-d_calib <- subset(twl, Twilight>=tm.calib[1] & Twilight<=tm.calib[2])
+d_calib <- subset(twl, Twilight >= tm.calib[1] & Twilight <= tm.calib[2])
 
 # perform the calibration and verify the fit with the gamma or log distribution
 calib <- thresholdCalibration(d_calib$Twilight, d_calib$Rise, lon.calib, lat.calib, method = "gamma")
@@ -226,7 +224,7 @@ zenith_twl <- data.frame(Date = twl$Twilight) %>%
 
 zeniths <- zenith_twl$zenith
 
-# if the Hill-ekstrom zenith and in-habitat zenith angles do not differ by more than 0.5 degrees
+# if the Hill-Ekstrom zenith and in-habitat zenith angles do not differ by more than 0.5 degrees
 # then the whole analysis can be performed using angles from the breeding grounds (obtained with thresholdcalibration)
 
 # Movement model ###############################################################
@@ -250,7 +248,7 @@ data(wrld_simpl)
 plot(x0, type = "n", xlab = "", ylab = "")
 plot(wrld_simpl, col = "grey95", add = T)
 
-points(path$x, pch=19, col="cornflowerblue", type = "o")
+points(path$x[1:300,], pch=19, col="cornflowerblue", type = "o")
 points(lon.calib, lat.calib, pch = 16, cex = 2.5, col = "firebrick")
 box()
 
@@ -323,13 +321,13 @@ log.prior <- function(p) {
 #Define the model
 model <- thresholdModel(twilight = twl$Twilight,
                         rise = twl$Rise,
-                        twilight.model = "ModifieGamma",
+                        twilight.model = "ModifiedGamma",
                         alpha = alpha,
                         beta = beta,
                         logp.x = log.prior, logp.z = log.prior, 
                         x0 = x0,
                         z0 = z0,
-                        zenith = zeniths,
+                        zenith = zenith0,
                         fixedx = fixedx)
 
 #Define the error distribution around each location 
@@ -350,7 +348,7 @@ model <- thresholdModel(twilight = twl$Twilight,
                         logp.x = log.prior, logp.z = log.prior, 
                         x0 = x0,
                         z0 = z0,
-                        zenith = zeniths,
+                        zenith = zenith0,
                         fixedx = fixedx)
 
 x.proposal <- mvnorm(S = diag(c(0.005, 0.005)), n = nrow(twl))
@@ -621,7 +619,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                beta =  beta,
                                x0 = x0, # median point for each greoup (defined by twl$group)
                                z0 = z0, # middle points between the x0 points
-                               zenith = zenith0,
+                               zenith = zeniths,
                                logp.x = logp,# land sea mask
                                fixedx = fixedx)
 
@@ -642,13 +640,13 @@ z0 <- chainLast(fit$z)
 model <- groupedThresholdModel(twl$Twilight, 
                                twl$Rise, 
                                group = twl$group,
-                               twilight.model = "ModifiedGamma",
+                               twilight.model = "Gamma",
                                alpha = alpha, 
                                beta =  beta,
                                x0 = x0, z0 = z0,
                                logp.x = logp,
                                missing=twl$Missing,
-                               zenith = zenith0,
+                               zenith = zeniths,
                                fixedx = fixedx)
 
 for (k in 1:3) {
@@ -782,6 +780,6 @@ points(stat.loc$Lon.50., stat.loc$Lat.50., pch = 16, cex = 1.5, col = "firebrick
 load(file = paste0(dir,"/", geo.id, "_initial_path.csv"))
 
 par(mfrow=c(3,1))
-plot(lig$Date[lig$Date < "2019-10-21" & lig$Date > "2019-10-05"], lig$Light[lig$Date < "2019-10-21" & lig$Date > "2019-10-05"], type = "o")
-plot(twl$Twilight[twl$Twilight< "2019-10-21" & twl$Twilight > "2019-10-05"], x0[,1][twl$Twilight< "2019-10-21" & twl$Twilight > "2019-10-05"])
-plot(twl$Twilight[twl$Twilight< "2019-10-21" & twl$Twilight > "2019-10-05"], x0[,2][twl$Twilight< "2019-10-21" & twl$Twilight > "2019-10-05"])
+plot(lig$Date[lig$Date > "2019-06-21" & lig$Date < "2020-01-01"], lig$Light[lig$Date > "2019-06-21" & lig$Date < "2020-01-01"], type = "o")
+plot(twl$Twilight[twl$Twilight > "2019-06-21" & twl$Twilight < "2020-01-01"], x0[,1][twl$Twilight > "2019-06-21" & twl$Twilight < "2020-01-01"])
+plot(twl$Twilight[twl$Twilight > "2019-06-21" & twl$Twilight < "2020-01-01"], x0[,2][twl$Twilight > "2019-06-21" & twl$Twilight < "2020-01-01"])

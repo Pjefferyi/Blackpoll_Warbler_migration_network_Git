@@ -1,6 +1,6 @@
 # source: unpublished data 
-# tag number: V8296-017
-# site: Quebec
+# tag number: V8757-055
+# site: Churchill
 
 #load packages
 require(readr)
@@ -27,17 +27,17 @@ library(LLmig)
 library(GeoLocTools)
 setupGeolocation()
 
-geo.id <- "V8296_017"
+geo.id <- "V8757_055"
 
 # data directory
 dir <- paste0("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geolocator_data/", geo.id)
 
 # geo deployment location 
-lat.calib <- 47.38355
-lon.calib <- -71.08777
+lat.calib <- 62.432741
+lon.calib <- -114.420252
 
 # time of deployment (from reference file)
-deploy.start <- anytime("2019-07-11", asUTC = T, tz = "GMT")
+deploy.start <- anytime("2019-06-27", asUTC = T, tz = "GMT")
 
 # time of recovery (estimate from light data)
 deploy.end <- anytime("", asUTC = T, tz = "GMT")
@@ -51,11 +51,14 @@ spring.equi <- anytime("2020-03-19", asUTC = T, tz = "GMT")
 # import lig data 
 lig <- readLig(paste0(dir,"/Raw_light_data_", geo.id, ".lig"), skip = 1)
 
+#adjust year
+lig$Date <- lig$Date %m+% years(7)
+
 #remove rows before and after deployment time 
 lig <- lig[(lig$Date > deploy.start),]
 
 #parameter to visualize the data 
-offset <- 16 # adjusts the y-axis to put night (dark shades) in the middle
+offset <- 20 # adjusts the y-axis to put night (dark shades) in the middle
 
 #Threshold light level 
 threshold <- 1.5 
@@ -89,9 +92,9 @@ twl_in$Twilight <- as.POSIXct(twl_in$Twilight, tz = "UTC")
 
 # Period over which to calculate the time shift. It should be while the bird is
 # still in the breeding grounds
-period <- as.POSIXct(c("2019-07-14", "2019-08-14"), tz = "UTC")
+period <- as.POSIXct(c("2019-08-01", "2019-08-30"), tz = "UTC")
 
-# #plot the period over the light image
+# plot the period over the light image
 lightImage( tagdata = lig,
             offset = offset,
             zlim = c(0, 64))
@@ -111,8 +114,8 @@ shift <- shiftSpan(twl = twl_in, lig = lig, period = period, est.zenith = 92,
 shift
 
 #adjust  the based on the time shift detected 
-lig$Date <- lig$Date - (shift$shift)
-#lig$Date <- lig$Date + 1*60*60
+#lig$Date <- lig$Date + (shift$shift)
+lig$Date <- lig$Date + 5.5*60*60
 
 #TWILIGHT ANNOTATION ##########################################################
 
@@ -172,10 +175,9 @@ lightImage( tagdata = lig,
 tsimageDeploymentLines(twl$Twilight, lon.calib, lat.calib, offset, lwd = 2, col = "orange")
 
 #calibration period before the migration 
-tm.calib <- as.POSIXct(c("2019-07-17", "2019-09-10"), tz = "UTC")
+tm.calib <- as.POSIXct(c("2019-08-04", "2019-09-03"), tz = "UTC")
 
 abline(v = tm.calib, lwd = 2, lty = 2, col = "orange")
-abline(v = tm.calib2, lwd = 2, lty = 2, col = "orange")
 
 # subset of twilight times that are within the calibration period
 d_calib <- subset(twl, Twilight>=tm.calib[1] & Twilight<=tm.calib[2])
@@ -209,12 +211,6 @@ end   <- max(which(mS$site == stationarySite))
 
 (zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
 
-# Vector with different zenith angle for the breeding and nonbreeding periods 
-zenith_twl <- data.frame(Date = twl$Twilight) %>%
-  mutate(zenith = case_when(Date < fall.equi ~ zenith0,
-                            Date > fall.equi ~ zenith_sd))
-zeniths <- zenith_twl$zenith
-
 # adjust the zenith angles calculated from the breeding sites 
 zenith0_ad <- zenith0 + abs(zenith - zenith_sd)
 zenith_ad  <- zenith_sd
@@ -222,7 +218,7 @@ zenith_ad  <- zenith_sd
 # create a list of twilights providing a different zenith angle for the breeding and nonbreeding periods 
 zenith_twl <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < fall.equi ~ zenith0,
-                            Date > fall.equi ~ zenith0_ad))
+                            Date > fall.equi ~ zenith_ad))
 
 zeniths <- zenith_twl$zenith
 
@@ -267,6 +263,8 @@ fixedx <- rep(F, nrow(x0))
 fixedx[1:2] <- T # first two location estimates
 
 fixedx[(nrow(x0) - 1):nrow(x0)] <- T # last two location estimates
+
+#we don't fix the last location because this track is incomplete 
 
 x0[fixedx, 1] <- lon.calib
 x0[fixedx, 2] <- lat.calib
@@ -481,10 +479,10 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-cL <- changeLight(twl=geo_twl, quantile=0.75, summary = F, days = 3, plot = T)
+cL <- changeLight(twl=geo_twl, quantile=0.86, summary = F, days = 1, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = 1000)
 
 #back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 
@@ -655,7 +653,7 @@ for (k in 1:3) {
   x.proposal <- mvnorm(chainCov(fit$x), s = 0.3)
   z.proposal <- mvnorm(chainCov(fit$z), s = 0.3)
   fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = chainLast(fit$x),
-                           z0 = chainLast(fit$z), iters = 300, thin = 20)
+                           z0 = chainLast(fit$z), iters = 400, thin = 20)
 }
 
 ## Check if chains mix
