@@ -83,8 +83,8 @@ twl_in <- preprocessLight(lig,
                           gr.Device = "x11", # MacOS version (and windows)
                           dark.min = 60)
 
-#write.csv(twl_in, paste0(dir,"/Pre_analysis_", geo.id,"_twl_times_initial.csv"))
-twl_in <- read.csv(paste0(dir,"/Pre_analysis_", geo.id,"_twl_times_initial.csv"))
+#write.csv(twl_in, paste0(dir,"/", geo.id,"_twl_times_initial.csv"))
+twl_in <- read.csv(paste0(dir,"/", geo.id,"_twl_times_initial.csv"))
 twl_in$Twilight <- as.POSIXct(twl_in$Twilight, tz = "UTC")
 
 # Period over which to calculate the time shift. It should be while the bird is
@@ -152,14 +152,14 @@ tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
 
 
 # Save the twilight times 
-# write.csv(twl, paste0(dir,"/Pre_analysis_",geo.id , "_twl_times.csv"))
+# write.csv(twl, paste0(dir,"/",geo.id , "_twl_times.csv"))
 
 ###############################################################################
 # SGAT ANALYSIS ###############################################################
 ###############################################################################
 
 # Import file with twilight times  
-twl <- read.csv(paste0(dir,"/Pre_analysis_", geo.id, "_twl_times.csv"))
+twl <- read.csv(paste0(dir,"/", geo.id, "_twl_times.csv"))
 twl$Twilight <- as.POSIXct(twl$Twilight, tz = "UTC")
 
 # Calibration ##################################################################
@@ -383,8 +383,8 @@ sm <- locationSummary(fit$z, time=fit$model$time)
 head(sm)
 
 #Save the output of the estelle model 
-#save(sm, file = paste0(dir,"/Pre_analysis_", geo.id, "_SGAT_estelle_summary.csv"))
-#save(fit, file = paste0(dir,"/Pre_analysis_", geo.id, "_SGAT_estelle_fit.R"))
+#save(sm, file = paste0(dir,"/", geo.id, "_SGAT_estelle_summary.csv"))
+#save(fit, file = paste0(dir,"/", geo.id, "_SGAT_estelle_fit.R"))
 
 # Plot Results #################################################################
 
@@ -767,13 +767,16 @@ plot(wrld_simpl, xlim=xlim, ylim=ylim, col = "grey95")
 points(sm$Lon.50., sm$Lat.50., pch = 16, cex = 0, col = "firebrick", type = "o")
 points(stat.loc$Lon.50., stat.loc$Lat.50., pch = 16, cex = 1.5, col = "firebrick")
 
+# add column with geolocator ID
+sm$geo_id <- geo.id
+
 #Save the output of the model 
-#save(sm, file = paste0(dir,"/Pre_analysis_", geo.id,"_SGAT_GroupedThreshold_summary.csv"))
-#save(fit, file = paste0(dir,"/Pre_analysis_", geo.id,"_SGAT_GroupedThreshold_fit.R"))
+#save(sm, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))
+#save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 
 #load the output of the model 
-#load(file = paste0(dir,"/Pre_analysis_", geo.id,"_SGAT_GroupedThreshold_summary.csv"))
-#load(file = paste0(dir,"/Pre_analysis_", geo.id,"_SGAT_GroupedThreshold_fit.R"))
+#load(file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))
+#load(file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 
 
 # Examine twilights ############################################################
