@@ -181,7 +181,7 @@ plotLocVec <- function(data, stati_only = F, timing = c("Post-breeding migration
   data <- data[(data$period %in% timing),]
   
   #Create the map 
-  ggplot(world[(world$continent %in% c("North America", "South America")),]) +
+  ggplot(spData::world[(spData::world$continent %in% c("North America", "South America")),]) +
     geom_sf() +
     coord_sf() +
     geom_point(data = data, mapping = aes(x = Lon.50., y = Lat.50., color = geo_id), size = 2) +

@@ -33,20 +33,20 @@ rm(list=ls())
 # Load helper functions 
 source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis/Geolocator_analysis_helper_functions.R")
 
-geo.id <- "V8757_018"
+geo.id <- "V8757_019"
 
 # data directory
 dir <- paste0("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geolocator_data/", geo.id)
 
 # geo deployment location 
-lat.calib <- 47.38517	
-lon.calib <- -71.08742
+lat.calib <- 58.16343635
+lon.calib <- -129.8574554
 
 # time of deployment (from reference file)
-deploy.start <- anytime("2019-07-11", asUTC = T, tz = "GMT")
+#deploy.start <- anytime("", asUTC = T, tz = "GMT")
 
 # time of recovery (estimate from light data)
-deploy.end <- anytime("", asUTC = T, tz = "GMT")
+#deploy.end <- anytime("", asUTC = T, tz = "GMT")
 
 #Equinox times
 fall.equi <- anytime("2019-09-23", asUTC = T, tz = "GMT")
@@ -58,7 +58,7 @@ spring.equi <- anytime("2020-03-19", asUTC = T, tz = "GMT")
 lig <- readLig(paste0(dir,"/Raw_light_data_", geo.id, ".lig"), skip = 1)
 
 #remove rows before and after deployment time 
-lig <- lig[(lig$Date > deploy.start),]
+#lig <- lig[(lig$Date > deploy.start),]
 
 #parameter to visualize the data 
 offset <- 20 # adjusts the y-axis to put night (dark shades) in the middle
@@ -82,12 +82,12 @@ tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
 # we will do an initial twilight annotation to find identify the time interval
 # by which we need to shift time
 # There should be not need to edit, delete or insert twilights for this
-twl_in <- preprocessLight(lig,
-                          threshold = threshold,
-                          offset = offset,
-                          lmax = 64,         # max. light value
-                          gr.Device = "x11", # MacOS version (and windows)
-                          dark.min = 60)
+# twl_in <- preprocessLight(lig,
+#                           threshold = threshold,
+#                           offset = offset,
+#                           lmax = 64,         # max. light value
+#                           gr.Device = "x11", # MacOS version (and windows)
+#                           dark.min = 60)
 
 #write.csv(twl_in, paste0(dir,"/", geo.id,"_twl_times_initial.csv"))
 twl_in <- read.csv(paste0(dir,"/", geo.id,"_twl_times_initial.csv"))
@@ -117,8 +117,8 @@ shift <- shiftSpan(twl = twl_in, lig = lig, period = period, est.zenith = 92,
 shift
 
 #adjust  the based on the time shift detected 
-#lig$Date <- lig$Date - (shift$shift)
-lig$Date <- lig$Date - 1*60*60
+lig$Date <- lig$Date - (shift$shift)
+#lig$Date <- lig$Date - 1*60*60
 
 #TWILIGHT ANNOTATION ##########################################################
 
@@ -134,27 +134,27 @@ tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
 dev.off()
 
 # Detect twilight times, for now do not edit twilight times  
-twl <- preprocessLight(lig,
-                       threshold = threshold,
-                       offset = offset,
-                       lmax = 64,         # max. light value
-                       gr.Device = "x11", # MacOS version (and windows)
-                       dark.min = 60)
-
-# Adjust sunset times by 120 second sampling interval
-twl <- twilightAdjust(twilights = twl, interval = 120)
-
-# Automatically adjust or mark false twilights
-twl <- twilightEdit(twilights = twl,
-                    window = 4,
-                    outlier.mins = 25,
-                    stationary.mins = 20,
-                    plot = TRUE)
-
-# Visualize light and twilight time-series
-lightImage(lig, offset = 19)
-tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
-              col = ifelse(twl$Rise, "dodgerblue", "firebrick"))
+# twl <- preprocessLight(lig,
+#                        threshold = threshold,
+#                        offset = offset,
+#                        lmax = 64,         # max. light value
+#                        gr.Device = "x11", # MacOS version (and windows)
+#                        dark.min = 60)
+# 
+# # Adjust sunset times by 120 second sampling interval
+# twl <- twilightAdjust(twilights = twl, interval = 120)
+# 
+# # Automatically adjust or mark false twilights
+# twl <- twilightEdit(twilights = twl,
+#                     window = 4,
+#                     outlier.mins = 25,
+#                     stationary.mins = 20,
+#                     plot = TRUE)
+# 
+# # Visualize light and twilight time-series
+# lightImage(lig, offset = 19)
+# tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
+#               col = ifelse(twl$Rise, "dodgerblue", "firebrick"))
 
 
 # Save the twilight times 
@@ -178,7 +178,7 @@ lightImage( tagdata = lig,
 tsimageDeploymentLines(twl$Twilight, lon.calib, lat.calib, offset, lwd = 2, col = "orange")
 
 #calibration period before the migration 
-tm.calib <- as.POSIXct(c("2019-07-15", "2019-08-30"), tz = "UTC")
+tm.calib <- as.POSIXct(c("2019-07-15", "2019-08-28"), tz = "UTC")
 
 abline(v = tm.calib, lwd = 2, lty = 2, col = "orange")
 
@@ -228,24 +228,24 @@ z0 <- trackMidpts(x0)
 
 par(mfrow = c(2,1))
 plot(twl$Twilight, x0[,1], ylab = "longitude")
-abline(v = anytime("2019-10-15"))
-abline(v = anytime("2020-04-25"))
+abline(v = anytime("2019-10-28"))
+abline(v = anytime("2020-04-28"))
 plot(twl$Twilight, x0[,2], ylab = "latitude")
-abline(v = anytime("2019-10-15"))
-abline(v = anytime("2020-04-25"))
+abline(v = anytime("2019-10-28"))
+abline(v = anytime("2020-04-28"))
 
 # Using approximate timings of arrival and departure from the breeding grounds
 zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
-  mutate(zenith = case_when(Date < anytime("2019-10-15") ~ zenith0,
-                            Date > anytime("2019-10-15") & Date < anytime("2020-04-25") ~ zenith0_ad,
-                            Date > anytime("2020-04-25") ~ zenith0))
+  mutate(zenith = case_when(Date < anytime("2019-10-28") ~ zenith0,
+                            Date > anytime("2019-10-28") & Date < anytime("2020-04-28") ~ zenith0_ad,
+                            Date > anytime("2020-04-28") ~ zenith0))
 
 zeniths0 <- zenith_twl_zero$zenith
 
 zenith_twl_med <- data.frame(Date = twl$Twilight) %>%
-  mutate(zenith = case_when(Date < anytime("2019-10-15") ~ zenith,
-                            Date > anytime("2019-10-15") & Date < anytime("2020-04-25") ~ zenith_sd,
-                            Date > anytime("2020-04-25") ~ zenith))
+  mutate(zenith = case_when(Date < anytime("2019-10-28") ~ zenith,
+                            Date > anytime("2019-10-28") & Date < anytime("2020-04-28") ~ zenith_sd,
+                            Date > anytime("2020-04-28") ~ zenith))
 
 zeniths_med <- zenith_twl_med$zenith
 
@@ -257,7 +257,7 @@ matplot(0:100, dgamma(0:100, beta[1], beta[2]),
         type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol=0.1)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol=0.12)
 
 x0 <- path$x
 z0 <- trackMidpts(x0)
@@ -503,10 +503,10 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-cL <- changeLight(twl=geo_twl, quantile= 0.86, summary = F, days = 2, plot = T)
+cL <- changeLight(twl=geo_twl, quantile= 0.90, summary = F, days = 2, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = 1000)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 86-zeniths0[1: length(zeniths0) -1], distThreshold = 1000)
 
 #back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 
@@ -791,12 +791,11 @@ points(stat.loc$Lon.50., stat.loc$Lat.50., pch = 16, cex = 1.5, col = "firebrick
 
 # add column with geolocator ID
 sm$geo_id <- geo.id
-sm$group <- "Eastern"
 
 #add a column that categorizes the locations (based on the groupthreshold model output)
-sm <- sm %>% mutate(period= case_when(StartTime < anytime("2019-10-06 21:55:57")  ~ "Post-breeding migration",
-                                      StartTime >= anytime("2019-10-06 21:55:57") & StartTime < anytime("2020-04-30 22:41:48") ~ "Non-breeding period",
-                                      StartTime > anytime("2020-04-30 22:41:48") ~ "Pre-breeding migration"))
+sm <- sm %>% mutate(period= case_when(StartTime < anytime("2019-10-13 10:39:35", asUTC = T, tz = "GMT")  ~ "Post-breeding migration",
+                                      StartTime >= anytime("2019-10-13 10:39:35", asUTC = T, tz = "GMT") & StartTime < anytime("2020-04-27 22:33:01", asUTC = T, tz = "GMT") ~ "Non-breeding period",
+                                      StartTime > anytime("2020-04-27 22:33:01", asUTC = T, tz = "GMT") ~ "Pre-breeding migration"))
 
 #Save the output of the model 
 #save(sm, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))
