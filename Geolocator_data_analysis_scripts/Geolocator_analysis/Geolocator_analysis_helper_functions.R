@@ -180,25 +180,25 @@ plotLocVec <- function(data, stati_only = F, timing = c("Post-breeding migration
   ggplot(spData::world[(spData::world$continent %in% c("North America", "South America")),]) +
     geom_sf() +
     coord_sf() +
-    geom_point(data = data, mapping = aes(x = Lon.50., y = Lat.50., color = geo_id), size = 2) +
-    geom_path(data = data, mapping = aes(x = Lon.50., y = Lat.50., color = geo_id), linewidth = 0.8) +
+    geom_point(data = data, mapping = aes(x = Lon.50., y = Lat.50., color = geo_id), size = 1.6) +
+    geom_path(data = data, mapping = aes(x = Lon.50., y = Lat.50., color = geo_id), linewidth = 0.6) +
     theme_bw() 
 }
     
 # test calls  for mapLocData ###################################################
 
-r2 <- findLocData(geo.ids = c(c("V8757_010",
+r2 <- findLocData(geo.ids = c("V8757_010",
                                  "V8296_004", 
                                  "V8757_055",
                                  "V8757_018",
                                  "V8296_007",
                                  "V8296_008",
                                 "V8757_019",
-                                "V8757_096")), check_col_length = F)
+                                "V8757_096"), check_col_length = F)
 
-r2 <- findLocData(geo.ids = c("V8757_096"), check_col_length = F)
+r2 <- findLocData(geo.ids = c("V8757_019"), check_col_length = F)
 
 plotLocVec(data = r2, stati_only = T, timing = c("Post-breeding migration", "Non-breeding period"))
-plotLocVec(data = r2, stati_only = F, timing = c("Pre-breeding migration", "Non-breeding period"))  
+plotLocVec(data = r2, stati_only = T, timing = c("Pre-breeding migration", "Non-breeding period"))  
 plotLocVec(data = r2, stati_only = T, timing = c("Non-breeding period"))  
 plotLocVec(data = r2, stati_only = T, timing = c("Post-breeding migration", "Pre-breeding migration", "Non-breeding period"))

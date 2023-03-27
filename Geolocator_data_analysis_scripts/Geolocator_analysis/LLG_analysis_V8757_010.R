@@ -214,14 +214,14 @@ end   <- max(which(mS$site == stationarySite))
 #calculate the zenith angle that minimizes variation in latitude during this period 
 (zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
 
-# The angles obtained with in-habitat and Hill-Ekstrom Calibration differ by less than 0.5 
+# The angles obtained with in-habitat and Hill-Ekstrom Calibration differ by less than 0.5
 # we can use the same zenith angle throughout the annual cycle
 
 # # adjust the zenith angles calculated from the breeding sites for the non-breeding sites
 # zenith0_ad <- zenith0 + abs(zenith - zenith_sd)
 # zenith_ad  <- zenith_sd
 # 
-# # Using approximate timings of arrival and departure from the breeding grounds 
+# # Using approximate timings of arrival and departure from the breeding grounds
 # zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
 #   mutate(zenith = case_when(Date < anytime("2019-11-10") ~ zenith0,
 #                             Date > anytime("2019-11-10") & Date < anytime("2020-04-20") ~ zenith0_ad,

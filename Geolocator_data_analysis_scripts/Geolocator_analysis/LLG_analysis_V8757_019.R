@@ -143,19 +143,18 @@ dev.off()
 # 
 # # Adjust sunset times by 120 second sampling interval
 # twl <- twilightAdjust(twilights = twl, interval = 120)
-# 
-# # Automatically adjust or mark false twilights
-# twl <- twilightEdit(twilights = twl,
-#                     window = 4,
-#                     outlier.mins = 25,
-#                     stationary.mins = 20,
-#                     plot = TRUE)
-# 
+
+# Automatically adjust or mark false twilights
+twl <- twilightEdit(twilights = twl,
+                    window = 4,
+                    outlier.mins = 10,
+                    stationary.mins = 20,
+                    plot = TRUE)
+
 # # Visualize light and twilight time-series
 # lightImage(lig, offset = 19)
 # tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
 #               col = ifelse(twl$Rise, "dodgerblue", "firebrick"))
-
 
 # Save the twilight times 
 # write.csv(twl, paste0(dir,"/",geo.id , "_twl_times.csv"))
@@ -238,14 +237,14 @@ abline(v = anytime("2020-04-28"))
 zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime("2019-10-13") ~ zenith0,
                             Date > anytime("2019-10-13") & Date < anytime("2020-04-28") ~ zenith0_ad,
-                            Date > anytime("2020-04-28") ~ zenith0))
+                            Date > anytime("2020-04-28") ~ mean(zenith0_ad, zenith0)))
 
 zeniths0 <- zenith_twl_zero$zenith
 
 zenith_twl_med <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime("2019-10-13") ~ zenith,
                             Date > anytime("2019-10-13") & Date < anytime("2020-04-28") ~ zenith_sd,
-                            Date > anytime("2020-04-28") ~ zenith))
+                            Date > anytime("2020-04-28") ~ mean(zenith, zenith_sd)))
 
 zeniths_med <- zenith_twl_med$zenith
 
@@ -270,7 +269,7 @@ data(wrld_simpl)
 plot(x0, type = "n", xlab = "", ylab = "")
 plot(wrld_simpl, col = "grey95", add = T)
 
-points(path$x[200:400,], pch=19, col="cornflowerblue", type = "o")
+points(path$x, pch=19, col="cornflowerblue", type = "o")
 points(lon.calib, lat.calib, pch = 16, cex = 2.5, col = "firebrick")
 box()
 
@@ -503,7 +502,7 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-cL <- changeLight(twl=geo_twl, quantile= 0.86, summary = F, days = 2, plot = T)
+cL <- changeLight(twl=geo_twl, quantile= 0.8, summary = F, days = 2, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
 mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths0[1: length(zeniths0) -1], distThreshold = 500)
@@ -793,9 +792,9 @@ points(stat.loc$Lon.50., stat.loc$Lat.50., pch = 16, cex = 1.5, col = "firebrick
 sm$geo_id <- geo.id
 
 #add a column that categorizes the locations (based on the groupthreshold model output)
-sm <- sm %>% mutate(period= case_when(StartTime < anytime("2019-10-13 10:39:35", asUTC = T, tz = "GMT")  ~ "Post-breeding migration",
-                                      StartTime >= anytime("2019-10-13 10:39:35", asUTC = T, tz = "GMT") & StartTime < anytime("2020-04-27 22:33:01", asUTC = T, tz = "GMT") ~ "Non-breeding period",
-                                      StartTime > anytime("2020-04-27 22:33:01", asUTC = T, tz = "GMT") ~ "Pre-breeding migration"))
+sm <- sm %>% mutate(period= case_when(StartTime < anytime("2019-10-24 22:10:35", asUTC = T, tz = "GMT")  ~ "Post-breeding migration",
+                                      StartTime >= anytime("2019-10-24 22:10:35", asUTC = T, tz = "GMT") & StartTime < anytime("2020-04-27 22:33:01 ", asUTC = T, tz = "GMT") ~ "Non-breeding period",
+                                      StartTime > anytime("2020-04-27 22:33:01 ", asUTC = T, tz = "GMT") ~ "Pre-breeding migration"))
 
 #Save the output of the model 
 #save(sm, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))
