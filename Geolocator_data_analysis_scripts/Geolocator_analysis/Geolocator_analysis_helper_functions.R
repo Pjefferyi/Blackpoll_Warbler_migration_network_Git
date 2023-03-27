@@ -84,25 +84,21 @@ shiftSpan <- function(twl, lig, period, est.zenith, dep.lon, dep.lat){
                                     zenith = est.zenith, # adjust zenith to match observed and known twilights
                                     rise = rise),
                          rise = rise)
+  
+  exp_twl_sub <- subset(exp_twl, exp_twl$twilight > period[1] & exp_twl$twilight < period[2])
+  
   #There are some cases where we must change the subset of observed times
-  if ((ob_twl_sub$Rise[1] == exp_twl$rise[1] & exp_twl$twilight[1] > exp_twl$twilight[2])|
-    (ob_twl_sub$Rise[1] != exp_twl$rise[1] & exp_twl$twilight[1] < exp_twl$twilight[2])){
+  if ((ob_twl_sub$Rise[1] == exp_twl_sub$rise[1] & exp_twl_sub$twilight[1] > exp_twl_sub$twilight[2])|
+    (ob_twl_sub$Rise[1] != exp_twl_sub$rise[1] & exp_twl_sub$twilight[1] < exp_twl_sub$twilight[2])){
 
   # expected twilights must be adjusted
-  exp_twl_sub <- subset(exp_twl, exp_twl$twilight > period[1] & exp_twl$twilight < period[2])
-
   exp_twl_sub <- exp_twl_sub[-1,]
 
   exp_twl_sub[nrow(exp_twl_sub) +1,] <- exp_twl[(exp_twl$twilight > period[2]),][1,]
 
   # Else, if sunrise and sunset occur within the span of a single calendar day (based on GMT),
   # we will calculate the shift using the timing of midnight
-  } else {
-  
-  # expected twilights do not have to be adjusted 
-  exp_twl_sub <- subset(exp_twl, exp_twl$twilight > period[1] & exp_twl$twilight < period[2])
-  
-  }
+  } 
   
   # Check that the two list of twilights are the same length 
   if (nrow(ob_twl_sub) != nrow(exp_twl_sub)) {
@@ -196,10 +192,13 @@ r2 <- findLocData(geo.ids = c(c("V8757_010",
                                  "V8757_055",
                                  "V8757_018",
                                  "V8296_007",
-                                 "V8296_008")), check_col_length = F)
+                                 "V8296_008",
+                                "V8757_019",
+                                "V8757_096")), check_col_length = F)
 
+r2 <- findLocData(geo.ids = c("V8757_096"), check_col_length = F)
 
 plotLocVec(data = r2, stati_only = T, timing = c("Post-breeding migration", "Non-breeding period"))
-plotLocVec(data = r2, stati_only = T, timing = c("Pre-breeding migration", "Non-breeding period"))  
+plotLocVec(data = r2, stati_only = F, timing = c("Pre-breeding migration", "Non-breeding period"))  
 plotLocVec(data = r2, stati_only = T, timing = c("Non-breeding period"))  
-
+plotLocVec(data = r2, stati_only = T, timing = c("Post-breeding migration", "Pre-breeding migration", "Non-breeding period"))
