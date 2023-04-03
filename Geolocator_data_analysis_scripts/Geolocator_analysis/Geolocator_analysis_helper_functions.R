@@ -160,7 +160,7 @@ findLocData <- function(geo.ids = c(), check_col_length = F){
 # r1 <- findLocData(geo.ids = c(), check_col_length = T)
 
 # Extract location data for specific geolocators 
-# r2 <- findLocData(geo.ids = c(c("V8757_010", "V8296_004")), check_col_length = F)
+# r2 <- findLocData(geo.ids = c("V8757_010", "V8296_004"), check_col_length = F)
 
 # MapLocData ###################################################################
 
@@ -187,6 +187,7 @@ plotLocVec <- function(data, stati_only = F, timing = c("Post-breeding migration
     
 # test calls  for mapLocData ###################################################
 
+# call for all geolocators 
 r2 <- findLocData(geo.ids = c("V8757_010",
                                  "V8296_004", 
                                  "V8757_055",
@@ -194,11 +195,21 @@ r2 <- findLocData(geo.ids = c("V8757_010",
                                  "V8296_007",
                                  "V8296_008",
                                 "V8757_019",
-                                "V8757_096"), check_col_length = F)
+                                "V8757_096",
+                              "V8757_134",
+                              "V8757_029"), check_col_length = F)
 
-r2 <- findLocData(geo.ids = c("V8757_019"), check_col_length = F)
+# Call for geolocators from Newfoundland 
+#r2 <- findLocData(geo.ids = c("V8757_096", "V8757_134"), check_col_length = F)
+
+# Call for geolocators from British Columbia
+#r2 <- findLocData(geo.ids = c("V8757_019", "V8757_010", "V8757_029"), check_col_length = F)
+
+# Custom call
+# r2 <- findLocData(geo.ids = c("V8757_055"), check_col_length = F)
 
 plotLocVec(data = r2, stati_only = T, timing = c("Post-breeding migration", "Non-breeding period"))
 plotLocVec(data = r2, stati_only = T, timing = c("Pre-breeding migration", "Non-breeding period"))  
 plotLocVec(data = r2, stati_only = T, timing = c("Non-breeding period"))  
 plotLocVec(data = r2, stati_only = T, timing = c("Post-breeding migration", "Pre-breeding migration", "Non-breeding period"))
+ 

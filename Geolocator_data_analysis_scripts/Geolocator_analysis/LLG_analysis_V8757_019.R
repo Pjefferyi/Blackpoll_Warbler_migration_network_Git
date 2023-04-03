@@ -145,11 +145,11 @@ dev.off()
 # twl <- twilightAdjust(twilights = twl, interval = 120)
 
 # Automatically adjust or mark false twilights
-twl <- twilightEdit(twilights = twl,
-                    window = 4,
-                    outlier.mins = 10,
-                    stationary.mins = 20,
-                    plot = TRUE)
+# twl <- twilightEdit(twilights = twl,
+#                     window = 4,
+#                     outlier.mins = 10,
+#                     stationary.mins = 20,
+#                     plot = TRUE)
 
 # # Visualize light and twilight time-series
 # lightImage(lig, offset = 19)
@@ -220,7 +220,7 @@ zenith0_ad <- zenith0 + abs(zenith - zenith_sd)
 zenith_ad  <- zenith_sd
 
 # Find approximate  timing of arrival and departure from the nonbreeding grounds 
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol=0.05)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol= 0)
 
 x0 <- path$x
 z0 <- trackMidpts(x0)
@@ -232,6 +232,7 @@ abline(v = anytime("2020-04-28"))
 plot(twl$Twilight, x0[,2], ylab = "latitude")
 abline(v = anytime("2019-10-13"))
 abline(v = anytime("2020-04-28"))
+
 
 # Using approximate timings of arrival and departure from the breeding grounds
 zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
@@ -256,7 +257,7 @@ matplot(0:100, dgamma(0:100, beta[1], beta[2]),
         type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol=0.12)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol=0.05)
 
 x0 <- path$x
 z0 <- trackMidpts(x0)
@@ -350,7 +351,7 @@ model <- thresholdModel(twilight = twl$Twilight,
                         logp.x = log.prior, logp.z = log.prior, 
                         x0 = x0,
                         z0 = z0,
-                        zenith = zeniths0,
+                        zenith = zenith0,
                         fixedx = fixedx)
 
 #Define the error distribution around each location 
@@ -371,7 +372,7 @@ model <- thresholdModel(twilight = twl$Twilight,
                         logp.x = log.prior, logp.z = log.prior, 
                         x0 = x0,
                         z0 = z0,
-                        zenith = zeniths0,
+                        zenith = zenith0,
                         fixedx = fixedx)
 
 x.proposal <- mvnorm(S = diag(c(0.005, 0.005)), n = nrow(twl))
@@ -505,7 +506,7 @@ geo_twl <- export2GeoLight(twl)
 cL <- changeLight(twl=geo_twl, quantile= 0.8, summary = F, days = 2, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths0[1: length(zeniths0) -1], distThreshold = 500)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
 
 #back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 
@@ -642,7 +643,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                beta =  beta,
                                x0 = x0, # median point for each greoup (defined by twl$group)
                                z0 = z0, # middle points between the x0 points
-                               zenith = zeniths0,
+                               zenith = zenith0,
                                logp.x = logp,# land sea mask
                                fixedx = fixedx)
 
@@ -669,7 +670,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                x0 = x0, z0 = z0,
                                logp.x = logp,
                                missing=twl$Missing,
-                               zenith = zeniths0,
+                               zenith = zenith0,
                                fixedx = fixedx)
 
 for (k in 1:3) {
@@ -702,7 +703,7 @@ sm <- SGAT2Movebank(fit$x, time = twl$Twilight, group = twl$group)
 # open jpeg
 jpeg(paste0(dir, "/", geo.id,"_grouped_threshold_model_map.png"), width = 1024 , height = 990)
 
-par(mfrow=c(1,1))
+par(mfrow=c(1,1), mar = c(2, 2, 2, 2))
 colours <- c("black",colorRampPalette(c("blue","yellow","red"))(max(twl.rev$Site)))
 data(wrld_simpl)
 
@@ -713,7 +714,7 @@ r <- raster(nrows = 2 * diff(ylim), ncols = 2 * diff(xlim), xmn = xlim[1]-5,
 s <- slices(type = "intermediate", breaks = "week", mcmc = fit, grid = r)
 sk <- slice(s, sliceIndices(s))
 
-plot(sk, useRaster = F,col = c("transparent", rev(viridis::viridis(50))))
+plot(sk, useRaster = F,col = c("transparent", rev(viridis::viridis(50))), ylab = "Latitude", xlab = "Longitude")
 plot(wrld_simpl, xlim=xlim, ylim=ylim,add = T, bg = adjustcolor("black",alpha=0.1))
 
 with(sm[sitenum>0,], arrows(`Lon.50.`, `Lat.2.5.`, `Lon.50.`, `Lat.97.5.`, length = 0, lwd = 2.5, col = "firebrick"))
