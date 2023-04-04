@@ -223,19 +223,19 @@ zenith_ad  <- zenith_sd
 # Find approximate  timing of arrival and departure from the nonbreeding grounds 
 path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol=0)
 
-x0 <- path$x
-z0 <- trackMidpts(x0)
+x0_r <- path$x
+z0 <- trackMidpts(x0_r)
 
 par(mfrow = c(2,1))
-plot(twl$Twilight, x0[,1], ylab = "longitude")
+plot(twl$Twilight, x0_r[,1], ylab = "longitude")
 abline(v = anytime("2019-10-06"))
 abline(v = anytime("2020-04-28"))
-plot(twl$Twilight, x0[,2], ylab = "latitude")
+plot(twl$Twilight, x0_r[,2], ylab = "latitude")
 abline(v = anytime("2019-10-06"))
 abline(v = anytime("2020-04-28"))
 
 #Save initial path 
-save(x0, file = paste0(dir,"/", geo.id, "_initial_path.csv"))
+save(x0_r, file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
 
 # Using approximate timings of arrival and departure from the breeding grounds
 zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
@@ -278,6 +278,9 @@ points(lon.calib, lat.calib, pch = 16, cex = 2.5, col = "firebrick")
 box()
 
 dev.off()
+
+#Save initial path x0
+save(x0, file = paste0(dir,"/", geo.id, "_initial_path.csv"))
 
 # Define known locations #######################################################
 
@@ -818,22 +821,23 @@ plot(twl$Twilight, x0[,1], type = "o", ylab = "longitude", xlab = "time")
 plot(twl$Twilight, x0[,2], type = "o", ylab = "latitude", xlab = "time")
 
 #Plot light transitions during fall transoceanic flight
-par(cex.lab=1.3)
-par(cex.axis=1.3)
+par(cex.lab=1.5)
+par(cex.axis=1.5)
 par(mfrow=c(3,1), mar = c(5,5,0.1,5))
 plot(lig$Date[lig$Date < "2019-10-15" & lig$Date > "2019-09-15" ], lig$Light[lig$Date < "2019-10-15" & lig$Date > "2019-09-15" ], type = "o",
-     ylab = "Light level", xlab = "Time", cex = 1.1)
+     ylab = "Light level", xlab = "Time")
 rect(anytime("2019-09-27"), min(lig$Light)-2, anytime("2019-09-30"), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
-rect(anytime("2019-10-03"), min(lig$Light)-2, anytime("2019-10-06"), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime("2019-10-03"), min(lig$Light)-2, anytime("2019-10-07"), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
 
 plot(twl$Twilight[twl$Twilight< "2019-10-15" & twl$Twilight > "2019-09-15"], x0[,1][twl$Twilight< "2019-10-15" & twl$Twilight > "2019-09-15"],
-     ylab = "Longitude", xlab = "Time", cex = 1.1)
+     ylab = "Longitude", xlab = "Time")
 rect(anytime("2019-09-27"), min(x0[,1])-2, anytime("2019-09-30"), max(x0[,1])+2, col = alpha("yellow", 0.2), lty=0)
-rect(anytime("2019-10-03"), min(x0[,1])-2, anytime("2019-10-06"), max(x0[,1])+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime("2019-10-03"), min(x0[,1])-2, anytime("2019-10-07"), max(x0[,1])+2, col = alpha("yellow", 0.2), lty=0)
 
 plot(twl$Twilight[twl$Twilight< "2019-10-15" & twl$Twilight > "2019-09-15"], x0[,2][twl$Twilight< "2019-10-15" & twl$Twilight > "2019-09-15"],
-       ylab = "Latitude", xlab = "Time", cex = 1.1)
+       ylab = "Latitude", xlab = "Time")
 rect(anytime("2019-09-27"), min(x0[,2])-2, anytime("2019-09-30"), max(x0[,2])+2, col = alpha("yellow", 0.2), lty=0) 
-rect(anytime("2019-10-03"), min(x0[,2])-2, anytime("2019-10-06"), max(x0[,2])+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime("2019-10-03"), min(x0[,2])-2, anytime("2019-10-07"), max(x0[,2])+2, col = alpha("yellow", 0.2), lty=0)
 par(cex.axis=1.0)
 par(cex.lab=1.0)
+

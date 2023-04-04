@@ -85,12 +85,12 @@ tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
 # we will do an initial twilight annotation to find identify the time interval
 # by which we need to shift time
 # There should be not need to edit, delete or insert twilights for this
-twl_in <- preprocessLight(lig,
-                          threshold = threshold,
-                          offset = offset,
-                          lmax = 64,         # max. light value
-                          gr.Device = "x11", # MacOS version (and windows)
-                          dark.min = 60)
+# twl_in <- preprocessLight(lig,
+#                           threshold = threshold,
+#                           offset = offset,
+#                           lmax = 64,         # max. light value
+#                           gr.Device = "x11", # MacOS version (and windows)
+#                           dark.min = 60)
 
 #write.csv(twl_in, paste0(dir,"/", geo.id,"_twl_times_initial.csv"))
 twl_in <- read.csv(paste0(dir,"/", geo.id,"_twl_times_initial.csv"))
@@ -136,28 +136,28 @@ tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
                        offset = offset, lwd = 3, col = adjustcolor("orange", alpha.f = 0.5))
 dev.off()
 
-#Detect twilight times, for now do not edit twilight times
-twl <- preprocessLight(lig,
-                       threshold = threshold,
-                       offset = offset,
-                       lmax = 64,         # max. light value
-                       gr.Device = "x11", # MacOS version (and windows)
-                       dark.min = 60)
-
-# Adjust sunset times by 120 second sampling interval
-twl <- twilightAdjust(twilights = twl, interval = 120)
-
-# Automatically adjust or mark false twilights
-twl <- twilightEdit(twilights = twl,
-                    window = 4,
-                    outlier.mins = 45,
-                    stationary.mins = 25,
-                    plot = TRUE)
-
-# Visualize light and twilight time-series
-lightImage(lig, offset = 19)
-tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
-              col = ifelse(twl$Rise, "dodgerblue", "firebrick"))
+# #Detect twilight times, for now do not edit twilight times
+# twl <- preprocessLight(lig,
+#                        threshold = threshold,
+#                        offset = offset,
+#                        lmax = 64,         # max. light value
+#                        gr.Device = "x11", # MacOS version (and windows)
+#                        dark.min = 60)
+# 
+# # Adjust sunset times by 120 second sampling interval
+# twl <- twilightAdjust(twilights = twl, interval = 120)
+# 
+# # Automatically adjust or mark false twilights
+# twl <- twilightEdit(twilights = twl,
+#                     window = 4,
+#                     outlier.mins = 45,
+#                     stationary.mins = 25,
+#                     plot = TRUE)
+# 
+# # Visualize light and twilight time-series
+# lightImage(lig, offset = 19)
+# tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
+#               col = ifelse(twl$Rise, "dodgerblue", "firebrick"))
 
 
 # Save the twilight times 
@@ -224,16 +224,19 @@ zenith0_ad <- zenith0 + abs(zenith - zenith_sd)
 zenith_ad  <- zenith_sd
 
 # Find approximate  timing of arrival and departure from the nonbreeding grounds 
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol= 0)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol= 0)
 
-x0 <- path$x
+x0_r<- path$x
 z0 <- trackMidpts(x0)
 
+#Save raw path (no linear interpolation around the equinox)
+save(x0_r, file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
+
 par(mfrow = c(2,1))
-plot(twl$Twilight, x0[,1], ylab = "longitude")
+plot(twl$Twilight, x0_r[,1], ylab = "longitude")
 abline(v = anytime("2012-11-05"))
 abline(v = anytime("2023-05-13"))
-plot(twl$Twilight, x0[,2], ylab = "latitude")
+plot(twl$Twilight, x0_r[,2], ylab = "latitude")
 abline(v = anytime("2012-11-05"))
 abline(v = anytime("2013-05-13"))
 
@@ -814,26 +817,26 @@ sm <- sm %>% mutate(period= case_when(StartTime < anytime("2012-11-05 22:01:57",
 
 # Examine twilights ############################################################
 
-#load initial path x0
-load(file = paste0(dir,"/", geo.id, "_initial_path.csv"))
+#load the raw initial path x0_r
+load(file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
 
 #plot of light transitions throughout the fall migration 
 par(mfrow=c(2,1))
-plot(twl$Twilight, x0[,1], type = "o", ylab = "longitude", xlab = "time")
-plot(twl$Twilight, x0[,2], type = "o", ylab = "latitude", xlab = "time")
+plot(twl$Twilight, x0_r[,1], type = "o", ylab = "longitude", xlab = "time")
+plot(twl$Twilight, x0_r[,2], type = "o", ylab = "latitude", xlab = "time")
 
 #Fall transoceanic flight 
-par(cex.lab=1.3)
-par(cex.axis=1.3)
+par(cex.lab=1.4)
+par(cex.axis=1.4)
 par(mfrow=c(3,1), mar = c(5,5,0.1,5))
 plot(lig$Date[lig$Date < "2012-11-15" & lig$Date > "2012-10-25"], lig$Light[lig$Date < "2012-11-15" & lig$Date > "2012-10-25"], type = "o",
-     ylab = "Light level", xlab = "Time", cex = 1.1)
+     ylab = "Light level", xlab = "Time")
 rect(anytime("2012-11-04"), min(lig$Light)-2, anytime("2012-11-08"), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
 plot(twl$Twilight[twl$Twilight< "2012-11-15" & twl$Twilight > "2012-10-25"], x0[,1][twl$Twilight< "2012-11-15" & twl$Twilight > "2012-10-25"],
-     ylab = "Longitude", xlab = "Time", cex = 1.1)
+     ylab = "Longitude", xlab = "Time")
 rect(anytime("2012-11-04"), min(x0[,1])-2, anytime("2012-11-08"), max(x0[,1])+2, col = alpha("yellow", 0.2), lty=0)
 plot(twl$Twilight[twl$Twilight< "2012-11-15" & twl$Twilight > "2012-10-25"], x0[,2][twl$Twilight< "2012-11-15" & twl$Twilight > "2012-10-25"],
-     ylab = "Latitude", xlab = "Time", cex = 1.1)
+     ylab = "Latitude", xlab = "Time")
 rect(anytime("2012-11-04"), min(x0[,2])-2, anytime("2012-11-08"), max(x0[,2])+2, col = alpha("yellow", 0.2), lty=0)
 par(cex.lab= 1)
 par(cex.axis= 1)
