@@ -76,12 +76,12 @@ tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
 # we will do an initial twilight annotation to find identify the time interval
 # by which we need to shift time
 # There should be not need to edit, delete or insert twilights for this
-twl_in <- preprocessLight(lig,
-                          threshold = threshold,
-                          offset = offset,
-                          lmax = 64,         # max. light value
-                          gr.Device = "x11", # MacOS version (and windows)
-                          dark.min = 60)
+# twl_in <- preprocessLight(lig,
+#                           threshold = threshold,
+#                           offset = offset,
+#                           lmax = 64,         # max. light value
+#                           gr.Device = "x11", # MacOS version (and windows)
+#                           dark.min = 60)
 
 #write.csv(twl_in, paste0(dir,"/", geo.id,"_twl_times_initial.csv"))
 twl_in <- read.csv(paste0(dir,"/", geo.id,"_twl_times_initial.csv"))
@@ -127,28 +127,28 @@ tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
                        offset = offset, lwd = 3, col = adjustcolor("orange", alpha.f = 0.5))
 dev.off()
 
-# #Detect twilight times, for now do not edit twilight times  
-twl <- preprocessLight(lig,
-                       threshold = threshold,
-                       offset = offset,
-                       lmax = 64,         # max. light value
-                       gr.Device = "x11", # MacOS version (and windows)
-                       dark.min = 60)
-
-# Adjust sunset times by 120 second sampling interval
-twl <- twilightAdjust(twilights = twl, interval = 120)
-
-# Automatically adjust or mark false twilights
-twl <- twilightEdit(twilights = twl,
-                    window = 4,
-                    outlier.mins = 45,
-                    stationary.mins = 25,
-                    plot = TRUE)
-
-# Visualize light and twilight time-series
-lightImage(lig, offset = 19)
-tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
-              col = ifelse(twl$Rise, "dodgerblue", "firebrick"))
+# # #Detect twilight times, for now do not edit twilight times  
+# twl <- preprocessLight(lig,
+#                        threshold = threshold,
+#                        offset = offset,
+#                        lmax = 64,         # max. light value
+#                        gr.Device = "x11", # MacOS version (and windows)
+#                        dark.min = 60)
+# 
+# # Adjust sunset times by 120 second sampling interval
+# twl <- twilightAdjust(twilights = twl, interval = 120)
+# 
+# # Automatically adjust or mark false twilights
+# twl <- twilightEdit(twilights = twl,
+#                     window = 4,
+#                     outlier.mins = 45,
+#                     stationary.mins = 25,
+#                     plot = TRUE)
+# 
+# # Visualize light and twilight time-series
+# lightImage(lig, offset = 19)
+# tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
+#               col = ifelse(twl$Rise, "dodgerblue", "firebrick"))
 
 
 # Save the twilight times 
@@ -209,25 +209,40 @@ end   <- max(which(mS$site == stationarySite))
 
 (zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
 
-# Vector with different zenith angle for the breeding and nonbreeding periods 
-zenith_twl <- data.frame(Date = twl$Twilight) %>%
-  mutate(zenith = case_when(Date < fall.equi ~ zenith0,
-                            Date > fall.equi ~ zenith_sd))
-zeniths <- zenith_twl$zenith
 
-# adjust the zenith angles calculated from the breeding sites 
-zenith0_ad <- zenith0 + abs(zenith - zenith_sd)
-zenith_ad  <- zenith_sd
+# the Hill-ekstrom zenith and in-habitat zenith angles do not differ by more than 0.5 degrees, alternative calibration is not required 
 
-# create a list of twilights providing a different zenith angle for the breeding and nonbreeding periods 
-zenith_twl <- data.frame(Date = twl$Twilight) %>%
-  mutate(zenith = case_when(Date < fall.equi ~ zenith0,
-                            Date > fall.equi ~ zenith0_ad))
+# Find approximate  timing of arrival and departure from the nonbreeding grounds 
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol= 0)
 
-zeniths <- zenith_twl$zenith
+x0_r<- path$x
+z0 <- trackMidpts(x0_r)
 
-# if the Hill-ekstrom zenith and in-habitat zenith angles do not differ by more than 0.5 degrees
-# then the whole analysis can be performed using angles from the breeding grounds (obtained with thresholdcalibration)
+#Save raw path (no linear interpolation around the equinox)
+save(x0_r, file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
+
+par(mfrow = c(2,1))
+plot(twl$Twilight, x0_r[,1], ylab = "longitude")
+abline(v = anytime("2019-10-05"))
+abline(v = anytime("2020-05-15"))
+plot(twl$Twilight, x0_r[,2], ylab = "latitude")
+abline(v = anytime("2019-10-05"))
+abline(v = anytime("2020-05-15"))
+
+# Using approximate timings of arrival and departure from the breeding grounds
+zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
+  mutate(zenith = case_when(Date < anytime("2019-10-05") ~ zenith0,
+                            Date > anytime("2019-10-05") & Date < anytime("2020-05-15") ~ zenith0_ad,
+                            Date > anytime("2020-05-15") ~ zenith0_ad))
+
+zeniths0 <- zenith_twl_zero$zenith
+
+zenith_twl_med <- data.frame(Date = twl$Twilight) %>%
+  mutate(zenith = case_when(Date < anytime("2019-10-05") ~ zenith,
+                            Date > anytime("2019-10-05") & Date < anytime("2020-05-15") ~ zenith_sd,
+                            Date > anytime("2020-05-15") ~ zenith_sd))
+
+zeniths_med <- zenith_twl_med$zenith
 
 # Movement model ###############################################################
 
@@ -237,7 +252,7 @@ matplot(0:100, dgamma(0:100, beta[1], beta[2]),
         type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol=0.18)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol=0.05)
 
 x0 <- path$x
 z0 <- trackMidpts(x0)
@@ -481,10 +496,10 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-cL <- changeLight(twl=geo_twl, quantile=0.75, summary = F, days = 3, plot = T)
+cL <- changeLight(twl=geo_twl, quantile=0.86, summary = F, days = 2 , plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = 500)
 
 #back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 
@@ -769,6 +784,11 @@ points(stat.loc$Lon.50., stat.loc$Lat.50., pch = 16, cex = 1.5, col = "firebrick
 
 # add column with geolocator ID
 sm$geo_id <- geo.id
+
+#add a column that categorizes the locations (based on the groupthreshold model output)
+sm <- sm %>% mutate(period= case_when(StartTime < anytime("2019-10-07 10:31:43", asUTC = T, tz = "GMT")  ~ "Post-breeding migration",
+                                      StartTime > anytime("2020-05-08 10:07:42", asUTC = T, tz = "GMT") ~ "Pre-breeding migration",
+                                      StartTime >= anytime("2019-10-07 10:31:43", asUTC = T, tz = "GMT") & EndTime <= anytime("2020-05-08 10:07:42", asUTC = T, tz = "GMT") ~ "Non-breeding period"))
 
 #Save the output of the model 
 #save(sm, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))

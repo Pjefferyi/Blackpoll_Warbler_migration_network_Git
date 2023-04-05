@@ -227,7 +227,7 @@ zenith_ad  <- zenith_sd
 path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol= 0)
 
 x0_r<- path$x
-z0 <- trackMidpts(x0)
+z0 <- trackMidpts(x0_r)
 
 #Save raw path (no linear interpolation around the equinox)
 save(x0_r, file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))

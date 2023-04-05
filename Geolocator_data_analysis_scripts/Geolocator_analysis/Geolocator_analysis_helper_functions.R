@@ -180,8 +180,8 @@ plotLocVec <- function(data, stati_only = F, timing = c("Post-breeding migration
   ggplot(spData::world[(spData::world$continent %in% c("North America", "South America")),]) +
     geom_sf() +
     coord_sf() +
-    geom_point(data = data, mapping = aes(x = Lon.50., y = Lat.50., color = geo_id), size = 1.6) +
-    geom_path(data = data, mapping = aes(x = Lon.50., y = Lat.50., color = geo_id), linewidth = 0.6) +
+    geom_point(data = data, mapping = aes(x = Lon.50., y = Lat.50., color = geo_id), size = 1.2) +
+    geom_path(data = data, mapping = aes(x = Lon.50., y = Lat.50., color = geo_id), linewidth = 0.4) +
     theme_bw() 
 }
     
@@ -192,12 +192,17 @@ r2 <- findLocData(geo.ids = c("V8757_010",
                                  "V8296_004", 
                                  "V8757_055",
                                  "V8757_018",
+                                  "V8296_015",
+                                  "V8296_017",
                                  "V8296_007",
                                  "V8296_008",
                                 "V8757_019",
                                 "V8757_096",
                               "V8757_134",
                               "V8757_029"), check_col_length = F)
+
+# Call for geolocators from Quebec
+#r2 <- findLocData(geo.ids = c("V8296_004", "V8757_018", "V8296_007", "V8296_015", "V8296_017"), check_col_length = F)
 
 # Call for geolocators from Newfoundland 
 #r2 <- findLocData(geo.ids = c("V8757_096", "V8757_134"), check_col_length = F)
