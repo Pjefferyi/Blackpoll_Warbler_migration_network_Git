@@ -224,7 +224,7 @@ zenith0_ad <- zenith0 + abs(zenith - zenith_sd)
 zenith_ad  <- zenith_sd
 
 # Find approximate  timing of arrival and departure from the nonbreeding grounds 
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol= 0)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol= 0)
 
 x0_r<- path$x
 z0 <- trackMidpts(x0_r)
@@ -235,7 +235,7 @@ save(x0_r, file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
 par(mfrow = c(2,1))
 plot(twl$Twilight, x0_r[,1], ylab = "longitude")
 abline(v = anytime("2012-11-05"))
-abline(v = anytime("2023-05-13"))
+abline(v = anytime("2013-05-13"))
 plot(twl$Twilight, x0_r[,2], ylab = "latitude")
 abline(v = anytime("2012-11-05"))
 abline(v = anytime("2013-05-13"))

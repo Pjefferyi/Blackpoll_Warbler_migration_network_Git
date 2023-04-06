@@ -189,7 +189,7 @@ plotLocVec <- function(data, stati_only = F, timing = c("Post-breeding migration
 
 # call for all geolocators 
 r2 <- findLocData(geo.ids = c("V8757_010",
-                                 "V8296_004", 
+                                 "V8296_004",
                                  "V8757_055",
                                  "V8757_018",
                                   "V8296_015",
@@ -214,7 +214,7 @@ r2 <- findLocData(geo.ids = c("V8757_010",
 # r2 <- findLocData(geo.ids = c("V8757_055"), check_col_length = F)
 
 plotLocVec(data = r2, stati_only = T, timing = c("Post-breeding migration", "Non-breeding period"))
-plotLocVec(data = r2, stati_only = T, timing = c("Pre-breeding migration", "Non-breeding period"))  
-plotLocVec(data = r2, stati_only = T, timing = c("Non-breeding period"))  
+plotLocVec(data = r2, stati_only = T, timing = c("Pre-breeding migration", "Non-breeding period"))
+plotLocVec(data = r2, stati_only = T, timing = c("Non-breeding period"))
 plotLocVec(data = r2, stati_only = T, timing = c("Post-breeding migration", "Pre-breeding migration", "Non-breeding period"))
- 
+

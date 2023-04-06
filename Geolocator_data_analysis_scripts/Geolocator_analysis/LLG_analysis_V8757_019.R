@@ -220,32 +220,34 @@ zenith0_ad <- zenith0 + abs(zenith - zenith_sd)
 zenith_ad  <- zenith_sd
 
 # Find approximate  timing of arrival and departure from the nonbreeding grounds 
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol= 0)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol= 0)
 
-x0 <- path$x
-z0 <- trackMidpts(x0)
+x0_r<- path$x
+z0 <- trackMidpts(x0_r)
+
+#Save raw path (no linear interpolation around the equinox)
+save(x0_r, file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
 
 par(mfrow = c(2,1))
-plot(twl$Twilight, x0[,1], ylab = "longitude")
-abline(v = anytime("2019-10-13"))
+plot(twl$Twilight, x0_r[,1], ylab = "longitude")
+abline(v = anytime("2019-10-15"))
 abline(v = anytime("2020-04-28"))
-plot(twl$Twilight, x0[,2], ylab = "latitude")
-abline(v = anytime("2019-10-13"))
+plot(twl$Twilight, x0_r[,2], ylab = "latitude")
+abline(v = anytime("2019-10-15"))
 abline(v = anytime("2020-04-28"))
-
 
 # Using approximate timings of arrival and departure from the breeding grounds
 zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
-  mutate(zenith = case_when(Date < anytime("2019-10-13") ~ zenith0,
-                            Date > anytime("2019-10-13") & Date < anytime("2020-04-28") ~ zenith0_ad,
-                            Date > anytime("2020-04-28") ~ mean(zenith0_ad, zenith0)))
+  mutate(zenith = case_when(Date < anytime("2019-10-15") ~ zenith0,
+                            Date > anytime("2019-10-15") & Date < anytime("2020-04-26") ~ zenith0_ad,
+                            Date > anytime("2020-04-26") ~ mean(zenith0_ad, zenith0)))
 
 zeniths0 <- zenith_twl_zero$zenith
 
 zenith_twl_med <- data.frame(Date = twl$Twilight) %>%
-  mutate(zenith = case_when(Date < anytime("2019-10-13") ~ zenith,
-                            Date > anytime("2019-10-13") & Date < anytime("2020-04-28") ~ zenith_sd,
-                            Date > anytime("2020-04-28") ~ mean(zenith, zenith_sd)))
+  mutate(zenith = case_when(Date < anytime("2019-10-15") ~ zenith,
+                            Date > anytime("2019-10-15") & Date < anytime("2020-04-26") ~ zenith_sd,
+                            Date > anytime("2020-04-26") ~ mean(zenith, zenith_sd)))
 
 zeniths_med <- zenith_twl_med$zenith
 
@@ -257,7 +259,7 @@ matplot(0:100, dgamma(0:100, beta[1], beta[2]),
         type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol=0.05)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol=0.05)
 
 x0 <- path$x
 z0 <- trackMidpts(x0)
@@ -506,7 +508,7 @@ geo_twl <- export2GeoLight(twl)
 cL <- changeLight(twl=geo_twl, quantile= 0.8, summary = F, days = 2, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths0[1:length(zeniths0)-1], distThreshold = 500)
 
 #back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 
@@ -643,7 +645,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                beta =  beta,
                                x0 = x0, # median point for each greoup (defined by twl$group)
                                z0 = z0, # middle points between the x0 points
-                               zenith = zenith0,
+                               zenith = zeniths0,
                                logp.x = logp,# land sea mask
                                fixedx = fixedx)
 
@@ -670,7 +672,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                x0 = x0, z0 = z0,
                                logp.x = logp,
                                missing=twl$Missing,
-                               zenith = zenith0,
+                               zenith = zeniths0,
                                fixedx = fixedx)
 
 for (k in 1:3) {
@@ -794,8 +796,8 @@ sm$geo_id <- geo.id
 
 #add a column that categorizes the locations (based on the groupthreshold model output)
 sm <- sm %>% mutate(period= case_when(StartTime < anytime("2019-10-24 22:10:35", asUTC = T, tz = "GMT")  ~ "Post-breeding migration",
-                                      StartTime >= anytime("2019-10-24 22:10:35", asUTC = T, tz = "GMT") & StartTime < anytime("2020-04-27 22:33:01 ", asUTC = T, tz = "GMT") ~ "Non-breeding period",
-                                      StartTime > anytime("2020-04-27 22:33:01 ", asUTC = T, tz = "GMT") ~ "Pre-breeding migration"))
+                                      StartTime >= anytime("2019-10-24 22:10:35", asUTC = T, tz = "GMT") & StartTime < anytime("2020-04-27 22:33:01", asUTC = T, tz = "GMT") ~ "Non-breeding period",
+                                      StartTime > anytime("2020-04-27 22:33:01", asUTC = T, tz = "GMT") ~ "Pre-breeding migration"))
 
 #Save the output of the model 
 #save(sm, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))
