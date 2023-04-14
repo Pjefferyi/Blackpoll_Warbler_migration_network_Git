@@ -238,24 +238,24 @@ z0 <- trackMidpts(x0)
 
 par(mfrow = c(2,1))
 plot(twl$Twilight, x0[,1], ylab = "longitude")
-abline(v = anytime("2012-11-19 "))
+abline(v = anytime("2012-11-05 "))    #change 10-14 to 11-05 
 abline(v = anytime("2013-2013-05-23 "))
 plot(twl$Twilight, x0[,2], ylab = "latitude")
-abline(v = anytime("2012-11-19 "))
+abline(v = anytime("2012-11-05 "))
 abline(v = anytime("2013-05-23 "))
 
 # Using approximate timings of arrival and departure from the breeding grounds
 zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
-  mutate(zenith = case_when(Date < anytime("2012-10-14") ~ zenith0,
-                            Date > anytime("2012-10-14") & Date < anytime("2013-05-23 ") ~ zenith0_ad,
+  mutate(zenith = case_when(Date < anytime("2012-11-05") ~ zenith0,
+                            Date > anytime("2012-11-05") & Date < anytime("2013-05-23 ") ~ zenith0_ad,
                             Date > anytime("2013-05-23 ") ~ zenith0_ad))
 
 zeniths0 <- zenith_twl_zero$zenith
 
 zenith_twl_med <- data.frame(Date = twl$Twilight) %>%
-  mutate(zenith = case_when(Date < anytime("2012-10-14") ~ zenith,
-                            Date > anytime("2012-10-14") & Date < anytime("2013-05-23 ") ~ zenith_sd,
-                            Date > anytime("2013-05-23 ") ~ zenith_sd - 2))
+  mutate(zenith = case_when(Date < anytime("2012-11-05") ~ zenith,
+                            Date > anytime("2012-11-05") & Date < anytime("2013-05-23 ") ~ zenith_sd,
+                            Date > anytime("2013-05-23 ") ~ zenith_sd ))
 
 zeniths_med <- zenith_twl_med$zenith
 
@@ -267,7 +267,7 @@ matplot(0:100, dgamma(0:100, beta[1], beta[2]),
         type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol=0.02)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol=0.01)
 
 x0 <- path$x
 z0 <- trackMidpts(x0)
@@ -811,9 +811,9 @@ points(stat.loc$Lon.50., stat.loc$Lat.50., pch = 16, cex = 1.5, col = "firebrick
 sm$geo_id <- geo.id
 
 #add a column that categorizes the locations (based on the groupthreshold model output)
-sm <- sm %>% mutate(period= case_when(StartTime < anytime("2012-11-03 09:44:24", asUTC = T, tz = "GMT")  ~ "Post-breeding migration",
-                                      StartTime >= anytime("2012-11-03 09:44:24", asUTC = T, tz = "GMT") & StartTime < anytime("2013-05-23 22:48:24", asUTC = T, tz = "GMT") ~ "Non-breeding period",
-                                      StartTime > anytime("2013-05-23 22:48:24", asUTC = T, tz = "GMT") ~ "Pre-breeding migration"))
+sm <- sm %>% mutate(period= case_when(StartTime < anytime("2012-11-19 10:11:54", asUTC = T, tz = "GMT")  ~ "Post-breeding migration",
+                                      StartTime >= anytime("2012-11-19 10:11:54", asUTC = T, tz = "GMT") & StartTime < anytime("2013-05-06 22:52:21", asUTC = T, tz = "GMT") ~ "Non-breeding period",
+                                      StartTime > anytime("2013-05-06 22:52:21", asUTC = T, tz = "GMT") ~ "Pre-breeding migration"))
 
 #Save the output of the model 
 #save(sm, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))
