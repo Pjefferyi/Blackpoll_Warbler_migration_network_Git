@@ -298,8 +298,6 @@ fixedx[1:2] <- T # first two location estimates
 
 fixedx[(nrow(x0) - 1):nrow(x0)] <- T # last two location estimates
 
-#we don't fix the last location because this track is incomplete 
-
 x0[fixedx, 1] <- lon.calib
 x0[fixedx, 2] <- lat.calib
 

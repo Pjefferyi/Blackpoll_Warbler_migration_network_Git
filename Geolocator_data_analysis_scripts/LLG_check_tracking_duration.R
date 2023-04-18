@@ -22,6 +22,7 @@ for (e in list){
   dur.data[nrow(dur.data) + 1,] <- list(list.short[nrow(dur.data) + 1], 
                                      lig$Date[1],
                                      lig$Date[nrow(lig)])
-  
 }
 
+# display the results 
+dur.data
