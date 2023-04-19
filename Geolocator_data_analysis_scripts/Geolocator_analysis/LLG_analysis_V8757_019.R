@@ -505,7 +505,7 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-cL <- changeLight(twl=geo_twl, quantile= 0.8, summary = F, days = 2, plot = T)
+cL <- changeLight(twl=geo_twl, quantile= 0.80, summary = F, days = 2, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
 mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths0[1:length(zeniths0)-1], distThreshold = 500)
@@ -602,7 +602,8 @@ earthseaMask <- function(xlim, ylim, n = 2, pacific=FALSE, index) {
   rm = rs; rm[] = 1
   
   # stack the movement and stationary rasters on top of each other
-  mask = stack(rs, rm)
+  #mask = stack(rs, rm)
+  mask = stack(rs, rs)
   
   xbin = seq(xmin(mask),xmax(mask),length=ncol(mask)+1)
   ybin = seq(ymin(mask),ymax(mask),length=nrow(mask)+1)
@@ -643,7 +644,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                twilight.model = "ModifiedGamma",
                                alpha = alpha,
                                beta =  beta,
-                               x0 = x0, # median point for each greoup (defined by twl$group)
+                               x0 = x0, # median point for each group (defined by twl$group)
                                z0 = z0, # middle points between the x0 points
                                zenith = zeniths0,
                                logp.x = logp,# land sea mask
