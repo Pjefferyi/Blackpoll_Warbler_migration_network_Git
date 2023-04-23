@@ -177,7 +177,7 @@ zenith0_ad <- zenith0 + abs(zenith - zenith_sd)
 zenith_ad  <- zenith_sd
 
 # Find approximate  timing of arrival and departure from the nonbreeding grounds 
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol= 0)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol= 0.08)
 
 x0_r<- path$x
 z0 <- trackMidpts(x0_r)
@@ -220,7 +220,7 @@ matplot(0:100, dgamma(0:100, beta[1], beta[2]),
         type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol=0.08)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol=0.05)
 
 x0 <- path$x
 z0 <- trackMidpts(x0)
@@ -233,7 +233,7 @@ data(wrld_simpl)
 plot(x0, type = "n", xlab = "", ylab = "")
 plot(wrld_simpl, col = "grey95", add = T)
 
-points(path$x, pch=19, col="cornflowerblue", type = "o")
+points(path$x[1:300,], pch=19, col="cornflowerblue", type = "o")
 points(lon.calib, lat.calib, pch = 16, cex = 2.5, col = "firebrick")
 box()
 
@@ -554,7 +554,7 @@ mask <- earthseaMask(xlim, ylim, n = 10, index=index)
 ## Define the log prior for x and z
 logp <- function(p) {
   f <- mask(p)
-  ifelse(is.na(f), -1000, log(2))
+  ifelse(is.na(f), -1000, log(1))
 }
 
 # Define the Estelle model ####################################################

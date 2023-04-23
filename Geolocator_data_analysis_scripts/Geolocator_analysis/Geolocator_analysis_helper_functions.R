@@ -168,7 +168,8 @@ findLocData <- function(geo.ids = c(), check_col_length = F){
 
 plotLocVec <- function(data, stati_only = F, timing = c("Post-breeding migration",
                                                         "Pre-breeding migration",
-                                                        "Non-breeding migration")){
+                                                        "Non-breeding migration")
+                       , er_bars = F, legend = T){
   # whether to use only stationary locations
   if (stati_only == T){
   data <- data[(data$sitenum > 0),]
@@ -182,9 +183,13 @@ plotLocVec <- function(data, stati_only = F, timing = c("Post-breeding migration
     coord_sf() +
     geom_point(data = data, mapping = aes(x = Lon.50., y = Lat.50., color = geo_id), size = 1.1) +
     geom_path(data = data, mapping = aes(x = Lon.50., y = Lat.50., color = geo_id), linewidth = 0.3) +
-    #geom_errorbar(data = data, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), width=1, color = "firebrick") +
-    #geom_errorbar(data = data, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), width=1, color = "firebrick") +
-    theme_bw() 
+    {if(er_bars ==  T)geom_errorbar(data = data, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), width=1, color = "firebrick")} + 
+    {if(er_bars ==  T)geom_errorbar(data = data, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), width=1, color = "firebrick")} + 
+    theme_bw() +
+    theme(panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank()) +
+    {if(legend ==  F)theme(legend.pos ition = "none")}
+    
 }
     
 # test calls  for mapLocData ###################################################
@@ -210,7 +215,8 @@ r2 <- findLocData(geo.ids = c("V8757_010",
                               "V8757_078",
                               "blpw12",
                               "3254_001",
-                              "4068_014"), check_col_length = F)
+                              "4068_014",
+                              "blpw14"), check_col_length = F)
 
 # Call for geolocators from Quebec
 #r2 <- findLocData(geo.ids = c("V8296_004","V8757_018", "V8296_007", "V8296_015", "V8296_017", "V8296_026", "V8296_025", "V8296_005", "V8296_006", "V8757_078", "V8757_021"), check_col_length = F)
@@ -222,10 +228,36 @@ r2 <- findLocData(geo.ids = c("V8757_010",
 #r2 <- findLocData(geo.ids = c("V8757_019", "V8757_010", "V8757_029"), check_col_length = F)
 
 # call one geolocator 
-# r2 <- findLocData(geo.ids = c("blpw12"), check_col_length = F)
+# r2 <- findLocData(geo.ids = c("V8296_026"), check_col_length = F)
 
-plotLocVec(data = r2, stati_only = T, timing = c("Post-breeding migration", "Non-breeding period"))
-plotLocVec(data = r2, stati_only = T, timing = c("Pre-breeding migration", "Non-breeding period"))
-plotLocVec(data = r2, stati_only = T, timing = c("Non-breeding period"))
-plotLocVec(data = r2, stati_only = T, timing = c("Post-breeding migration", "Pre-breeding migration", "Non-breeding period"))
+plotLocVec(data = r2, stati_only = T, legend = T,timing = c("Post-breeding migration", "Non-breeding period"))
+plotLocVec(data = r2, stati_only = F, legend = T,timing = c("Pre-breeding migration", "Non-breeding period"))
+plotLocVec(data = r2, stati_only = T, legend = T,timing = c("Non-breeding period"))
+plotLocVec(data = r2, stati_only = T, legend = T, timing = c("Post-breeding migration", "Pre-breeding migration", "Non-breeding period"))
+
+
+# plotBreedSites ##################################################################
+
+# Function to plot the breeding sites for all blackpoll warblers in the analysis
+
+plotBreedSites <- function(){
+  
+  #load location data
+  geo.data <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv")
+  
+  #Create and crop base sf object
+  range_crop <- st_crop(spData::world[(spData::world$continent %in% c("North America", "South America")),],
+                        xmin = -190, xmax = -10, ymin = -10, ymax = 60)
+  
+  #Create the map of breeding sites 
+  ggplot(range_crop) +
+    geom_sf() +
+    coord_sf() +
+    geom_point(data = geo.data, mapping = aes(x = deploy.longitude, y = deploy.latitude), size = 1.4, col = "firebrick") +
+    xlab("Longitude") +
+    ylab("Latitude")+
+    theme_bw() 
+  
+}  
+
 

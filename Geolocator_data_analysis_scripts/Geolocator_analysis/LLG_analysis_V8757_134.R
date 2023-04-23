@@ -230,10 +230,10 @@ z0 <- trackMidpts(x0_r)
 
 par(mfrow = c(2,1))
 plot(twl$Twilight, x0_r[,1], ylab = "longitude")
-abline(v = anytime("2012-10-20 "))
+abline(v = anytime("2012-10-22 "))
 abline(v = anytime("2013-05-18 "))
 plot(twl$Twilight, x0_r[,2], ylab = "latitude")
-abline(v = anytime("2012-10-20 "))
+abline(v = anytime("2012-10-22 "))
 abline(v = anytime("2013-05-18 "))
 
 #Save raw path (no linear interpolation around the equinox)
@@ -241,15 +241,15 @@ save(x0_r, file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
 
 # Using approximate timings of arrival and departure from the breeding grounds
 zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
-  mutate(zenith = case_when(Date < anytime("2012-10-19") ~ zenith0,
-                            Date > anytime("2012-10-19") & Date < anytime("2013-05-19 ") ~ zenith0_ad,
+  mutate(zenith = case_when(Date < anytime("2012-10-23") ~ zenith0,
+                            Date > anytime("2012-10-22") & Date < anytime("2013-05-19 ") ~ zenith0_ad,
                             Date > anytime("2013-05-17 ") ~ zenith0_ad))
 
 zeniths0 <- zenith_twl_zero$zenith
 
 zenith_twl_med <- data.frame(Date = twl$Twilight) %>%
-  mutate(zenith = case_when(Date < anytime("2012-10-19") ~ zenith,
-                            Date > anytime("2012-10-13") & Date < anytime("2013-05-19 ") ~ zenith_sd,
+  mutate(zenith = case_when(Date < anytime("2012-10-22") ~ zenith,
+                            Date > anytime("2012-10-22") & Date < anytime("2013-05-19 ") ~ zenith_sd,
                             Date > anytime("2013-05-17 ") ~ zenith_sd-2))
 
 zeniths_med <- zenith_twl_med$zenith
@@ -820,43 +820,46 @@ sm <- sm %>% mutate(period= case_when(StartTime < anytime("2012-10-26 10:20:06",
 
 # Examine twilights ############################################################
 
-#load raw threshold path x0_r
+#load the raw initial path x0_r
 load(file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
 
-#plot of the whole tracking period 
+#plot of light transitions throughout the fall migration 
 par(mfrow=c(2,1))
-plot(twl$Twilight, x0_r[,1], type = "o")
-plot(twl$Twilight, x0_r[,2], type = "o")
-abline(h = 0)
-
-# plot for fall flight over Atlantic - clean transition from October 18 - October 20
-par(mfrow=c(3,1), mar = c(2, 2, 2, 2) )
-plot(lig$Date[lig$Date < "2012-10-30" & lig$Date > "2012-09-20"], lig$Light[lig$Date < "2012-10-30" & lig$Date >  "2012-09-20"], type = "o",
-     ylab = "Light-level")
-plot(twl$Twilight[twl$Twilight < "2012-10-30" & twl$Twilight >  "2012-09-20"], x0_r[,1][twl$Twilight< "2012-10-30" & twl$Twilight >  "2012-09-20"],
-     ylab = "Latitude")
-abline(v = anytime("2012-10-18"), lwd = 2, lty = 2, col = "orange")
-abline(v = anytime("2012-10-20"), lwd = 2, lty = 2, col = "orange")
-plot(twl$Twilight[twl$Twilight< "2012-10-30" & twl$Twilight >  "2012-09-20"], x0_r[,2][twl$Twilight< "2012-10-30" & twl$Twilight >  "2012-09-20"],
-     ylab = "Latitude")
-abline(v = anytime("2012-10-18"), lwd = 2, lty = 2, col = "orange")
-abline(v = anytime("2012-10-20"), lwd = 2, lty = 2, col = "orange")
-
-# plot for fall flight over Atlantic - clean transition from on October 21 morning
-par(mfrow=c(3,1), mar = c(2, 2, 2, 2) )
-plot(lig$Date[lig$Date < "2012-11-10" & lig$Date > "2012-10-10"], lig$Light[lig$Date < "2012-11-10" & lig$Date >  "2012-10-10"], type = "o",
-     ylab = "Light-level")
-plot(twl$Twilight[twl$Twilight< "2012-11-10" & twl$Twilight >  "2012-10-10"], x0_r[,1][twl$Twilight< "2012-11-10" & twl$Twilight >  "2012-10-10"],
-     ylab = "Latitude")
-plot(twl$Twilight[twl$Twilight< "2012-11-10" & twl$Twilight >  "2012-10-10"], x0_r[,2][twl$Twilight< "2012-11-10" & twl$Twilight >  "2012-10-10"],
-     ylab = "Latitude")
+plot(twl$Twilight, x0_r[,1], type = "o", ylab = "longitude", xlab = "time")
+rect(anytime("2012-10-18"), min(x0_r[,1])-2, anytime("2012-10-20"), max(x0_r[,1])+2, col = alpha("orange", 0.2), lty=0)
+rect(anytime("2012-10-21"), min(x0_r[,1])-2, anytime("2012-10-22"), max(x0_r[,1])+2, col = alpha("orange", 0.2), lty=0)
+plot(twl$Twilight, x0_r[,2], type = "o", ylab = "latitude", xlab = "time")
+rect(anytime("2012-10-18"), min(x0_r[,2])-2, anytime("2012-10-20"), max(x0_r[,2])+2, col = alpha("orange", 0.2), lty=0)
+rect(anytime("2012-10-21"), min(x0_r[,2])-2, anytime("2012-10-22"), max(x0_r[,2])+2, col = alpha("orange", 0.2), lty=0)
 
 
-# plot for fall flight over Atlantic - clean transition from October 18 - October 20
-par(mfrow=c(3,1), mar = c(2, 2, 2, 2) )
-plot(lig$Date[lig$Date < "2012-11-25" & lig$Date > "2012-09-20"], lig$Light[lig$Date < "2012-11-25" & lig$Date >  "2012-09-20"], type = "o",
-     ylab = "Light-level")
-plot(twl$Twilight[twl$Twilight< "2012-11-30" & twl$Twilight >  "2012-09-20"], x0_r[,1][twl$Twilight< "2012-11-30" & twl$Twilight >  "2012-09-20"],
-     ylab = "Latitude")
-plot(twl$Twilight[twl$Twilight< "2012-11-30" & twl$Twilight >  "2012-09-20"], x0_r[,2][twl$Twilight< "2012-11-30" & twl$Twilight >  "2012-09-20"],
-     ylab = "Latitude")
+#Fall transoceanic flights 
+start <- "2012-10-10"
+end <- "2012-11-3"
+
+par(cex.lab=1.4)
+par(cex.axis=1.4)
+par(mfrow=c(3,1), mar = c(5,5,0.1,5))
+
+plot(lig$Date[lig$Date > start & lig$Date < end], lig$Light[lig$Date > start & lig$Date < end], type = "o",
+     ylab = "Light level", xlab = "Time")
+rect(anytime("2012-10-18"), min(lig$Light)-2, anytime("2012-10-20"), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime("2012-10-21"), min(lig$Light)-2, anytime("2012-10-22"), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
+
+
+plot(twl$Twilight[twl$Twilight> start & twl$Twilight < end], x0_r[,1][twl$Twilight > start & twl$Twilight < end],
+     ylab = "Longitude", xlab = "Time")
+rect(anytime("2012-10-18"), min(x0_r[,1])-2, anytime("2012-10-20"), max(x0_r[,1])+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime("2012-10-21"), min(x0_r[,1])-2, anytime("2012-10-22"), max(x0_r[,1])+2, col = alpha("yellow", 0.2), lty=0)
+
+
+plot(twl$Twilight[twl$Twilight > start & twl$Twilight < end], x0_r[,2][twl$Twilight > start & twl$Twilight < end],
+     ylab = "Latitude", xlab = "Time")
+rect(anytime("2012-10-18"), min(x0_r[,2])-2, anytime("2012-10-20"), max(x0_r[,2])+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime("2012-10-21"), min(x0_r[,2])-2, anytime("2012-10-22"), max(x0_r[,2])+2, col = alpha("yellow", 0.2), lty=0)
+
+par(cex.lab= 1)
+par(cex.axis= 1)
+
+
+

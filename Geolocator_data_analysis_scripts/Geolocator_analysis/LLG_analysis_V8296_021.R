@@ -82,12 +82,12 @@ tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
 # we will do an initial twilight annotation to find identify the time interval
 # by which we need to shift time
 # There should be not need to edit, delete or insert twilights for this
-twl_in <- preprocessLight(lig,
-                          threshold = threshold,
-                          offset = offset,
-                          lmax = 64,         # max. light value
-                          gr.Device = "x11", # MacOS version (and windows)
-                          dark.min = 60)
+# twl_in <- preprocessLight(lig,
+#                           threshold = threshold,
+#                           offset = offset,
+#                           lmax = 64,         # max. light value
+#                           gr.Device = "x11", # MacOS version (and windows)
+#                           dark.min = 60)
 
 #write.csv(twl_in, paste0(dir,"/", geo.id,"_twl_times_initial.csv"))
 twl_in <- read.csv(paste0(dir,"/", geo.id,"_twl_times_initial.csv"))
@@ -134,20 +134,20 @@ tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
 dev.off()
 
 #Detect twilight times, for now do not edit twilight times
-twl <- preprocessLight(lig,
-                       threshold = threshold,
-                       offset = offset,
-                       lmax = 64,         # max. light value
-                       gr.Device = "x11", # MacOS version (and windows)
-                       dark.min = 60)
+# twl <- preprocessLight(lig,
+#                        threshold = threshold,
+#                        offset = offset,
+#                        lmax = 64,         # max. light value
+#                        gr.Device = "x11", # MacOS version (and windows)
+#                        dark.min = 60)
+# 
+# # Adjust sunset times by 120 second sampling interval
+# twl <- twilightAdjust(twilights = twl, interval = 120)
 
-# Adjust sunset times by 120 second sampling interval
-twl <- twilightAdjust(twilights = twl, interval = 120)
-
-# Visualize light and twilight time-series
-lightImage(lig, offset = 19)
-tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
-              col = ifelse(twl$Rise, "dodgerblue", "firebrick"))
+# # Visualize light and twilight time-series
+# lightImage(lig, offset = 19)
+# tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
+#               col = ifelse(twl$Rise, "dodgerblue", "firebrick"))
 
 # Save the twilight times 
 # write.csv(twl, paste0(dir,"/",geo.id , "_twl_times.csv"))
@@ -793,17 +793,20 @@ par(cex.axis=1.4)
 par(mfrow=c(3,1), mar = c(5,5,0.1,5))
 plot(lig$Date[lig$Date > start & lig$Date < end], lig$Light[lig$Date > start & lig$Date < end], type = "o",
      ylab = "Light level", xlab = "Time")
-rect(anytime("2019-09-30"), min(lig$Light)-2, anytime("2019-10-02"), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime("2019-09-29"), min(lig$Light)-2, anytime("2019-10-02"), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime("2019-10-03"), min(lig$Light)-2, anytime("2019-10-04"), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
 rect(anytime("2019-10-07"), min(lig$Light)-2, anytime("2019-10-08"), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
 
 plot(twl$Twilight[twl$Twilight> start & twl$Twilight < end], x0_r[,1][twl$Twilight > start & twl$Twilight < end],
      ylab = "Longitude", xlab = "Time")
-rect(anytime("2019-09-30"), min(x0_r[,1])-2, anytime("2019-10-02"), max(x0_r[,1])+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime("2019-09-29"), min(x0_r[,1])-2, anytime("2019-10-02"), max(x0_r[,1])+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime("2019-10-03"), min(x0_r[,1])-2, anytime("2019-10-04"), max(x0_r[,1])+2, col = alpha("yellow", 0.2), lty=0)
 rect(anytime("2019-10-07"), min(x0_r[,1])-2, anytime("2019-10-08"), max(x0_r[,1])+2, col = alpha("yellow", 0.2), lty=0)
 
 plot(twl$Twilight[twl$Twilight > start & twl$Twilight < end], x0_r[,2][twl$Twilight > start & twl$Twilight < end],
      ylab = "Latitude", xlab = "Time")
-rect(anytime("2019-09-30"), min(x0_r[,2])-2, anytime("2019-10-02"), max(x0_r[,2])+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime("2019-09-29"), min(x0_r[,2])-2, anytime("2019-10-02"), max(x0_r[,2])+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime("2019-10-03"), min(x0_r[,2])-2, anytime("2019-10-04"), max(x0_r[,2])+2, col = alpha("yellow", 0.2), lty=0)
 rect(anytime("2019-10-07"), min(x0_r[,2])-2, anytime("2019-10-08"), max(x0_r[,2])+2, col = alpha("yellow", 0.2), lty=0)
 par(cex.lab= 1)
 par(cex.axis= 1)

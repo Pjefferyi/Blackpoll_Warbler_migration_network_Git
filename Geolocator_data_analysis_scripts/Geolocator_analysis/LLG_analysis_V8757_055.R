@@ -217,8 +217,6 @@ end   <- max(which(mS$site == stationarySite))
 
 (zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
 
-# the Hill-ekstrom zenith and in-habitat zenith angles differ by more than 0.5 degrees
-
 # adjust the zenith angles calculated from the breeding sites for the non-breeding sites
 zenith0_ad <- zenith0 + abs(zenith - zenith_sd)
 zenith_ad  <- zenith_sd
@@ -245,13 +243,17 @@ zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime("2012-11-05") ~ zenith0,
                             Date > anytime("2012-11-05") & Date < anytime("2013-05-13") ~ zenith0_ad,
                             Date > anytime("2013-05-13") ~ zenith0_ad))
-
+                            #Date > anytime("2013-05-13") ~ mean(c(zenith0_ad, zenith0 ))))
+                            #Date > anytime("2013-05-13") ~ zenith0))
+                            
 zeniths0 <- zenith_twl_zero$zenith
 
 zenith_twl_med <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime("2012-11-05") ~ zenith,
                             Date > anytime("2012-11-05") & Date < anytime("2013-05-13") ~ zenith_sd,
                             Date > anytime("2013-05-13") ~ zenith_sd))
+                            #Date > anytime("2013-05-13") ~ mean(c(zenith_sd, zenith))))
+                            #Date > anytime("2013-05-13") ~ zenith))
 
 zeniths_med <- zenith_twl_med$zenith
 
@@ -263,7 +265,7 @@ matplot(0:100, dgamma(0:100, beta[1], beta[2]),
         type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol=0.16)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol=0.18)
 
 x0 <- path$x
 z0 <- trackMidpts(x0)
@@ -509,11 +511,14 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-cL <- changeLight(twl=geo_twl, quantile=0.86, summary = F, days = 1, plot = T)
+#cL <- changeLight(twl=geo_twl, quantile=0.86, summary = F, days = 1, plot = T)
+cL <- changeLight(twl=geo_twl, quantile=0.86, summary = F, days = 2, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
 mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = 1000)
 #mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths_med[1: length(zeniths_med)-1], distThreshold = 500)
+#mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths0[1: length(zeniths0)-1], distThreshold = 500)
+#mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
 
 ##back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 

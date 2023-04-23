@@ -634,7 +634,7 @@ mask <- earthseaMask(xlim, ylim, n = 10, index=index)
 ## Define the log prior for x and z
 logp <- function(p) {
   f <- mask(p)
-  ifelse(is.na(f), -1000, log(2))
+  ifelse(is.na(f), -1000, log(1))
 }
 
 # Define the Estelle model ####################################################

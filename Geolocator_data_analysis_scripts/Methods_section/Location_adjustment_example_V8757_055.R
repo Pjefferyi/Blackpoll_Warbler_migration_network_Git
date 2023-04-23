@@ -149,7 +149,7 @@ no_adj_plot <- ggplot(range_crop) +
   geom_text(data = dat, mapping = aes(x = Lon.50., y = Lat.50., label = round(sitenum, digits = 0)),
             color = "black", nudge_x = 5, nudge_y = 3, check_overlap = T) +
   theme_bw() +
-  labs(size = "Number of days site \nwas occupied") +
+  labs(size = "Number of days site \was occupied") +
   xlab("Longitude") + 
   ylab("Latitude") +
   theme(panel.grid.major = element_blank(),
@@ -190,7 +190,7 @@ rect(anytime("2012-10-12 10:12:12"), min(x0_r[,2])-2, anytime("2012-10-16 21:54:
 
 # Plot geolocators with uncertainty in location over the southern US ##########
 
-geo.south <- findLocData(geo.ids = c("V8757_019", "V8757_029", "4068_014"), check_col_length = F)
+geo.south <- findLocData(geo.ids = c("V8757_019", "V8757_029", "4068_014", "blpw14"), check_col_length = F)
 plotLocVec(data = geo.south, stati_only = T, timing = c("Post-breeding migration", "Non-breeding period"))
 
 
