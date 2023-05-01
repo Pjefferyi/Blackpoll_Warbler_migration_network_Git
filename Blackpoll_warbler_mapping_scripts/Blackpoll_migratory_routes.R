@@ -24,7 +24,11 @@ geo.list <- c("V8757_010",
               "blpw12",
               "3254_001",
               "4068_014",
-              "blpw14")
+              "blpw14",
+              "3254_003",
+              "3254_008",
+              "blpw15")
+  
 
 # retrive location data 
 geo.all <- findLocData(geo.ids = geo.list , check_col_length = F)
@@ -101,7 +105,10 @@ geo.list <- c("V8757_010",
               "blpw12",
               "3254_001",
               "4068_014",
-              "blpw14")
+              "blpw14",
+              "3254_003",
+              "3254_008",
+              "blpw15")
 
 # retrieve location data 
 geo.all <- findLocData(geo.ids = geo.list , check_col_length = F)
@@ -152,7 +159,10 @@ geo.list <- c("V8757_010",
               "blpw12",
               "3254_001",
               "4068_014",
-              "blpw14")
+              "blpw14",
+              "3254_003",
+              "3254_008",
+              "blpw15")
 
 # retrive location data 
 geo.all <- findLocData(geo.ids = geo.list , check_col_length = F)

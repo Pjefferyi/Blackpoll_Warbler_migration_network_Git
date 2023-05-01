@@ -188,7 +188,7 @@ plotLocVec <- function(data, stati_only = F, timing = c("Post-breeding migration
     theme_bw() +
     theme(panel.grid.major = element_blank(),
           panel.grid.minor = element_blank()) +
-    {if(legend ==  F)theme(legend.pos ition = "none")}
+    {if(legend ==  F)theme(legend.position = "none")}
     
 }
     
