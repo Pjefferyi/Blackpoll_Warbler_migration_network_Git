@@ -8,6 +8,7 @@ library(tidyr)
 library(remotes)
 library(anytime)
 library(lubridate)
+library(ebirdst)
 
 #load spatial packages 
 library(ggmap)
@@ -27,6 +28,9 @@ library(LLmig)
 # install_github("SLisovski/GeoLocTools")
 library(GeoLocTools)
 setupGeolocation()
+
+# Set eBirdst key 
+#set_ebirdst_access_key("mk5l4atjq2bg", overwrite = TRUE)
 
 
 # thresholdOverLight############################################################
@@ -194,7 +198,7 @@ plotLocVec <- function(data, stati_only = F, timing = c("Post-breeding migration
     
 # test calls  for mapLocData ###################################################
 
-# call for all geolocators 
+#call for all geolocators
 r2 <- findLocData(geo.ids = c("V8757_010",
                               "V8296_004",
                               "V8296_005",
@@ -216,7 +220,13 @@ r2 <- findLocData(geo.ids = c("V8757_010",
                               "blpw12",
                               "3254_001",
                               "4068_014",
-                              "blpw14"), check_col_length = F)
+                              "blpw14",
+                              "3254_003",
+                              "3254_008",
+                              "blpw15",
+                              "blpw25",
+                              "4105_009",
+                              "4105_016"), check_col_length = F)
 
 # Call for geolocators from Quebec
 #r2 <- findLocData(geo.ids = c("V8296_004","V8757_018", "V8296_007", "V8296_015", "V8296_017", "V8296_026", "V8296_025", "V8296_005", "V8296_006", "V8757_078", "V8757_021"), check_col_length = F)
@@ -228,12 +238,12 @@ r2 <- findLocData(geo.ids = c("V8757_010",
 #r2 <- findLocData(geo.ids = c("V8757_019", "V8757_010", "V8757_029"), check_col_length = F)
 
 # call one geolocator 
-# r2 <- findLocData(geo.ids = c("V8296_026"), check_col_length = F)
+# r2 <- findLocData(geo.ids = c("3254_008"), check_col_length = F)
 
-plotLocVec(data = r2, stati_only = T, legend = T,timing = c("Post-breeding migration", "Non-breeding period"))
-plotLocVec(data = r2, stati_only = F, legend = T,timing = c("Pre-breeding migration", "Non-breeding period"))
-plotLocVec(data = r2, stati_only = T, legend = T,timing = c("Non-breeding period"))
-plotLocVec(data = r2, stati_only = T, legend = T, timing = c("Post-breeding migration", "Pre-breeding migration", "Non-breeding period"))
+# plotLocVec(data = r2, stati_only = F, legend = T,timing = c("Post-breeding migration", "Non-breeding period"))
+# plotLocVec(data = r2, stati_only = F, legend = T,timing = c("Pre-breeding migration", "Non-breeding period"))
+# plotLocVec(data = r2, stati_only = T, legend = T,timing = c("Non-breeding period"))
+# plotLocVec(data = r2, stati_only = F, legend = T, timing = c("Post-breeding migration", "Pre-breeding migration", "Non-breeding period"))
 
 
 # plotBreedSites ##################################################################
@@ -250,7 +260,7 @@ plotBreedSites <- function(){
                         xmin = -190, xmax = -10, ymin = -10, ymax = 60)
   
   #Create the map of breeding sites 
-  ggplot(range_crop) +
+  brd.sites <- ggplot(range_crop) +
     geom_sf() +
     coord_sf() +
     geom_point(data = geo.data, mapping = aes(x = deploy.longitude, y = deploy.latitude), size = 1.4, col = "firebrick") +
@@ -258,6 +268,14 @@ plotBreedSites <- function(){
     ylab("Latitude")+
     theme_bw() 
   
+  return(brd.sites)
 }  
 
+
+# getAbData ####################################################################
+
+# Function to extract the weekly abundance rasters for the Blackpoll warbler from 
+# eBird, and consolidate them into a single array 
+
+#path <- ebirdst_download(species = "bkpwar", path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_imports")
 

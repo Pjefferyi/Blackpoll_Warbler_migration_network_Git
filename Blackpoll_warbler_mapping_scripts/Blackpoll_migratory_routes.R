@@ -27,7 +27,8 @@ geo.list <- c("V8757_010",
               "blpw14",
               "3254_003",
               "3254_008",
-              "blpw15")
+              "blpw15",
+              "blpw25")
   
 
 # retrive location data 
