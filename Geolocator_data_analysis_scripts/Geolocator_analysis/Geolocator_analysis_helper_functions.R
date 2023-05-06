@@ -127,7 +127,7 @@ shiftSpan <- function(twl, lig, period, est.zenith, dep.lon, dep.lat){
 
 # Function to recover location data from the folders allocated to each geolocator 
 
-findLocData <- function(geo.ids = c(), check_col_length = F){
+findLocData <- function(geo.ids = c(), check_col_length = F, ref_path = NA){
 
   # Create a list of path to all files with location data 
   paths <- list.files("/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geolocator_data",
@@ -155,6 +155,23 @@ findLocData <- function(geo.ids = c(), check_col_length = F){
     }
   }
   
+
+  # Add reference data 
+  if (!is.na(ref_path)){
+    
+    ref.data <- read.csv(ref_path)
+    
+    # Only retain relevant rows
+    ref.data <- ref.data[,c("geo.id",
+                            "deploy.latitude",
+                            "deploy.longitude",
+                            "study.site",
+                            "Range_region")]
+    
+    #Join the region and location data (inner join)
+    location_set <- merge(location_set, ref.data, by.x = "geo_id", by.y = "geo.id")
+  }
+  
   return(location_set)
 }
 
@@ -165,6 +182,11 @@ findLocData <- function(geo.ids = c(), check_col_length = F){
 
 # Extract location data for specific geolocators 
 # r2 <- findLocData(geo.ids = c("V8757_010", "V8296_004"), check_col_length = F)
+
+# Extract location data for specific geolocators with reference information 
+
+# path <- "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv"   
+# r3 <- findLocData(geo.ids = c("V8757_010", "V8296_004"), check_col_length = F, ref_path = path)
 
 # MapLocData ###################################################################
 
@@ -223,10 +245,16 @@ r2 <- findLocData(geo.ids = c("V8757_010",
                               "blpw14",
                               "3254_003",
                               "3254_008",
+                              "3254_057",
                               "blpw15",
                               "blpw25",
+                              "4105_008",
                               "4105_009",
-                              "4105_016"), check_col_length = F)
+                              "4105_016",
+                              "4105_017",
+                              "4210_002",
+                              "4210_004",
+                              "4210_006"), check_col_length = F)
 
 # Call for geolocators from Quebec
 #r2 <- findLocData(geo.ids = c("V8296_004","V8757_018", "V8296_007", "V8296_015", "V8296_017", "V8296_026", "V8296_025", "V8296_005", "V8296_006", "V8757_078", "V8757_021"), check_col_length = F)
@@ -238,9 +266,9 @@ r2 <- findLocData(geo.ids = c("V8757_010",
 #r2 <- findLocData(geo.ids = c("V8757_019", "V8757_010", "V8757_029"), check_col_length = F)
 
 # call one geolocator 
-# r2 <- findLocData(geo.ids = c("3254_008"), check_col_length = F)
+# r2 <- findLocData(geo.ids = c("3254_057"), check_col_length = F)
 
-# plotLocVec(data = r2, stati_only = F, legend = T,timing = c("Post-breeding migration", "Non-breeding period"))
+# plotLocVec(data = r2, stati_only = T, legend = T,timing = c("Post-breeding migration", "Non-breeding period"))
 # plotLocVec(data = r2, stati_only = F, legend = T,timing = c("Pre-breeding migration", "Non-breeding period"))
 # plotLocVec(data = r2, stati_only = T, legend = T,timing = c("Non-breeding period"))
 # plotLocVec(data = r2, stati_only = F, legend = T, timing = c("Post-breeding migration", "Pre-breeding migration", "Non-breeding period"))
@@ -277,5 +305,5 @@ plotBreedSites <- function(){
 # Function to extract the weekly abundance rasters for the Blackpoll warbler from 
 # eBird, and consolidate them into a single array 
 
-#path <- ebirdst_download(species = "bkpwar", path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_imports")
+path <- ebirdst_download(species = "bkpwar", path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_imports")
 

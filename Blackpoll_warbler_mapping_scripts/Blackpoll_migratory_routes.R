@@ -31,7 +31,7 @@ geo.list <- c("V8757_010",
               "blpw25")
   
 
-# retrive location data 
+# retrieve location data 
 geo.all <- findLocData(geo.ids = geo.list , check_col_length = F)
 
 # retrieve region data (Western and central, or Eastern)
