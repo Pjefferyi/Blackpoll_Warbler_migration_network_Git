@@ -27,9 +27,16 @@ geo.list <- c("V8757_010",
               "blpw14",
               "3254_003",
               "3254_008",
+              "3254_057",
               "blpw15",
-              "blpw25")
-  
+              "blpw25",
+              "4105_008",
+              "4105_009",
+              "4105_016",
+              "4105_017",
+              "4210_002",
+              "4210_004",
+              "4210_006")
 
 # retrieve location data 
 geo.all <- findLocData(geo.ids = geo.list , check_col_length = F)
@@ -109,14 +116,23 @@ geo.list <- c("V8757_010",
               "blpw14",
               "3254_003",
               "3254_008",
-              "blpw15")
+              "3254_057",
+              "blpw15",
+              "blpw25",
+              "4105_008",
+              "4105_009",
+              "4105_016",
+              "4105_017",
+              "4210_002",
+              "4210_004",
+              "4210_006")
 
 # retrieve location data 
-geo.all <- findLocData(geo.ids = geo.list , check_col_length = F)
+geo.all <- merge(geo.all, region.data, by.x = "geo_id", by.y = "geo.id")
 
 # extract nonbreeding locations
 geo.nbr.all <- geo.all[(geo.all$period %in% c("Non-breeding period")),]
-geo.nbr.stat<- geo.nbr.all[(geo.nbr.all$sitenum > 0),]
+geo.nbr.stat <- geo.nbr.all[(geo.nbr.all$sitenum > 0),]
 
 # crop map of south america
 crop.nbr <- st_crop(spData::world[(spData::world$continent %in% c( "South America")),],
@@ -126,8 +142,8 @@ crop.nbr <- st_crop(spData::world[(spData::world$continent %in% c( "South Americ
 ggplot(crop.nbr) +
   geom_sf() +
   coord_sf() +
-  geom_path(data = geo.nbr.stat, mapping = aes(x = Lon.50., y = Lat.50., color = geo_id), linewidth = 0.3) +
-  geom_point(data = geo.nbr.stat, mapping = aes(x = Lon.50., y = Lat.50., colour= geo_id, fill = geo_id), size = 1.3, shape = 23) +
+  geom_path(data = geo.nbr.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, color = Range_region), linewidth = 0.3) +
+  geom_point(data = geo.nbr.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, color = Range_region), size = 1.3, shape = 23) +
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank()) +
@@ -163,7 +179,16 @@ geo.list <- c("V8757_010",
               "blpw14",
               "3254_003",
               "3254_008",
-              "blpw15")
+              "3254_057",
+              "blpw15",
+              "blpw25",
+              "4105_008",
+              "4105_009",
+              "4105_016",
+              "4105_017",
+              "4210_002",
+              "4210_004",
+              "4210_006")
 
 # retrive location data 
 geo.all <- findLocData(geo.ids = geo.list , check_col_length = F)

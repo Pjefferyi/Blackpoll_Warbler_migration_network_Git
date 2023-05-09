@@ -239,6 +239,7 @@ r2 <- findLocData(geo.ids = c("V8757_010",
                               "V8757_134",
                               "V8757_029",
                               "V8757_078",
+                              "blw09",
                               "blpw12",
                               "3254_001",
                               "4068_014",
@@ -254,7 +255,8 @@ r2 <- findLocData(geo.ids = c("V8757_010",
                               "4105_017",
                               "4210_002",
                               "4210_004",
-                              "4210_006"), check_col_length = F)
+                              "4210_006",
+                              "A"), check_col_length = F)
 
 # Call for geolocators from Quebec
 #r2 <- findLocData(geo.ids = c("V8296_004","V8757_018", "V8296_007", "V8296_015", "V8296_017", "V8296_026", "V8296_025", "V8296_005", "V8296_006", "V8757_078", "V8757_021"), check_col_length = F)
