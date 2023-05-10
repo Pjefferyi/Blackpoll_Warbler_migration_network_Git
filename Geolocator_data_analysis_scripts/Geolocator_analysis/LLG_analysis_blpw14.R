@@ -1,6 +1,6 @@
-# source: unpublished data 
+# source: Deluca et al. 2019
 # tag number: blpw14
-# site: Denali, Alaska
+# site: Whitehorse, Yukon
 
 #load packages
 require(readr)
@@ -90,15 +90,15 @@ tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
 dev.off()
 
 #Detect twilight times, for now do not edit twilight times
-twl <- preprocessLight(lig,
-                       threshold = threshold,
-                       offset = offset,
-                       lmax = 64,         # max. light value
-                       gr.Device = "x11", # MacOS version (and windows)
-                       dark.min = 60)
-
-# Adjust sunset times by 120 second sampling interval
-twl <- twilightAdjust(twilights = twl, interval = 120)
+# twl <- preprocessLight(lig,
+#                        threshold = threshold,
+#                        offset = offset,
+#                        lmax = 64,         # max. light value
+#                        gr.Device = "x11", # MacOS version (and windows)
+#                        dark.min = 60)
+# 
+# # Adjust sunset times by 120 second sampling interval
+# twl <- twilightAdjust(twilights = twl, interval = 120)
 
 # # Visualize light and twilight time-series
 # lightImage(lig, offset = 19)
@@ -133,12 +133,14 @@ lightImage( tagdata = lig,
 tsimageDeploymentLines(twl$Twilight, lon.calib, lat.calib, offset, lwd = 2, col = "orange")
 
 #calibration period before the migration 
-tm.calib <- as.POSIXct(c("2016-08-01", "2016-08-20"), tz = "UTC")
+tm.calib1 <- as.POSIXct(c("2016-07-01", "2016-08-20"), tz = "UTC")
+tm.calib2 <- as.POSIXct(c("2017-06-01", "2017-06-10"), tz = "UTC")
 
-abline(v = tm.calib, lwd = 2, lty = 2, col = "orange")
+abline(v = tm.calib1, lwd = 2, lty = 2, col = "orange")
+abline(v = tm.calib2, lwd = 2, lty = 2, col = "orange")
 
 # subset of twilight times that are within the calibration period
-d_calib <- subset(twl, Twilight>=tm.calib[1] & Twilight<=tm.calib[2])
+d_calib <- subset(twl, Twilight>=tm.calib1[1] & Twilight<=tm.calib1[2] |Twilight>=tm.calib2[1] & Twilight<=tm.calib2[2])
 
 # perform the calibration and verify the fit with the gamma or log distribution
 calib <- thresholdCalibration(d_calib$Twilight, d_calib$Rise, lon.calib, lat.calib, method = "gamma")
@@ -155,7 +157,7 @@ alpha <- calib[3:4]
 geo_twl <- export2GeoLight(twl)
 
 # this is just to find places where birds have been for a long time, would not use these parameters for stopover identification, detailed can be found in grouped model section
-cL <- changeLight(twl=geo_twl, quantile=0.8, summary = F, days = 10, plot = T)
+cL <- changeLight(twl=geo_twl, quantile=0.9, summary = F, days = 10, plot = T)
 # merge site helps to put sites together that are separated by single outliers.
 mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
 
@@ -186,7 +188,7 @@ z0 <- trackMidpts(x0_r)
 save(x0_r, file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
 
 # Check the following times of arrival and departure in tyhe nonbreeding grounds using a plot 
-arr.nbr <- "2016-10-24" 
+arr.nbr <- "2016-11-01" 
 dep.nbr <- "2017-04-21" 
 
 par(mfrow = c(2,1))
@@ -202,7 +204,7 @@ zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith0,
                             Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad,
                             Date > anytime(dep.nbr) ~ mean(c(zenith0, zenith0_ad))))
-                            #Date > anytime(dep.nbr) ~ zenith0_ad))
+                            #Date > anytime(dep.nbr) ~ zenith_ad))
 
 zeniths0 <- zenith_twl_zero$zenith
 
@@ -313,7 +315,7 @@ model <- thresholdModel(twilight = twl$Twilight,
                         logp.x = log.prior, logp.z = log.prior, 
                         x0 = x0,
                         z0 = z0,
-                        zenith = zenith0,
+                        zenith = zeniths0,
                         fixedx = fixedx)
 
 #Define the error distribution around each location 
@@ -334,7 +336,7 @@ model <- thresholdModel(twilight = twl$Twilight,
                         logp.x = log.prior, logp.z = log.prior, 
                         x0 = x0,
                         z0 = z0,
-                        zenith = zenith0,
+                        zenith = zeniths0,
                         fixedx = fixedx)
 
 x.proposal <- mvnorm(S = diag(c(0.005, 0.005)), n = nrow(twl))
@@ -431,6 +433,9 @@ cL <- changeLight(twl=geo_twl, quantile=0.86, summary = F, days = 2, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
 mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths0[1: length(1- zeniths0) -1], distThreshold = 500)
+#mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths_med[1: length(1- zeniths_med) -1], distThreshold = 500)
+# mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = 500)
+#mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
 
 ##back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 

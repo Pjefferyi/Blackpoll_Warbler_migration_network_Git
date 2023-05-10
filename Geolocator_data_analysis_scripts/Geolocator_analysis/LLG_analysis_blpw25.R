@@ -179,7 +179,7 @@ zenith0_ad <- zenith0 + abs(zenith - zenith_sd)
 zenith_ad  <- zenith_sd
 
 # Find approximate  timing of arrival and departure from the nonbreeding grounds 
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol= 0.01)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol= 0.00)
 
 x0_r<- path$x
 z0 <- trackMidpts(x0_r)
@@ -471,7 +471,6 @@ sitenum[stationary==F] <- 0
 #set initial path
 x0 <- cbind(tapply(path$x[,1],twl$group,median), 
             tapply(path$x[,2],twl$group,median))
-
 
 #set fixed locations 
 fixedx <- rep_len(FALSE, length.out = nrow(x0))

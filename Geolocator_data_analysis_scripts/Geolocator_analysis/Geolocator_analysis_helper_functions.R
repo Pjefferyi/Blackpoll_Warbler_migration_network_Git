@@ -32,7 +32,6 @@ setupGeolocation()
 # Set eBirdst key 
 #set_ebirdst_access_key("mk5l4atjq2bg", overwrite = TRUE)
 
-
 # thresholdOverLight############################################################
 
 #Function to visualize the threshold in a plot of light level over time 
@@ -246,6 +245,7 @@ r2 <- findLocData(geo.ids = c("V8757_010",
                               "blpw14",
                               "3254_003",
                               "3254_008",
+                              "3254_011",
                               "3254_057",
                               "blpw15",
                               "blpw25",
@@ -256,7 +256,9 @@ r2 <- findLocData(geo.ids = c("V8757_010",
                               "4210_002",
                               "4210_004",
                               "4210_006",
-                              "A"), check_col_length = F)
+                              "4210_010",
+                              "A",
+                              "WRMA04173"), check_col_length = F)
 
 # Call for geolocators from Quebec
 #r2 <- findLocData(geo.ids = c("V8296_004","V8757_018", "V8296_007", "V8296_015", "V8296_017", "V8296_026", "V8296_025", "V8296_005", "V8296_006", "V8757_078", "V8757_021"), check_col_length = F)
@@ -268,12 +270,12 @@ r2 <- findLocData(geo.ids = c("V8757_010",
 #r2 <- findLocData(geo.ids = c("V8757_019", "V8757_010", "V8757_029"), check_col_length = F)
 
 # call one geolocator 
-# r2 <- findLocData(geo.ids = c("3254_057"), check_col_length = F)
+# r2 <- findLocData(geo.ids = c("4210_010"), check_col_length = F)
 
 # plotLocVec(data = r2, stati_only = T, legend = T,timing = c("Post-breeding migration", "Non-breeding period"))
 # plotLocVec(data = r2, stati_only = F, legend = T,timing = c("Pre-breeding migration", "Non-breeding period"))
 # plotLocVec(data = r2, stati_only = T, legend = T,timing = c("Non-breeding period"))
-# plotLocVec(data = r2, stati_only = F, legend = T, timing = c("Post-breeding migration", "Pre-breeding migration", "Non-breeding period"))
+# plotLocVec(data = r2, stati_only = T, legend = T, timing = c("Post-breeding migration", "Pre-breeding migration", "Non-breeding period"))
 
 
 # plotBreedSites ##################################################################

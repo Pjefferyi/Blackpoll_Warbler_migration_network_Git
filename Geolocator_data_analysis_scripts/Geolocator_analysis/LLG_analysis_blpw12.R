@@ -201,14 +201,17 @@ abline(v = anytime(dep.nbr))
 zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith0,
                             Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad,
-                            Date > anytime(dep.nbr) ~ mean(c(zenith0, zenith0_ad))))
+                            #Date > anytime(dep.nbr) ~ mean(c(zenith0, zenith0_ad))))
+                            Date > anytime(dep.nbr) ~ zenith0))
 
 zeniths0 <- zenith_twl_zero$zenith
 
 zenith_twl_med <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith,
                             Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith_sd,
-                            Date > anytime(dep.nbr) ~ mean(c(zenith, zenith_sd))))
+                            #Date > anytime(dep.nbr) ~ mean(c(zenith, zenith_sd))))
+                            Date > anytime(dep.nbr) ~ zenith))
+                            
 
 zeniths_med <- zenith_twl_med$zenith
 
@@ -220,7 +223,7 @@ matplot(0:100, dgamma(0:100, beta[1], beta[2]),
         type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol=0.11)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol=0.11)
 
 x0 <- path$x
 z0 <- trackMidpts(x0)

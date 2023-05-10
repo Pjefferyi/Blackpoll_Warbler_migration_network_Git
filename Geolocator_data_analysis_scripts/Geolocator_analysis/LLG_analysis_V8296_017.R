@@ -194,7 +194,7 @@ alpha <- calib[3:4]
 geo_twl <- export2GeoLight(twl)
 
 # this is just to find places where birds have been for a long time, would not use these parameters for stopover identification, detailed can be found in grouped model section
-cL <- changeLight(twl=geo_twl, quantile=0.6, summary = F, days = 10, plot = T)
+cL <- changeLight(twl=geo_twl, quantile=0.9, summary = F, days = 10, plot = T)
 # merge site helps to put sites together that are separated by single outliers.
 mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
 
@@ -208,8 +208,7 @@ end   <- max(which(mS$site == stationarySite))
 
 (zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
 
-
-# the Hill-ekstrom zenith and in-habitat zenith angles do not differ by more than 0.5 degrees, alternative calibration is not required 
+# the Hill-ekstrom zenith and in-habitat zenith angles differ by more than 0.5 degrees, alternative calibration necessary
 
 # Find approximate  timing of arrival and departure from the nonbreeding grounds 
 path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol= 0)
@@ -251,7 +250,7 @@ matplot(0:100, dgamma(0:100, beta[1], beta[2]),
         type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol=0.08)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol=0.08)
 
 x0 <- path$x
 z0 <- trackMidpts(x0)
@@ -264,7 +263,7 @@ data(wrld_simpl)
 plot(x0, type = "n", xlab = "", ylab = "")
 plot(wrld_simpl, col = "grey95", add = T)
 
-points(path$x[1:300,], pch=19, col="cornflowerblue", type = "o")
+points(path$x, pch=19, col="cornflowerblue", type = "o")
 points(lon.calib, lat.calib, pch = 16, cex = 2.5, col = "firebrick")
 box()
 
@@ -337,13 +336,13 @@ log.prior <- function(p) {
 #Define the model
 model <- thresholdModel(twilight = twl$Twilight,
                         rise = twl$Rise,
-                        twilight.model = "ModifieGamma",
+                        twilight.model = "ModifiedGamma",
                         alpha = alpha,
                         beta = beta,
                         logp.x = log.prior, logp.z = log.prior, 
                         x0 = x0,
                         z0 = z0,
-                        zenith = zeniths,
+                        zenith = zeniths0,
                         fixedx = fixedx)
 
 #Define the error distribution around each location 
@@ -364,7 +363,7 @@ model <- thresholdModel(twilight = twl$Twilight,
                         logp.x = log.prior, logp.z = log.prior, 
                         x0 = x0,
                         z0 = z0,
-                        zenith = zeniths,
+                        zenith = zeniths0,
                         fixedx = fixedx)
 
 x.proposal <- mvnorm(S = diag(c(0.005, 0.005)), n = nrow(twl))
@@ -495,10 +494,11 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-cL <- changeLight(twl=geo_twl, quantile=0.86, summary = F, days = 2 , plot = T)
+cL <- changeLight(twl=geo_twl, quantile=0.90, summary = F, days = 2 , plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = 500)
+#mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths_med[1: length(zeniths_med) -1], distThreshold = 500)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 1000)
 
 #back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 
@@ -635,7 +635,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                beta =  beta,
                                x0 = x0, # median point for each greoup (defined by twl$group)
                                z0 = z0, # middle points between the x0 points
-                               zenith = zenith0,
+                               zenith = zeniths0,
                                logp.x = logp,# land sea mask
                                fixedx = fixedx)
 
@@ -662,7 +662,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                x0 = x0, z0 = z0,
                                logp.x = logp,
                                missing=twl$Missing,
-                               zenith = zenith0,
+                               zenith = zeniths0,
                                fixedx = fixedx)
 
 for (k in 1:3) {
@@ -785,9 +785,9 @@ points(stat.loc$Lon.50., stat.loc$Lat.50., pch = 16, cex = 1.5, col = "firebrick
 sm$geo_id <- geo.id
 
 #add a column that categorizes the locations (based on the groupthreshold model output)
-sm <- sm %>% mutate(period= case_when(StartTime < anytime("2019-10-07 10:31:43", asUTC = T, tz = "GMT")  ~ "Post-breeding migration",
-                                      StartTime >= anytime("2019-10-07 10:31:43", asUTC = T, tz = "GMT") & EndTime <= anytime("2020-05-08 10:07:42", asUTC = T, tz = "GMT",
-                                      StartTime > anytime("2020-05-08 10:07:42", asUTC = T, tz = "GMT") ~ "Pre-breeding migration") ~ "Non-breeding period"))
+sm <- sm %>% mutate(period= case_when(StartTime < anytime("2019-10-12 10:37:33", asUTC = T, tz = "GMT")  ~ "Post-breeding migration",
+                                      StartTime >= anytime("2019-10-12 10:37:33", asUTC = T, tz = "GMT") & EndTime <= anytime("2020-05-13 23:05:22 ", asUTC = T, tz = "GMT") ~ "Non-breeding period",
+                                      StartTime > anytime("2020-05-13 23:05:22  ", asUTC = T, tz = "GMT") ~ "Pre-breeding migration"))
 
 #Save the output of the model 
 #save(sm, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))
