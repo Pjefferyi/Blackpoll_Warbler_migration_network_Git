@@ -204,7 +204,7 @@ zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith0,
                             Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad,
                             Date > anytime(dep.nbr) ~ mean(c(zenith0, zenith0_ad))))
-                            #Date > anytime(dep.nbr) ~ zenith_ad))
+                            #Date > anytime(dep.nbr) ~ zenith0))
 
 zeniths0 <- zenith_twl_zero$zenith
 
@@ -212,7 +212,7 @@ zenith_twl_med <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith,
                             Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith_sd,
                             Date > anytime(dep.nbr) ~ mean(c(zenith, zenith_sd))))
-                            #Date > anytime(dep.nbr) ~ zenith_sd))
+                            #Date > anytime(dep.nbr) ~ zenith))
 
 zeniths_med <- zenith_twl_med$zenith
 

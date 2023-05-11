@@ -206,10 +206,10 @@ plotLocVec <- function(data, stati_only = F, timing = c("Post-breeding migration
   ggplot(spData::world[(spData::world$continent %in% c("North America", "South America")),]) +
     geom_sf() +
     coord_sf() +
+    {if(er_bars ==  T)geom_errorbar(data = data, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, alpha = 0.3, color = "black")} + 
+    {if(er_bars ==  T)geom_errorbar(data = data, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, alpha = 0.3, color = "black")} + 
     geom_point(data = data, mapping = aes(x = Lon.50., y = Lat.50., color = geo_id), size = 1.1) +
     geom_path(data = data, mapping = aes(x = Lon.50., y = Lat.50., color = geo_id), linewidth = 0.3) +
-    {if(er_bars ==  T)geom_errorbar(data = data, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), width=1, color = "firebrick")} + 
-    {if(er_bars ==  T)geom_errorbar(data = data, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), width=1, color = "firebrick")} + 
     theme_bw() +
     theme(panel.grid.major = element_blank(),
           panel.grid.minor = element_blank()) +
@@ -219,8 +219,12 @@ plotLocVec <- function(data, stati_only = F, timing = c("Post-breeding migration
     
 # test calls  for mapLocData ###################################################
 
+
 #call for all geolocators
-r2 <- findLocData(geo.ids = c("V8757_010",
+
+ref_path <- "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv"   
+
+geo.all <- findLocData(geo.ids = c("V8757_010",
                               "V8296_004",
                               "V8296_005",
                               "V8296_006",
@@ -258,24 +262,75 @@ r2 <- findLocData(geo.ids = c("V8757_010",
                               "4210_006",
                               "4210_010",
                               "A",
-                              "WRMA04173"), check_col_length = F)
+                              "WRMA04173"), check_col_length = F, ref_path = ref_path)
 
-# Call for geolocators from Quebec
-#r2 <- findLocData(geo.ids = c("V8296_004","V8757_018", "V8296_007", "V8296_015", "V8296_017", "V8296_026", "V8296_025", "V8296_005", "V8296_006", "V8757_078", "V8757_021"), check_col_length = F)
+geo.church <- geo.all[(geo.all$study.site == "Churchill, Manitoba"),]
+geo.nome <- geo.all[(geo.all$study.site == "Nome, Alaska"),]
+geo.denali <- geo.all[(geo.all$study.site == "Denali, Alaska"),]
+geo.whitehorse <- geo.all[(geo.all$study.site == "Whitehorse, Yukon"),]
 
-# Call for geolocators from Newfoundland 
-#r2 <- findLocData(geo.ids = c("V8757_096", "V8757_134"), check_col_length = F)
+geos <- geo.denali
 
-# Call for geolocators from British Columbia
-#r2 <- findLocData(geo.ids = c("V8757_019", "V8757_010", "V8757_029"), check_col_length = F)
+# plotLocVec(data = geos, er_bars =  T, stati_only = T, legend = T,timing = c("Post-breeding migration", "Non-breeding period"))
+# plotLocVec(data = geos, er_bars =  T,stati_only = T, legend = T,timing = c("Pre-breeding migration", "Non-breeding period"))
+# plotLocVec(data = geos, er_bars =  T,stati_only = T, legend = T,timing = c("Non-breeding period"))
+# plotLocVec(data = geos, er_bars =  T,stati_only = T, legend = T, timing = c("Post-breeding migration", "Pre-breeding migration", "Non-breeding period"))
 
-# call one geolocator 
-# r2 <- findLocData(geo.ids = c("4210_010"), check_col_length = F)
 
-# plotLocVec(data = r2, stati_only = T, legend = T,timing = c("Post-breeding migration", "Non-breeding period"))
-# plotLocVec(data = r2, stati_only = F, legend = T,timing = c("Pre-breeding migration", "Non-breeding period"))
-# plotLocVec(data = r2, stati_only = T, legend = T,timing = c("Non-breeding period"))
-# plotLocVec(data = r2, stati_only = T, legend = T, timing = c("Post-breeding migration", "Pre-breeding migration", "Non-breeding period"))
+# findslices ##################################################################
+
+# Function to recover thedata required to obtain the density estimates for each geolocator 
+
+period = "Non-breeding period"
+
+findSlicesData <- function(period){
+  
+  # Create a list of path to all files with fit data 
+  paths <- list.files("/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geolocator_data",
+                      pattern = "SGAT_GroupedThreshold_fit.R", recursive = T, full.names = T )
+  
+  # Create a list of geolocator names for the slices
+  spl.paths <- strsplit(paths, "/")
+  geonames <- seq(1:length(paths))
+  
+  for (i in seq(1:length(paths))){
+    
+    geonames[i] <- spl.paths[[i]][11]
+  }
+  
+  #list to store the density rasters 
+  dens.list <- list() 
+  
+  #Create a grid to project density rasters 
+  r <- raster(nrows = 2 * diff(ylim), ncols = 2 * diff(xlim), xmn = xlim[1]-5,
+              xmx = xlim[2]+10, ymn = ylim[1]-5, ymx = ylim[2]+5, crs = proj4string(wrld_simpl))
+  
+  
+  # extract the density data 
+  for (f in seq(1:length(paths))) {
+    
+    # load the model fit file 
+    load(paths[f])
+    
+    # Create a slices object 
+    s <- slices(type = "intermediate", breaks = NULL, mcmc = fit, grid = r)
+    
+    # Retrieve the index for the period of interest
+    load(paste0("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geolocator_data/", geonames[f] ,"/", geonames[f] ,"_SGAT_GroupedThreshold_summary.csv"))
+    period.index <- which(sm$period == period)
+    
+    # generate the density estimate  
+    sk <- slice(s, sliceIndices(s)[period.index])
+    
+    # save the density raster
+    dens.list[geonames[f]] <-sk 
+  }
+  
+  return(dens_list)
+}
+
+
+
 
 
 # plotBreedSites ##################################################################
@@ -309,5 +364,5 @@ plotBreedSites <- function(){
 # Function to extract the weekly abundance rasters for the Blackpoll warbler from 
 # eBird, and consolidate them into a single array 
 
-path <- ebirdst_download(species = "bkpwar", path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_imports")
+#path <- ebirdst_download(species = "bkpwar", path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_imports")
 
