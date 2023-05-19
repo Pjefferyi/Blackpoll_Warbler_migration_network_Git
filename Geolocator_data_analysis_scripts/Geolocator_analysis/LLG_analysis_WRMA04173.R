@@ -394,7 +394,7 @@ geo_twl <- export2GeoLight(twl)
 cL <- changeLight(twl=geo_twl, quantile=0.9, summary = F, days = 2, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = 500)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
 
 ##back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 
@@ -692,8 +692,7 @@ sm <- sm %>% mutate(period= case_when(StartTime <= anytime("2020-04-30 10:29:15"
 
 # Record details for the geolocator analysis 
 writeLines(c(paste("Median zenith angle in Breeding grounds =", zenith),
-             paste("Zero deviation angle in Breeding grounds =", zenith0),
-             paste("Hill Ekstrom zenith angle =", zenith_sd)),
+             paste("Zero deviation angle in Breeding grounds =", zenith0)),
            paste0(dir, "/", geo.id,"_analysis_details.txt", sep = ""))
 
 # Examine twilights ############################################################

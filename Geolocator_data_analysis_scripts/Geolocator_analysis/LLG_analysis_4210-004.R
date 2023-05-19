@@ -154,25 +154,25 @@ alpha <- calib[3:4]
 # Alternative calibration #######################################################
 
 #convert to geolight format
-geo_twl <- export2GeoLight(twl)
+#geo_twl <- export2GeoLight(twl)
 
-# this is just to find places where birds have been for a long time, would not use these parameters for stopover identification, detailed can be found in grouped model section
-cL <- changeLight(twl =geo_twl, quantile=0.8, summary = F, days = 10, plot = T)
-# merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
+# # this is just to find places where birds have been for a long time, would not use these parameters for stopover identification, detailed can be found in grouped model section
+# cL <- changeLight(twl =geo_twl, quantile=0.65, summary = F, days = 10, plot = T)
+# # merge site helps to put sites together that are separated by single outliers.
+# mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
+# 
+# #specify which site is the stationary one
+# site           <- mS$site[mS$site>0] # get rid of movement periods
+# stationarySite <- which(table(site) == max(table(site))) # find the site where bird is the longest
+# 
+# #find the dates that the bird arrives and leaves this stationary site
+# start <- min(which(mS$site == stationarySite))
+# end   <- max(which(mS$site == stationarySite))
+# 
+# (zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
 
-#specify which site is the stationary one
-site           <- mS$site[mS$site>0] # get rid of movement periods
-stationarySite <- which(table(site) == max(table(site))) # find the site where bird is the longest
-
-#find the dates that the bird arrives and leaves this stationary site
-start <- min(which(mS$site == stationarySite))
-end   <- max(which(mS$site == stationarySite))
-
-(zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
-
-# startDate <- "2016-10-20"
-# endDate   <- "2017-05-08"
+# startDate <- "2016-12-20"
+# endDate   <- "2017-03-15"
 # 
 # start = min(which(as.Date(twl$Twilight) == startDate))
 # end = max(which(as.Date(twl$Twilight) == endDate))
@@ -182,9 +182,9 @@ end   <- max(which(mS$site == stationarySite))
 # The Hill-ekstrom zenith and in-habitat zenith angles differ by more than 0.5 degrees
 # Alternative calibration is necessary
 
-# adjust the zenith angles calculated from the breeding sites for the non-breeding sites
-zenith0_ad <- zenith0 + abs(zenith - zenith_sd)
-zenith_ad  <- zenith_sd
+# # adjust the zenith angles calculated from the breeding sites for the non-breeding sites
+# zenith0_ad <- zenith0 + abs(zenith - zenith_sd)
+# zenith_ad  <- zenith_sd
 
 # Find approximate  timing of arrival and departure from the nonbreeding grounds 
 path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol= 0)
@@ -195,20 +195,26 @@ z0 <- trackMidpts(x0_r)
 #Save raw path (no linear interpolation around the equinox)
 save(x0_r, file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
 
-# Check the following times of arrival and departure using a plot 
-arr.nbr <- "2016-10-14" 
-dep.nbr <- "2017-05-01" 
+# Check the following times of arrival and departure using a plot
+dep.br <- "2016-09-09" 
+arr.nbr <- "2016-10-12"  #"2016-10-12" 
+dep.nbr <- "2017-05-06"  #"2017-05-01" 
+arr.br <- "2017-06-02"
 
 # open jpeg
 jpeg(paste0(dir, "/", geo.id, "_LatLon_scatterplot.png"), width = 1024, height = 990)
 
 par(mfrow = c(2,1))
 plot(twl$Twilight, x0_r[,1], ylab = "longitude")
+abline(v = anytime(dep.br))
 abline(v = anytime(arr.nbr))
 abline(v = anytime(dep.nbr))
+abline(v = anytime(arr.br))
 plot(twl$Twilight, x0_r[,2], ylab = "latitude")
+abline(v = anytime(dep.br))
 abline(v = anytime(arr.nbr))
 abline(v = anytime(dep.nbr))
+abline(v = anytime(arr.br))
 abline(v = spring.equi, col = "orange")
 
 dev.off()
@@ -216,19 +222,46 @@ dev.off()
 # Using approximate timings of arrival and departure from the breeding grounds
 zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith0,
-                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad + 1.1,
-                            Date > anytime(dep.nbr) ~ zenith0_ad))
+                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0 - 0.8,
+                            Date > anytime(dep.nbr) ~ zenith0))
 #Date > anytime(dep.nbr) ~ zenith0))
 
 zeniths0 <- zenith_twl_zero$zenith
 
 zenith_twl_med <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith,
-                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith_sd + 1.1,
-                            Date > anytime(dep.nbr) ~ zenith_sd))
+                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith - 0.8 ,
+                            Date > anytime(dep.nbr) ~ zenith))
 #Date > anytime(dep.nbr) ~ zenith))
 
 zeniths_med <- zenith_twl_med$zenith
+
+
+# plot longitudes and latitudes with the new zenith angles 
+# Find approximate  timing of arrival and departure from the nonbreeding grounds 
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol= 0)
+
+x0_ad <- path$x
+z0 <- trackMidpts(x0_ad)
+
+# open jpeg
+jpeg(paste0(dir, "/", geo.id, "_LatLon_scatterplot_adjusted.png"), width = 1024, height = 990)
+
+par(mfrow = c(2,1))
+plot(twl$Twilight, x0_r[,1], ylab = "longitude")
+abline(v = anytime(dep.br))
+abline(v = anytime(arr.nbr))
+abline(v = anytime(dep.nbr))
+abline(v = anytime(arr.br))
+plot(twl$Twilight, x0_r[,2], ylab = "latitude")
+abline(v = anytime(dep.br))
+abline(v = anytime(arr.nbr))
+abline(v = anytime(dep.nbr))
+abline(v = anytime(arr.br))
+abline(v = spring.equi, col = "orange")
+
+dev.off()
+
 
 # Movement model ###############################################################
 
@@ -238,7 +271,7 @@ matplot(0:100, dgamma(0:100, beta[1], beta[2]),
         type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol=0.)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol=0.16)
 
 #Adjusted tol until second stopover was located over North Carolina rather than further South. 
 x0 <- path$x
@@ -252,7 +285,7 @@ data(wrld_simpl)
 plot(x0, type = "n", xlab = "", ylab = "")
 plot(wrld_simpl, col = "grey95", add = T)
 
-points(path$x[], pch=19, col="cornflowerblue", type = "o")
+points(path$x[300:745,], pch=19, col="cornflowerblue", type = "o")
 points(lon.calib, lat.calib, pch = 16, cex = 2.5, col = "firebrick")
 box()
 
@@ -447,8 +480,8 @@ geo_twl <- export2GeoLight(twl)
 cL <- changeLight(twl=geo_twl, quantile=0.86, summary = F, days = 2, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths0[1:length(zeniths0) -1], distThreshold = 500)
-#mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths0, distThreshold = 500)
+#mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths0[1:length(zeniths0) -1], distThreshold = 500)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = 500)
 
 ##back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 
@@ -574,7 +607,7 @@ mask <- earthseaMask(xlim, ylim, n = 10, index=index)
 ## Define the log prior for x and z
 logp <- function(p) {
   f <- mask(p)
-  ifelse(is.na(f), -1000, log(2))
+  ifelse(is.na(f), -1000, log(1))
 }
 
 # Define the Estelle model ####################################################

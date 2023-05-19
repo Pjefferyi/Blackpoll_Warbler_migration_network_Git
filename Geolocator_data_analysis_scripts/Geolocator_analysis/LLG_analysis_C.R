@@ -61,7 +61,7 @@ lig <- readMTlux(paste0(dir,"/Raw_light_data_", geo.id, ".lux"), skip = 20)
 
 #remove rows before and after deployment time 
 #lig <- lig[(lig$Date > deploy.start),]
-lig <- lig[(lig$Date < deploy.start),]
+#lig <- lig[(lig$Date < deploy.start),]
 
 #parameter to visualize the data 
 offset <- 20 # adjusts the y-axis to put night (dark shades) in the middle
@@ -151,31 +151,31 @@ alpha <- calib[3:4]
 
 # Alternative calibration #######################################################
 
-#convert to geolight format
-geo_twl <- export2GeoLight(twl)
-
-# this is just to find places where birds have been for a long time, would not use these parameters for stopover identification, detailed can be found in grouped model section
-cL <- changeLight(twl =geo_twl, quantile=0.8, summary = F, days = 10, plot = T)
-# merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
-
-#specify which site is the stationary one
-site           <- mS$site[mS$site>0] # get rid of movement periods
-stationarySite <- which(table(site) == max(table(site))) # find the site where bird is the longest
-
-#find the dates that the bird arrives and leaves this stationary site
-start <- min(which(mS$site == stationarySite))
-end   <- max(which(mS$site == stationarySite))
-
-(zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
-
-# startDate <- "2013-10-20"
-# endDate   <- "2014-04-15"
+# #convert to geolight format
+# geo_twl <- export2GeoLight(twl)
 # 
-# start = min(which(as.Date(twl$Twilight) == startDate))
-# end = max(which(as.Date(twl$Twilight) == endDate))
+# # this is just to find places where birds have been for a long time, would not use these parameters for stopover identification, detailed can be found in grouped model section
+# cL <- changeLight(twl =geo_twl, quantile=0.7, summary = F, days = 10, plot = T)
+# # merge site helps to put sites together that are separated by single outliers.
+# mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
+# 
+# #specify which site is the stationary one
+# site           <- mS$site[mS$site>0] # get rid of movement periods
+# stationarySite <- which(table(site) == max(table(site))) # find the site where bird is the longest
+# 
+# #find the dates that the bird arrives and leaves this stationary site
+# start <- min(which(mS$site == stationarySite))
+# end   <- max(which(mS$site == stationarySite))
 # 
 # (zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
+
+startDate <- "2013-10-30"
+endDate   <- "2014-03-01"
+
+start = min(which(as.Date(twl$Twilight) == startDate))
+end = max(which(as.Date(twl$Twilight) == endDate))
+
+(zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
 
 # The Hill-ekstrom zenith and in-habitat zenith angles differ by more than 0.5 degrees
 # Alternative calibration is necessary
@@ -185,7 +185,7 @@ zenith0_ad <- zenith0 + abs(zenith - zenith_sd)
 zenith_ad  <- zenith_sd
 
 # Find approximate  timing of arrival and departure from the nonbreeding grounds 
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol= 0)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol= 0.20)
 
 x0_r<- path$x
 z0 <- trackMidpts(x0_r)
@@ -194,7 +194,7 @@ z0 <- trackMidpts(x0_r)
 save(x0_r, file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
 
 # Check the following times of arrival and departure using a plot 
-arr.nbr <- "2013-10-16" 
+arr.nbr <- "2013-10-08" 
 
 # open jpeg
 jpeg(paste0(dir, "/", geo.id, "_LatLon_scatterplot.png"), width = 1024, height = 990)
@@ -211,17 +211,13 @@ dev.off()
 # Using approximate timings of arrival and departure from the breeding grounds
 zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith0,
-                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad,
-                            Date > anytime(dep.nbr) ~ zenith0_ad))
-#Date > anytime(dep.nbr) ~ zenith0))
+                            Date > anytime(arr.nbr) ~ zenith0_ad))
 
 zeniths0 <- zenith_twl_zero$zenith
 
 zenith_twl_med <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith,
-                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith_sd,
-                            Date > anytime(dep.nbr) ~ zenith_sd))
-#Date > anytime(dep.nbr) ~ zenith))
+                            Date > anytime(arr.nbr) ~ zenith_sd))
 
 zeniths_med <- zenith_twl_med$zenith
 
@@ -233,7 +229,7 @@ matplot(0:100, dgamma(0:100, beta[1], beta[2]),
         type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol=0.12)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol=0.20)
 
 #Adjusted tol until second stopover was located over North Carolina rather than further South. 
 x0 <- path$x
@@ -420,14 +416,12 @@ axis(2, las = 2)
 polygon(x=c(sm$Time1,rev(sm$Time1)), y=c(sm$`Lon.2.5%`,rev(sm$`Lon.97.5%`)), border="gray", col="gray")
 lines(sm$Time1,sm$"Lon.50%", lwd = 2)
 abline(v = fall.equi, lwd = 2, lty = 2, col = "orange")
-abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
 
 plot(sm$Time1,sm$"Lat.50%", type="n", ylab = "Latitude", xlab = "", yaxt = "n", ylim = c(min(sm$Lat.mean) - 10, max(sm$Lat.mean) + 10))
 axis(2, las = 2)
 polygon(x=c(sm$Time1,rev(sm$Time1)), y=c(sm$`Lat.2.5%`,rev(sm$`Lat.97.5%`)), border="gray", col="gray")
 lines(sm$Time1, sm$"Lat.50%", lwd = 2)
 abline(v = fall.equi, lwd = 2, lty = 2, col = "orange")
-abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
 
 #close jpeg
 dev.off()
@@ -440,11 +434,11 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-cL <- changeLight(twl=geo_twl, quantile=0.9, summary = F, days = 6, plot = T)
+cL <- changeLight(twl=geo_twl, quantile=0.9, summary = F, days = 2, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths0[1:length(zeniths0) -1], distThreshold = 500)
-#mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = 500)
+#mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths0[1:length(zeniths0) -1], distThreshold = 500)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
 
 ##back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 
@@ -583,7 +577,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                beta =  beta,
                                x0 = x0, # median point for each group (defined by twl$group)
                                z0 = z0, # middle points between the x0 points
-                               zenith = zeniths0,
+                               zenith = zenith0,
                                logp.x = logp,# land sea mask
                                fixedx = fixedx)
 
@@ -610,7 +604,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                x0 = x0, z0 = z0,
                                logp.x = logp,
                                missing=twl$Missing,
-                               zenith = zeniths0,
+                               zenith = zenith0,
                                fixedx = fixedx)
 
 for (k in 1:3) {
@@ -690,7 +684,6 @@ axis(2, las = 2)
 polygon(x=c(sm$StartTime,rev(sm$StartTime)), y=c(sm$`Lon.2.5.`,rev(sm$`Lon.97.5.`)), border="gray", col="gray")
 lines(sm$StartTim,sm$"Lon.50.", lwd = 2)
 abline(v = fall.equi, lwd = 2, lty = 2, col = "orange")
-abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
 
 #Add points for stopovers 
 points(sm$StartTime, sm$"Lon.50.", pch=21, bg=colours[sitenum+1], 
@@ -704,7 +697,6 @@ axis(2, las = 2)
 polygon(x=c(sm$StartTime,rev(sm$StartTime)), y=c(sm$`Lat.2.5.`,rev(sm$`Lat.97.5.`)), border="gray", col="gray")
 lines(sm$StartTim,sm$"Lat.50.", lwd = 2)
 abline(v = fall.equi, lwd = 2, lty = 2, col = "orange")
-abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
 
 #Add points for stopovers 
 points(sm$StartTime, sm$"Lat.50.", pch=21, bg=colours[sitenum+1], 

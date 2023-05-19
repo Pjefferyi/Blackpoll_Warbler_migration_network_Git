@@ -195,6 +195,7 @@ plotLocVec <- function(data, stati_only = F, timing = c("Post-breeding migration
                                                         "Pre-breeding migration",
                                                         "Non-breeding migration")
                        , er_bars = F, legend = T){
+  
   # whether to use only stationary locations
   if (stati_only == T){
   data <- data[(data$sitenum > 0),]
@@ -218,7 +219,6 @@ plotLocVec <- function(data, stati_only = F, timing = c("Post-breeding migration
 }
     
 # test calls  for mapLocData ###################################################
-
 
 #call for all geolocators
 
@@ -264,12 +264,15 @@ geo.all <- findLocData(geo.ids = c("V8757_010",
                               "A",
                               "WRMA04173"), check_col_length = F, ref_path = ref_path)
 
+
 geo.church <- geo.all[(geo.all$study.site == "Churchill, Manitoba"),]
 geo.nome <- geo.all[(geo.all$study.site == "Nome, Alaska"),]
 geo.denali <- geo.all[(geo.all$study.site == "Denali, Alaska"),]
 geo.whitehorse <- geo.all[(geo.all$study.site == "Whitehorse, Yukon"),]
+geo.west <- geo.all[(geo.all$study.site %in% c("Whitehorse, Yukon", "Nome, Alaska", "Denali, Alaska")),]
+geo.sample <- findLocData(geo.ids = c("V8757_134",  "blpw14", "4210_004", "A", "3254_057", "V8757_029"), check_col_length = F, ref_path = ref_path)
 
-geos <- geo.denali
+geos <- geo.sample
 
 # plotLocVec(data = geos, er_bars =  T, stati_only = T, legend = T,timing = c("Post-breeding migration", "Non-breeding period"))
 # plotLocVec(data = geos, er_bars =  T,stati_only = T, legend = T,timing = c("Pre-breeding migration", "Non-breeding period"))
@@ -281,9 +284,7 @@ geos <- geo.denali
 
 # Function to recover thedata required to obtain the density estimates for each geolocator 
 
-period = "Non-breeding period"
-
-findSlicesData <- function(period){
+findSlicesData <- function(periods, xlim = c(-170, -40), ylim = c(-40, 75)  ){
   
   # Create a list of path to all files with fit data 
   paths <- list.files("/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geolocator_data",
@@ -302,9 +303,8 @@ findSlicesData <- function(period){
   dens.list <- list() 
   
   #Create a grid to project density rasters 
-  r <- raster(nrows = 2 * diff(ylim), ncols = 2 * diff(xlim), xmn = xlim[1]-5,
-              xmx = xlim[2]+10, ymn = ylim[1]-5, ymx = ylim[2]+5, crs = proj4string(wrld_simpl))
-  
+  r <- raster(nrows = 2 * diff(ylim), ncols = 2 * diff(xlim), xmn = xlim[1],
+              xmx = xlim[2], ymn = ylim[1], ymx = ylim[2], crs = proj4string(wrld_simpl))
   
   # extract the density data 
   for (f in seq(1:length(paths))) {
@@ -317,21 +317,28 @@ findSlicesData <- function(period){
     
     # Retrieve the index for the period of interest
     load(paste0("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geolocator_data/", geonames[f] ,"/", geonames[f] ,"_SGAT_GroupedThreshold_summary.csv"))
-    period.index <- which(sm$period == period)
+    period.index <- which(sm$period %in% periods)
     
     # generate the density estimate  
-    sk <- slice(s, sliceIndices(s)[period.index])
+    sk <- slice(s, sliceIndices(s)[period.index-1]) # must had -1 here so that the index coresponds with the bins 
     
     # save the density raster
-    dens.list[geonames[f]] <-sk 
+    dens.list[[geonames[f]]] <-sk 
   }
   
-  return(dens_list)
+  return(dens.list)
 }
 
+# Arguments for findSlicesData #################################################
 
+# periods: a vecator of periods for which the density estimates will be extracted
+# e.g. c("Non-breeding period", "Pre-breeding migration")
 
+# Test calls  for findSlicesData ###############################################
 
+# periods = c("Non-breeding period")
+# nbr.dens <- findSlicesData(periods)
+# plot(nbr.dens[["A"]])
 
 # plotBreedSites ##################################################################
 
