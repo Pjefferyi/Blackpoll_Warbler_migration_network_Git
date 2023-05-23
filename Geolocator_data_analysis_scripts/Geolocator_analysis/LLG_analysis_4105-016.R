@@ -157,7 +157,7 @@ alpha <- calib[3:4]
 geo_twl <- export2GeoLight(twl)
 
 # this is just to find places where birds have been for a long time, would not use these parameters for stopover identification, detailed can be found in grouped model section
-cL <- changeLight(twl =geo_twl, quantile=0.8, summary = F, days = 10, plot = T)
+cL <- changeLight(twl =geo_twl, quantile=0.9, summary = F, days = 10, plot = T)
 # merge site helps to put sites together that are separated by single outliers.
 mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
 
@@ -170,7 +170,7 @@ start <- min(which(mS$site == stationarySite))
 end   <- max(which(mS$site == stationarySite))
 
 (zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
-# 
+
 # startDate <- "2016-11-15"
 # endDate   <- "2017-05-15"
 # 
@@ -218,16 +218,16 @@ dev.off()
 zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith0,
                             Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad,
-                            Date > anytime(dep.nbr) ~ mean(c(zenith0, zenith0_ad))))
-                            #Date > anytime(dep.nbr) ~ zenith0_ad))
+                            #Date > anytime(dep.nbr) ~ mean(c(zenith0, zenith0_ad))))
+                            Date > anytime(dep.nbr) ~ zenith0))
 
 zeniths0 <- zenith_twl_zero$zenith
 
 zenith_twl_med <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith,
                             Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith_sd,
-                            Date > anytime(dep.nbr) ~ mean(c(zenith, zenith_sd))))
-                            #Date > anytime(dep.nbr) ~ zenith_sd))
+                            #Date > anytime(dep.nbr) ~ mean(c(zenith, zenith_sd))))
+                            Date > anytime(dep.nbr) ~ zenith))
 
 zeniths_med <- zenith_twl_med$zenith
 
@@ -448,9 +448,9 @@ geo_twl <- export2GeoLight(twl)
 cL <- changeLight(twl=geo_twl, quantile=0.90, summary = F, days = 2, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths0[1:length(zeniths0) -1], distThreshold = 500)
+#mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths0[1:(length(zeniths0) -1)], distThreshold = 500)
 #mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths_med[1:length(zeniths_med) -1], distThreshold = 500)
-#mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = 350)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
 
 ##back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 

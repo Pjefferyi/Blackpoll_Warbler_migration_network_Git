@@ -157,7 +157,7 @@ alpha <- calib[3:4]
 geo_twl <- export2GeoLight(twl)
 
 # this is just to find places where birds have been for a long time, would not use these parameters for stopover identification, detailed can be found in grouped model section
-cL <- changeLight(twl =geo_twl, quantile=0.6, summary = F, days = 10, plot = T)
+cL <- changeLight(twl =geo_twl, quantile=0.9, summary = F, days = 10, plot = T)
 # merge site helps to put sites together that are separated by single outliers.
 mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
 
@@ -171,8 +171,8 @@ end   <- max(which(mS$site == stationarySite))
 
 (zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
 
-# startDate <- "2016-10-20"
-# endDate   <- "2017-05-15"
+# startDate <- "2016-10-26"
+# endDate   <- "2017-04-15"
 # 
 # start = min(which(as.Date(twl$Twilight) == startDate))
 # end = max(which(as.Date(twl$Twilight) == endDate))
@@ -219,7 +219,7 @@ zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith0,
                             Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad,
                             #Date > anytime(dep.nbr) ~ mean(c(zenith0, zenith0_ad))))
-                            Date > anytime(dep.nbr) ~ zenith0))
+                            Date > anytime(dep.nbr) ~ zenith0_ad))
 
 zeniths0 <- zenith_twl_zero$zenith
 
@@ -227,7 +227,7 @@ zenith_twl_med <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith,
                             Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith_sd,
                             #Date > anytime(dep.nbr) ~ mean(c(zenith, zenith_sd))))
-                            Date > anytime(dep.nbr) ~ zenith))
+                            Date > anytime(dep.nbr) ~ zenith_sd))
 
 zeniths_med <- zenith_twl_med$zenith
 
@@ -239,7 +239,7 @@ matplot(0:100, dgamma(0:100, beta[1], beta[2]),
         type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol=0.08)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol=0.08)
 
 #Adjusted tol until second stopover was located over North Carolina rather than further South. 
 x0 <- path$x
@@ -448,8 +448,8 @@ geo_twl <- export2GeoLight(twl)
 cL <- changeLight(twl=geo_twl, quantile=0.86, summary = F, days = 3, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths0[1:length(zeniths0) -1], distThreshold = 500)
-#mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
+#mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths0[1:length(zeniths0) -1], distThreshold = 500)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
 
 ##back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 
@@ -587,7 +587,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                beta =  beta,
                                x0 = x0, # median point for each group (defined by twl$group)
                                z0 = z0, # middle points between the x0 points
-                               zenith = zenith0,
+                               zenith = zeniths0,
                                logp.x = logp,# land sea mask
                                fixedx = fixedx)
 
@@ -614,7 +614,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                x0 = x0, z0 = z0,
                                logp.x = logp,
                                missing=twl$Missing,
-                               zenith = zenith0,
+                               zenith = zeniths0,
                                fixedx = fixedx)
 
 for (k in 1:3) {

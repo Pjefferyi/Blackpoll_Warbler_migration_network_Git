@@ -70,12 +70,12 @@ geo.fall.stat <- geo.all[(geo.all$period %in% c("Breeding period", "Post-breedin
 #set the colours for each region
 region.colours <- c(Eastern = "#D55E00", Central = "#009E73", West = "#0072B2")
 symbols <- c(22, 23, 21)
-symb.size <- c(3, 3, 2)
+symb.size <- c(4, 4, 4)
 
 #plot spring migratory routes
 
 #ggplot(spData::world[(spData::world$continent %in% c("North America", "South America")),]) +
-ggplot(st_as_sf(wrld_simpl))+
+fig1 <- ggplot(st_as_sf(wrld_simpl))+
   geom_sf(colour = NA, fill = "lightgray") +
   coord_sf(xlim = c(-170, -30),ylim = c(-8, 70)) +
   #geom_errorbar(data = geo.fall.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), color = "red", width=1, alpha = 0.5) + 
@@ -85,10 +85,10 @@ ggplot(st_as_sf(wrld_simpl))+
   scale_fill_manual(values= region.colours, labels=c("Central","Eastern", "Western"),
                     name = "Breeding region")+
   scale_color_manual(values = region.colours, labels=c("Central","Eastern", "Western"), 
-                     guide = guide_legend(override.aes = list(shape = 21)),
+                     guide = guide_legend(override.aes = list(shape = 21, size = 2)),
                      name = "Breeding region")+
   scale_shape_manual(values = symbols, labels=c('Breeding site', 'Nonbreeding site', 'Fall stopover'),
-                     name = "Stationary areas")+
+                     name = "Stationary areas", guide = guide_legend(override.aes = list(size = 4)))+
   scale_size_manual(values = symb.size, guide = 'none', name = "Stationary areas")+
   theme_bw() +
   theme(panel.grid.major = element_blank(),
@@ -96,7 +96,14 @@ ggplot(st_as_sf(wrld_simpl))+
   theme(legend.position = c(0.2, 0.4)) +
   xlab("Longitude") + 
   ylab("Latitude")+
-  theme(text = element_text(size = 18))
+  theme(text = element_text(size = 20))
+
+ggsave("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Conferences/OE3C_2023/Poster/Figure1.png",
+       fig1,
+       dpi = 300,
+       width = 30,
+       height = 20,
+       units = c("cm"))
 
 # Extract location data for spring migratory routes
 geo.all <- findLocData(geo.ids = c("V8757_010",
@@ -166,12 +173,12 @@ geo.spr.stat <- geo.all[(geo.all$period %in% c("Pre-breeding migration", "Non-br
 #set the colours for each region
 region.colours <- c(Eastern = "#D55E00", Central = "#009E73", West = "#0072B2")
 symbols <- c(22, 23, 21)
-symb.size <- c(3, 3, 2)
+symb.size <- c(4, 4, 4)
 
 #plot spring migratory routes
 
 #ggplot(spData::world[(spData::world$continent %in% c("North America", "South America")),]) +
-ggplot(st_as_sf(wrld_simpl))+
+fig2 <- ggplot(st_as_sf(wrld_simpl))+
   geom_sf(colour = NA, fill = "lightgray") +
   coord_sf(xlim = c(-170, -30),ylim = c(-8, 70)) +
   #geom_errorbar(data = geo.spr.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5., color = Range_region), width=1, alpha = 0.2) + 
@@ -180,19 +187,26 @@ ggplot(st_as_sf(wrld_simpl))+
   geom_point(data = geo.spr.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = Range_region, pch = period, size = period), colour = "black") +
    scale_fill_manual(values= region.colours, labels=c("Central","Eastern", "Western"),
                      name = "Breeding region")+
-   scale_color_manual(values = region.colours, labels=c("Central","Eastern", "Western"), 
-                      guide = guide_legend(override.aes = list(shape = 21)),
-                      name = "Breeding region")+
-   scale_shape_manual(values = symbols, labels=c('Breeding site', 'Nonbreeding site', 'Spring stopover'),
-                      name = "Stationary areas")+
-   scale_size_manual(values = symb.size, guide = 'none', name = "Stationary areas")+
+  scale_color_manual(values = region.colours, labels=c("Central","Eastern", "Western"), 
+                     guide = guide_legend(override.aes = list(shape = 21, size = 2)),
+                     name = "Breeding region")+
+  scale_shape_manual(values = symbols, labels=c('Breeding site', 'Nonbreeding site', 'Fall stopover'),
+                     name = "Stationary areas", guide = guide_legend(override.aes = list(size = 4)))+
+   scale_size_manual(values = symb.size, guide = "none", name = "Stationary areas")+
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank()) +
   theme(legend.position = c(0.2, 0.4)) +
   xlab("Longitude") + 
   ylab("Latitude")+
-  theme(text = element_text(size = 18))
+  theme(text = element_text(size = 20))
+
+ggsave("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Conferences/OE3C_2023/Poster/Figure2.png",
+       fig2,
+       dpi = 300,
+       width = 30,
+       height = 20,
+       units = c("cm"))
 
 
 # Extract location data for migratory routes that will be show with errors 
@@ -222,12 +236,12 @@ geo.samp.stat <- geo.all[(geo.all$period %in% c("Breeding period", "Post-breedin
 #set the colours for each region
 region.colours <- c(Eastern = "#D55E00", Central = "#009E73", West = "#0072B2")
 symbols <- c(22, 23, 21)
-symb.size <- c(3, 3, 2)
+symb.size <- c(5, 5, 5)
 
 #plot spring migratory routes
 
 #ggplot(spData::world[(spData::world$continent %in% c("North America", "South America")),]) +
-ggplot(st_as_sf(wrld_simpl))+
+fig3 <- ggplot(st_as_sf(wrld_simpl))+
   geom_sf(colour = NA, fill = "lightgray") +
   coord_sf(xlim = c(-170, -30),ylim = c(-8, 70)) +
   geom_errorbar(data = geo.samp.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), color = "red",  width=1, alpha = 0.8) + 
@@ -237,10 +251,10 @@ ggplot(st_as_sf(wrld_simpl))+
   scale_fill_manual(values= region.colours, labels=c("Central","Eastern", "Western"),
                     name = "Breeding region")+
   scale_color_manual(values = region.colours, labels=c("Central","Eastern", "Western"), 
-                     guide = guide_legend(override.aes = list(shape = 21)),
+                     guide = guide_legend(override.aes = list(shape = 21, size = 5)),
                      name = "Breeding region")+
   scale_shape_manual(values = symbols, labels=c('Breeding site', 'Nonbreeding site', 'Fall stopover'),
-                     name = "Stationary areas")+
+                     name = "Stationary areas", guide_legend(override.aes = list(size = 4)))+
   scale_size_manual(values = symb.size, guide = 'none', name = "Stationary areas")+
   theme_bw() +
   theme(panel.grid.major = element_blank(),
@@ -249,5 +263,12 @@ ggplot(st_as_sf(wrld_simpl))+
   theme(legend.position = "none") +
   xlab("Longitude") + 
   ylab("Latitude")+
-  theme(text = element_text(size = 18))
+  theme(text = element_text(size = 20))
+
+ggsave("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Conferences/OE3C_2023/Poster/Figure3.png",
+       fig3,
+       dpi = 300,
+       width = 30,
+       height = 20,
+       units = c("cm"))
 

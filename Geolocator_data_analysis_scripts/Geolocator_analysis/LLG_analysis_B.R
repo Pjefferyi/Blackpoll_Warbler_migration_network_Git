@@ -100,10 +100,10 @@ dev.off()
 # # Adjust sunset times by 120 second sampling interval
 # twl <- twilightAdjust(twilights = twl, interval = 120)
 
-# Visualize light and twilight time-series
-lightImage(lig, offset = 19)
-tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
-              col = ifelse(twl$Rise, "dodgerblue", "firebrick"))
+# # Visualize light and twilight time-series
+# lightImage(lig, offset = 19)
+# tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
+#               col = ifelse(twl$Rise, "dodgerblue", "firebrick"))
 
 # Save the twilight times
 # write.csv(twl, paste0(dir,"/",geo.id , "_twl_times.csv"))
@@ -156,24 +156,24 @@ alpha <- calib[3:4]
 #convert to geolight format
 geo_twl <- export2GeoLight(twl)
 
-#this is just to find places where birds have been for a long time, would not use these parameters for stopover identification, detailed can be found in grouped model section
-cL <- changeLight(twl =geo_twl, quantile=0.9, summary = F, days = 10, plot = T)
- 
-#merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
-
-#specify which site is the stationary one
-site           <- mS$site[mS$site>0] # get rid of movement periods
-stationarySite <- which(table(site) == max(table(site))) # find the site where bird is the longest
-
-#find the dates that the bird arrives and leaves this stationary site
-start <- min(which(mS$site == stationarySite))
-end   <- max(which(mS$site == stationarySite))
-
-(zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
-
-# startDate <- "2013-11-20"
-# endDate   <- "2014-04-20"
+# #this is just to find places where birds have been for a long time, would not use these parameters for stopover identification, detailed can be found in grouped model section
+# cL <- changeLight(twl =geo_twl, quantile=0.9, summary = F, days = 10, plot = T)
+# 
+# #merge site helps to put sites together that are separated by single outliers.
+# mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
+# 
+# #specify which site is the stationary one
+# site           <- mS$site[mS$site>0] # get rid of movement periods
+# stationarySite <- which(table(site) == max(table(site))) # find the site where bird is the longest
+# 
+# #find the dates that the bird arrives and leaves this stationary site
+# start <- min(which(mS$site == stationarySite))
+# end   <- max(which(mS$site == stationarySite))
+# 
+# (zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
+# 
+# startDate <- "2013-08-20"
+# endDate   <- "2014-04-26"
 # 
 # start = min(which(as.Date(twl$Twilight) == startDate))
 # end = max(which(as.Date(twl$Twilight) == endDate))
@@ -184,12 +184,11 @@ end   <- max(which(mS$site == stationarySite))
 # Alternative calibration is necessary
 
 # adjust the zenith angles calculated from the breeding sites for the non-breeding sites
-zenith_sd <- zenith_sd -1
 zenith0_ad <- zenith0 + abs(zenith - zenith_sd)
 zenith_ad  <- zenith_sd
 
 # Find approximate  timing of arrival and departure from the nonbreeding grounds 
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol= 0)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol= 0)
 
 x0_r<- path$x
 z0 <- trackMidpts(x0_r)
@@ -233,6 +232,27 @@ zenith_twl_med <- data.frame(Date = twl$Twilight) %>%
 
 zeniths_med <- zenith_twl_med$zenith
 
+# plot longitudes and latitudes with the new zenith angles 
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol= 0)
+
+x0_ad <- path$x
+z0 <- trackMidpts(x0_ad)
+
+# open jpeg
+#jpeg(paste0(dir, "/", geo.id, "_LatLon_scatterplot_adjusted.png"), width = 1024, height = 990)
+
+par(mfrow = c(2,1))
+plot(twl$Twilight, x0_ad[,1], ylab = "longitude")
+abline(v = anytime(arr.nbr))
+abline(v = anytime(dep.nbr))
+plot(twl$Twilight, x0_ad[,2], ylab = "latitude")
+abline(v = anytime(arr.nbr))
+abline(v = anytime(dep.nbr))
+abline(v = fall.equi, col = "orange")
+abline(v = spring.equi, col = "orange")
+
+#dev.off()
+
 # Movement model ###############################################################
 
 #this movement model should be based on the estimated migration speed of the blackpoll warbler 
@@ -241,7 +261,7 @@ matplot(0:100, dgamma(0:100, beta[1], beta[2]),
         type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol=0.20)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol=0.18)
 
 #Adjusted tol until second stopover was located over North Carolina rather than further South. 
 x0 <- path$x
@@ -318,7 +338,7 @@ mask <- earthseaMask(xlim, ylim, n = 4)
 log.prior <- function(p) {
   f <- mask(p)
   #ifelse(is.na(f), log(1), f)  # if f is the relative abundance within a grid square 
-  ifelse(is.na(f), log(1), log(2)) # if f indicates the distribution of the blackpoll warbler 
+  ifelse(is.na(f), log(1), log(5)) # if f indicates the distribution of the blackpoll warbler 
   #ifelse(f | is.na(f), log(2), log(1)) #original function from Lisovski et al. 2020
 }
 
@@ -593,7 +613,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                beta =  beta,
                                x0 = x0, # median point for each group (defined by twl$group)
                                z0 = z0, # middle points between the x0 points
-                               zenith = zeniths0,
+                               zenith = zenith0,
                                logp.x = logp,# land sea mask
                                fixedx = fixedx)
 
@@ -620,7 +640,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                x0 = x0, z0 = z0,
                                logp.x = logp,
                                missing=twl$Missing,
-                               zenith = zeniths0,
+                               zenith = zenith0,
                                fixedx = fixedx)
 
 for (k in 1:3) {

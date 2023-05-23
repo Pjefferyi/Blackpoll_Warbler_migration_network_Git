@@ -270,12 +270,14 @@ geo.nome <- geo.all[(geo.all$study.site == "Nome, Alaska"),]
 geo.denali <- geo.all[(geo.all$study.site == "Denali, Alaska"),]
 geo.whitehorse <- geo.all[(geo.all$study.site == "Whitehorse, Yukon"),]
 geo.west <- geo.all[(geo.all$study.site %in% c("Whitehorse, Yukon", "Nome, Alaska", "Denali, Alaska")),]
+geo.quebec <- geo.all[(geo.all$study.site == "Quebec"),]
+
 geo.sample <- findLocData(geo.ids = c("V8757_134",  "blpw14", "4210_004", "A", "3254_057", "V8757_029"), check_col_length = F, ref_path = ref_path)
 
-geos <- geo.sample
+geos <- geo.quebec
 
 # plotLocVec(data = geos, er_bars =  T, stati_only = T, legend = T,timing = c("Post-breeding migration", "Non-breeding period"))
-# plotLocVec(data = geos, er_bars =  T,stati_only = T, legend = T,timing = c("Pre-breeding migration", "Non-breeding period"))
+# plotLocVec(data = geo.all, er_bars =  F, stati_only = F, legend = T,timing = c("Pre-breeding migration", "Non-breeding period"))
 # plotLocVec(data = geos, er_bars =  T,stati_only = T, legend = T,timing = c("Non-breeding period"))
 # plotLocVec(data = geos, er_bars =  T,stati_only = T, legend = T, timing = c("Post-breeding migration", "Pre-breeding migration", "Non-breeding period"))
 

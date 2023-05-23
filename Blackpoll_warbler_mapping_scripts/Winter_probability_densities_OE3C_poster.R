@@ -118,6 +118,15 @@ plot(wrld_simpl, xlim=xl, ylim=yl,add = T, bg = adjustcolor("black",alpha=0.1))
 
 # Create a plot with all three raster distributions (with generic plot function) ################
 
+#This plot will be saved as a jpeg
+
+jpeg("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Conferences/OE3C_2023/Poster/Figure4.png",
+     width = 30,
+     height = 21,
+     units = "cm",
+     quality = 100,
+     res = 300)
+
 #Create a layout for the plot
 layout.matrix <- matrix(c(1, 2, 1, 3, 1, 4), nrow = 2, ncol = 3)
 
@@ -131,17 +140,17 @@ par (mar = c(1,1,1,1), mai = c(0, 0, 0, 0))
 
 world <- spData::world
 
-plot(wrld_simpl, xlim= c(-170, -40), ylim= c(42, 70), bg = "white", col = "lightgray", border ="darkgray", lwd=0.5)
+plot(wrld_simpl, xlim= c(-170, -40), ylim= c(42, 70), bg = "white", col = "lightgray", border ="darkgray", lwd=1)
 points(ref.data[(ref.data$Range_region == "Eastern"),]$deploy.longitude,
        ref.data[(ref.data$Range_region == "Eastern"),]$deploy.latitude,
-     col = "black", bg = "#D55E00", pch = 21, cex = 2)
+     col = "black", bg = "#D55E00", pch = 21, cex = 3)
 points(ref.data[(ref.data$Range_region == "Central"),]$deploy.longitude,
        ref.data[(ref.data$Range_region == "Central"),]$deploy.latitude,
-       col = "black", bg = "#009E73", pch = 21, cex = 2)
+       col = "black", bg = "#009E73", pch = 21, cex = 3)
 points(ref.data[(ref.data$Range_region == "West"),]$deploy.longitude,
        ref.data[(ref.data$Range_region == "West"),]$deploy.latitude,
-       col = "black", bg = "#0072B2", pch = 21, cex = 2)
-box(col = "darkgray", lwd = 0.5)
+       col = "black", bg = "#0072B2", pch = 21, cex = 3)
+box(col = "darkgray", lwd = 1)
 
 # Plot 2: Breeding areas for the Western populations
 
@@ -154,16 +163,16 @@ par (mar = c(1,1,1,1), mai = c(0, 0, 0, 0))
 crs(east.ras.m) <- crs(world)
 plot(wrld_simpl, xlim= xl.p, ylim= yl.p, bg = "white", col = "lightgray", border = "darkgray", lwd=0.5)
 plot(west.ras.m , col = west.col(100), alpha = 0.9, legend = F, axes=FALSE, add = T)
-plot(wrld_simpl, xlim= xl.p, ylim= yl.p, bg = "white", add = T, border = "darkgray", lwd=0.5)
+plot(wrld_simpl, xlim= xl.p, ylim= yl.p, bg = "white", add = T, border = "darkgray", lwd=1)
 
 west.samp <- paste( "N = ", length(west.geo) -2) # number of geolocators (sample size)
 #Added -2 because some geolocators were excluded from the dataset 
 
-text(-45, 10, cex = 1.6, (bquote(paste(bold(.(west.samp))))))
+text(-45, 10, cex = 2, (bquote(paste(bold(.(west.samp))))))
 
 
 
-box(col = "darkgray", lwd = 0.5)
+box(col = "darkgray", lwd = 1)
 
 # Plot 3: Breeding areas for the central populations
 
@@ -172,13 +181,13 @@ par (mar = c(1,1,1,1), mai = c(0, 0, 0, 0))
 crs(east.ras.m) <- crs(world)
 plot(wrld_simpl, xlim= xl.p, ylim= yl.p, bg = "white", col = "lightgray", border = "darkgray", lwd=0.5)
 plot(cent.ras.m , col = cent.col(100), alpha = 0.9, legend = F, axes=FALSE, add = T)
-plot(wrld_simpl, xlim= xl.p, ylim= yl.p, bg = "white", add = T, border = "darkgray", lwd=0.5)
+plot(wrld_simpl, xlim= xl.p, ylim= yl.p, bg = "white", add = T, border = "darkgray", lwd=1)
 
 cent.samp <- paste( "N = ", length(cent.geo)) # number of geolocators (sample size)
 
-text(-45, 10, cex = 1.6, (bquote(paste(bold(.(cent.samp))))))
+text(-45, 10, cex = 2, (bquote(paste(bold(.(cent.samp))))))
 
-box(col = "darkgray", lwd = 0.5)
+box(col = "darkgray", lwd = 1)
 
 # Plot 4: Breeding areas for the Eastern populations
 
@@ -187,14 +196,16 @@ par (mar = c(1,1,1,1), mai = c(0, 0, 0, 0))
 crs(east.ras.m) <- crs(world)
 plot(wrld_simpl, xlim= xl.p, ylim= yl.p, bg = "white", col = "lightgray", border = "darkgray", lwd=0.5)
 plot(east.ras.m , col = east.col(100), alpha = 0.9, legend = F, axes=FALSE, add = T)
-plot(wrld_simpl, xlim= xl.p, ylim= yl.p, bg = "white", add = T, border = "darkgray", lwd=0.5)
+plot(wrld_simpl, xlim= xl.p, ylim= yl.p, bg = "white", add = T, border = "darkgray", lwd=1)
 
 east.samp <- paste( "N = ", length(east.geo)-1) # number of geolocators (sample size)
 #Substract 1 due to the geolocator located in Columbia 
 
-text(-45, 10, cex = 1.6, (bquote(paste(bold(.(east.samp))))))
+text(-45, 10, cex = 2, (bquote(paste(bold(.(east.samp))))))
 
-box(col = "darkgray", lwd = 0.5)
+box(col = "darkgray", lwd = 1)
+
+dev.off()
 
 # Create a plot with all three raster distributions (with ggplot2) #############
 
