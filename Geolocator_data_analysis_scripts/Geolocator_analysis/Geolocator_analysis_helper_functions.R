@@ -161,11 +161,11 @@ findLocData <- function(geo.ids = c(), check_col_length = F, ref_path = NA){
     ref.data <- read.csv(ref_path)
     
     # Only retain relevant rows
-    ref.data <- ref.data[,c("geo.id",
-                            "deploy.latitude",
-                            "deploy.longitude",
-                            "study.site",
-                            "Range_region")]
+    # ref.data <- ref.data[,c("geo.id",
+    #                         "deploy.latitude",
+    #                         "deploy.longitude",
+    #                         "study.site",
+    #                         "Range_region")]
     
     #Join the region and location data (inner join)
     location_set <- merge(location_set, ref.data, by.x = "geo_id", by.y = "geo.id")
@@ -174,7 +174,7 @@ findLocData <- function(geo.ids = c(), check_col_length = F, ref_path = NA){
   return(location_set)
 }
 
-# test calls  for findLocData ##################################################
+# Test calls  for findLocData ##################################################
 
 # check length of the dataframes with the data for each geolocator 
 # r1 <- findLocData(geo.ids = c(), check_col_length = T)
@@ -218,7 +218,7 @@ plotLocVec <- function(data, stati_only = F, timing = c("Post-breeding migration
     
 }
     
-# test calls  for mapLocData ###################################################
+# Test calls  for mapLocData ###################################################
 
 #call for all geolocators
 
@@ -262,6 +262,9 @@ geo.all <- findLocData(geo.ids = c("V8757_010",
                               "4210_006",
                               "4210_010",
                               "A",
+                              "B",
+                              "C",
+                              "D",
                               "WRMA04173"), check_col_length = F, ref_path = ref_path)
 
 
@@ -271,13 +274,14 @@ geo.denali <- geo.all[(geo.all$study.site == "Denali, Alaska"),]
 geo.whitehorse <- geo.all[(geo.all$study.site == "Whitehorse, Yukon"),]
 geo.west <- geo.all[(geo.all$study.site %in% c("Whitehorse, Yukon", "Nome, Alaska", "Denali, Alaska")),]
 geo.quebec <- geo.all[(geo.all$study.site == "Quebec"),]
+geo.2015 <- geo.all[(geo.all$Study == "Deluca et al. 2015"),]
 
 geo.sample <- findLocData(geo.ids = c("V8757_134",  "blpw14", "4210_004", "A", "3254_057", "V8757_029"), check_col_length = F, ref_path = ref_path)
 
-geos <- geo.quebec
+geos <- geo.2015
 
 # plotLocVec(data = geos, er_bars =  T, stati_only = T, legend = T,timing = c("Post-breeding migration", "Non-breeding period"))
-# plotLocVec(data = geo.all, er_bars =  F, stati_only = F, legend = T,timing = c("Pre-breeding migration", "Non-breeding period"))
+# plotLocVec(data = geos, er_bars =  F, stati_only = F, legend = T,timing = c("Pre-breeding migration", "Non-breeding period"))
 # plotLocVec(data = geos, er_bars =  T,stati_only = T, legend = T,timing = c("Non-breeding period"))
 # plotLocVec(data = geos, er_bars =  T,stati_only = T, legend = T, timing = c("Post-breeding migration", "Pre-breeding migration", "Non-breeding period"))
 
@@ -373,5 +377,12 @@ plotBreedSites <- function(){
 # Function to extract the weekly abundance rasters for the Blackpoll warbler from 
 # eBird, and consolidate them into a single array 
 
-#path <- ebirdst_download(species = "bkpwar", path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_imports")
+#ebirdst_download(species = "bkpwar", path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_imports")
 
+getAbData <- function(){
+  
+ ab.ras <- load_raster("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_imports/2021/bkpwar",
+             product = "abundance",
+             period = "weekly",
+             resolution = "lr")
+}

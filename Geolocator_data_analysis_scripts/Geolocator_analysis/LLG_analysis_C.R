@@ -151,31 +151,31 @@ alpha <- calib[3:4]
 
 # Alternative calibration #######################################################
 
-# #convert to geolight format
-# geo_twl <- export2GeoLight(twl)
-# 
-# # this is just to find places where birds have been for a long time, would not use these parameters for stopover identification, detailed can be found in grouped model section
-# cL <- changeLight(twl =geo_twl, quantile=0.7, summary = F, days = 10, plot = T)
-# # merge site helps to put sites together that are separated by single outliers.
-# mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
-# 
-# #specify which site is the stationary one
-# site           <- mS$site[mS$site>0] # get rid of movement periods
-# stationarySite <- which(table(site) == max(table(site))) # find the site where bird is the longest
-# 
-# #find the dates that the bird arrives and leaves this stationary site
-# start <- min(which(mS$site == stationarySite))
-# end   <- max(which(mS$site == stationarySite))
-# 
-# (zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
+#convert to geolight format
+geo_twl <- export2GeoLight(twl)
 
-startDate <- "2013-10-30"
-endDate   <- "2014-03-01"
+# this is just to find places where birds have been for a long time, would not use these parameters for stopover identification, detailed can be found in grouped model section
+cL <- changeLight(twl =geo_twl, quantile=0.7, summary = F, days = 10, plot = T)
+# merge site helps to put sites together that are separated by single outliers.
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
 
-start = min(which(as.Date(twl$Twilight) == startDate))
-end = max(which(as.Date(twl$Twilight) == endDate))
+#specify which site is the stationary one
+site           <- mS$site[mS$site>0] # get rid of movement periods
+stationarySite <- which(table(site) == max(table(site))) # find the site where bird is the longest
+
+#find the dates that the bird arrives and leaves this stationary site
+start <- min(which(mS$site == stationarySite))
+end   <- max(which(mS$site == stationarySite))
 
 (zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
+
+# startDate <- "2013-10-30"
+# endDate   <- "2014-03-01"
+# 
+# start = min(which(as.Date(twl$Twilight) == startDate))
+# end = max(which(as.Date(twl$Twilight) == endDate))
+# 
+# (zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
 
 # The Hill-ekstrom zenith and in-habitat zenith angles differ by more than 0.5 degrees
 # Alternative calibration is necessary
@@ -185,7 +185,7 @@ zenith0_ad <- zenith0 + abs(zenith - zenith_sd)
 zenith_ad  <- zenith_sd
 
 # Find approximate  timing of arrival and departure from the nonbreeding grounds 
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol= 0.20)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol= 0)
 
 x0_r<- path$x
 z0 <- trackMidpts(x0_r)
@@ -197,7 +197,7 @@ save(x0_r, file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
 arr.nbr <- "2013-10-08" 
 
 # open jpeg
-jpeg(paste0(dir, "/", geo.id, "_LatLon_scatterplot.png"), width = 1024, height = 990)
+# jpeg(paste0(dir, "/", geo.id, "_LatLon_scatterplot.png"), width = 1024, height = 990)
 
 par(mfrow = c(2,1))
 plot(twl$Twilight, x0_r[,1], ylab = "longitude")
@@ -206,7 +206,7 @@ plot(twl$Twilight, x0_r[,2], ylab = "latitude")
 abline(v = anytime(arr.nbr))
 abline(v = fall.equi, col = "orange")
 
-dev.off()
+#dev.off()
 
 # Using approximate timings of arrival and departure from the breeding grounds
 zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
@@ -221,6 +221,26 @@ zenith_twl_med <- data.frame(Date = twl$Twilight) %>%
 
 zeniths_med <- zenith_twl_med$zenith
 
+# plot longitudes and latitudes with the new zenith angles 
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol= 0.085)
+
+x0_ad <- path$x
+z0 <- trackMidpts(x0_ad)
+
+# open jpeg
+#jpeg(paste0(dir, "/", geo.id, "_LatLon_scatterplot_adjusted.png"), width = 1024, height = 990)
+
+par(mfrow = c(2,1))
+plot(twl$Twilight, x0_ad[,1], ylab = "longitude")
+abline(v = anytime(arr.nbr))
+plot(twl$Twilight, x0_ad[,2], ylab = "latitude")
+abline(v = anytime(arr.nbr))
+abline(v = fall.equi, col = "orange")
+
+#dev.off()
+
+# Movement 
+
 # Movement model ###############################################################
 
 #this movement model should be based on the estimated migration speed of the blackpoll warbler 
@@ -229,7 +249,7 @@ matplot(0:100, dgamma(0:100, beta[1], beta[2]),
         type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol=0.20)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol=0.12)
 
 #Adjusted tol until second stopover was located over North Carolina rather than further South. 
 x0 <- path$x
@@ -565,7 +585,7 @@ mask <- earthseaMask(xlim, ylim, n = 10, index=index)
 ## Define the log prior for x and z
 logp <- function(p) {
   f <- mask(p)
-  ifelse(is.na(f), -1000, log(2))
+  ifelse(is.na(f), -1000, log(1))
 }
 
 # Define the Estelle model ####################################################
@@ -577,7 +597,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                beta =  beta,
                                x0 = x0, # median point for each group (defined by twl$group)
                                z0 = z0, # middle points between the x0 points
-                               zenith = zenith0,
+                               zenith = zeniths0,
                                logp.x = logp,# land sea mask
                                fixedx = fixedx)
 
@@ -604,7 +624,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                x0 = x0, z0 = z0,
                                logp.x = logp,
                                missing=twl$Missing,
-                               zenith = zenith0,
+                               zenith = zeniths0,
                                fixedx = fixedx)
 
 for (k in 1:3) {
@@ -725,9 +745,8 @@ points(stat.loc$Lon.50., stat.loc$Lat.50., pch = 16, cex = 1.5, col = "firebrick
 sm$geo_id <- geo.id
 
 #add a column that categorizes the locations (based on the groupthreshold model output)
-sm <- sm %>% mutate(period= case_when(StartTime < anytime("2013-10-13 10:20:37", asUTC = T, tz = "GMT")  ~ "Post-breeding migration",
-                                      StartTime >= anytime("2013-10-13 10:20:37", asUTC = T, tz = "GMT") & StartTime < anytime("2014-05-06 22:51:37" , asUTC = T, tz = "GMT") ~ "Non-breeding period",
-                                      StartTime > anytime("2014-05-06 22:51:37 ", asUTC = T, tz = "GMT") ~ "Pre-breeding migration"))
+sm <- sm %>% mutate(period= case_when(StartTime < anytime("2013-09-17 10:06:21 ", asUTC = T, tz = "GMT")  ~ "Post-breeding migration",
+                                      StartTime >= anytime("2013-09-17 10:06:21 ", asUTC = T, tz = "GMT") & StartTime < anytime("2014-05-06 22:51:37" , asUTC = T, tz = "GMT") ~ "Non-breeding period"))
 
 #Save the output of the model 
 #save(sm, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))
@@ -737,11 +756,11 @@ sm <- sm %>% mutate(period= case_when(StartTime < anytime("2013-10-13 10:20:37",
 #load(file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))
 #load(file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 
-# Record details for the geolocator analysis 
-writeLines(c(paste("Median zenith angle in Breeding grounds =", zenith),
-             paste("Zero deviation angle in Breeding grounds =", zenith0),
-             paste("Hill Ekstrom zenith angle =", zenith_sd)),
-           paste0(dir, "/", geo.id,"_analysis_details.txt", sep = ""))
+# Record details for the geolocator analysis ###################################
+geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
+geo.ref[(geo.ref$geo.id == geo.id),]$In_habitat_median_zenith_angle <- zenith
+geo.ref[(geo.ref$geo.id == geo.id),]$Hill_Ekstrom_median_angle <- zenith_sd 
+write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
 
 # Examine twilights ############################################################
 
