@@ -5,8 +5,7 @@
     xlim <- range(x0[,1])+c(-5,5)
     ylim <- range(x0[,2])+c(-5,5)
     
-    index <- ifelse(stationary, 1, 2)
-    
+    index <- ifelse(stationary, T, F)
   
   if (pacific) { wrld_simpl <- nowrapRecenter(wrld_simpl, avoidGEOS = TRUE)}
   
@@ -32,69 +31,37 @@
   #project the abundance rasters
   ab.ras.pr <- project(ab.ras, crs(rs), method = "near") 
   
+  values(ab.ras.pr)[is.nan(values(ab.ras.pr))] <- NA
+  
   # get bincodes linking geolocator twilight measurment times to the weeks of  
   # each abundance layer 
-  doy <- as.numeric(strftime(twl$Twilight, format = "%j"))
+  t.times <- (twl %>% filter(group != lag(group, default = -1)))$Twilight
+  doy <- as.numeric(strftime(t.times, format = "%j"))
   t.code <- .bincode(doy, as.numeric(names(ab.ras)))
   
   xbin = seq(xmin(ab.ras.pr),xmax(ab.ras.pr),length=ncol(ab.ras.pr)+1)
   ybin = seq(ymin(ab.ras.pr),ymax(ab.ras.pr),length=nrow(ab.ras.pr)+1)
   ab.arr <- as.array(ab.ras.pr)
   
-  ab.arr[cbind(length(ybin)-.bincode(dtx0[,2],ybin), .bincode(dtx0[,1],xbin), t.code)]
-
+  p <- dtx0
   
-  
-  twl.rev2 <- twl.rev %>% filter(Site == 0 | Site != lag(Site))
-  
-  
-  
-  # make the movement raster the same resolution as the stationary raster, but allow the bird to go anywhere by giving all cells a value of 1
-  rm = rs; rm[] = 1
-  
-  # stack the movement and stationary rasters on top of each other
-  mask = stack(rs, rm)
-  
-  xbin = seq(xmin(ab.ras.pr ),xmax(ab.ras.pr ),length=ncol(ab.ras.pr)+1)
-  ybin = seq(ymin(ab.ras.pr ),ymax(ab.ras.pr ),length=nrow(ab.ras.pr)+1)
-  mask = as.array(mask)[,,sort(unique(index)),drop=FALSE]
-  
-  p = dtx0
-  
-  function(p) mask[cbind(length(ybin)-.bincode(p[,2],ybin), .bincode(p[,1],xbin), index)]
-
-  
-  
+  # We multiply the result by the index to have a value of NA when the birds are not moving 
+  function(p){
+    
+    ifelse(stationary, 
+           ab.arr[cbind(length(ybin)-.bincode(p[,2],ybin), .bincode(p[,1],xbin), t.code)],
+           0)
+  }
   #}
-
-#create the mask using the function 
-
-xlim <- range(x0[,1])+c(-5,5)
-ylim <- range(x0[,2])+c(-5,5)
-
-index <- ifelse(stationary, 1, 2)
-
-# testing #################
-#  dtsm <- sm[,c("Lon.50.","Lat.50.")]
-# # dtsm$index <- index
-# # dtx0$index <- index
-# # 
-#  i <- dtsm[,1:2]
-#  logp(i) 
-############################
-
-mask <- earthseaMask(xlim, ylim, n = 10, index=index)
-
-# We will give locations on land a higher prior 
-## Define the log prior for x and z
-logp <- function(p) {
-  f <- mask(p)
-  ifelse(is.na(f), -1000, log(2))
-}
-
-
-
-
+  
+  mask <- earthseaMask(xlim, ylim, n = 10, index=index)
+  
+  # We will give locations on land a higher prior 
+  ## Define the log prior for x and z
+  logp <- function(p) {
+    f <- mask(p)
+    ifelse(is.na(f), -1000, f)
+  }
 
 
 a <- anytime(names(ab.ras), asUTC = T, tz = 'UTC')
