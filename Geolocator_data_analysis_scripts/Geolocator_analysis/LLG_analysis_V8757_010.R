@@ -314,35 +314,42 @@ earthseaMask <- function(xlim, ylim, n = 2, pacific=FALSE) {
                rasterize(wrld_simpl, r, 1, silent = TRUE), 
                rasterize(elide(wrld_simpl, shift = c(360, 0)), r, 1, silent = TRUE))
   
-  #load polygon of blackpoll's range
-  load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Birdlife_int_Full_blackpoll_range_polygon.R")
-  #load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_Full_blackpoll_range_polygon.R")
+  #load weekly rasters of blackpoll warbler abundance
+  ab.ras <- load_raster("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_imports/2021/bkpwar",
+                        product = "abundance",
+                        period = "weekly",
+                        resolution = "lr")
   
-  #rasterize the polygon 
-  range.raster <- rasterize(BLI.range.poly, mask)
-  #range.raster <- rasterize(range.poly, mask)
+  names(ab.ras) <- as.numeric(strftime(names(ab.ras), format = "%j"))
+  names(ab.ras)[1] <- 0
+  names(ab.ras)[length(names(ab.ras))] <- 366
   
-  #Update the land mask 
-  mask <- range.raster * mask
+  #project the abundance rasters
+  ab.ras.pr <- project(ab.ras, as.character(crs(r)), method = "near") 
   
-  xbin = seq(xmin(mask),xmax(mask),length=ncol(mask)+1)
-  ybin = seq(ymin(mask),ymax(mask),length=nrow(mask)+1)
+  values(ab.ras.pr)[is.nan(values(ab.ras.pr))] <- 0
   
-  function(p) mask[cbind(length(ybin) -.bincode(p[,2],ybin),.bincode(p[,1],xbin))]
+  # get bincodes linking geolocator twilight measurement times to the weeks of  
+  # each abundance layer 
+  doy <- as.numeric(strftime(twl$Twilight, format = "%j"))
+  t.code <- .bincode(doy, as.numeric(names(ab.ras)))
   
+  xbin = seq(xmin(ab.ras.pr),xmax(ab.ras.pr),length=ncol(ab.ras.pr)+1)
+  ybin = seq(ymin(ab.ras.pr),ymax(ab.ras.pr),length=nrow(ab.ras.pr)+1)
+  ab.arr <- as.array(ab.ras.pr)
+  
+  function(p) ab.arr[cbind(length(ybin) -.bincode(p[,2],ybin),.bincode(p[,1],xbin), t.code)]
+
 }
 
 xlim <- range(x0[,1]+c(-5,5))
 ylim <- range(x0[,2]+c(-5,5))
 
-mask <- earthseaMask(xlim, ylim, n = 4)
+mask <- earthseaMask(xlim, ylim, n = 2)
 
 ## Define the log prior for x and z
 log.prior <- function(p) {
   f <- mask(p)
-  #ifelse(is.na(f), log(1), f)  # if f is the relative abundance within a grid square 
-  ifelse(is.na(f), log(1), log(2)) # if f indicates the distribution of the blackpoll warbler 
-  #ifelse(f | is.na(f), log(2), log(1)) #original function from Lisovski et al. 2020
 }
 
 # Run the Estelle model ########################################################
@@ -593,36 +600,47 @@ earthseaMask <- function(xlim, ylim, n = 2, pacific=FALSE, index) {
              rasterize(wrld_simpl, r, 1, silent = TRUE), 
              rasterize(elide(wrld_simpl,shift = c(360, 0)), r, 1, silent = TRUE))
   
-  #load polygon of blackpoll's range
-  load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Birdlife_int_Full_blackpoll_range_polygon.R")
-  #load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_Full_blackpoll_range_polygon.R")
+  #load weekly rasters of blackpoll warbler abundance
+  ab.ras <- load_raster("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_imports/2021/bkpwar",
+                        product = "abundance",
+                        period = "weekly",
+                        resolution = "lr")
   
-  #rasterize the polygon 
-  range.raster <- rasterize(BLI.range.poly, rs)
-  #range.raster <- rasterize(range.poly, rs)
+  names(ab.ras) <- as.numeric(strftime(names(ab.ras), format = "%j"))
+  names(ab.ras)[1] <- 0
+  names(ab.ras)[length(names(ab.ras))] <- 366
   
-  #Update the stationary mask 
-  rs <- range.raster * rs
+  #project the abundance rasters
+  ab.ras.pr <- project(ab.ras, crs(rs), method = "near") 
   
-  # make the movement raster the same resolution as the stationary raster, but allow the bird to go anywhere by giving all cells a value of 1
-  rm = rs; rm[] = 1
+  values(ab.ras.pr)[is.nan(values(ab.ras.pr))] <- NA
   
-  # stack the movement and stationary rasters on top of each other
-  mask = stack(rs, rm)
+  # get bincodes linking geolocator twilight measurment times to the weeks of  
+  # each abundance layer 
+  t.times <- (twl %>% filter(group != lag(group, default = -1)))$Twilight
+  doy <- as.numeric(strftime(t.times, format = "%j"))
+  t.code <- .bincode(doy, as.numeric(names(ab.ras)))
   
-  xbin = seq(xmin(mask),xmax(mask),length=ncol(mask)+1)
-  ybin = seq(ymin(mask),ymax(mask),length=nrow(mask)+1)
-  mask = as.array(mask)[,,sort(unique(index)),drop=FALSE]
+  xbin = seq(xmin(ab.ras.pr),xmax(ab.ras.pr),length=ncol(ab.ras.pr)+1)
+  ybin = seq(ymin(ab.ras.pr),ymax(ab.ras.pr),length=nrow(ab.ras.pr)+1)
+  ab.arr <- as.array(ab.ras.pr)
   
-  function(p) mask[cbind(length(ybin)-.bincode(p[,2],ybin), .bincode(p[,1],xbin), index)]
+  p <- dtx0
+  
+  # We multiply the result by the index to have a value of NA when the birds are not moving 
+  function(p){
+    
+    ifelse(stationary, 
+           ab.arr[cbind(length(ybin)-.bincode(p[,2],ybin), .bincode(p[,1],xbin), t.code)],
+           0)
+  }
 }
-
 #create the mask using the function 
 
 xlim <- range(x0[,1])+c(-5,5)
 ylim <- range(x0[,2])+c(-5,5)
 
-index <- ifelse(stationary, 1, 2)
+index <- ifelse(stationary, T, F)
 
 # testing #################
 #  dtsm <- sm[,c("Lon.50.","Lat.50.")]
@@ -639,9 +657,8 @@ mask <- earthseaMask(xlim, ylim, n = 10, index=index)
 ## Define the log prior for x and z
 logp <- function(p) {
   f <- mask(p)
-  ifelse(is.na(f), -1000, log(2))
+  ifelse(is.na(f), -1000, f)
 }
-
 # Define the Estelle model ####################################################
 model <- groupedThresholdModel(twl$Twilight,
                                twl$Rise,
@@ -802,8 +819,8 @@ sm$geo_id <- geo.id
 
 #add a column that categorizes the locations 
 sm <- sm %>% mutate(period= case_when(StartTime < anytime("2019-12-11 21:36:24", asUTC = T, tz = "GMT")  ~ "Post-breeding migration",
-                      StartTime >= anytime("2019-12-11 21:36:24", asUTC = T, tz = "GMT") & StartTime <= anytime("2020-04-21 09:21:54", asUTC = T, tz = "GMT") ~ "Non-breeding period",
-                      StartTime > anytime("2020-04-21 09:21:54", asUTC = T, tz = "GMT") ~ "Pre-breeding migration"))
+                                      StartTime >= anytime("2019-12-11 21:36:24", asUTC = T, tz = "GMT") & StartTime <= anytime("2020-04-21 09:21:54", asUTC = T, tz = "GMT") ~ "Non-breeding period",
+                                      StartTime > anytime("2020-04-21 09:21:54", asUTC = T, tz = "GMT") ~ "Pre-breeding migration"))
 
 #Save the output of the model 
 #save(sm, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))

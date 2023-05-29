@@ -270,5 +270,5 @@ ggsave("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Conferen
        dpi = 300,
        width = 30,
        height = 20,
-       units = c("cm"))
+       units = c("cm")
 
