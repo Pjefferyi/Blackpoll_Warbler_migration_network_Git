@@ -1,6 +1,6 @@
-# source: Deluca et al. 2019
-# tag number: blpw25
-# site: Whitehorse, Yukon
+# source: unpublished data 
+# tag number: 3254-008
+# site: Nome, Alaska
 
 #load packages
 require(readr)
@@ -33,7 +33,7 @@ rm(list=ls())
 # Load helper functions 
 source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis/Geolocator_analysis_helper_functions.R")
 
-geo.id <- "blpw25"
+geo.id <- "3254_008"
 
 # data directory
 dir <- paste0("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geolocator_data/", geo.id)
@@ -133,14 +133,12 @@ lightImage( tagdata = lig,
 tsimageDeploymentLines(twl$Twilight, lon.calib, lat.calib, offset, lwd = 2, col = "orange")
 
 #calibration period before the migration 
-tm.calib1 <- as.POSIXct(c("2016-07-01", "2016-08-20"), tz = "UTC")
-tm.calib2 <- as.POSIXct(c("2017-06-01", "2017-06-10"), tz = "UTC")
+tm.calib <- as.POSIXct(c("2016-08-01", "2016-08-20"), tz = "UTC")
 
-abline(v = tm.calib1, lwd = 2, lty = 2, col = "orange")
-abline(v = tm.calib2, lwd = 2, lty = 2, col = "orange")
+abline(v = tm.calib, lwd = 2, lty = 2, col = "orange")
 
 # subset of twilight times that are within the calibration period
-d_calib <- subset(twl, Twilight>=tm.calib1[1] & Twilight<=tm.calib1[2] | Twilight>=tm.calib2[1] & Twilight<=tm.calib2[2] )
+d_calib <- subset(twl, Twilight>=tm.calib[1] & Twilight<=tm.calib[2])
 
 # perform the calibration and verify the fit with the gamma or log distribution
 calib <- thresholdCalibration(d_calib$Twilight, d_calib$Rise, lon.calib, lat.calib, method = "gamma")
@@ -157,7 +155,7 @@ alpha <- calib[3:4]
 geo_twl <- export2GeoLight(twl)
 
 # this is just to find places where birds have been for a long time, would not use these parameters for stopover identification, detailed can be found in grouped model section
-cL <- changeLight(twl =geo_twl, quantile=0.9, summary = F, days = 10, plot = T)
+cL <- changeLight(twl=geo_twl, quantile=0.6, summary = F, days = 10, plot = T)
 # merge site helps to put sites together that are separated by single outliers.
 mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
 
@@ -175,11 +173,11 @@ end   <- max(which(mS$site == stationarySite))
 # Alternative calibration is not necessary
 
 # adjust the zenith angles calculated from the breeding sites for the non-breeding sites
-zenith0_ad <- zenith0 + zenith_sd - zenith
+zenith0_ad <- zenith0 + abs(zenith - zenith_sd)
 zenith_ad  <- zenith_sd
 
 # Find approximate  timing of arrival and departure from the nonbreeding grounds 
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol= 0.00)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol= 0.01)
 
 x0_r<- path$x
 z0 <- trackMidpts(x0_r)
@@ -213,7 +211,7 @@ zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith0,
                             Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad,
                             #Date > anytime(dep.nbr) ~ mean(c(zenith0, zenith0_ad))))
-Date > anytime(dep.nbr) ~ zenith0))
+                            Date > anytime(dep.nbr) ~ zenith0))
 
 zeniths0 <- zenith_twl_zero$zenith
 
@@ -221,7 +219,7 @@ zenith_twl_med <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith,
                             Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith_sd,
                             #Date > anytime(dep.nbr) ~ mean(c(zenith, zenith_sd))))
-Date > anytime(dep.nbr) ~ zenith))
+                            Date > anytime(dep.nbr) ~ zenith))
 
 zeniths_med <- zenith_twl_med$zenith
 
@@ -259,7 +257,7 @@ matplot(0:100, dgamma(0:100, beta[1], beta[2]),
         type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol=0.08)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol=0.085)
 
 #Adjusted tol until second stopover was located over North Carolina rather than further South. 
 x0 <- path$x
@@ -290,11 +288,13 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-cL <- changeLight(twl=geo_twl, quantile=0.86, summary = F, days = 3, plot = T)
+cL <- changeLight(twl=geo_twl, quantile=0.80, summary = F, days = 4, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
-#mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths0[1:length(zeniths0) -1], distThreshold = 500)
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths0[1:length(zeniths0) -1], distThreshold = 500)
+#mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths_med[1:length(zeniths_med) -1], distThreshold = 500)
+#mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith_sd, distThreshold = 500)
+#mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = 500)
 
 ##back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 
@@ -327,10 +327,10 @@ sitenum[stationary==F] <- 0
 x0 <- cbind(tapply(path$x[,1],twl$group,median), 
             tapply(path$x[,2],twl$group,median))
 
+
 #set fixed locations 
 fixedx <- rep_len(FALSE, length.out = nrow(x0))
-fixedx[1] <- TRUE
-fixedx[c(1, length(fixedx))] <- TRUE
+fixedx[1] <- TRUE #We only fix the first location because this track is incomplete
 
 x0[fixedx,1] <- lon.calib
 x0[fixedx,2] <- lat.calib
@@ -378,7 +378,9 @@ earthseaMask <- function(xlim, ylim, n = 2, pacific=FALSE, index) {
                         period = "weekly",
                         resolution = "lr")
   
-  names(ab.ras) <- as.numeric(strftime(names(ab.ras), format = "%W"))
+  names(ab.ras) <- as.numeric(strftime(names(ab.ras), format = "%j"))
+  names(ab.ras)[1] <- 0
+  names(ab.ras)[length(names(ab.ras))] <- 366
   
   #project the abundance rasters
   ab.ras.pr <- project(ab.ras, as.character(crs(rs)), method = "near") 
@@ -387,9 +389,9 @@ earthseaMask <- function(xlim, ylim, n = 2, pacific=FALSE, index) {
   
   # get bincodes linking geolocator twilight measurement times to the weeks of  
   # each abundance layer 
-  t.datetime <- (twl %>% filter(group != lag(group, default = -1)))$Twilight
-  t.weeks <- week(t.datetime)
-  t.code <- .bincode(t.weeks, as.numeric(names(ab.ras)))
+  t.times <- (twl %>% filter(group != lag(group, default = -1)))$Twilight
+  doy <- as.numeric(strftime(t.times, format = "%j"))
+  t.code <- .bincode(doy, as.numeric(names(ab.ras)))
   
   xbin = seq(xmin(ab.ras.pr),xmax(ab.ras.pr),length=ncol(ab.ras.pr)+1)
   ybin = seq(ymin(ab.ras.pr),ymax(ab.ras.pr),length=nrow(ab.ras.pr)+1)
@@ -412,7 +414,7 @@ xlim <- range(x0[,1])+c(-5,5)
 ylim <- range(x0[,2])+c(-5,5)
 
 index <- ifelse(stationary, T, F)
-mask <- earthseaMask(xlim, ylim, n = 10, index=index)
+mask <- earthseaMask(xlim, ylim, n = 1, index=index)
 
 # We will give locations on land a higher prior 
 ## Define the log prior for x and z
@@ -464,7 +466,7 @@ for (k in 1:3) {
   x.proposal <- mvnorm(chainCov(fit$x), s = 0.3)
   z.proposal <- mvnorm(chainCov(fit$z), s = 0.3)
   fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = chainLast(fit$x),
-                           z0 = chainLast(fit$z), iters = 500, thin = 20)
+                           z0 = chainLast(fit$z), iters = 300, thin = 20)
 }
 
 ## Check if chains mix
@@ -496,7 +498,7 @@ data(wrld_simpl)
 
 # empty raster of the extent
 r <- raster(nrows = 2 * diff(ylim), ncols = 2 * diff(xlim), xmn = xlim[1]-5,
-            xmx = xlim[2]+10, ymn = ylim[1]-5, ymx = ylim[2]+5, crs = proj4string(wrld_simpl))
+            xmx = xlim[2]+5, ymn = ylim[1]-5, ymx = ylim[2]+5, crs = proj4string(wrld_simpl))
 
 s <- slices(type = "intermediate", breaks = "week", mcmc = fit, grid = r)
 sk <- slice(s, sliceIndices(s))
@@ -580,9 +582,9 @@ points(stat.loc$Lon.50., stat.loc$Lat.50., pch = 16, cex = 1.5, col = "firebrick
 sm$geo_id <- geo.id
 
 #add a column that categorizes the locations (based on the groupthreshold model output)
-sm <- sm %>% mutate(period= case_when(StartTime < anytime("2016-10-22 10:44:58", asUTC = T, tz = "GMT")  ~ "Post-breeding migration",
-                                      StartTime >= anytime("2016-10-22 10:44:58", asUTC = T, tz = "GMT") & StartTime < anytime("2017-04-24 22:41:03" , asUTC = T, tz = "GMT") ~ "Non-breeding period",
-                                      StartTime > anytime("2017-04-24 22:41:03", asUTC = T, tz = "GMT") ~ "Pre-breeding migration"))
+sm <- sm %>% mutate(period= case_when(StartTime < anytime("2016-10-26 22:02:03", asUTC = T, tz = "GMT")  ~ "Post-breeding migration",
+                                      StartTime >= anytime("2016-10-26 22:02:03", asUTC = T, tz = "GMT") & StartTime < anytime("2017-04-04 09:47:43" , asUTC = T, tz = "GMT") ~ "Non-breeding period",
+                                      StartTime > anytime("2017-04-04 09:47:43", asUTC = T, tz = "GMT") ~ "Pre-breeding migration"))
 
 #Save the output of the model 
 #save(sm, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))

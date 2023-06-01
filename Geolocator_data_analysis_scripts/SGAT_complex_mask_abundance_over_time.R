@@ -55,7 +55,6 @@ mask <- earthseaMask(xlim, ylim, n = 4)
 ## Define the log prior for x and z
 log.prior <- function(p) {
   f <- mask(p)
-  
 }
 
 
