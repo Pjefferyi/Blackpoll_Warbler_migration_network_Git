@@ -14,11 +14,6 @@
   r = raster(nrows = n * diff(ylim), ncols = n * diff(xlim), xmn = xlim[1],
              xmx = xlim[2], ymn = ylim[1], ymx = ylim[2], crs = proj4string(wrld_simpl))
   
-  # create a raster for the stationary period, in this case by giving land a value of 1 and sea NA
-  mask = cover(rasterize(elide(wrld_simpl, shift = c(-360, 0)), r, 1, silent = TRUE),
-               rasterize(wrld_simpl, r, 1, silent = TRUE), 
-               rasterize(elide(wrld_simpl, shift = c(360, 0)), r, 1, silent = TRUE))
-  
   #load weekly rasters of blackpoll warbler abundance
   ab.ras <- load_raster("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_imports/2021/bkpwar",
                         product = "abundance",
@@ -34,16 +29,22 @@
   
   values(ab.ras.pr)[is.nan(values(ab.ras.pr))] <- 0
   
-  # get bincodes linking geolocator twilight measurement times to the weeks of  
-  # each abundance layer 
-  doy <- as.numeric(strftime(twl$Twilight, format = "%j"))
-  t.code <- .bincode(doy, as.numeric(names(ab.ras)))
-  
   xbin = seq(xmin(ab.ras.pr),xmax(ab.ras.pr),length=ncol(ab.ras.pr)+1)
   ybin = seq(ymin(ab.ras.pr),ymax(ab.ras.pr),length=nrow(ab.ras.pr)+1)
   ab.arr <- as.array(ab.ras.pr)
   
-  function(p) ab.arr[cbind(length(ybin) -.bincode(p[,2],ybin),.bincode(p[,1],xbin), t.code)]
+  function(p) {
+    
+    # get bincodes linking geolocator twilight measurement times to the weeks of  
+    # each abundance layer
+    # This has to be done here because x0 and z0 (midpoints) can have different lengths 
+    times <- seq(from = min(twl$Twilight), to = max(twl$Twilight), length.out = nrow(p))
+    doy <- as.numeric(strftime(times, format = "%j"))
+    t.code <- .bincode(doy, as.numeric(names(ab.ras)))
+    
+    ab.arr[cbind(length(ybin) -.bincode(p[,2],ybin),.bincode(p[,1],xbin), t.code)]
+    
+  } 
   
 #}
 
@@ -84,9 +85,7 @@ log.prior <- function(p) {
                         period = "weekly",
                         resolution = "lr")
   
-  names(ab.ras) <- as.numeric(strftime(names(ab.ras), format = "%j"))
-  names(ab.ras)[1] <- 0
-  names(ab.ras)[length(names(ab.ras))] <- 366
+  names(ab.ras) <- as.numeric(strftime(names(ab.ras), format = "%W"))
   
   #project the abundance rasters
   ab.ras.pr <- project(ab.ras, as.character(crs(rs)), method = "near") 
@@ -95,9 +94,9 @@ log.prior <- function(p) {
   
   # get bincodes linking geolocator twilight measurement times to the weeks of  
   # each abundance layer 
-  t.times <- (twl %>% filter(group != lag(group, default = -1)))$Twilight
-  doy <- as.numeric(strftime(t.times, format = "%j"))
-  t.code <- .bincode(doy, as.numeric(names(ab.ras)))
+  t.datetime <- (twl %>% filter(group != lag(group, default = -1)))$Twilight
+  t.weeks <- week(t.datetime)
+  t.code <- .bincode(t.weeks, as.numeric(names(ab.ras)))
   
   xbin = seq(xmin(ab.ras.pr),xmax(ab.ras.pr),length=ncol(ab.ras.pr)+1)
   ybin = seq(ymin(ab.ras.pr),ymax(ab.ras.pr),length=nrow(ab.ras.pr)+1)

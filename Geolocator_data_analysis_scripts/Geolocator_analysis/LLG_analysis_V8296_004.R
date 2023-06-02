@@ -293,7 +293,7 @@ abline(v = spring.equi, col = "orange")
 dev.off()
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol=0.12)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol=0.1)
 
 x0 <- path$x
 z0 <- trackMidpts(x0)
@@ -326,9 +326,9 @@ geo_twl <- export2GeoLight(twl)
 cL <- changeLight(twl=geo_twl, quantile=0.86, summary = F, days = 2, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths0[1: length(zeniths0) -1], distThreshold = 500)
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths_med[1: length(zeniths_med) -1], distThreshold = 500)
-
+# mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths0[1: length(zeniths0) -1], distThreshold = 500)
+# mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths_med[1: length(zeniths_med) -1], distThreshold = 500)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
 
 #back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 
@@ -621,8 +621,8 @@ sm <- sm %>% mutate(period= case_when(StartTime < anytime("2019-10-13 22:32:16",
                                 StartTime > anytime("2020-05-07 23:11:01", asUTC = T, tz = "GMT") ~ "Pre-breeding migration"))
 
 # Save the output of the SGAT group threshold model 
-# save(sm, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))
-# save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
+save(sm, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))
+save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 
 # load the output of the SGAT group threshold model 
 # load(file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))

@@ -608,8 +608,8 @@ sm <- sm %>% mutate(period= case_when(StartTime < anytime("2019-10-24 10:24:07",
                                       StartTime >= anytime("2019-10-24 10:24:07", asUTC = T, tz = "GMT") ~ "Non-breeding period"))
 
 #Save the output of the model 
-#save(sm, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))
-#save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
+save(sm, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))
+save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 
 #load the output of the model 
 #load(file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))

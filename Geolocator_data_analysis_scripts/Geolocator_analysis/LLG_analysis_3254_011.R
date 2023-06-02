@@ -244,12 +244,6 @@ abline(v = fall.equi, col = "orange")
 
 dev.off()
 
-# Movement model ###############################################################
-#this movement model should be based on the estimated migration speed of the blackpoll warbler 
-beta  <- c(0.7, 0.05)
-matplot(0:100, dgamma(0:100, beta[1], beta[2]),
-        type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
-
 # Initial Path #################################################################
 path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol=0.05)
 
@@ -370,9 +364,7 @@ earthseaMask <- function(xlim, ylim, n = 2, pacific=FALSE, index) {
                         period = "weekly",
                         resolution = "lr")
   
-  names(ab.ras) <- as.numeric(strftime(names(ab.ras), format = "%j"))
-  names(ab.ras)[1] <- 0
-  names(ab.ras)[length(names(ab.ras))] <- 366
+  names(ab.ras) <- as.numeric(strftime(names(ab.ras), format = "%W"))
   
   #project the abundance rasters
   ab.ras.pr <- project(ab.ras, as.character(crs(rs)), method = "near") 
@@ -381,9 +373,9 @@ earthseaMask <- function(xlim, ylim, n = 2, pacific=FALSE, index) {
   
   # get bincodes linking geolocator twilight measurement times to the weeks of  
   # each abundance layer 
-  t.times <- (twl %>% filter(group != lag(group, default = -1)))$Twilight
-  doy <- as.numeric(strftime(t.times, format = "%j"))
-  t.code <- .bincode(doy, as.numeric(names(ab.ras)))
+  t.datetime <- (twl %>% filter(group != lag(group, default = -1)))$Twilight
+  t.weeks <- week(t.datetime)
+  t.code <- .bincode(t.weeks, as.numeric(names(ab.ras)))
   
   xbin = seq(xmin(ab.ras.pr),xmax(ab.ras.pr),length=ncol(ab.ras.pr)+1)
   ybin = seq(ymin(ab.ras.pr),ymax(ab.ras.pr),length=nrow(ab.ras.pr)+1)
@@ -414,6 +406,7 @@ logp <- function(p) {
   f <- mask(p)
   ifelse(is.na(f), -1000, f)
 }
+
 # Define the Estelle model ####################################################
 model <- groupedThresholdModel(twl$Twilight,
                                twl$Rise,
@@ -577,8 +570,8 @@ sm <- sm %>% mutate(period= case_when(StartTime < anytime("2016-10-17 22:16:47 "
                                       StartTime >= anytime("2016-10-17 22:16:47 ", asUTC = T, tz = "GMT") ~ "Non-breeding period"))
 
 #Save the output of the model 
-#save(sm, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))
-#save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
+save(sm, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))
+save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 
 #load the output of the model 
 #load(file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))

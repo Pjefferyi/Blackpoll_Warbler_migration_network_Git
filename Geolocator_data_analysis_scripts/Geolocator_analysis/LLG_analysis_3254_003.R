@@ -240,13 +240,6 @@ abline(v = spring.equi, col = "orange")
 
 dev.off()
 
-# Movement model ###############################################################
-
-#this movement model should be based on the estimated migration speed of the blackpoll warbler 
-beta  <- c(0.7, 0.05)
-matplot(0:100, dgamma(0:100, beta[1], beta[2]),
-        type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
-
 # Initial Path #################################################################
 path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol=0.18)
 
@@ -572,8 +565,8 @@ sm <- sm %>% mutate(period= case_when(StartTime < anytime("2016-10-23 22:12:30",
                                       StartTime >= anytime("2016-10-23 22:12:30", asUTC = T, tz = "GMT") ~ "Non-breeding period"))
 
 #Save the output of the model 
-#save(sm, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))
-#save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
+save(sm, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))
+save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 
 #load the output of the model 
 #load(file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))

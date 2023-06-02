@@ -1,5 +1,5 @@
 # source: unpublished data 
-# tag number: V8757-026
+# tag number: V8296-026
 # site: Quebec
 
 #load packages
@@ -33,7 +33,7 @@ rm(list=ls())
 # Load helper functions 
 source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis/Geolocator_analysis_helper_functions.R")
 
-geo.id <- "v8296_026"
+geo.id <- "V8296_026"
 
 # data directory
 dir <- paste0("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geolocator_data/", geo.id)
