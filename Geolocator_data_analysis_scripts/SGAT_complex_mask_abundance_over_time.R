@@ -125,11 +125,21 @@ log.prior <- function(p) {
   
   
 # code trials ##################################################################
+.bincode(week(anytime("2019-02-04")), as.numeric(names(ab.ras)))
 
-a <- anytime(names(ab.ras), asUTC = T, tz = 'UTC')
-a[1] <- "2021-01-01"
-a[length(a)] <- "2021-12-31"
+ab.arr[cbind(length(ybin)-.bincode(-72.959498, ybin), .bincode(-72.959498,xbin), 4)]
 
-year(twl$Twilight) <- 2021
+x <- raster(ab.arr[,,4], crs = rs)
+values(x)[values(x) > 0 & !is.na(values(x))] <- 1
+plot(x)
 
-b <- .bincode(twl$Twilight, a)
+
+p <- x0
+coord <- cbind(length(ybin)-.bincode(p[,2],ybin), .bincode(p[,1],xbin))
+               
+ab.ras.pr2 <- ab.ras.pr$"41"         
+values(ab.ras.pr2)[values(ab.ras.pr2) > 0 & !is.na(values(ab.ras.pr2))] <- 1
+plot(ab.ras.pr2)
+
+ab.ras.pr2[cbind(length(ybin)-.bincode(p[,2],ybin), .bincode(p[,1],xbin))] <- 10 
+plot(ab.ras.pr2)

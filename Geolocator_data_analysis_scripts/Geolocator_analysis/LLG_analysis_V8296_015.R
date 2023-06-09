@@ -379,66 +379,19 @@ matplot(0:100, dgamma(0:100, beta[1], beta[2]),
         type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
 
 # Create a Land mask for the group model #######################################
-earthseaMask <- function(xlim, ylim, n = 2, pacific=FALSE, index) {
-  
-  if (pacific) { wrld_simpl <- nowrapRecenter(wrld_simpl, avoidGEOS = TRUE)}
-  
-  # create empty raster with desired resolution
-  r = raster(nrows = n * diff(ylim), ncols = n * diff(xlim), xmn = xlim[1],
-             xmx = xlim[2], ymn = ylim[1], ymx = ylim[2], crs = proj4string(wrld_simpl))
-  
-  # create a raster for the stationary period, in this case by giving land a value of 1
-  rs = cover(rasterize(elide(wrld_simpl, shift = c(-360, 0)), r, 1, silent = TRUE),
-             rasterize(wrld_simpl, r, 1, silent = TRUE), 
-             rasterize(elide(wrld_simpl,shift = c(360, 0)), r, 1, silent = TRUE))
-  
-  #load weekly rasters of blackpoll warbler abundance
-  ab.ras <- load_raster("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_imports/2021/bkpwar",
-                        product = "abundance",
-                        period = "weekly",
-                        resolution = "lr")
-  
-  names(ab.ras) <- as.numeric(strftime(names(ab.ras), format = "%W"))
-  
-  #project the abundance rasters
-  ab.ras.pr <- project(ab.ras, as.character(crs(rs)), method = "near") 
-  
-  values(ab.ras.pr)[is.nan(values(ab.ras.pr))] <- NA
-  
-  # get bincodes linking geolocator twilight measurement times to the weeks of  
-  # each abundance layer 
-  t.datetime <- (twl %>% filter(group != lag(group, default = -1)))$Twilight
-  t.weeks <- week(t.datetime)
-  t.code <- .bincode(t.weeks, as.numeric(names(ab.ras)))
-  
-  xbin = seq(xmin(ab.ras.pr),xmax(ab.ras.pr),length=ncol(ab.ras.pr)+1)
-  ybin = seq(ymin(ab.ras.pr),ymax(ab.ras.pr),length=nrow(ab.ras.pr)+1)
-  ab.arr <- as.array(ab.ras.pr)
-  
-  # If the bird becomes stationary, the prior for a location is selected from an eBird 
-  # relative abundance raster for the week during which the bird arrived at the location 
-  # While the bird is moving, the prior always has a value of 0
-  function(p){
-    
-    ifelse(stationary, 
-           ab.arr[cbind(length(ybin)-.bincode(p[,2],ybin), .bincode(p[,1],xbin), t.code)],
-           0)
-  }
-}
 
-#create the mask using the function 
-
+#Set limits of the mask
 xlim <- range(x0[,1])+c(-5,5)
 ylim <- range(x0[,2])+c(-5,5)
 
-index <- ifelse(stationary, T, F)
-mask <- earthseaMask(xlim, ylim, n = 10, index=index)
+index <- ifelse(stationary, 1, 2)
+mask <- earthseaMask(xlim, ylim, n = 1, index=index)
 
 # We will give locations on land a higher prior 
 ## Define the log prior for x and z
 logp <- function(p) {
   f <- mask(p)
-  ifelse(is.na(f), -1000, f)
+  ifelse(is.na(f), -1000, log(2))
 }
 
 # Define the Estelle model ####################################################

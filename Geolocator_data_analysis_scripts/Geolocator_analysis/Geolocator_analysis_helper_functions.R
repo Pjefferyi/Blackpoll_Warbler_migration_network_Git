@@ -124,37 +124,49 @@ shiftSpan <- function(twl, lig, period, est.zenith, dep.lon, dep.lat){
 
 # findLocData ##################################################################
 
-# Function to recover location data from the folders allocated to each geolocator 
-
-findLocData <- function(geo.ids = c(), check_col_length = F, ref_path = NA){
-
+findLocData <- function(geo.ids = c(), check_col_length = F, ref_path = NA, with_edits = c()){
+  
   # Create a list of path to all files with location data 
-  paths <- list.files("/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geolocator_data",
-                     pattern = "SGAT_GroupedThreshold_summary.csv", recursive = T, full.names = T )
+  folder_paths <- list.files("/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geolocator_data", full.names = T)
+  geo_names <- list.files("/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geolocator_data")
   
   location_set <- data.frame()
   
   # Check the number of columns in the dataset for each geolocator 
   if (check_col_length == T){
-    for (f in paths){
-      load(file = f)
-      print(f)
-      print(ncol(sm))
+    for (i in seq(1:length(folder_paths))){
+      if (geo_names[i] %in% with_edits & geo_names[i] %in% geo.ids){
+        file_path <- paste0(folder_paths[i], "/",geo_names[i],"_SGAT_GroupedThreshold_summary_fall_edit.csv")
+        load(file = file_path)
+        print(ncol(sm.fall.edit))
+      }
+      if (geo_names[i] %in% geo.ids){
+        file_path <- paste0(folder_paths[i], "/",geo_names[i],"_SGAT_GroupedThreshold_summary.csv")
+        load(file = file_path)
+        print(folder_paths[i])
+        print(ncol(sm))
+      }
     }
     return()
   }
   
-  # For loop to load the data from each file and add it to dataset 
-  for (f in paths){
-    
-    #add the geolocator to the larger dataset if it is in geo_ids
-    load(file = f)
-    if (length(geo.ids) == 0 | sm$geo_id[1] %in% geo.ids) {
-      location_set <- rbind(location_set, sm) 
+  
+  for (i in seq(1:length(folder_paths))){
+    # load the data from each file and add it to dataset if it is in geo_ids 
+    if (geo_names[i] %in% geo.ids){
+      # some of the data has edits during durign the fall transoceanic flight
+      if (geo_names[i] %in% with_edits){
+        file_path <- paste0(folder_paths[i], "/",geo_names[i],"_SGAT_GroupedThreshold_summary_fall_edit.csv")
+        load(file = file_path)
+        location_set <- rbind(location_set, sm.fall.edit)
+      } else {
+        file_path <- paste0(folder_paths[i], "/",geo_names[i],"_SGAT_GroupedThreshold_summary.csv")
+        load(file = file_path)
+        location_set <- rbind(location_set, sm)
+      } 
     }
   }
   
-
   # Add reference data 
   if (!is.na(ref_path)){
     
@@ -222,71 +234,71 @@ plotLocVec <- function(data, stati_only = F, timing = c("Post-breeding migration
 
 #call for all geolocators
 
-ref_path <- "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv"   
-
-geo.all <- findLocData(geo.ids = c("V8757_010",
-                              "V8296_004",
-                              "V8296_005",
-                              "V8296_006",
-                              "V8757_055",
-                              "V8757_018",
-                              "V8757_021",
-                              "V8296_015",
-                              "V8296_017",
-                              "V8296_026",
-                              "V8296_025",
-                              "V8296_007",
-                              "V8296_008",
-                              "V8757_019",
-                              "V8757_096",
-                              "V8757_134",
-                              "V8757_029",
-                              "V8757_078",
-                              "blw09",
-                              "blpw12",
-                              "3254_001",
-                              "4068_014",
-                              "blpw14",
-                              "3254_003",
-                              "3254_008",
-                              "3254_011",
-                              "3254_057",
-                              "blpw15",
-                              "blpw25",
-                              "4105_008",
-                              "4105_009",
-                              "4105_016",
-                              "4105_017",
-                              "4210_002",
-                              "4210_004",
-                              "4210_006",
-                              "4210_010",
-                              "A",
-                              "B",
-                              "C",
-                              "D",
-                              "WRMA04173"), check_col_length = F, ref_path = ref_path)
-
-
-geo.church <- geo.all[(geo.all$study.site == "Churchill, Manitoba"),]
-geo.nome <- geo.all[(geo.all$study.site == "Nome, Alaska"),]
-geo.denali <- geo.all[(geo.all$study.site == "Denali, Alaska"),]
-geo.whitehorse <- geo.all[(geo.all$study.site == "Whitehorse, Yukon"),]
-geo.west <- geo.all[(geo.all$study.site %in% c("Whitehorse, Yukon", "Nome, Alaska", "Denali, Alaska")),]
-geo.quebec <- geo.all[(geo.all$study.site == "Quebec"),]
-geo.2015 <- geo.all[(geo.all$Study == "Deluca et al. 2015"),]
-
-geo.sample <- findLocData(geo.ids = c("V8757_134",  "blpw14", "4210_004", "A", "3254_057", "V8757_029"), check_col_length = F, ref_path = ref_path)
-
-geos <- geo.2015
+# ref_path <- "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv"   
+# 
+# geo.all <- findLocData(geo.ids = c("V8757_010",
+#                               "V8296_004",
+#                               "V8296_005",
+#                               "V8296_006",
+#                               "V8757_055",
+#                               "V8757_018",
+#                               "V8757_021",
+#                               "V8296_015",
+#                               "V8296_017",
+#                               "V8296_026",
+#                               "V8296_025",
+#                               "V8296_007",
+#                               "V8296_008",
+#                               "V8757_019",
+#                               "V8757_096",
+#                               "V8757_134",
+#                               "V8757_029",
+#                               "V8757_078",
+#                               "blw09",
+#                               "blpw12",
+#                               "3254_001",
+#                               "4068_014",
+#                               "blpw14",
+#                               "3254_003",
+#                               "3254_008",
+#                               "3254_011",
+#                               "3254_057",
+#                               "blpw15",
+#                               "blpw25",
+#                               "4105_008",
+#                               "4105_009",
+#                               "4105_016",
+#                               "4105_017",
+#                               "4210_002",
+#                               "4210_004",
+#                               "4210_006",
+#                               "4210_010",
+#                               "A",
+#                               "B",
+#                               "C",
+#                               "D",
+#                               "WRMA04173"), check_col_length = F, ref_path = ref_path)
+# 
+# 
+# geo.church <- geo.all[(geo.all$study.site == "Churchill, Manitoba"),]
+# geo.nome <- geo.all[(geo.all$study.site == "Nome, Alaska"),]
+# geo.denali <- geo.all[(geo.all$study.site == "Denali, Alaska"),]
+# geo.whitehorse <- geo.all[(geo.all$study.site == "Whitehorse, Yukon"),]
+# geo.west <- geo.all[(geo.all$study.site %in% c("Whitehorse, Yukon", "Nome, Alaska", "Denali, Alaska")),]
+# geo.quebec <- geo.all[(geo.all$study.site == "Quebec"),]
+# geo.2015 <- geo.all[(geo.all$Study == "Deluca et al. 2015"),]
+# 
+# geo.sample <- findLocData(geo.ids = c("V8757_134",  "blpw14", "4210_004", "A", "3254_057", "V8757_029"), check_col_length = F, ref_path = ref_path)
+# 
+# geos <- geo.all
 
 # plotLocVec(data = geos, er_bars =  T, stati_only = T, legend = T,timing = c("Post-breeding migration", "Non-breeding period"))
-# plotLocVec(data = geos, er_bars =  F, stati_only = F, legend = T,timing = c("Pre-breeding migration", "Non-breeding period"))
+# plotLocVec(data = geos, er_bars =  T, stati_only = T, legend = T,timing = c("Pre-breeding migration", "Non-breeding period"))
 # plotLocVec(data = geos, er_bars =  T,stati_only = T, legend = T,timing = c("Non-breeding period"))
 # plotLocVec(data = geos, er_bars =  T,stati_only = T, legend = T, timing = c("Post-breeding migration", "Pre-breeding migration", "Non-breeding period"))
 
 
-# findslices ##################################################################
+# findSlicesData ##################################################################
 
 # Function to recover thedata required to obtain the density estimates for each geolocator 
 
@@ -349,7 +361,6 @@ findSlicesData <- function(periods, xlim = c(-170, -40), ylim = c(-40, 75)  ){
 # plotBreedSites ##################################################################
 
 # Function to plot the breeding sites for all blackpoll warblers in the analysis
-
 plotBreedSites <- function(){
   
   #load location data
@@ -371,18 +382,124 @@ plotBreedSites <- function(){
   return(brd.sites)
 }  
 
+# earthseaMask ####################################################################
 
-# getAbData ####################################################################
-
-# Function to extract the weekly abundance rasters for the Blackpoll warbler from 
-# eBird, and consolidate them into a single array 
-
-#ebirdst_download(species = "bkpwar", path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_imports")
-
-getAbData <- function(){
+# Function to create a spatial mask
+earthseaMask <- function(xlim, ylim, n = 2, pacific=FALSE, index) {
   
- ab.ras <- load_raster("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_imports/2021/bkpwar",
-             product = "abundance",
-             period = "weekly",
-             resolution = "lr")
+  if (pacific) { wrld_simpl <- nowrapRecenter(wrld_simpl, avoidGEOS = TRUE)}
+  
+  # create empty raster with desired resolution
+  r = raster(nrows = n * diff(ylim), ncols = n * diff(xlim), xmn = xlim[1],
+             xmx = xlim[2], ymn = ylim[1], ymx = ylim[2], crs = proj4string(wrld_simpl))
+  
+  # create a raster for the stationary period, in this case by giving land a value of 1
+  rs = cover(rasterize(elide(wrld_simpl, shift = c(-360, 0)), r, 1, silent = TRUE),
+             rasterize(wrld_simpl, r, 1, silent = TRUE), 
+             rasterize(elide(wrld_simpl,shift = c(360, 0)), r, 1, silent = TRUE))
+  
+  #load polygon of blackpoll's range
+  load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Birdlife_int_Full_blackpoll_range_polygon.R")
+
+  #rasterize the polygon 
+  range.raster <- rasterize(BLI.range.poly, rs)
+  
+  #Update the stationary mask 
+  rs <- range.raster * rs
+  
+  # make the movement raster the same resolution as the stationary raster, but allow the bird to go anywhere by giving all cells a value of 1
+  rm = rs; rm[] = 1
+  
+  # stack the movement and stationary rasters on top of each other
+  mask = stack(rs, rm)
+  
+  xbin = seq(xmin(mask),xmax(mask),length=ncol(mask)+1)
+  ybin = seq(ymin(mask),ymax(mask),length=nrow(mask)+1)
+  mask = as.array(mask)[,,sort(unique(index)),drop=FALSE]
+  
+  function(p) mask[cbind(length(ybin)-.bincode(p[,2],ybin), .bincode(p[,1],xbin), index)]
 }
+
+# Test calls  for earthseaMask  ###############################################
+
+# arguments must be defined using geolocator data
+# mask <- earthseaMask(xlim, ylim, n = 10, index=index)
+
+# runGeoScripts ################################################################
+
+#Function to run all geolocaro analysis scripts
+
+runGeoScripts <- function(scripts = c()){
+  
+  # Create a list of path to all files with location data 
+  paths <- list.files("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis",
+                      pattern = "LLG_analysis", recursive = T, full.names = T )
+  
+  # For loop to load the data from each file and add it to dataset 
+  for (i in paths){
+    
+    script.name <- i
+    
+    if(script.name %in% scripts){
+      print(i)
+      source(i)
+      }
+    }
+  }
+
+# Test calls to runGeoScripts ##################################################
+
+paths <- list.files("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis",
+                    pattern = "LLG_analysis", recursive = T, full.names = T )
+# scr.list <- paths[37:45]
+# runGeoScripts(scripts = scr.list)
+
+# insertLoc ####################################################################
+
+# Function to add stopovers over the carribean that were undetected due to the equinox 
+
+insertLoc <- function(data, lat.at.loc, start.date, end.date, period, thresh.locs, twl, geo_id, sep1, sep2){
+  
+  # threshold location estimates 
+  thresh.loc.es <- data.frame(x = thresh.locs[,1], datetime = twl$Twilight) 
+  
+  # find the longitude for the stopover 
+  lon.at.loc <- filter(thresh.loc.es, thresh.loc.es$datetime >= start.date & thresh.loc.es$datetime <= end.date)$x
+  
+  # Add values to the row that will be inserted
+  new.loc <- data.frame(StartTime = start.date,
+                        EndTime = end.date,
+                        Lon.50. = mean(lon.at.loc),
+                        Lon.2.5. = quantile(lon.at.loc, 0.025)[[1]],
+                        Lon.97.5. = quantile(lon.at.loc, 0.975)[[1]],
+                        Lat.50. = lat.at.loc,
+                        Lat.2.5. = NA,
+                        Lat.97.5. = NA,
+                        sitenum = -1,
+                        duration = as.numeric(difftime(end.date, start.date), unit = "days"),
+                        geo_id = geo_id,
+                        period = period)
+  
+  # remove overlapping locations recorded while bird was moving
+  data.mod <- data %>% filter(!(StartTime > start.date & StartTime < end.date & duration == 0) |
+                                !(StartTime > start.date & EndTime < end.date))
+  
+  # Adjust stationary location times  
+  data.mod <- data.mod %>% mutate(StartTime = if_else((StartTime < start.date & EndTime > end.date) |
+                                                        (StartTime > start.date & StartTime < end.date & EndTime > end.date),
+                                                      anytime(end.date) + sep2,
+                                                      StartTime)) %>%
+    mutate(EndTime = if_else((StartTime > start.date & EndTime < end.date) |
+                               (EndTime > start.date & EndTime > end.date & StartTime < start.date),
+                             anytime(start.date) - sep1,
+                             EndTime))
+  
+  #Add the new row (location) and order data by date
+  data.mod <- rbind(data.mod, new.loc) %>% arrange(StartTime)
+  
+  # edit the site numbers 
+  data.mod[(data.mod$sitenum != 0), ]$sitenum <- seq(1, nrow(data.mod[(data.mod$sitenum != 0), ]), 1)
+  
+  return(data.mod)
+}
+

@@ -3,6 +3,8 @@
 #Load the helper functions (and associated packages)
 source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis/Geolocator_analysis_helper_functions.R")
 
+#path to reference file
+ref_path <- "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv"   
 
 # Extract location data for fall migratory routes
 geo.all <- findLocData(geo.ids = c("V8757_010",
@@ -21,8 +23,8 @@ geo.all <- findLocData(geo.ids = c("V8757_010",
                                    "V8757_019",
                                    "V8757_096",
                                    "V8757_134",
-                                   "V8757_029",
-                                   "V8757_078",
+                                    "V8757_029",
+                                    "V8757_078",
                                    "blw09",
                                    "blpw12",
                                    "3254_001",
@@ -34,16 +36,20 @@ geo.all <- findLocData(geo.ids = c("V8757_010",
                                    "3254_057",
                                    "blpw15",
                                    "blpw25",
-                                   "4105_008",
-                                   "4105_009",
-                                   "4105_016",
-                                   "4105_017",
-                                   "4210_002",
-                                   "4210_004",
-                                   "4210_006",
-                                   "4210_010",
-                                   #"WRMA04173",
-                                   "A"), check_col_length = F, ref_path = ref_path)
+                                    "4105_008",
+                                    "4105_009",
+                                    "4105_016",
+                                    "4105_017",
+                                    "4210_002",
+                                    "4210_004",
+                                    "4210_006",
+                                    "4210_010",
+                                   # "WRMA04173",
+                                    #"A",
+                                    #"B",
+                                    "C",
+                                    "D",
+                                   "E"), check_col_length = F, ref_path = ref_path)
 
 #remove any NA values
 geo.all <- geo.all[(!is.na(geo.all$Lon.50.) & !is.na(geo.all$"Lat.50.")),]
@@ -77,7 +83,7 @@ symb.size <- c(4, 4, 4)
 #ggplot(spData::world[(spData::world$continent %in% c("North America", "South America")),]) +
 fig1 <- ggplot(st_as_sf(wrld_simpl))+
   geom_sf(colour = NA, fill = "lightgray") +
-  coord_sf(xlim = c(-170, -30),ylim = c(-8, 70)) +
+  coord_sf(xlim = c(-170, -30),ylim = c(-15, 70)) +
   #geom_errorbar(data = geo.fall.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), color = "red", width=1, alpha = 0.5) + 
   #geom_errorbar(data = geo.fall.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5., color = Range_region), width=1, alpha = 0.2) + 
   geom_path(data = geo.fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, color = Range_region, ), alpha = 0.5) +
@@ -96,7 +102,9 @@ fig1 <- ggplot(st_as_sf(wrld_simpl))+
   theme(legend.position = c(0.2, 0.4)) +
   xlab("Longitude") + 
   ylab("Latitude")+
-  theme(text = element_text(size = 20))
+  theme(text = element_text(size = 20)) 
+  # + geom_text(data = geo.fall.stat, aes(x = Lon.50., y = Lat.50., group = geo_id),
+  #         label = geo.fall.stat$geo_id, size = 3)
 
 ggsave("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Conferences/OE3C_2023/Poster/Figure1.png",
        fig1,
@@ -144,6 +152,10 @@ geo.all <- findLocData(geo.ids = c("V8757_010",
                                    #"4210_006",
                                    #"4210_010",
                                    "A",
+                                   "B",
+                                   #"C",
+                                   #"D",
+                                   "E",
                                    "WRMA04173"), check_col_length = F, ref_path = ref_path)
 
 #remove any NA values
