@@ -230,7 +230,7 @@ z0 <- trackMidpts(x0_r)
 save(x0_r, file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
 
 # Check the following times of arrival and departure using a plot 
-arr.nbr <- "2019-10-06"  
+arr.nbr <- "2019-10-08"  
 dep.nbr <- "2020-04-28" 
 
 # open jpeg
@@ -584,37 +584,38 @@ write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Gue
 
 # Examine twilights ############################################################
 
-# #load initial path x0
-# load(file = paste0(dir,"/", geo.id, "_initial_path.csv"))
-# 
-# #plot of light transitions during the fall migration 
-# par(mfrow=c(2,1))
-# plot(twl$Twilight[100:280], x0[100:280,1], type = "o", ylab = "longitude", xlab = "time")
-# plot(twl$Twilight[100:280], x0[100:280,2], type = "o", ylab = "latitude", xlab = "time")
-# 
-# plot(twl$Twilight, x0[,1], type = "o", ylab = "longitude", xlab = "time")
-# plot(twl$Twilight, x0[,2], type = "o", ylab = "latitude", xlab = "time")
-# 
-# #Plot light transitions during fall transoceanic flight
-# par(cex.lab=1.5)
-# par(cex.axis=1.5)
-# par(mfrow=c(3,1), mar = c(5,5,0.1,5))
-# plot(lig$Date[lig$Date < "2019-10-15" & lig$Date > "2019-09-15" ], lig$Light[lig$Date < "2019-10-15" & lig$Date > "2019-09-15" ], type = "o",
-#      ylab = "Light level", xlab = "Time")
-# rect(anytime("2019-09-27"), min(lig$Light)-2, anytime("2019-09-30"), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
-# rect(anytime("2019-10-03"), min(lig$Light)-2, anytime("2019-10-07"), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
-# 
-# plot(twl$Twilight[twl$Twilight< "2019-10-15" & twl$Twilight > "2019-09-15"], x0[,1][twl$Twilight< "2019-10-15" & twl$Twilight > "2019-09-15"],
-#      ylab = "Longitude", xlab = "Time")
-# rect(anytime("2019-09-27"), min(x0[,1])-2, anytime("2019-09-30"), max(x0[,1])+2, col = alpha("yellow", 0.2), lty=0)
-# rect(anytime("2019-10-03"), min(x0[,1])-2, anytime("2019-10-07"), max(x0[,1])+2, col = alpha("yellow", 0.2), lty=0)
-# 
-# plot(twl$Twilight[twl$Twilight< "2019-10-15" & twl$Twilight > "2019-09-15"], x0[,2][twl$Twilight< "2019-10-15" & twl$Twilight > "2019-09-15"],
-#        ylab = "Latitude", xlab = "Time")
-# rect(anytime("2019-09-27"), min(x0[,2])-2, anytime("2019-09-30"), max(x0[,2])+2, col = alpha("yellow", 0.2), lty=0) 
-# rect(anytime("2019-10-03"), min(x0[,2])-2, anytime("2019-10-07"), max(x0[,2])+2, col = alpha("yellow", 0.2), lty=0)
-# par(cex.axis=1.0)
-# par(cex.lab=1.0)
-# 
+#load the adjusted threshold path path x0_ad
+load(file = paste0(dir,"/", geo.id, "adjusted_initial_path_raw.csv"))
+
+#Fall transoceanic flight
+start <- "2019-09-20"
+end <- "2019-10-30"
+
+# Plot lat, lon and light transitions  
+jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition"), width = 1024 , height = 990)
+
+par(cex.lab=1.4)
+par(cex.axis=1.4)
+par(mfrow=c(3,1), mar = c(5,5,0.1,5))
+plot(lig$Date[lig$Date > start & lig$Date < end], lig$Light[lig$Date > start & lig$Date < end], type = "o",
+     ylab = "Light level", xlab = "Time")
+rect(anytime("2019-10-04"), min(lig$Light)-2, anytime("2019-10-06"), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime("2019-10-07 12:00"), min(lig$Light)-2, anytime("2019-10-07 24:00"), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
+
+plot(twl$Twilight[twl$Twilight> start & twl$Twilight < end], x0_ad[,1][twl$Twilight > start & twl$Twilight < end],
+     ylab = "Longitude", xlab = "Time")
+rect(anytime("2019-10-04"), min(x0_ad[,1])-2, anytime("2019-10-06"), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime("2019-10-07 12:00"), min(x0_ad[,1])-2, anytime("2019-10-07 24:00"), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
+ 
+plot(twl$Twilight[twl$Twilight > start & twl$Twilight < end], x0_ad[,2][twl$Twilight > start & twl$Twilight < end],
+     ylab = "Latitude", xlab = "Time")
+rect(anytime("2019-10-04"), min(x0_ad[,2])-2, anytime("2019-10-06"), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime("2019-10-07 12:00"), min(x0_ad[,2])-2, anytime("2019-10-07 24:00"), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
+par(cex.lab= 1)
+par(cex.axis= 1)
+
+dev.off()
 
 
+# This bird may have performed a stopover in the Carribean, but it was likely short. 
+# The exact timing of the stopover is difficult to ascertain due to the lack of variation in latitude. 

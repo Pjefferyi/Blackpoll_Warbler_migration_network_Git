@@ -124,7 +124,7 @@ shiftSpan <- function(twl, lig, period, est.zenith, dep.lon, dep.lat){
 
 # findLocData ##################################################################
 
-findLocData <- function(geo.ids = c(), check_col_length = F, ref_path = NA, with_edits = c()){
+findLocData <- function(geo.ids = c(), check_col_length = F, ref_path = c(), with_edits = c()){
   
   # Create a list of path to all files with location data 
   folder_paths <- list.files("/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geolocator_data", full.names = T)
@@ -198,6 +198,9 @@ findLocData <- function(geo.ids = c(), check_col_length = F, ref_path = NA, with
 
 # path <- "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv"   
 # r3 <- findLocData(geo.ids = c("V8757_010", "V8296_004"), check_col_length = F, ref_path = path)
+
+# path <- "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv"   
+# r4 <- findLocData(geo.ids = c("V8757_010", "V8296_004", "V8296_005"), check_col_length = F, ref_path = path, with_edits = c("V2896_005") )
 
 # MapLocData ###################################################################
 

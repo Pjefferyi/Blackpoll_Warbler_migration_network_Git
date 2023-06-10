@@ -186,8 +186,8 @@ z0 <- trackMidpts(x0_r)
 save(x0_r, file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
 
 # Check the following times of arrival and departure using a plot 
-arr.nbr <- "2016-10-24" 
-dep.nbr <- "2017-04-25" 
+arr.nbr <- "2016-10-12" 
+dep.nbr <- "2017-04-20" 
 
 # open jpeg
 jpeg(paste0(dir, "/", geo.id, "_LatLon_scatterplot.png"), width = 1024, height = 990)

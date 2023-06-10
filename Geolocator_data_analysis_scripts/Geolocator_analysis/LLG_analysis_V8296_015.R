@@ -572,16 +572,38 @@ write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Gue
 
 # Examine twilights ############################################################
 
-# #load the raw trheshold location estimate
-# load(file = paste0(dir,"/", geo.id, "_initial_path.csv"))
-# 
-# #plot of light transitions throughout the fall migration 
-# par(mfrow=c(2,1))
-# plot(twl$Twilight, x0_r[,1], type = "o", ylab = "longitude", xlab = "time")
-# plot(twl$Twilight, x0_r[,2], type = "o", ylab = "latitude", xlab = "time")
-# 
-# #Fall transoceanic flight 
-# par(mfrow=c(3,1))
-# plot(lig$Date[lig$Date < "2019-10-21" & lig$Date > "2019-09-10"], lig$Light[lig$Date < "2019-10-21"& lig$Date > "2019-09-10"], type = "o")
-# plot(twl$Twilight[twl$Twilight< "2019-10-21" & twl$Twilight > "2019-09-10"], x0[,1][twl$Twilight< "2019-10-21"& twl$Twilight > "2019-09-10"])
-# plot(twl$Twilight[twl$Twilight< "2019-10-21" & twl$Twilight > "2019-09-10"], x0[,2][twl$Twilight< "2019-10-21"& twl$Twilight > "2019-09-10"])
+#load the adjusted threshold path path x0_ad
+load(file = paste0(dir,"/", geo.id, "adjusted_initial_path_raw.csv"))
+
+#Fall transoceanic flight
+start <- "2019-09-10"
+end <- "2019-10-30"
+
+# Plot lat, lon and light transitions  
+jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition"), width = 1024 , height = 990)
+
+par(cex.lab=1.4)
+par(cex.axis=1.4)
+par(mfrow=c(3,1), mar = c(5,5,0.1,5))
+plot(lig$Date[lig$Date > start & lig$Date < end], lig$Light[lig$Date > start & lig$Date < end], type = "o",
+     ylab = "Light level", xlab = "Time")
+rect(anytime("2019-09-29"), min(lig$Light)-2, anytime("2019-10-03"), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime("2019-10-17 12:00"), min(lig$Light)-2, anytime("2019-10-17 24:00"), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
+
+plot(twl$Twilight[twl$Twilight> start & twl$Twilight < end], x0_ad[,1][twl$Twilight > start & twl$Twilight < end],
+     ylab = "Longitude", xlab = "Time")
+rect(anytime("2019-09-29"), min(x0_ad[,1])-2, anytime("2019-10-03"), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime("2019-10-17 12:00"), min(x0_ad[,1])-2, anytime("2019-10-17 24:00"), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
+
+plot(twl$Twilight[twl$Twilight > start & twl$Twilight < end], x0_ad[,2][twl$Twilight > start & twl$Twilight < end],
+     ylab = "Latitude", xlab = "Time")
+rect(anytime("2019-09-29"), min(x0_ad[,2])-2, anytime("2019-10-03"), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime("2019-10-17 12:00"), min(x0_ad[,2])-2, anytime("2019-10-17 24:00"), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
+par(cex.lab= 1)
+par(cex.axis= 1)
+
+dev.off()
+
+# A stopover over the Caribbean was identified between approximately 2019-10-03 and 2019-10-79
+# we will not add it since a stopover was already identified at this location by SGAT. 
+

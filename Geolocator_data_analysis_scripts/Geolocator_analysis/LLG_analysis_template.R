@@ -231,8 +231,8 @@ z0 <- trackMidpts(x0_r)
 save(x0_r, file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
 
 # Check the following times of arrival and departure using a plot 
-arr.nbr <- "2019-10-22" 
-dep.nbr <- "2020-05-18" 
+arr.nbr <- "2019-10-15" 
+dep.nbr <- "2020-05-12" 
 
 # open jpeg
 jpeg(paste0(dir, "/", geo.id, "_LatLon_scatterplot.png"), width = 1024, height = 990)
@@ -362,7 +362,8 @@ x0 <- cbind(tapply(path$x[,1],twl$group,median),
 
 #set fixed locations 
 fixedx <- rep_len(FALSE, length.out = nrow(x0))
-fixedx[1] <- TRUE #We only fix the first point because this track is incomplete 
+fixedx[1] <- TRUE
+fixedx[c(1, length(fixedx))] <- TRUE
 
 x0[fixedx,1] <- lon.calib
 x0[fixedx,2] <- lat.calib
@@ -584,42 +585,39 @@ write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Gue
 
 # Examine twilights ############################################################
 
-# #load the initial path path x0
-# load(file = paste0(dir,"/", geo.id, "_initial_path.csv"))
-# 
-# #plot of light transitions throughout the fall migration 
-# par(mfrow=c(2,1))
-# plot(twl$Twilight, x0[,1], type = "o", ylab = "longitude", xlab = "time")
-# #rect(anytime("2019-10-05"), min(x0[,1])-2, anytime("2019-10-07"), max(x0[,1])+2, col = alpha("yellow", 0.2), lty=0)
-# #rect(anytime("2019-10-11"), min(x0[,1])-2, anytime("2019-10-12"), max(x0[,1])+2, col = alpha("yellow", 0.2), lty=0)
-# 
-# plot(twl$Twilight, x0[,2], type = "o", ylab = "latitude", xlab = "time")
-# #rect(anytime("2019-10-05"), min(x0[,2])-2, anytime("2019-10-07"), max(x0[,2])+2, col = alpha("yellow", 0.2), lty=0)
-# #rect(anytime("2019-10-11"), min(x0[,2])-2, anytime("2019-10-12"), max(x0[,2])+2, col = alpha("yellow", 0.2), lty=0)
-# 
-# #Fall transoceanic flight 
-# 
-# start <- "2019-09-20"
-# end <- "2019-10-29"
-# 
-# par(cex.lab=1.4)
-# par(cex.axis=1.4)
-# par(mfrow=c(3,1), mar = c(5,5,0.1,5))
-# plot(lig$Date[lig$Date > start & lig$Date < end], lig$Light[lig$Date > start & lig$Date < end], type = "o",
-#      ylab = "Light level", xlab = "Time")
-# #rect(anytime("2019-10-05"), min(lig$Light)-2, anytime("2019-10-07"), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
-# #rect(anytime("2019-10-11"), min(lig$Light)-2, anytime("2019-10-12"), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
-# 
-# 
-# plot(twl$Twilight[twl$Twilight> start & twl$Twilight < end], x0[,1][twl$Twilight > start & twl$Twilight < end],
-#      ylab = "Longitude", xlab = "Time")
-# #rect(anytime("2019-10-05"), min(x0[,1])-2, anytime("2019-10-07"), max(x0[,1])+2, col = alpha("yellow", 0.2), lty=0)
-# #rect(anytime("2019-10-11"), min(x0[,1])-2, anytime("2019-10-12"), max(x0[,1])+2, col = alpha("yellow", 0.2), lty=0)
-# 
-# 
-# plot(twl$Twilight[twl$Twilight > start & twl$Twilight < end], x0_r[,2][twl$Twilight > start & twl$Twilight < end],
-#      ylab = "Latitude", xlab = "Time")
-# #rect(anytime("2019-10-05"), min(x0[,2])-2, anytime("2019-10-07"), max(x0[,2])+2, col = alpha("yellow", 0.2), lty=0)
-# #rect(anytime("2019-10-11"), min(x0[],2])-2, anytime("2019-10-12"), max(x[,2])+2, col = alpha("yellow", 0.2), lty=0)
-# par(cex.lab= 1)
-# par(cex.axis= 1)
+#load the adjusted threshold path path x0_ad
+load(file = paste0(dir,"/", geo.id, "adjusted_initial_path_raw.csv"))
+
+#Fall transoceanic flight
+start <- "2019-09-15"
+end <- "2019-10-19"
+
+# Plot lat, lon and light transitions  
+jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition"), width = 1024 , height = 990)
+
+par(cex.lab=1.4)
+par(cex.axis=1.4)
+par(mfrow=c(3,1), mar = c(5,5,0.1,5))
+plot(lig$Date[lig$Date > start & lig$Date < end], lig$Light[lig$Date > start & lig$Date < end], type = "o",
+     ylab = "Light level", xlab = "Time")
+rect(anytime("2019-10-12 12:00 PM"), min(lig$Light)-2, anytime("2019-10-15"), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
+#rect(anytime("2019-10-08"), min(lig$Light)-2, anytime("2019-10-09"), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
+
+plot(twl$Twilight[twl$Twilight> start & twl$Twilight < end], x0_ad[,1][twl$Twilight > start & twl$Twilight < end],
+     ylab = "Longitude", xlab = "Time")
+rect(anytime("2019-10-12 12:00 PM"), min(x0_ad[,1])-2, anytime("2019-10-15"), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
+#rect(anytime("2019-10-08"), min(x0_ad[,1])-2, anytime("2019-10-09"), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
+
+plot(twl$Twilight[twl$Twilight > start & twl$Twilight < end], x0_ad[,2][twl$Twilight > start & twl$Twilight < end],
+     ylab = "Latitude", xlab = "Time")
+rect(anytime("2019-10-12 12:00 PM"), min(x0_ad[,1])-2, anytime("2019-10-15"), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
+#rect(anytime("2019-10-08"), min(x0_ad[,1])-2, anytime("2019-10-09"), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
+par(cex.lab= 1)
+par(cex.axis= 1)
+
+dev.off()
+
+
+# A flight of a bout 2.5 days was detected, but there is no clear evidence of a stopover over the carribea
+
+
