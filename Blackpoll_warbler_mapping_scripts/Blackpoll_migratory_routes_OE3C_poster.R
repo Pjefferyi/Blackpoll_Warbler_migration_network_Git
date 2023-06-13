@@ -43,13 +43,14 @@ geo.all <- findLocData(geo.ids = c("V8757_010",
                                     "4210_002",
                                     "4210_004",
                                     "4210_006",
-                                    "4210_010",
+                                    "4210_010"#,
                                    # "WRMA04173",
                                     #"A",
                                     #"B",
-                                    "C",
-                                    "D",
-                                   "E"), check_col_length = F, ref_path = ref_path)
+                                    #"C",
+                                    #"D",
+                                   #"E"
+                                   ), check_col_length = F, ref_path = ref_path)
 
 #remove any NA values
 geo.all <- geo.all[(!is.na(geo.all$Lon.50.) & !is.na(geo.all$"Lat.50.")),]

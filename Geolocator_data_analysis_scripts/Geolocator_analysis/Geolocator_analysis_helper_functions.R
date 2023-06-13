@@ -484,16 +484,16 @@ insertLoc <- function(data, lat.at.loc, start.date, end.date, period, thresh.loc
                         period = period)
   
   # remove overlapping locations recorded while bird was moving
-  data.mod <- data %>% filter(!(StartTime > start.date & StartTime < end.date & duration == 0) |
-                                !(StartTime > start.date & EndTime < end.date))
+  data.mod <- data  %>% filter(!(StartTime > start.date & EndTime <  anytime(end.date) + days(1) & duration == 0))#remove overlapping locations when the bird was moving
+  data.mod <- data  %>% filter(!(StartTime > start.date & EndTime < anytime(end.date) + days(1))) # remove  stationary locations estimated during the Caribbean stopover 
   
   # Adjust stationary location times  
-  data.mod <- data.mod %>% mutate(StartTime = if_else((StartTime < start.date & EndTime > end.date) |
-                                                        (StartTime > start.date & StartTime < end.date & EndTime > end.date),
+  data.mod <- data.mod %>% mutate(StartTime = if_else((StartTime < start.date & EndTime >  anytime(end.date) + days(1) & (EndTime - anytime(end.date)) > (anytime(start.date) - StartTime)) |
+                                                        (StartTime > start.date & StartTime <  anytime(end.date) + days(1) & EndTime >  anytime(end.date) + days(1)),
                                                       anytime(end.date) + sep2,
                                                       StartTime)) %>%
-    mutate(EndTime = if_else((StartTime > start.date & EndTime < end.date) |
-                               (EndTime > start.date & EndTime > end.date & StartTime < start.date),
+    mutate(EndTime = if_else((StartTime < start.date & EndTime > start.date & EndTime <  anytime(end.date) + days(1) & (EndTime - anytime(end.date)) < (anytime(start.date) - StartTime)) |
+                               (EndTime > start.date & EndTime >  anytime(end.date) + days(1) & StartTime < start.date),
                              anytime(start.date) - sep1,
                              EndTime))
   
@@ -503,6 +503,10 @@ insertLoc <- function(data, lat.at.loc, start.date, end.date, period, thresh.loc
   # edit the site numbers 
   data.mod[(data.mod$sitenum != 0), ]$sitenum <- seq(1, nrow(data.mod[(data.mod$sitenum != 0), ]), 1)
   
+  # recalculate durations
+  data.mod$duration <- as.numeric(difftime(data.mod$EndTime, data.mod$StartTime), unit = "days")
+  
+  print(paste0("Estimated stopover longitude: ", as.character(mean(lon.at.loc))))
   return(data.mod)
 }
 

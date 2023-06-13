@@ -305,7 +305,7 @@ z0 <- trackMidpts(x0_r)
 save(x0_r, file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
 
 # Check the following times of arrival and departure using a plot 
-arr.nbr <- "2019-10-01"  
+arr.nbr <- "2019-10-11"  
 dep.nbr <- "2020-04-23" 
 
 # open jpeg
@@ -397,7 +397,7 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-cL <- changeLight(twl=geo_twl, quantile=0.86, summary = F, days = 1, plot = T)
+cL <- changeLight(twl=geo_twl, quantile=0.9, summary = F, days = 2, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
 #mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths0[1: length(zeniths0) - 1], distThreshold = 1000)
@@ -588,7 +588,35 @@ dev.off()
 # open jpeg
 jpeg(paste0(dir, "/", geo.id,"_grouped_threshold_model_lon_lat.png"), width = 1024 , height = 990)
 
+par(mfrow=c(2,1))
 
+plot(sm$StartTime, sm$"Lon.50.", ylab = "Longitude", xlab = "", yaxt = "n", type = "n", ylim = c(min(sm$Lon.50.) - 10, max(sm$Lon.50.) + 10))
+axis(2, las = 2)
+polygon(x=c(sm$StartTime,rev(sm$StartTime)), y=c(sm$`Lon.2.5.`,rev(sm$`Lon.97.5.`)), border="gray", col="gray")
+lines(sm$StartTim,sm$"Lon.50.", lwd = 2)
+abline(v = fall.equi, lwd = 2, lty = 2, col = "orange")
+abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
+
+#Add points for stopovers 
+points(sm$StartTime, sm$"Lon.50.", pch=21, bg=colours[sitenum+1], 
+       cex = ifelse(sitenum>0, 3, 0), col = "firebrick", lwd = 2.5)
+
+#The text in the symbols indicates the estimated number of days spent at each stopover location 
+text(sm$StartTime, sm$"Lon.50.", ifelse(sitenum>0, as.integer(((sm$EndTime - sm$StartTime)/86400)), ""), col="black") 
+
+plot(sm$StartTime, sm$"Lat.50.", ylab = "Latitude", xlab = "", yaxt = "n", type = "n", ylim = c(min(sm$Lat.50.) - 10, max(sm$Lat.50.) + 10))
+axis(2, las = 2)
+polygon(x=c(sm$StartTime,rev(sm$StartTime)), y=c(sm$`Lat.2.5.`,rev(sm$`Lat.97.5.`)), border="gray", col="gray")
+lines(sm$StartTim,sm$"Lat.50.", lwd = 2)
+abline(v = fall.equi, lwd = 2, lty = 2, col = "orange")
+abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
+
+#Add points for stopovers 
+points(sm$StartTime, sm$"Lat.50.", pch=21, bg=colours[sitenum+1], 
+       cex = ifelse(sitenum>0, 3, 0), col = "firebrick", lwd = 2.5)
+
+#The text in the symbols indicates the estimated number of days spent at each stopover location 
+text(sm$StartTime, sm$"Lat.50.", ifelse(sitenum>0, as.integer(((sm$EndTime - sm$StartTime)/86400)), ""), col="black")
 
 #Close jpeg
 dev.off()
@@ -622,49 +650,7 @@ save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 #load(file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))
 #load(file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 
-# Record details for the geolocator analysis ###################################
-geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
-geo.ref[(geo.ref$geo.id == geo.id),]$In_habitat_median_zenith_angle <- zenith
-geo.ref[(geo.ref$geo.id == geo.id),]$Hill_Ekstrom_median_angle <- zenith_sd 
-write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
-
-
 # Examine twilights ############################################################
-
-# #load the raw threshold path path x0_r
-# load(file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
-# 
-# #plot of light transitions throughout the fall migration 
-# par(mfrow=c(2,1))
-# plot(twl$Twilight, x0_r[,1], type = "o", ylab = "longitude", xlab = "time")
-# #rect(anytime("2019-09-28"), min(x0_r[,1])-2, anytime("2019-10-02"), max(x0_r[,1])+2, col = alpha("yellow", 0.2), lty=0)
-# plot(twl$Twilight, x0_r[,2], type = "o", ylab = "latitude", xlab = "time")
-# #rect(anytime("2019-09-28"), min(x0_r[,2])-2, anytime("2019-10-02"), max(x0_r[,2])+2, col = alpha("yellow", 0.2), lty=0)
-# 
-# #Fall transoceanic flight 
-# 
-# start <- "2019-09-01"
-# end <- "2019-10-29"
-# 
-# par(cex.lab=1.4)
-# par(cex.axis=1.4)
-# par(mfrow=c(3,1), mar = c(5,5,0.1,5))
-# plot(lig$Date[lig$Date > start & lig$Date < end], lig$Light[lig$Date > start & lig$Date < end], type = "o",
-#      ylab = "Light level", xlab = "Time")
-# #rect(anytime("2019-09-28"), min(lig$Light)-2, anytime("2019-10-02"), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
-# 
-# plot(twl$Twilight[twl$Twilight> start & twl$Twilight < end], x0_r[,1][twl$Twilight > start & twl$Twilight < end],
-#      ylab = "Longitude", xlab = "Time")
-# #rect(anytime("2019-09-28"), min(x0_r[,1])-2, anytime("2019-10-02"), max(x0_r[,1])+2, col = alpha("yellow", 0.2), lty=0)
-# 
-# plot(twl$Twilight[twl$Twilight > start & twl$Twilight < end], x0_r[,2][twl$Twilight > start & twl$Twilight < end],
-#      ylab = "Latitude", xlab = "Time")
-# #rect(anytime("2019-09-28"), min(x0_r[,2])-2, anytime("2019-10-02"), max(x0_r[,2])+2, col = alpha("yellow", 0.2), lty=0)
-# par(cex.lab= 1)
-# par(cex.axis= 1)
-# 
-
-
 
 #load the adjusted threshold path path x0_ad
 load(file = paste0(dir,"/", geo.id, "adjusted_initial_path_raw.csv"))
@@ -674,7 +660,7 @@ start <- "2019-09-01"
 end <- "2019-10-29"
 
 # Plot lat, lon and light transitions  
-jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition"), width = 1024 , height = 990)
+jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition.png"), width = 1024 , height = 990, quality = 100, res = 200)
 
 par(cex.lab=1.4)
 par(cex.axis=1.4)
@@ -682,17 +668,17 @@ par(mfrow=c(3,1), mar = c(5,5,0.1,5))
 plot(lig$Date[lig$Date > start & lig$Date < end], lig$Light[lig$Date > start & lig$Date < end], type = "o",
      ylab = "Light level", xlab = "Time")
 rect(anytime("2019-09-30"), min(lig$Light)-2, anytime("2019-10-03"), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
-rect(anytime("2019-10-06"), min(lig$Light)-2, anytime("2019-10-07"), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime("2019-10-06"), min(lig$Light)-2, anytime("2019-10-08"), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
 
 plot(twl$Twilight[twl$Twilight> start & twl$Twilight < end], x0_ad[,1][twl$Twilight > start & twl$Twilight < end],
      ylab = "Longitude", xlab = "Time")
 rect(anytime("2019-09-30"), min(x0_ad[,1])-2, anytime("2019-10-03"), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
-rect(anytime("2019-10-06"), min(x0_ad[,1])-2, anytime("2019-10-07"), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime("2019-10-06"), min(x0_ad[,1])-2, anytime("2019-10-08"), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
 
 plot(twl$Twilight[twl$Twilight > start & twl$Twilight < end], x0_ad[,2][twl$Twilight > start & twl$Twilight < end],
      ylab = "Latitude", xlab = "Time")
 rect(anytime("2019-09-30"), min(x0_ad[,2])-2, anytime("2019-10-03"), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
-rect(anytime("2019-10-06"), min(x0_ad[,2])-2, anytime("2019-10-07"), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime("2019-10-06"), min(x0_ad[,2])-2, anytime("2019-10-08"), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
 
 par(cex.lab= 1)
 par(cex.axis= 1)
@@ -700,3 +686,36 @@ par(cex.axis= 1)
 dev.off()
 
 # A stopover over the Caribbean was identified between approximately 2019-10-03 and 2019-10-06
+
+# Add the new stopover to the location summary obtained at the end of the geolocator analysis
+sm.fall.edit <- insertLoc(data = sm,
+                          lat.at.loc = 18.747636,
+                          start.date = "2019-10-03" ,
+                          end.date = "2019-10-06" , 
+                          period = "Post-breeding migration",
+                          thresh.locs = x0_ad,
+                          twl = twl,
+                          geo_id = geo.id,
+                          sep1 = days(3),
+                          sep2 = days (1))
+
+#plot the final stationary locations 
+sm.fall.stat <- sm.fall.edit[(sm.fall.edit$sitenum > 0), ]
+
+par(mfrow=c(1,1))
+
+data(wrld_simpl)
+plot(wrld_simpl, xlim=xlim, ylim=ylim, col = "grey95")
+points(sm.fall.edit$Lon.50., sm.fall.edit$Lat.50., pch = 16, cex = 0, col = "firebrick", type = "o")
+points(sm.fall.stat$Lon.50., sm.fall.stat$Lat.50., pch = 16, cex = 1.5, col = "firebrick")
+
+#Save the final location summary
+save(sm.fall.edit , file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary_fall_edit.csv"))
+
+# Record details for the geolocator analysis ###################################
+geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
+geo.ref[(geo.ref$geo.id == geo.id),]$In_habitat_median_zenith_angle <- zenith
+geo.ref[(geo.ref$geo.id == geo.id),]$Hill_Ekstrom_median_angle <- zenith_sd 
+geo.ref[(geo.ref$geo.id == geo.id),]$Fall_carrib_edits <- TRUE
+geo.ref[(geo.ref$geo.id == geo.id),]$Time_shift_hours <- shift
+write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 

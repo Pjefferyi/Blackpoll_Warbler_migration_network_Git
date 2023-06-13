@@ -575,52 +575,48 @@ save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 #load(file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))
 #load(file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 
+# Examine twilights ############################################################
+
+#load the adjusted threshold path path x0_ad
+load(file = paste0(dir,"/", geo.id, "adjusted_initial_path_raw.csv"))
+
+#Fall transoceanic flight
+start <- "2019-09-01"
+end <- "2019-11-01"
+
+# Plot lat, lon and light transitions  
+jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition.png"), width = 1024 , height = 990, quality = 100, res = 200)
+
+par(cex.lab=1.4)
+par(cex.axis=1.4)
+par(mfrow=c(3,1), mar = c(5,5,0.1,5))
+plot(lig$Date[lig$Date > start & lig$Date < end], lig$Light[lig$Date > start & lig$Date < end], type = "o",
+     ylab = "Light level", xlab = "Time")
+rect(anytime("2019-09-29"), min(lig$Light)-2, anytime("2019-10-02"), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime("2019-10-03"), min(lig$Light)-2, anytime("2019-10-04"), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
+
+plot(twl$Twilight[twl$Twilight> start & twl$Twilight < end], x0_ad[,1][twl$Twilight > start & twl$Twilight < end],
+     ylab = "Longitude", xlab = "Time")
+rect(anytime("2019-09-29"), min(x0_ad[,1])-2, anytime("2019-10-02"), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime("2019-10-03"), min(x0_ad[,1])-2, anytime("2019-10-04"), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
+
+plot(twl$Twilight[twl$Twilight > start & twl$Twilight < end], x0_ad[,2][twl$Twilight > start & twl$Twilight < end],
+     ylab = "Latitude", xlab = "Time")
+rect(anytime("2019-09-29"), min(x0_ad[,2])-2, anytime("2019-10-02"), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime("2019-10-03"), min(x0_ad[,2])-2, anytime("2019-10-04"), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
+par(cex.lab= 1)
+par(cex.axis= 1)
+
+dev.off()
+
+# It is difficult to identify a stopover over the carribean for this geolocator
+# light transitions and latitude values remain similar throughout the fall
+# I estimated that the stopover over the carribean was approx. 1 day. 
+
 # Record details for the geolocator analysis ###################################
 geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
 geo.ref[(geo.ref$geo.id == geo.id),]$In_habitat_median_zenith_angle <- zenith
 geo.ref[(geo.ref$geo.id == geo.id),]$Hill_Ekstrom_median_angle <- zenith_sd 
+geo.ref[(geo.ref$geo.id == geo.id),]$Fall_carrib_edits <- FALSE
+geo.ref[(geo.ref$geo.id == geo.id),]$Time_shift_hours <- shift
 write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
-
-# Examine twilights ############################################################
-
-# #load the raw threshold path x0_r
-# load(file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
-# 
-# #plot of light transitions throughout the fall migration 
-# par(mfrow=c(2,1))
-# plot(twl$Twilight, x0_r[,1], type = "o", ylab = "longitude", xlab = "time")
-# rect(anytime("2019-09-30"), min(x0_r[,1])-2, anytime("2019-10-02"), max(x0_r[,1])+2, col = alpha("yellow", 0.2), lty=0)
-# rect(anytime("2019-10-07"), min(x0_r[,1])-2, anytime("2019-10-08"), max(x0_r[,1])+2, col = alpha("yellow", 0.2), lty=0)
-# 
-# plot(twl$Twilight, x0_r[,2], type = "o", ylab = "latitude", xlab = "time")
-# rect(anytime("2019-09-30"), min(x0_r[,2])-2, anytime("2019-10-02"), max(x0_r[,2])+2, col = alpha("yellow", 0.2), lty=0)
-# rect(anytime("2019-10-07"), min(x0_r[,2])-2, anytime("2019-10-08"), max(x0_r[,2])+2, col = alpha("yellow", 0.2), lty=0)
-# 
-# #Fall transoceanic flight 
-# 
-# start <- "2019-09-21"
-# end <- "2019-10-11"
-# 
-# par(cex.lab=1.4)
-# par(cex.axis=1.4)
-# par(mfrow=c(3,1), mar = c(5,5,0.1,5))
-# plot(lig$Date[lig$Date > start & lig$Date < end], lig$Light[lig$Date > start & lig$Date < end], type = "o",
-#      ylab = "Light level", xlab = "Time")
-# rect(anytime("2019-09-29"), min(lig$Light)-2, anytime("2019-10-02"), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
-# rect(anytime("2019-10-03"), min(lig$Light)-2, anytime("2019-10-04"), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
-# rect(anytime("2019-10-07"), min(lig$Light)-2, anytime("2019-10-08"), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
-# 
-# plot(twl$Twilight[twl$Twilight> start & twl$Twilight < end], x0_r[,1][twl$Twilight > start & twl$Twilight < end],
-#      ylab = "Longitude", xlab = "Time")
-# rect(anytime("2019-09-29"), min(x0_r[,1])-2, anytime("2019-10-02"), max(x0_r[,1])+2, col = alpha("yellow", 0.2), lty=0)
-# rect(anytime("2019-10-03"), min(x0_r[,1])-2, anytime("2019-10-04"), max(x0_r[,1])+2, col = alpha("yellow", 0.2), lty=0)
-# rect(anytime("2019-10-07"), min(x0_r[,1])-2, anytime("2019-10-08"), max(x0_r[,1])+2, col = alpha("yellow", 0.2), lty=0)
-# 
-# plot(twl$Twilight[twl$Twilight > start & twl$Twilight < end], x0_r[,2][twl$Twilight > start & twl$Twilight < end],
-#      ylab = "Latitude", xlab = "Time")
-# rect(anytime("2019-09-29"), min(x0_r[,2])-2, anytime("2019-10-02"), max(x0_r[,2])+2, col = alpha("yellow", 0.2), lty=0)
-# rect(anytime("2019-10-03"), min(x0_r[,2])-2, anytime("2019-10-04"), max(x0_r[,2])+2, col = alpha("yellow", 0.2), lty=0)
-# rect(anytime("2019-10-07"), min(x0_r[,2])-2, anytime("2019-10-08"), max(x0_r[,2])+2, col = alpha("yellow", 0.2), lty=0)
-# par(cex.lab= 1)
-# par(cex.axis= 1)
-# 

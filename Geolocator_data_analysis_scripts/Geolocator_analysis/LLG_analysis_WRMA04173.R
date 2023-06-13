@@ -460,50 +460,12 @@ save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 #load(file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))
 #load(file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 
+# Examine twilights ############################################################
+
 # Record details for the geolocator analysis ###################################
 geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
 geo.ref[(geo.ref$geo.id == geo.id),]$In_habitat_median_zenith_angle <- zenith
-geo.ref[(geo.ref$geo.id == geo.id),]$Hill_Ekstrom_median_angle <- "Not used"
+geo.ref[(geo.ref$geo.id == geo.id),]$Hill_Ekstrom_median_angle <- NA
+geo.ref[(geo.ref$geo.id == geo.id),]$Fall_carrib_edits <- FALSE
+geo.ref[(geo.ref$geo.id == geo.id),]$Time_shift_hours <- shift
 write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
-
-# Examine twilights ############################################################
-
-# #load the raw threshold path path x0_r
-# load(file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
-# 
-# #plot of light transitions throughout the fall migration 
-# par(mfrow=c(2,1))
-# plot(twl$Twilight, x0_r[,1], type = "o", ylab = "longitude", xlab = "time")
-# rect(anytime("2013-10-13"), min(x0_r[,1])-2, anytime("2013-10-15"), max(x0_r[,1])+2, col = alpha("orange", 0.2), lty=0)
-# rect(anytime("2013-10-17"), min(x0_r[,1])-2, anytime("2013-10-18"), max(x0_r[,1])+2, col = alpha("orange", 0.2), lty=0)
-# 
-# plot(twl$Twilight, x0_r[,2], type = "o", ylab = "latitude", xlab = "time")
-# rect(anytime("2013-10-13"), min(x0_r[,2])-2, anytime("2013-10-15"), max(x0_r[,2])+2, col = alpha("orange", 0.2), lty=0)
-# rect(anytime("2013-10-17"), min(x0_r[,2])-2, anytime("2013-10-18"), max(x0_r[,2])+2, col = alpha("orange", 0.2), lty=0)
-# 
-# #Fall transoceanic flight 
-# 
-# start <- "2013-10-05"
-# end <- "2013-10-25"
-# 
-# par(cex.lab=1.4)
-# par(cex.axis=1.4)
-# par(mfrow=c(3,1), mar = c(5,5,0.1,5))
-# plot(lig$Date[lig$Date > start & lig$Date < end], lig$Light[lig$Date > start & lig$Date < end], type = "o",
-#      ylab = "Light level", xlab = "Time")
-# rect(anytime("2013-10-13"), min(lig$Light)-2, anytime("2013-10-15"), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
-# rect(anytime("2013-10-17"), min(lig$Light)-2, anytime("2013-10-18"), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
-# 
-# plot(twl$Twilight[twl$Twilight> start & twl$Twilight < end], x0_r[,1][twl$Twilight > start & twl$Twilight < end],
-#      ylab = "Longitude", xlab = "Time")
-# rect(anytime("2013-10-13"), min(x0_r[,1])-2, anytime("2013-10-15"), max(x0_r[,1])+2, col = alpha("yellow", 0.2), lty=0)
-# rect(anytime("2013-10-17"), min(x0_r[,1])-2, anytime("2013-10-18"), max(x0_r[,1])+2, col = alpha("yellow", 0.2), lty=0)
-# 
-# plot(twl$Twilight[twl$Twilight > start & twl$Twilight < end], x0_r[,2][twl$Twilight > start & twl$Twilight < end],
-#      ylab = "Latitude", xlab = "Time")
-# rect(anytime("2013-10-13"), min(x0_r[,2])-2, anytime("2013-10-15"), max(x0_r[,2])+2, col = alpha("yellow", 0.2), lty=0)
-# rect(anytime("2013-10-17"), min(x0_r[,2])-2, anytime("2013-10-15"), max(x0_r[,2])+2, col = alpha("yellow", 0.2), lty=0)
-# 
-# par(cex.lab= 1)
-# par(cex.axis= 1)
-# 

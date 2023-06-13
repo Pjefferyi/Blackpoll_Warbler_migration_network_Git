@@ -590,26 +590,10 @@ write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Gue
 
 # Examine twilights ############################################################
 
-# #load the raw initial path x0_r
-# load(file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
-# 
-# #plot of light transitions throughout the fall migration 
-# par(mfrow=c(2,1))
-# plot(twl$Twilight, x0_r[,1], type = "o", ylab = "longitude", xlab = "time")
-# plot(twl$Twilight, x0_r[,2], type = "o", ylab = "latitude", xlab = "time")
-# 
-# #Fall transoceanic flight 
-# par(cex.lab=1.4)
-# par(cex.axis=1.4)
-# par(mfrow=c(3,1), mar = c(5,5,0.1,5))
-# plot(lig$Date[lig$Date < "2012-11-15" & lig$Date > "2012-10-25"], lig$Light[lig$Date < "2012-11-15" & lig$Date > "2012-10-25"], type = "o",
-#      ylab = "Light level", xlab = "Time")
-# rect(anytime("2012-11-04"), min(lig$Light)-2, anytime("2012-11-08"), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
-# plot(twl$Twilight[twl$Twilight< "2012-11-15" & twl$Twilight > "2012-10-25"], x0[,1][twl$Twilight< "2012-11-15" & twl$Twilight > "2012-10-25"],
-#      ylab = "Longitude", xlab = "Time")
-# rect(anytime("2012-11-04"), min(x0[,1])-2, anytime("2012-11-08"), max(x0[,1])+2, col = alpha("yellow", 0.2), lty=0)
-# plot(twl$Twilight[twl$Twilight< "2012-11-15" & twl$Twilight > "2012-10-25"], x0[,2][twl$Twilight< "2012-11-15" & twl$Twilight > "2012-10-25"],
-#      ylab = "Latitude", xlab = "Time")
-# rect(anytime("2012-11-04"), min(x0[,2])-2, anytime("2012-11-08"), max(x0[,2])+2, col = alpha("yellow", 0.2), lty=0)
-# par(cex.lab= 1)
-# par(cex.axis= 1)
+# Record details for the geolocator analysis ###################################
+geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
+geo.ref[(geo.ref$geo.id == geo.id),]$In_habitat_median_zenith_angle <- zenith
+geo.ref[(geo.ref$geo.id == geo.id),]$Hill_Ekstrom_median_angle <- zenith_sd 
+geo.ref[(geo.ref$geo.id == geo.id),]$Fall_carrib_edits <- FALSE
+geo.ref[(geo.ref$geo.id == geo.id),]$Time_shift_hours <- shift
+write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 

@@ -594,47 +594,46 @@ save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 #load(file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))
 #load(file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 
+# Examine twilights ############################################################
+
+#load the adjusted threshold path path x0_ad
+load(file = paste0(dir,"/", geo.id, "adjusted_initial_path_raw.csv"))
+
+#Fall transoceanic flight
+start <- "2012-09-01"
+end <- "2012-12-01"
+
+#first flight
+f1.start <- "2012-11-01"
+f1.end <- "2012-11-05"
+
+# Plot lat, lon and light transitions  
+jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition.png"), width = 1024 , height = 990, quality = 100, res = 200)
+par(cex.lab=1.4)
+par(cex.axis=1.4)
+par(mfrow=c(3,1), mar = c(5,5,0.1,5))
+plot(lig$Date[lig$Date > start & lig$Date < end], lig$Light[lig$Date > start & lig$Date < end], type = "o",
+     ylab = "Light level", xlab = "Time")
+rect(anytime(f1.start), min(lig$Light)-2, anytime(f1.end), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
+
+plot(twl$Twilight[twl$Twilight> start & twl$Twilight < end], x0_ad[,1][twl$Twilight > start & twl$Twilight < end],
+     ylab = "Longitude", xlab = "Time")
+rect(anytime(f1.start), min(x0_ad[,1])-2, anytime(f1.end), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
+
+plot(twl$Twilight[twl$Twilight > start & twl$Twilight < end], x0_ad[,2][twl$Twilight > start & twl$Twilight < end],
+     ylab = "Latitude", xlab = "Time")
+rect(anytime(f1.start), min(x0_ad[,2])-2, anytime(f1.end), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
+par(cex.lab= 1)
+par(cex.axis= 1)
+
+dev.off()
+
+# This bird made a direct flight to either South America or the lesser antilles
+
 # Record details for the geolocator analysis ###################################
 geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
 geo.ref[(geo.ref$geo.id == geo.id),]$In_habitat_median_zenith_angle <- zenith
 geo.ref[(geo.ref$geo.id == geo.id),]$Hill_Ekstrom_median_angle <- zenith_sd 
+geo.ref[(geo.ref$geo.id == geo.id),]$Fall_carrib_edits <- FALSE
+geo.ref[(geo.ref$geo.id == geo.id),]$Time_shift_hours <- shift
 write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
-
-# Examine twilights ############################################################
-
-# #load initial path x0
-# load(file = paste0(dir,"/", geo.id, "_initial_path.csv"))
-# 
-# #plot of the whole tracking period 
-# par(mfrow=c(2,1))
-# plot(twl$Twilight, x0[,1], type = "o")
-# plot(twl$Twilight, x0[,2], type = "o")
-# abline(h = 0)
-# 
-# # plot for fall flight over Atlantic
-# par(mfrow=c(3,1), mar = c(5, 5, 5, 5) )
-# plot(lig$Date[lig$Date < "2012-11-23" & lig$Date > "2012-10-20"], lig$Light[lig$Date < "2012-11-23" & lig$Date >  "2012-10-20"], type = "o",
-#      ylab = "Light-level", xlab = "date")
-# plot(twl$Twilight[twl$Twilight< "2012-11-23" & twl$Twilight >  "2012-10-20"], x0[,1][twl$Twilight< "2012-11-23" & twl$Twilight >  "2012-10-20"],
-#      ylab = "Longitude", xlab = "date")
-# abline(v = anytime("2012-11-01"), lwd = 2, lty = 2, col = "orange")
-# abline(v = anytime("2012-11-05"), lwd = 2, lty = 2, col = "orange")
-# plot(twl$Twilight[twl$Twilight< "2012-11-23" & twl$Twilight >  "2012-10-20"], x0[,2][twl$Twilight< "2012-11-23" & twl$Twilight >  "2012-10-20"],
-#      ylab = "Latitude", xlab = "date")
-# abline(v = anytime("2012-11-01"), lwd = 2, lty = 2, col = "orange")
-# abline(v = anytime("2012-11-05"), lwd = 2, lty = 2, col = "orange")
-# 
-# 
-# 
-# # plot for fall flight over Atlantic
-# par(mfrow=c(3,1), mar = c(5, 5, 5, 5) )
-# plot(lig$Date[lig$Date < "2012-10-20" & lig$Date > "2012-08-20"], lig$Light[lig$Date < "2012-10-20" & lig$Date > "2012-08-20"], type = "o",
-#      ylab = "Light-level", xlab = "date")
-# plot(twl$Twilight[twl$Twilight< "2012-10-20" & twl$Twilight >  "2012-08-20"], x0[,1][twl$Twilight< "2012-10-20" & twl$Twilight >  "2012-08-20"],
-#      ylab = "Longitude", xlab = "date")
-# # abline(v = anytime("2012-10-18"), lwd = 2, lty = 2, col = "orange")
-# # abline(v = anytime("2012-10-20"), lwd = 2, lty = 2, col = "orange")
-# plot(twl$Twilight[twl$Twilight< "2012-10-20" & twl$Twilight >  "2012-08-20"], x0[,2][twl$Twilight< "2012-10-20" & twl$Twilight >  "2012-08-20"],
-#      ylab = "Latitude", xlab = "date")
-# # abline(v = anytime("2012-10-18"), lwd = 2, lty = 2, col = "orange")
-# # abline(v = anytime("2012-10-20"), lwd = 2, lty = 2, col = "orange")
