@@ -133,7 +133,7 @@ lightImage( tagdata = lig,
 tsimageDeploymentLines(twl$Twilight, lon.calib, lat.calib, offset, lwd = 2, col = "orange")
 
 #calibration period before the migration 
-tm.calib1 <- as.POSIXct(c("2016-06-20", "2016-08-20"), tz = "UTC")
+tm.calib1 <- as.POSIXct(c("2016-06-20", "2016-09-05"), tz = "UTC")
 tm.calib2 <- as.POSIXct(c("2017-06-12", "2017-06-21"), tz = "UTC")
 
 abline(v = tm.calib1, lwd = 2, lty = 2, col = "orange")
@@ -279,7 +279,7 @@ geo_twl <- export2GeoLight(twl)
 cL <- changeLight(twl=geo_twl, quantile=0.86, summary = F, days = 2, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
-#mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-twl$zenith.0[1:(length(twl$zenith.0) -1)], distThreshold = 500)
+#mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-twl$zenith.0[1:(length(twl$zenith.0) -1)], distThreshold = 250)
 mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
 
 ##back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
@@ -396,7 +396,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                beta =  beta,
                                x0 = x0, z0 = z0,
                                logp.x = logp,
-                               missing=twl$Missing,
+                               missing= twl$Missing,
                                zenith = twl$zenith.0,
                                fixedx = fixedx)
 

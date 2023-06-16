@@ -199,18 +199,24 @@ alpha <- calib[3:4]
 #convert to geolight format
 geo_twl <- export2GeoLight(twl)
 
-# this is just to find places where birds have been for a long time, would not use these parameters for stopover identification, detailed can be found in grouped model section
-cL <- changeLight(twl=geo_twl, quantile=0.9, summary = F, days = 10, plot = T)
-# merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
+# # this is just to find places where birds have been for a long time, would not use these parameters for stopover identification, detailed can be found in grouped model section
+# cL <- changeLight(twl=geo_twl, quantile=0.9, summary = F, days = 10, plot = T)
+# # merge site helps to put sites together that are separated by single outliers.
+# mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 1000)
+# 
+# #specify which site is the stationary one
+# site           <- mS$site[mS$site>0] # get rid of movement periods
+# stationarySite <- which(table(site) == max(table(site))) # find the site where bird is the longest
+# 
+# #find the dates that the bird arrives and leaves this stationary site
+# start <- min(which(mS$site == stationarySite))
+# end   <- max(which(mS$site == stationarySite))
 
-#specify which site is the stationary one
-site           <- mS$site[mS$site>0] # get rid of movement periods
-stationarySite <- which(table(site) == max(table(site))) # find the site where bird is the longest
+startDate <- "2019-10-20"
+endDate   <- "2020-04-08"
 
-#find the dates that the bird arrives and leaves this stationary site
-start <- min(which(mS$site == stationarySite))
-end   <- max(which(mS$site == stationarySite))
+start = min(which(as.Date(twl$Twilight) == startDate))
+end = max(which(as.Date(twl$Twilight) == endDate))
 
 (zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
 
@@ -292,7 +298,7 @@ abline(v = spring.equi, col = "orange")
 dev.off()
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol=0.01)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol=0.1)
 
 x0 <- path$x
 z0 <- trackMidpts(x0)
@@ -322,10 +328,12 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-cL <- changeLight(twl=geo_twl, quantile=0.86, summary = F, days = 3, plot = T)
+cL <- changeLight(twl=geo_twl, quantile=0.9, summary = F, days = 2, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers (worked with zenith, not zenith0)
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths0[1: length(zeniths0) -1 ], distThreshold = 1000)
+#mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths0[1: length(zeniths0) -1 ], distThreshold = 1000)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 250)
+
 
 #back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 
@@ -618,5 +626,5 @@ geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Gu
 geo.ref[(geo.ref$geo.id == geo.id),]$In_habitat_median_zenith_angle <- zenith
 geo.ref[(geo.ref$geo.id == geo.id),]$Hill_Ekstrom_median_angle <- zenith_sd 
 geo.ref[(geo.ref$geo.id == geo.id),]$Fall_carrib_edits <- FALSE
-geo.ref[(geo.ref$geo.id == geo.id),]$Time_shift_hours <- shift
+geo.ref[(geo.ref$geo.id == geo.id),]$Time_shift_hours <- shift$shift
 write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 

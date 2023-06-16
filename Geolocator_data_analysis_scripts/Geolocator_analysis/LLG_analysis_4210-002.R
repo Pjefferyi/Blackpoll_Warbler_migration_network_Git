@@ -197,7 +197,7 @@ save(x0_r, file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
 
 # Check the following times of arrival and departure using a plot 
 arr.nbr <- "2016-10-15" 
-dep.nbr <- "2017-04-30" 
+dep.nbr <- "2017-04-28" 
 
 # open jpeg
 jpeg(paste0(dir, "/", geo.id, "_LatLon_scatterplot.png"), width = 1024, height = 990)
@@ -221,7 +221,7 @@ zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith0,
                             Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad,
                             #Date > anytime(dep.nbr) ~ mean(c(zenith0, zenith0_ad))))
-                            Date > anytime(dep.nbr) ~ zenith0))
+                            Date > anytime(dep.nbr) ~ zenith0_ad))
 
 zeniths0 <- zenith_twl_zero$zenith
 
@@ -291,10 +291,10 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-cL <- changeLight(twl=geo_twl, quantile=0.86, summary = F, days = 2, plot = T)
+cL <- changeLight(twl=geo_twl, quantile=0.9, summary = F, days = 2, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = 500)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = 250)
 
 ##back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 
@@ -386,7 +386,6 @@ model <- groupedThresholdModel(twl$Twilight,
                                zenith = zeniths0,
                                logp.x = logp,# land sea mask
                                fixedx = fixedx)
-
 
 # define the error shape
 x.proposal <- mvnorm(S = diag(c(0.005, 0.005)), n = nrow(x0))

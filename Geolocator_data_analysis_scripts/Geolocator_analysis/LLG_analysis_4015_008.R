@@ -159,7 +159,7 @@ geo_twl <- export2GeoLight(twl)
 # this is just to find places where birds have been for a long time, would not use these parameters for stopover identification, detailed can be found in grouped model section
 cL <- changeLight(twl =geo_twl, quantile=0.9, summary = F, days = 10, plot = T)
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 250)
 
 #specify which site is the stationary one
 site           <- mS$site[mS$site>0] # get rid of movement periods
@@ -183,7 +183,7 @@ end   <- max(which(mS$site == stationarySite))
 # Alternative calibration is necessary
 
 # adjust the zenith angles calculated from the breeding sites for the non-breeding sites
-zenith0_ad <- zenith0 + (zenith_sd - zenith)
+zenith0_ad <- zenith0 +  abs(zenith - zenith_sd)
 zenith_ad  <- zenith_sd
 
 # Find approximate  timing of arrival and departure from the nonbreeding grounds 
@@ -275,7 +275,7 @@ data(wrld_simpl)
 plot(x0, type = "n", xlab = "", ylab = "")
 plot(wrld_simpl, col = "grey95", add = T)
 
-points(path$x, pch=19, col="cornflowerblue", type = "o")
+points(path$x[300:710,], pch=19, col="cornflowerblue", type = "o")
 points(lon.calib, lat.calib, pch = 16, cex = 2.5, col = "firebrick")
 box()
 
@@ -296,7 +296,7 @@ cL <- changeLight(twl=geo_twl, quantile=0.90, summary = F, days = 2, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
 #mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths0[1:length(zeniths0) -1], distThreshold = 500)
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = 500)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
 
 ##back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 

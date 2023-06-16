@@ -639,18 +639,13 @@ sm <- sm %>% mutate(period= case_when(StartTime < anytime("2019-12-11 21:36:24",
 #load(file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))
 #load(file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 
+# Examine twilights ############################################################
+
 # Record details for the geolocator analysis ###################################
 geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
 geo.ref[(geo.ref$geo.id == geo.id),]$In_habitat_median_zenith_angle <- zenith
 geo.ref[(geo.ref$geo.id == geo.id),]$Hill_Ekstrom_median_angle <- zenith_sd 
+geo.ref[(geo.ref$geo.id == geo.id),]$Fall_carrib_edits <- FALSE
+geo.ref[(geo.ref$geo.id == geo.id),]$Time_shift_hours <- shift$shift
 write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
 
-# Examine twilights ############################################################
-# 
-# #load initial path x0
-# load(file = paste0(dir,"/", geo.id, "_initial_path.csv"))
-# 
-# par(mfrow=c(3,1))
-# plot(lig$Date[lig$Date > "2019-06-21" & lig$Date < "2020-01-01"], lig$Light[lig$Date > "2019-06-21" & lig$Date < "2020-01-01"], type = "o")
-# plot(twl$Twilight[twl$Twilight > "2019-06-21" & twl$Twilight < "2020-01-01"], x0[,1][twl$Twilight > "2019-06-21" & twl$Twilight < "2020-01-01"])
-# plot(twl$Twilight[twl$Twilight > "2019-06-21" & twl$Twilight < "2020-01-01"], x0[,2][twl$Twilight > "2019-06-21" & twl$Twilight < "2020-01-01"])

@@ -45,11 +45,11 @@ geo.all <- findLocData(geo.ids = c("V8757_010",
                                     "4210_006",
                                     "4210_010"#,
                                    # "WRMA04173",
-                                    #"A",
-                                    #"B",
-                                    #"C",
-                                    #"D",
-                                   #"E"
+                                    "A",
+                                    "B",
+                                    "C",
+                                    "D",
+                                   "E"
                                    ), check_col_length = F, ref_path = ref_path)
 
 #remove any NA values
@@ -161,12 +161,6 @@ geo.all <- findLocData(geo.ids = c("V8757_010",
 
 #remove any NA values
 geo.all <- geo.all[(!is.na(geo.all$Lon.50.) & !is.na(geo.all$"Lat.50.")),]
-
-#Extract the geolocator reference data to create several groups
-ref.data <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv")
-
-#merge the geolocator and ref. data
-geo.all <- merge(geo.all, ref.data[, c("geo.id", "Recorded_North_South_mig")], by.x = "geo_id", by.y = "geo.id" )
 
 # Breeding period following the migration (only for complete tracks!)
 geo.all <- geo.all %>% group_by(geo_id) %>%

@@ -153,32 +153,32 @@ alpha <- calib[3:4]
 
 # Alternative calibration #######################################################
 
-#convert to geolight format
-geo_twl <- export2GeoLight(twl)
-
-#this is just to find places where birds have been for a long time, would not use these parameters for stopover identification, detailed can be found in grouped model section
-cL <- changeLight(twl =geo_twl, quantile=0.9, summary = F, days = 10, plot = T)
-
-#merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
-
-#specify which site is the stationary one
-site           <- mS$site[mS$site>0] # get rid of movement periods
-stationarySite <- which(table(site) == max(table(site))) # find the site where bird is the longest
-
-#find the dates that the bird arrives and leaves this stationary site
-start <- min(which(mS$site == stationarySite))
-end   <- max(which(mS$site == stationarySite))
-
-(zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
-
-# startDate <- "2013-11-15"
-# endDate   <- "2014-04-26"
+# #convert to geolight format
+# geo_twl <- export2GeoLight(twl)
 # 
-# start = min(which(as.Date(twl$Twilight) == startDate))
-# end = max(which(as.Date(twl$Twilight) == endDate))
+# #this is just to find places where birds have been for a long time, would not use these parameters for stopover identification, detailed can be found in grouped model section
+# cL <- changeLight(twl =geo_twl, quantile=0.9, summary = F, days = 10, plot = T)
+# 
+# #merge site helps to put sites together that are separated by single outliers.
+# mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 250)
+# 
+# #specify which site is the stationary one
+# site           <- mS$site[mS$site>0] # get rid of movement periods
+# stationarySite <- which(table(site) == max(table(site))) # find the site where bird is the longest
+# 
+# #find the dates that the bird arrives and leaves this stationary site
+# start <- min(which(mS$site == stationarySite))
+# end   <- max(which(mS$site == stationarySite))
 # 
 # (zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
+
+startDate <- "2013-10-24"
+endDate   <- "2014-04-15"
+
+start = min(which(as.Date(twl$Twilight) == startDate))
+end = max(which(as.Date(twl$Twilight) == endDate))
+
+(zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
 
 # The Hill-ekstrom zenith and in-habitat zenith angles differ by more than 0.5 degrees
 # Alternative calibration is necessary
@@ -197,8 +197,8 @@ z0 <- trackMidpts(x0_r)
 #save(x0_r, file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
 
 # Check the following times of arrival and departure using a plot 
-arr.nbr <- "2013-10-18" 
-dep.nbr <- "2014-05-07" 
+arr.nbr <- "2013-10-24" 
+dep.nbr <- "2014-04-22" 
 
 # open jpeg
 jpeg(paste0(dir, "/", geo.id, "_LatLon_scatterplot.png"), width = 1024, height = 990)

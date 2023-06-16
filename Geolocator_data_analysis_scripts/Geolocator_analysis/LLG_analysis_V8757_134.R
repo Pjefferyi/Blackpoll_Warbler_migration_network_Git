@@ -324,10 +324,10 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-cL <- changeLight(twl=geo_twl, quantile= 0.75, summary = F, days = 4, plot = T)
+cL <- changeLight(twl=geo_twl, quantile= 0.76, summary = F, days = 4, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths_med[1: length(zeniths_med)-1], distThreshold = 500)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths_med[1:length(zeniths_med)-1], distThreshold = 500)
 
 #back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 
@@ -633,7 +633,7 @@ geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Gu
 geo.ref[(geo.ref$geo.id == geo.id),]$In_habitat_median_zenith_angle <- zenith
 geo.ref[(geo.ref$geo.id == geo.id),]$Hill_Ekstrom_median_angle <- zenith_sd 
 geo.ref[(geo.ref$geo.id == geo.id),]$Fall_carrib_edits <- FALSE
-geo.ref[(geo.ref$geo.id == geo.id),]$Time_shift_hours <- shift
+geo.ref[(geo.ref$geo.id == geo.id),]$Time_shift_hours <- shift$shift
 write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
 
 

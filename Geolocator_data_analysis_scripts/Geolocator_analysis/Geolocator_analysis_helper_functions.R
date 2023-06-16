@@ -124,7 +124,7 @@ shiftSpan <- function(twl, lig, period, est.zenith, dep.lon, dep.lat){
 
 # findLocData ##################################################################
 
-findLocData <- function(geo.ids = c(), check_col_length = F, ref_path = c(), with_edits = c()){
+findLocData <- function(geo.ids = NULL, check_col_length = F, ref_path = c()){
   
   # Create a list of path to all files with location data 
   folder_paths <- list.files("/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geolocator_data", full.names = T)
@@ -150,11 +150,15 @@ findLocData <- function(geo.ids = c(), check_col_length = F, ref_path = c(), wit
     return()
   }
   
+  if (!is.na(ref_path)){
+    ref.data <- read.csv(ref_path)
+    with_edits = ref.data[(ref.data$Fall_carrib_edits == T),]$geo.id
+  }  
   
   for (i in seq(1:length(folder_paths))){
     # load the data from each file and add it to dataset if it is in geo_ids 
-    if (geo_names[i] %in% geo.ids){
-      # some of the data has edits during durign the fall transoceanic flight
+    if (geo_names[i] %in% geo.ids | is.null(geo.ids)){
+      # some of the data has edits during during the fall transoceanic flight
       if (geo_names[i] %in% with_edits){
         file_path <- paste0(folder_paths[i], "/",geo_names[i],"_SGAT_GroupedThreshold_summary_fall_edit.csv")
         load(file = file_path)
@@ -200,7 +204,7 @@ findLocData <- function(geo.ids = c(), check_col_length = F, ref_path = c(), wit
 # r3 <- findLocData(geo.ids = c("V8757_010", "V8296_004"), check_col_length = F, ref_path = path)
 
 # path <- "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv"   
-# r4 <- findLocData(geo.ids = c("V8757_010", "V8296_004", "V8296_005"), check_col_length = F, ref_path = path, with_edits = c("V2896_005") )
+# r4 <- findLocData(geo.ids = c("V8757_010", "V8296_004", "V8296_005"), check_col_length = F, ref_path = path)
 
 # MapLocData ###################################################################
 
@@ -225,7 +229,7 @@ plotLocVec <- function(data, stati_only = F, timing = c("Post-breeding migration
     {if(er_bars ==  T)geom_errorbar(data = data, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, alpha = 0.3, color = "black")} + 
     {if(er_bars ==  T)geom_errorbar(data = data, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, alpha = 0.3, color = "black")} + 
     geom_point(data = data, mapping = aes(x = Lon.50., y = Lat.50., color = geo_id), size = 1.1) +
-    geom_path(data = data, mapping = aes(x = Lon.50., y = Lat.50., color = geo_id), linewidth = 0.3) +
+    #geom_path(data = data, mapping = aes(x = Lon.50., y = Lat.50., color = geo_id), linewidth = 0.3) +
     theme_bw() +
     theme(panel.grid.major = element_blank(),
           panel.grid.minor = element_blank()) +
@@ -237,7 +241,7 @@ plotLocVec <- function(data, stati_only = F, timing = c("Post-breeding migration
 
 #call for all geolocators
 
-# ref_path <- "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv"   
+# ref_path <- "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv"
 # 
 # geo.all <- findLocData(geo.ids = c("V8757_010",
 #                               "V8296_004",
@@ -281,7 +285,7 @@ plotLocVec <- function(data, stati_only = F, timing = c("Post-breeding migration
 #                               "C",
 #                               "D",
 #                               "WRMA04173"), check_col_length = F, ref_path = ref_path)
-# 
+
 # 
 # geo.church <- geo.all[(geo.all$study.site == "Churchill, Manitoba"),]
 # geo.nome <- geo.all[(geo.all$study.site == "Nome, Alaska"),]
@@ -295,7 +299,7 @@ plotLocVec <- function(data, stati_only = F, timing = c("Post-breeding migration
 # 
 # geos <- geo.all
 
-# plotLocVec(data = geos, er_bars =  T, stati_only = T, legend = T,timing = c("Post-breeding migration", "Non-breeding period"))
+# plotLocVec(data = geos, er_bars =  T, stati_only = T, legend = F,timing = c("Post-breeding migration", "Non-breeding period"))
 # plotLocVec(data = geos, er_bars =  T, stati_only = T, legend = T,timing = c("Pre-breeding migration", "Non-breeding period"))
 # plotLocVec(data = geos, er_bars =  T,stati_only = T, legend = T,timing = c("Non-breeding period"))
 # plotLocVec(data = geos, er_bars =  T,stati_only = T, legend = T, timing = c("Post-breeding migration", "Pre-breeding migration", "Non-breeding period"))
@@ -454,8 +458,10 @@ runGeoScripts <- function(scripts = c()){
 
 paths <- list.files("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis",
                     pattern = "LLG_analysis", recursive = T, full.names = T )
-# scr.list <- paths[37:45]
-# runGeoScripts(scripts = scr.list)
+
+scr.list <- paths[18:45]
+
+#runGeoScripts(scripts = scr.list)
 
 # insertLoc ####################################################################
 
