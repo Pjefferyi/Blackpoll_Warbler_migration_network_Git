@@ -202,7 +202,7 @@ geo_twl <- export2GeoLight(twl)
 # this is just to find places where birds have been for a long time, would not use these parameters for stopover identification, detailed can be found in grouped model section
 cL <- changeLight(twl=geo_twl, quantile=0.8, summary = F, days = 10, plot = T)
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 250)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
 
 #specify which site is the stationary one
 site           <- mS$site[mS$site>0] # get rid of movement periods
@@ -580,6 +580,12 @@ save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 # load(file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))
 # load(file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 
+# Record details for the geolocator analysis ###################################
+geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
+geo.ref[(geo.ref$geo.id == geo.id),]$In_habitat_median_zenith_angle <- zenith
+geo.ref[(geo.ref$geo.id == geo.id),]$Hill_Ekstrom_median_angle <- zenith_sd 
+write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE) 
+
 # Examine twilights ############################################################
 
 #load the adjusted threshold path path x0_ad
@@ -590,7 +596,7 @@ start <- "2019-09-10"
 end <- "2019-10-25"
 
 # Plot lat, lon and light transitions  
-jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition.png"), width = 1024 , height = 990, quality = 100, res = 200)
+jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition"), width = 1024 , height = 990)
 
 par(cex.lab=1.4)
 par(cex.axis=1.4)
@@ -616,12 +622,4 @@ par(cex.axis= 1)
 
 dev.off()
 
-# A stopover over the Caribbeans is visible, but it was already detected in the geolocator analysis. 
-
-# Record details for the geolocator analysis ###################################
-geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
-geo.ref[(geo.ref$geo.id == geo.id),]$In_habitat_median_zenith_angle <- zenith
-geo.ref[(geo.ref$geo.id == geo.id),]$Hill_Ekstrom_median_angle <- zenith_sd 
-geo.ref[(geo.ref$geo.id == geo.id),]$Fall_carrib_edits <- FALSE
-geo.ref[(geo.ref$geo.id == geo.id),]$Time_shift_hours <- shift$shift
-write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
+# A stopover of ther carribean is visible, but it was already detected in the geolocator analysis. 

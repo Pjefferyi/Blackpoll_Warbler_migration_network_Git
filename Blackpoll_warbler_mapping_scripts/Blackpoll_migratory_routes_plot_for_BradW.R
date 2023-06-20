@@ -1,3 +1,10 @@
+
+#Load the helper functions (and associated packages)
+source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis/Geolocator_analysis_helper_functions.R")
+
+#path to reference file
+ref_path <- "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv"   
+
 # Extract location data for spring migratory routes
 geo.all <- findLocData(geo.ids = c(#"V8757_010",
                               #"V8296_004",

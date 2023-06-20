@@ -201,7 +201,7 @@ geo_twl <- export2GeoLight(twl)
 # this is just to find places where birds have been for a long time, would not use these parameters for stopover identification, detailed can be found in grouped model section
 cL <- changeLight(twl=geo_twl, quantile=0.6, summary = F, days = 10, plot = T)
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 250)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
 
 #specify which site is the stationary one
 site           <- mS$site[mS$site>0] # get rid of movement periods
@@ -425,7 +425,7 @@ x.proposal <- mvnorm(S = diag(c(0.005, 0.005)), n = nrow(x0))
 z.proposal <- mvnorm(S = diag(c(0.005, 0.005)), n = nrow(z0))
 
 # Fit the model
-fit <- estelleMetropolis(model, x.proposal, z.proposal, iters = 1000, thin = 20, chains = 3)
+fit <- estelleMetropolis(model, x.proposal, z.proposal, iters = 1000, thin = 20)
 
 #Tuning ########################################################################
 
@@ -449,7 +449,7 @@ for (k in 1:3) {
   x.proposal <- mvnorm(chainCov(fit$x), s = 0.3)
   z.proposal <- mvnorm(chainCov(fit$z), s = 0.3)
   fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = chainLast(fit$x),
-                           z0 = chainLast(fit$z), iters = 300, thin = 20, chains = 3)
+                           z0 = chainLast(fit$z), iters = 300, thin = 20)
 }
 
 ## Check if chains mix
@@ -463,7 +463,7 @@ x.proposal <- mvnorm(chainCov(fit$x), s = 0.3)
 z.proposal <- mvnorm(chainCov(fit$z), s = 0.3)
 
 fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = chainLast(fit$x),
-                         z0 = chainLast(fit$z), iters = 2000, thin = 20, chain = 3)
+                         z0 = chainLast(fit$z), iters = 2000, thin = 20, chain = 1)
 
 #Summarize results #############################################################
 
@@ -587,7 +587,7 @@ start <- "2019-09-01"
 end <- "2019-11-01"
 
 # Plot lat, lon and light transitions  
-jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition.png"), width = 1024 , height = 990, quality = 100, res = 200)
+jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition"), width = 1024 , height = 990)
 
 par(cex.lab=1.4)
 par(cex.axis=1.4)
@@ -613,35 +613,8 @@ dev.off()
 
 # A stopover over the Caribbean was identified between approximately 2019-10-01 and 2019-10-08
 
-# Add the new stopover to the location summary obtained at the end of the geolocator analysis
-sm.fall.edit <- insertLoc(data = sm,
-                            lat.at.loc = 18.894488,
-                            start.date = "2019-10-01" ,
-                            end.date = "2019-10-08" , 
-                            period = "Post-breeding migration",
-                            thresh.locs = x0_ad,
-                            twl = twl,
-                            geo_id = geo.id,
-                            sep1 = days(3),
-                            sep2 = days (1))
-                            
-#plot the final stationary locations 
-sm.fall.stat <- sm.fall.edit[(sm.fall.edit$sitenum > 0), ]
-
-par(mfrow=c(1,1))
-
-data(wrld_simpl)
-plot(wrld_simpl, xlim=xlim, ylim=ylim, col = "grey95")
-points(sm.fall.edit$Lon.50., sm.fall.edit$Lat.50., pch = 16, cex = 0, col = "firebrick", type = "o")
-points(sm.fall.stat$Lon.50., sm.fall.stat$Lat.50., pch = 16, cex = 1.5, col = "firebrick")
-
-#Save the final location summary
-save(sm.fall.edit , file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary_fall_edit.csv"))
-
 # Record details for the geolocator analysis ###################################
 geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
 geo.ref[(geo.ref$geo.id == geo.id),]$In_habitat_median_zenith_angle <- zenith
 geo.ref[(geo.ref$geo.id == geo.id),]$Hill_Ekstrom_median_angle <- zenith_sd 
-geo.ref[(geo.ref$geo.id == geo.id),]$Fall_carrib_edits <- TRUE
-geo.ref[(geo.ref$geo.id == geo.id),]$Time_shift_hours <- shift$shift
-write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
+write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE) 

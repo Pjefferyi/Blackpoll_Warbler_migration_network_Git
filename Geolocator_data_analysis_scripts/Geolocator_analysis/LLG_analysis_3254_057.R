@@ -218,16 +218,14 @@ dev.off()
 zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith0,
                             Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad,
-                            #Date > anytime(dep.nbr) ~ zenith0_ad))
-Date > anytime(dep.nbr) ~ zenith0_ad))
+                            Date > anytime(dep.nbr) ~ zenith0_ad + 2))
 
 zeniths0 <- zenith_twl_zero$zenith
 
 zenith_twl_med <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith,
                             Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith_sd,
-                            #Date > anytime(dep.nbr) ~ zenith_sd))
-Date > anytime(dep.nbr) ~ zenith_sd))
+                            Date > anytime(dep.nbr) ~ zenith_sd))
 
 zeniths_med <- zenith_twl_med$zenith
 
@@ -292,7 +290,7 @@ geo_twl <- export2GeoLight(twl)
 cL <- changeLight(twl=geo_twl, quantile=0.88, summary = F, days = 2, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 250)
 
 ##back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 
@@ -549,7 +547,7 @@ save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
 geo.ref[(geo.ref$geo.id == geo.id),]$In_habitat_median_zenith_angle <- zenith
 geo.ref[(geo.ref$geo.id == geo.id),]$Hill_Ekstrom_median_angle <- zenith_sd 
-write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
+write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE) 
 
 # Examine twilights ############################################################
 

@@ -43,7 +43,7 @@ geo.all <- findLocData(geo.ids = c("V8757_010",
                                     "4210_002",
                                     "4210_004",
                                     "4210_006",
-                                    "4210_010"#,
+                                    "4210_010",
                                    # "WRMA04173",
                                     "A",
                                     "B",
@@ -103,9 +103,9 @@ fig1 <- ggplot(st_as_sf(wrld_simpl))+
   theme(legend.position = c(0.2, 0.4)) +
   xlab("Longitude") + 
   ylab("Latitude")+
-  theme(text = element_text(size = 20)) 
-  # + geom_text(data = geo.fall.stat, aes(x = Lon.50., y = Lat.50., group = geo_id),
-  #         label = geo.fall.stat$geo_id, size = 3)
+  theme(text = element_text(size = 20)) +
+  geom_text(data = geo.fall.stat[(geo.fall.stat$Range_region == "Eastern"),], aes(x = Lon.50., y = Lat.50., group = geo_id),
+           label = geo.fall.stat[(geo.fall.stat$Range_region == "Eastern"),]$geo_id, size = 3)
 
 ggsave("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Conferences/OE3C_2023/Poster/Figure1.png",
        fig1,
@@ -133,25 +133,25 @@ geo.all <- findLocData(geo.ids = c("V8757_010",
                                    "V8757_134",
                                    "V8757_029",
                                    "V8757_078",
-                                   "blw09",
-                                   "blpw12",
-                                   "3254_001",
-                                   "4068_014",
-                                   "blpw14",
-                                   #"3254_003",
-                                   "3254_008",
-                                   #"3254_011",
-                                   "3254_057",
-                                   #"blpw15",
-                                   "blpw25",
-                                   "4105_008",
-                                   "4105_009",
-                                   "4105_016",
-                                   "4105_017",
-                                   "4210_002",
-                                   "4210_004",
-                                   #"4210_006",
-                                   #"4210_010",
+                                   # "blw09",
+                                   # "blpw12",
+                                   # "3254_001",
+                                   # "4068_014",
+                                   # "blpw14",
+                                   # #"3254_003",
+                                   # "3254_008",
+                                   # #"3254_011",
+                                   # "3254_057",
+                                   # #"blpw15",
+                                   # "blpw25",
+                                   # "4105_008",
+                                   # "4105_009",
+                                   # "4105_016",
+                                   # "4105_017",
+                                   # "4210_002",
+                                   # "4210_004",
+                                   # #"4210_006",
+                                   # #"4210_010",
                                    "A",
                                    "B",
                                    #"C",
@@ -206,7 +206,9 @@ fig2 <- ggplot(st_as_sf(wrld_simpl))+
   theme(legend.position = c(0.2, 0.4)) +
   xlab("Longitude") + 
   ylab("Latitude")+
-  theme(text = element_text(size = 20))
+  theme(text = element_text(size = 20)) +
+  geom_text(data = geo.spr.stat, aes(x = Lon.50., y = Lat.50., group = geo_id),
+            label = geo.spr.stat$geo_id, size = 3)
 
 ggsave("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Conferences/OE3C_2023/Poster/Figure2.png",
        fig2,
