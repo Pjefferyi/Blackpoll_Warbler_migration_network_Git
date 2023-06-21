@@ -221,7 +221,7 @@ zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith0,
                             Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad,
                             #Date > anytime(dep.nbr) ~ mean(c(zenith0, zenith0_ad))))
-                            Date > anytime(dep.nbr) ~ zenith0_ad))
+                            Date > anytime(dep.nbr) ~ zenith0_ad + 1))
 
 zeniths0 <- zenith_twl_zero$zenith
 

@@ -153,9 +153,27 @@ alpha <- calib[3:4]
 
 # Alternative calibration #######################################################
 
-# Hill-Ekstrom calibration following the approach of Lisovksi et al. 2020 fails here
-# Consequently, we will incrementally the zenith angle in the non-breeding grounds
-# until the mean latitudes before and after the equinox are equal. 
+# # Hill-Ekstrom calibration following the approach of Lisovksi et al. 2020 fails here
+# # Consequently, we will incrementally the zenith angle in the non-breeding grounds
+# # until the mean latitudes before and after the equinox are equal. 
+# 
+# #convert to geolight format
+# geo_twl <- export2GeoLight(twl)
+# 
+# # this is just to find places where birds have been for a long time, would not use these parameters for stopover identification, detailed can be found in grouped model section
+# cL <- changeLight(twl =geo_twl, quantile=0.8, summary = F, days = 10, plot = T)
+# # merge site helps to put sites together that are separated by single outliers.
+# mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 1000)
+# 
+# #specify which site is the stationary one
+# site           <- mS$site[mS$site>0] # get rid of movement periods
+# stationarySite <- which(table(site) == max(table(site))) # find the site where bird is the longest
+# 
+# #find the dates that the bird arrives and leaves this stationary site
+# start <- min(which(mS$site == stationarySite))
+# end   <- max(which(mS$site == stationarySite))
+# 
+# (zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
 
 # Find approximate timing of arrival and departure from the nonbreeding grounds 
 
@@ -171,7 +189,7 @@ save(x0_r, file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
 # Check the following times of arrival and departure using a plot
 dep.br <- "2016-09-09" 
 arr.nbr <- "2016-10-12"  #"2016-10-12" 
-dep.nbr <- "2017-04-30"  #"2017-05-01" 
+dep.nbr <- "2017-05-05"  
 arr.br <- "2017-06-02"
 
 # open jpeg
@@ -195,12 +213,12 @@ dev.off()
 # Use approximate timings of arrival and departure from the breeding grounds
 # Assign different zenith angles to different periods of the tracking period 
 zenith.med.Br <- zenith 
-zenith.med.Nbr <- zenith - 0.8 
+zenith.med.Nbr <- zenith - 0.9
 zenith.med.Mig <- zenith  
 
 zenith0.Br <- zenith0
-zenith0.Nbr <- zenith0 - 0.8
-zenith0.Mig <- zenith0 
+zenith0.Nbr <- zenith0 + 0.9
+zenith0.Mig <- zenith0 + 0.9 
 
 # Add column to twl with the median zenith angles for different periods of the tracking period 
 twl <- mutate(twl, season = cut(Twilight, breaks = c(min(Twilight) - days(1), 
@@ -221,7 +239,7 @@ twl <- mutate(twl, season = cut(Twilight, breaks = c(min(Twilight) - days(1),
                                    season == "NBr" ~ zenith0.Nbr))
 
 # plot longitudes and latitudes with the new zenith angles 
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = twl$zenith.med, tol= 0)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = twl$zenith.med, tol= 0.01)
 
 x0_ad <- path$x
 z0 <- trackMidpts(x0_ad)
@@ -245,7 +263,7 @@ abline(v = spring.equi, col = "orange")
 dev.off()
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = twl$zenith.med, tol=0.12)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol=0.12)
 
 #Adjusted tol until second stopover was located over North Carolina rather than further South. 
 x0 <- path$x

@@ -202,7 +202,7 @@ alpha <- calib[3:4]
 geo_twl <- export2GeoLight(twl)
 
 # # this is just to find places where birds have been for a long time, would not use these parameters for stopover identification, detailed can be found in grouped model section
-# cL <- changeLight(twl=geo_twl, quantile=0.6, summary = F, days = 10, plot = T)
+# cL <- changeLight(twl=geo_twl, quantile=0.9, summary = F, days = 10, plot = T)
 # # merge site helps to put sites together that are separated by single outliers.
 # mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 1000)
 # 
@@ -216,8 +216,8 @@ geo_twl <- export2GeoLight(twl)
 # 
 # (zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
 
-startDate <- "2012-11-15"
-endDate   <- "2013-04-20"
+startDate <- "2012-11-10"
+endDate   <- "2013-05-20"
 
 start = min(which(as.Date(twl$Twilight) == startDate))
 end = max(which(as.Date(twl$Twilight) == endDate))
@@ -302,7 +302,7 @@ abline(v = spring.equi, col = "orange")
 dev.off()
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol=0.01)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol=0.14)
 
 x0 <- path$x
 z0 <- trackMidpts(x0)
@@ -332,10 +332,11 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-cL <- changeLight(twl=geo_twl, quantile= 0.86, summary = F, days = 8, plot = T)
+cL <- changeLight(twl=geo_twl, quantile= 0.86, summary = F, days = 3, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths_med[1: length(zeniths_med)-1], distThreshold = 250)
+#mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths_med[1: length(zeniths_med)-1], distThreshold = 250)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = 500)
 
 #back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 
@@ -407,7 +408,7 @@ xlim <- range(x0[,1])+c(-5,5)
 ylim <- range(x0[,2])+c(-5,5)
 
 index <- ifelse(stationary, 1, 2)
-mask <- earthseaMask(xlim, ylim, n = 1, index=index)
+mask <- earthseaMask(xlim, ylim, n = 10, index=index)
 
 # We will give locations on land a higher prior 
 ## Define the log prior for x and z

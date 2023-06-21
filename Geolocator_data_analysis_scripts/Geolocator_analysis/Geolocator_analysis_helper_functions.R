@@ -394,7 +394,7 @@ plotBreedSites <- function(){
 # Function to create a spatial mask
 earthseaMask <- function(xlim, ylim, n = 2, pacific=FALSE, index) {
   
-  if (pacific) { wrld_simpl <- nowrapRecenter(wrld_simpl, avoidGEOS = TRUE)}
+  if (pacific) {wrld_simpl <- nowrapRecenter(wrld_simpl, avoidGEOS = TRUE)}
   
   # create empty raster with desired resolution
   r = raster(nrows = n * diff(ylim), ncols = n * diff(xlim), xmn = xlim[1],
