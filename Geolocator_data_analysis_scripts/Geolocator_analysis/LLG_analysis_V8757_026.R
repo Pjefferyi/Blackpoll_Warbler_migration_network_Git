@@ -201,7 +201,7 @@ geo_twl <- export2GeoLight(twl)
 # this is just to find places where birds have been for a long time, would not use these parameters for stopover identification, detailed can be found in grouped model section
 cL <- changeLight(twl=geo_twl, quantile=0.9, summary = F, days = 10, plot = T)
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 250)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 1000)
 
 #specify which site is the stationary one
 site           <- mS$site[mS$site>0] # get rid of movement periods
@@ -601,8 +601,11 @@ f1.start <- "2019-09-30"
 f1.end <- "2019-10-02"
 
 #second flight
-f2.start <- "2019-10-03 00:00"
-f2.end <- "2019-10-03 12:00"
+#f2.start <- "2019-10-03 00:00"
+#f2.end <- "2019-10-03 12:00"
+f2.start <- "2019-10-15 00:00"
+f2.end <- "2019-10-15 12:00"
+
 
 # Plot lat, lon and light transitions  
 jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition.png"), width = 1024 , height = 990, quality = 100, res = 200)

@@ -52,8 +52,8 @@ lon.calib <- ref_data$deploy.longitude[which(ref_data$geo.id == geo.id)]
 #deploy.end <- anytime("", asUTC = T, tz = "GMT")
 
 #Equinox times
-fall.equi <- anytime("2016-09-22", asUTC = T, tz = "GMT")
-spring.equi <- anytime("2017-03-20", asUTC = T, tz = "GMT")
+fall.equi <- anytime("2013-09-22", asUTC = T, tz = "GMT")
+spring.equi <- anytime("2014-03-20", asUTC = T, tz = "GMT")
 
 #DATA EXTRACTION ##############################################################
 
@@ -248,6 +248,8 @@ par(mfrow = c(2,1))
 plot(twl$Twilight, x0_ad[,1], ylab = "longitude")
 abline(v = anytime(arr.nbr))
 abline(v = anytime(dep.nbr))
+abline(v = fall.equi, col = "orange")
+abline(v = spring.equi, col = "orange")
 plot(twl$Twilight, x0_ad[,2], ylab = "latitude")
 abline(v = anytime(arr.nbr))
 abline(v = anytime(dep.nbr))
@@ -599,8 +601,7 @@ sm.fall.edit <- insertLoc(data = sm,
 #plot the final stationary locations 
 sm.fall.stat <- sm.fall.edit[(sm.fall.edit$sitenum > 0), ]
 
-#Further edits are necessary
-
+# Further edits are necessary 
 par(mfrow=c(1,1))
 
 data(wrld_simpl)
@@ -610,6 +611,27 @@ points(sm.fall.stat$Lon.50., sm.fall.stat$Lat.50., pch = 16, cex = 1.5, col = "f
 
 #Save the final location summary
 save(sm.fall.edit , file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary_fall_edit.csv"))
+
+
+# One location was also estimated as being located over water 
+
+# plot of lon and lat where this location is highlighted
+par(mfrow = c(2,1))
+plot(twl$Twilight, x0_ad[,1], ylab = "longitude")
+abline(v = anytime(arr.nbr))
+abline(v = anytime(dep.nbr))
+abline(v = fall.equi, col = "orange")
+abline(v = spring.equi, col = "orange")
+rect(anytime("2013-10-05"), min(x0_ad[,1])-2, anytime("2013-11-08"), max(x0_ad[,1])+2, col = alpha("green", 0.2), lty=0)
+rect(anytime("2013-10-05"), min(x0_ad[,1])-2, anytime("2013-11-08"), max(x0_ad[,1])+2, col = alpha("green", 0.2), lty=0)
+plot(twl$Twilight, x0_ad[,2], ylab = "latitude")
+abline(v = anytime(arr.nbr))
+abline(v = anytime(dep.nbr))
+abline(v = fall.equi, col = "orange")
+abline(v = spring.equi, col = "orange")
+rect(anytime("2013-10-05"), min(x0_ad[,1])-2, anytime("2013-11-08"), max(x0_ad[,2])+2, col = alpha("green", 0.2), lty=0)
+rect(anytime("2013-10-05"), min(x0_ad[,1])-2, anytime("2013-11-08"), max(x0_ad[,2])+2, col = alpha("green", 0.2), lty=0)
+
 
 # Record details for the geolocator analysis ###################################
 geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
