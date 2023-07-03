@@ -432,6 +432,58 @@ earthseaMask <- function(xlim, ylim, n = 2, pacific=FALSE, index) {
 # arguments must be defined using geolocator data
 # mask <- earthseaMask(xlim, ylim, n = 10, index=index)
 
+# earthseaMask2 ####################################################################
+
+# Function to create a spatial mask
+# Unlike with the earthseaMask, earthseaMask2 uses weekly abundance raster to estimate stationary locations
+# The raster used is selected based on the week during which the stationary period started
+# Thus is possible because eBird abundance data is available at a weekly scale 
+
+earthseaMask2 <- function(xlim, ylim, pacific=FALSE, index, twl, res = "lr") {
+  
+  if (pacific) {wrld_simpl <- nowrapRecenter(wrld_simpl, avoidGEOS = TRUE)}
+  
+  #load weekly rasters of blackpoll warbler abundance (only uncommon if want to import a different abundance raster)
+  ab.ras <- load_raster("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_imports/2021/bkpwar",
+                        product = "abundance",
+                        period = "weekly",
+                        resolution = res)
+
+  # names for each week as a number
+  names(ab.ras) <- as.numeric(strftime(names(ab.ras), format = "%W"))
+
+  #project the abundance rasters
+  ab.ras.pr <- terra::project(ab.ras, as.character(crs(wrld_simpl)))
+
+  values(ab.ras.pr)[is.nan(values(ab.ras.pr)) | values(ab.ras.pr) ==0 ] <- NA
+  values(ab.ras.pr)[values(ab.ras.pr) > 0] <- 1
+  
+  # get bincodes linking geolocator twilight measurement times to the weeks of  
+  # each abundance layer 
+  t.datetime <- (twl %>% filter(group != lag(group, default = -1)))$Twilight
+  t.weeks <- week(t.datetime)
+  t.code <- .bincode(t.weeks, as.numeric(names(ab.ras.pr)))
+  
+  xbin = seq(xmin(ab.ras.pr),xmax(ab.ras.pr),length=ncol(ab.ras.pr)+1)
+  ybin = seq(ymin(ab.ras.pr),ymax(ab.ras.pr),length=nrow(ab.ras.pr)+1)
+  ab.arr <- as.array(ab.ras.pr)
+  
+  # If the bird becomes stationary, the prior for a location is selected from an eBird 
+  # relative abundance raster for the week during which the bird arrived at the location 
+  # While the bird is moving, the prior always has a value of 0
+  function(p){
+    
+    ifelse(stationary == 1, 
+           ab.arr[cbind(length(ybin)-.bincode(p[,2],ybin), .bincode(p[,1],xbin), t.code)],
+           1)
+  }
+}
+
+# Test calls  for earthseaMask  ###############################################
+
+# arguments must be defined using geolocator data
+# mask <- earthseaMask2(xlim, ylim, n = 10, index=index)
+
 # runGeoScripts ################################################################
 
 #Function to run all geolocaro analysis scripts

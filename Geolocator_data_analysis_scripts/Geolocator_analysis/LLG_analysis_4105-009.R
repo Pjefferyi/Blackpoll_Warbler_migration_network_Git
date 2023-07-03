@@ -359,12 +359,13 @@ ylim <- range(x0[,2])+c(-5,5)
 
 index <- ifelse(stationary, 1, 2)
 mask <- earthseaMask(xlim, ylim, n = 1, index=index)
+#mask <- earthseaMask2(xlim, ylim, index=index, twl, pacific = FALSE)
 
 # We will give locations on land a higher prior 
 ## Define the log prior for x and z
 logp <- function(p) {
   f <- mask(p)
-  ifelse(is.na(f), log(1), log(100))
+  ifelse(is.na(f), -1000, log(1))
 }
 
 # Define the Estelle model ####################################################

@@ -11,6 +11,7 @@ library(geosphere)
 library(terra)
 library(sf)
 library(maptools)
+library(ebirdst)
 
 source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis/Geolocator_analysis_helper_functions.R")
 
@@ -82,7 +83,7 @@ ref_data <- ref_data %>% group_by(study.site) %>%
   mutate(mod.deploy.lon = median(deploy.longitude))%>%
   mutate(mod.deploy.lat = median(deploy.latitude))
 
-View(ref_data %>% group_by(study.site, geo.id) %>% summarise(disp = mean(deploy.longitude)))
+#View(ref_data %>% group_by(study.site, geo.id) %>% summarise(disp = mean(deploy.longitude)))
 
 # Now we can modify our location dataset
 #geo.all <- merge(geo.all, ref_data[,c("geo.id", "mod.deploy.lon", "mod.deploy.lat")], by.x = "geo_id", by.y = "geo.id")
@@ -99,7 +100,7 @@ geo.all <- geo.all %>% group_by(geo_id) %>% mutate(Lon.50. = case_when(
     .default = Lat.50.))
 
 # Check the location of breeding and nonbreeding sites   
-View(geo.all[,c("geo_id", "Lon.50.", "Lat.50.", "mod.deploy.lon", "mod.deploy.lat")])
+#View(geo.all[,c("geo_id", "Lon.50.", "Lat.50.", "mod.deploy.lon", "mod.deploy.lat")])
 
 # plot locations of deployment sites (there should be 10) 
 dep.sites <- geo.all[(geo.all$sitenum == 1),]
@@ -486,11 +487,11 @@ NB.stat$cluster  <- cutree(NB.clust, k = 5)
 ggplot(st_as_sf(wrld_simpl))+
   geom_sf(colour = NA, fill = "lightgray") +
   coord_sf(xlim = c(-90, -30),ylim = c(-15, 20))+
+  geom_errorbar(data = NB.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), color = "red", width=1, alpha = 0.2) + 
   geom_point(data = NB.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, colour = site_type)) +
   geom_path(data = NB.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5,
             arrow = arrow(end = "last", type = "open", length = unit(0.10, "inches"))) 
 
-# plot the clusters 
 ggplot(st_as_sf(wrld_simpl))+
   geom_sf(colour = NA, fill = "lightgray") +
   coord_sf(xlim = c(-90, -30),ylim = c(-15, 20)) +
@@ -575,13 +576,36 @@ plot(NB.graph.weighed, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
 ################################################################################
 
 # create and export geolocator deployment sites
-geo.breed <- geo.all %>% filter(site_type == "Breeding" & 
-                                  period == "Post-breeding migration") %>% 
+geo.breed <- geo.all %>% filter(site_type == "Breeding" &
+                                  period == "Post-breeding migration") %>%
   dplyr::select(geo_id, Lon.50., Lat.50., sitenum, site_type, period, study.site)
 breed.sites <- st_as_sf(geo.breed, coords = c("Lon.50.", "Lat.50."))
 
-#set crs
+# set crs
 st_crs(breed.sites) <- st_crs(wrld_simpl)
 
-#export
-st_write(breed.sites, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Relative_abundance_propagation/bpw_breeding_sites.shp")
+# export breeding sites
+#st_write(breed.sites, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Relative_abundance_propagation/bpw_breeding_sites.shp")
+
+# import breeding sites and join with breeding site data 
+abundance.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Relative_abundance_propagation/bpw_abundance_regions.shp")
+abundance.regions <- st_join(abundance.regions, breed.sites)
+
+# import breeding season abundance data
+bpw.fall.ab <- load_raster("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_imports/2021/bkpwar",
+                           product = "abundance",
+                           period = "seasonal",
+                           resolution = "lr")
+
+bpw.fall.ab <- terra::project(bpw.fall.ab, crs(abundance.regions))
+
+# extract the abundance for each region,
+ab.extract <- terra::extract(bpw.fall.ab$breeding, abundance.regions, fun = sum, na.rm=TRUE)
+ab.extract$ID <- abundance.regions$geo_id
+ab.extract$breedregionname <- abundance.regions$breedregio
+
+# Create a dataframe with the abundance per region
+ab.per.region <- merge(as.data.frame(abundance.regions), ab.extract, by.x = "id", by.y = "ID") %>%
+  dplyr::select(-geometry)
+
+
