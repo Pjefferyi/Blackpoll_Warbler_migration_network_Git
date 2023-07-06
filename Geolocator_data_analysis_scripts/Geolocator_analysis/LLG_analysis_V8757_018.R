@@ -301,7 +301,7 @@ abline(v = spring.equi, col = "orange")
 dev.off()
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol=0.11)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol=0.095)
 
 x0 <- path$x
 z0 <- trackMidpts(x0)
@@ -331,10 +331,10 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-cL <- changeLight(twl=geo_twl, quantile= 0.9, summary = F, days = 2, plot = T)
+cL <- changeLight(twl=geo_twl, quantile= 0.96, summary = F, days = 2, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = 1000) # 1000
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = 500) # 1000
 
 #back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 
@@ -603,6 +603,7 @@ f2.end <- "2019-10-03"
 
 # Plot lat, lon and light transitions  
 jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition.png"), width = 1024 , height = 990, quality = 100, res = 200)
+
 par(cex.lab=1.4)
 par(cex.axis=1.4)
 par(mfrow=c(3,1), mar = c(5,5,0.1,5))

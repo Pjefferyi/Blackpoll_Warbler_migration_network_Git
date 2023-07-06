@@ -205,7 +205,7 @@ geo_twl <- export2GeoLight(twl)
 # this is just to find places where birds have been for a long time, would not use these parameters for stopover identification, detailed can be found in grouped model section
 cL <- changeLight(twl=geo_twl, quantile=0.8, summary = F, days = 10, plot = T)
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 250)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 1000)
 
 #specify which site is the stationary one
 site           <- mS$site[mS$site>0] # get rid of movement periods
@@ -263,7 +263,7 @@ dev.off()
 # Using approximate timings of arrival and departure from the breeding grounds
 zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith0,
-                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad,
+                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad-2,
                             Date > anytime(dep.nbr) ~ zenith0))
 
 zeniths0 <- zenith_twl_zero$zenith
@@ -406,8 +406,8 @@ xlim <- range(x0[,1])+c(-5,5)
 ylim <- range(x0[,2])+c(-5,5)
 
 index <- ifelse(stationary, 1, 2)
-#mask <- earthseaMask(xlim, ylim, n = 1, index=index)
-mask <- earthseaMask2(xlim, ylim, index=index, twl, pacific = FALSE)
+mask <- earthseaMask(xlim, ylim, n = 1, index=index)
+#mask <- earthseaMask2(xlim, ylim, index=index, twl, pacific = FALSE)
 
 # We will give locations on land a higher prior 
 ## Define the log prior for x and z
@@ -425,7 +425,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                beta =  beta,
                                x0 = x0, # median point for each group (defined by twl$group)
                                z0 = z0, # middle points between the x0 points
-                               zenith = zeniths0,
+                               zenith = zenith0,
                                logp.x = logp,# land sea mask
                                fixedx = fixedx)
 
@@ -452,7 +452,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                x0 = x0, z0 = z0,
                                logp.x = logp,
                                missing=twl$Missing,
-                               zenith = zeniths0,
+                               zenith = zenith0,
                                fixedx = fixedx)
 
 for (k in 1:3) {

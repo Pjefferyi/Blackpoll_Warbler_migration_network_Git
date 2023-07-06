@@ -196,7 +196,7 @@ geo_twl <- export2GeoLight(twl)
 # this is just to find places where birds have been for a long time, would not use these parameters for stopover identification, detailed can be found in grouped model section
 cL <- changeLight(twl=geo_twl, quantile=0.9, summary = F, days = 10, plot = T)
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 250)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 1000)
 
 #specify which site is the stationary one
 site           <- mS$site[mS$site>0] # get rid of movement periods
@@ -286,7 +286,7 @@ abline(v = spring.equi, col = "orange")
 dev.off()
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol=0.01)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol=0.18)
 
 x0 <- path$x
 z0 <- trackMidpts(x0)
@@ -320,7 +320,7 @@ cL <- changeLight(twl=geo_twl, quantile=0.90, summary = F, days = 2 , plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
 #mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths_med[1: length(zeniths_med) -1], distThreshold = 500)
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 1000)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
 
 #back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 

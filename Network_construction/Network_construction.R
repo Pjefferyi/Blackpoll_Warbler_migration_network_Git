@@ -177,7 +177,7 @@ geo.dist = function(df) {
 dist.matrix <- geo.dist(fall.stat[,c("Lon.50.","Lat.50.")])
 fall.clust <- hclust(dist.matrix)
 plot(fall.clust)
-fall.stat$cluster  <- cutree(fall.clust, k = 16)
+fall.stat$cluster  <- cutree(fall.clust, k = 18)
 
 # Add breeding sites with separate clusters
 fall.breed.n <- geo.all  %>% filter(site_type == "Breeding",
@@ -191,6 +191,11 @@ fall.breed <- geo.all  %>% filter(site_type == "Breeding",
 fall.breed$cluster <- rep(seq(max(fall.stat$cluster) + 1, max(fall.stat$cluster) + nrow(fall.breed.n)), fall.breed.n$geo_per_site)
 
 fall.stat <- rbind(fall.stat, fall.breed) %>% arrange(geo_id, StartTime)
+
+# # export fall stat sites for manual clustering
+# fall.stat.sites <- st_as_sf(fall.stat[,1:12], coords = c("Lon.50.", "Lat.50."))
+# st_crs(fall.stat.sites) <- st_crs(wrld_simpl)
+# st_write(fall.stat.sites, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/fall_stat_sites.shp")
 
 # plot stopover and nonbreeding nodes
 
@@ -247,16 +252,16 @@ fall.node.type <- fall.stat %>% group_by(cluster, site_type) %>%
   ))
 
 # Create a layout with node locations 
-meta <- data.frame("vertex" = seq(min(fall.edge.df$cluster), max(fall.edge.df$cluster)), 
+meta.fall <- data.frame("vertex" = seq(min(fall.edge.df$cluster), max(fall.edge.df$cluster)), 
                    "Lon.50." = fall.node.lon$node.lon,
                    "Lat.50." = fall.node.lat$node.lat,
                    "node.type" = fall.node.type$site_type,
                    "node.type.num" = fall.node.type$site_type_num)
 
-location <- as.matrix(meta[, c("Lon.50.", "Lat.50.")])
+fall.location <- as.matrix(meta.fall[, c("Lon.50.", "Lat.50.")])
 
 # Create the fall network
-fall.graph <- graph_from_data_frame(fall.edge.df, directed = T, vertices = meta)
+fall.graph <- graph_from_data_frame(fall.edge.df, directed = T, vertices = meta.fall)
 
 # Colour palette for site type
 type.palette <- rainbow(3)  
@@ -265,10 +270,10 @@ type.palette <- rainbow(3)
 plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70))
 plot(fall.graph, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
      edge.width = 1, edge.arrow.size = 0, edge.arrow.width = 0,  
-     layout = location, rescale = F, asp = 0, xlim = c(-170, -30),
-     ylim = c(-15, 70), vertex.color = type.palette[meta$node.type.num], add = T)
+     layout = fall.location, rescale = F, asp = 0, xlim = c(-170, -30),
+     ylim = c(-15, 70), vertex.color = type.palette[meta.fall$node.type.num], add = T)
 legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
-       col = type.palette[unique(meta$node.type.num)],
+       col = type.palette[unique(meta.fall$node.type.num)],
        pch = 16)
 
 # Add edge weights to the fall network to show the flow of individuals #########
@@ -280,17 +285,17 @@ fall.con <- fall.edge.df %>% group_by(cluster, next.cluster) %>%
   summarize(weight = n()) 
 
 # Create a fall network with weighed edges
-fall.graph.weighed <- graph_from_data_frame(fall.con, directed = T, vertices = meta)
+fall.graph.weighed <- graph_from_data_frame(fall.con, directed = T, vertices = meta.fall)
 is_weighted(fall.graph.weighed)
 
 plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70))
 plot(fall.graph.weighed, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
      edge.width = fall.con$weight/1.5, edge.arrow.size = 0, edge.arrow.width = 0,  
-     layout = location, rescale = F, asp = 0, xlim = c(-170, -30),
+     layout = fall.location, rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.3, 0.3), nrow(fall.con)),
-     vertex.color = type.palette[meta$node.type.num], add = T)
+     vertex.color = type.palette[meta.fall$node.type.num], add = T)
 legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
-       col = type.palette[unique(meta$node.type.num)],
+       col = type.palette[unique(meta.fall$node.type.num)],
        pch = 16)
 
 ################################################################################
@@ -343,6 +348,11 @@ spring.breed <- geo.all  %>% filter(site_type == "Breeding",
 spring.breed$cluster <- rep(seq(max(spring.stat$cluster) + 1, max(spring.stat$cluster) + nrow(spring.breed.n)), spring.breed.n$geo_per_site)
 
 spring.stat <-rbind(spring.stat, spring.breed) %>% arrange(geo_id, StartTime)
+
+# # export spring stat sites for manual clustering
+# spring.stat.sites <- st_as_sf(spring.stat[,1:12], coords = c("Lon.50.", "Lat.50."))
+# st_crs(spring.stat.sites) <- st_crs(wrld_simpl)
+# st_write(spring.stat.sites, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/spring_stat_sites.shp")
 
 # plot stopover and nonbreeding nodes 
 
@@ -398,27 +408,27 @@ spring.node.type <- spring.stat %>% group_by(cluster, site_type) %>%
   ))
 
 # Create a layout with node locations 
-meta <- data.frame("vertex" = seq(min(spring.stat$cluster), max(spring.stat$cluster)), 
+meta.spring <- data.frame("vertex" = seq(min(spring.stat$cluster), max(spring.stat$cluster)), 
                    "Lon.50." = spring.node.lon$node.lon,
                    "Lat.50." = spring.node.lat$node.lat,
                    "node.type.num" = spring.node.type$site_type_num)
 
-location <- as.matrix(meta[, c("Lon.50.", "Lat.50.")])
+spring.location <- as.matrix(meta.spring[, c("Lon.50.", "Lat.50.")])
 
 # Create the spring network
-spring.graph <- graph_from_data_frame(spring.edge.df, directed = T, vertices = meta)
+spring.graph <- graph_from_data_frame(spring.edge.df, directed = T, vertices = meta.spring)
 
 # Colour palette for site type
 type.palette <- rainbow(3)  
 
-# plot the fall network over North and South America
+# plot the spring network over North and South America
 plot(wrld_simpl, xlim = c(-170, -30),ylim = c(-15, 70))
 plot(spring.graph, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
      edge.width = 1, edge.arrow.size = 0, edge.arrow.width = 0,  
-     layout = location, rescale = F, asp = 0, xlim = c(-170, -30),
-     ylim = c(-15, 70), vertex.color = type.palette[meta$node.type.num], add = T)
+     layout = spring.location, rescale = F, asp = 0, xlim = c(-170, -30),
+     ylim = c(-15, 70), vertex.color = type.palette[meta.spring$node.type.num], add = T)
 legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
-       col = type.palette[unique(meta$node.type.num)],
+       col = type.palette[unique(meta.spring$node.type.num)],
        pch = 16)
 
 # Add edge weights to the spring network to show the flow of individuals #########
@@ -430,17 +440,17 @@ spring.con <- spring.edge.df %>% group_by(cluster, next.cluster) %>%
   summarize(weight = n()) 
 
 # Create a new spring network
-spring.graph.weighed <- graph_from_data_frame(spring.con, directed = T, vertices = meta)
+spring.graph.weighed <- graph_from_data_frame(spring.con, directed = T, vertices = meta.spring)
 is_weighted(spring.graph.weighed)
 
 plot(wrld_simpl, xlim = c(-170, -30),ylim = c(-15, 70))
 plot(spring.graph.weighed, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
      edge.width = spring.con$weight/1.5, edge.arrow.size = 0, edge.arrow.width = 0,  
-     layout = location, rescale = F, asp = 0, xlim = c(-170, -30),
+     layout = spring.location, rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.3, 0.3), nrow(spring.con)),
-     vertex.color = type.palette[meta$node.type.num], add = T)
+     vertex.color = type.palette[meta.spring$node.type.num], add = T)
 legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
-       col = type.palette[unique(meta$node.type.num)],
+       col = type.palette[unique(meta.spring$node.type.num)],
        pch = 16)
 
 ################################################################################
@@ -533,15 +543,15 @@ NB.node.type <- NB.stat %>% group_by(cluster, site_type) %>%
   ))
 
 # Create a layout with node locations 
-meta <- data.frame("vertex" = seq(min(NB.stat$cluster), max(NB.stat$cluster)), 
+meta.NB <- data.frame("vertex" = seq(min(NB.stat$cluster), max(NB.stat$cluster)), 
                    "Lon.50." = NB.node.lon$node.lon,
                    "Lat.50." = NB.node.lat$node.lat,
                    "node.type.num" = NB.node.type$site_type_num)
 
-location <- as.matrix(meta[, c("Lon.50.", "Lat.50.")])
+NB.location <- as.matrix(meta.NB[, c("Lon.50.", "Lat.50.")])
 
 # Create the spring network
-NB.graph <- graph_from_data_frame(NB.edge.df, directed = T, vertices = meta)
+NB.graph <- graph_from_data_frame(NB.edge.df, directed = T, vertices = meta.NB)
 
 # Colour palette for site type
 type.palette <- rainbow(3)  
@@ -549,8 +559,8 @@ type.palette <- rainbow(3)
 # plot the fall network over North and South America
 plot(NB.graph, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
      edge.width = 1, edge.arrow.size = 0.5, edge.arrow.width = 0.5,  
-     layout = location, rescale = F, asp = 0, xlim = c(-90, -30),
-     ylim = c(-15, 20), vertex.color = type.palette[meta$node.type.num])
+     layout = NB.location, rescale = F, asp = 0, xlim = c(-90, -30),
+     ylim = c(-15, 20), vertex.color = type.palette[meta.NB $node.type.num])
 plot(wrld_simpl, add = T)
 
 # Add edge weights to the spring network to show the flow of individuals #########
@@ -562,14 +572,14 @@ NB.con <- NB.edge.df %>% group_by(cluster, next.cluster) %>%
   summarize(weight = n()) 
 
 # Create a new spring network
-NB.graph.weighed <- graph_from_data_frame(NB.con, directed = T, vertices = meta)
+NB.graph.weighed <- graph_from_data_frame(NB.con, directed = T, vertices = meta.NB )
 is_weighted(NB.graph.weighed)
 
 plot(wrld_simpl, xlim = c(-90, -30), ylim = c(-15, 20))
 plot(NB.graph.weighed, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
      edge.width = NB.con$weight/1.5, edge.arrow.size = 0.5, edge.arrow.width = 1.2,  
-     layout = location, rescale = F, asp = 0, edge.curved = rep(c(-0.3, 0.3), nrow(NB.con)),
-     vertex.color = type.palette[meta$node.type.num], add = T)
+     layout = NB.location, rescale = F, asp = 0, edge.curved = rep(c(-0.3, 0.3), nrow(NB.con)),
+     vertex.color = type.palette[meta.NB $node.type.num], add = T)
 
 ################################################################################
 # Assess and propagate the relative abundance of blackpoll warblers from eBird
@@ -577,17 +587,17 @@ plot(NB.graph.weighed, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
 
 # create and export geolocator deployment sites
 geo.breed <- geo.all %>% filter(site_type == "Breeding" &
-                                  period == "Post-breeding migration") %>%
+                                  (period == "Post-breeding migration" | Recorded_North_South_mig == "North")) %>%
   dplyr::select(geo_id, Lon.50., Lat.50., sitenum, site_type, period, study.site)
 breed.sites <- st_as_sf(geo.breed, coords = c("Lon.50.", "Lat.50."))
 
-# set crs
+# set crs of breeding.sites sf object
 st_crs(breed.sites) <- st_crs(wrld_simpl)
 
-# export breeding sites
-#st_write(breed.sites, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Relative_abundance_propagation/bpw_breeding_sites.shp")
+# export breeding sites for to draw breeding region polygons.  
+# st_write(breed.sites, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Relative_abundance_propagation/bpw_breeding_sites.shp")
 
-# import breeding sites and join with breeding site data 
+# import breeding regions polygon and join attributes with breeding site data 
 abundance.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Relative_abundance_propagation/bpw_abundance_regions.shp")
 abundance.regions <- st_join(abundance.regions, breed.sites)
 
@@ -599,13 +609,82 @@ bpw.fall.ab <- load_raster("C:/Users/Jelan/OneDrive/Desktop/University/Universit
 
 bpw.fall.ab <- terra::project(bpw.fall.ab, crs(abundance.regions))
 
+# plot breeding regions, breeding sites/geolocator deployment sites, and abundance 
+# NOTE: the breeding site for WRMA04173 in Northern Quebec will only be used for the spring migration
+abundance.regions <- st_transform(abundance.regions , crs = crs(wrld_simpl))
+plot(bpw.fall.ab$breeding, xlim = c(-180, -30), ylim = c(30, 80))
+plot(as_Spatial(abundance.regions), col = NA, border = "darkred", add = T)
+plot(wrld_simpl[wrld_simpl$NAME %in% c("United States", "Canada"),], add = T)
+points(geo.breed$Lon.50., geo.breed$Lat.50., cex = 1, col = "blue", pch = 19)
+
 # extract the abundance for each region,
 ab.extract <- terra::extract(bpw.fall.ab$breeding, abundance.regions, fun = sum, na.rm=TRUE)
 ab.extract$ID <- abundance.regions$geo_id
 ab.extract$breedregionname <- abundance.regions$breedregio
 
 # Create a dataframe with the abundance per region
-ab.per.region <- merge(as.data.frame(abundance.regions), ab.extract, by.x = "id", by.y = "ID") %>%
-  dplyr::select(-geometry)
+ab.per.region <- merge(as.data.frame(abundance.regions), ab.extract, by.x = "geo_id", by.y = "ID") %>%
+  dplyr::select(-geometry, -breedregio) %>%
+  rename(br.region.abundance = breeding, br.polygon = breedregionname)
 
+################################################################################
+# relative abundance propagation on in the fall season 
+################################################################################
 
+# create abundance units for each individual bird tracked in the fall
+# these units will be used to propagate the relative abundance from the breeding regions
+fall.breed.ab <- merge(fall.breed, dplyr::select(ab.per.region, geo_id, br.region.abundance, br.polygon), by = "geo_id") %>%
+  group_by(br.polygon) %>% mutate(ab_unit = br.region.abundance/ n())
+
+# We add the abundance units to our dataset of movements
+fall.edge.df.ab <- merge(fall.edge.df, dplyr::select(fall.breed.ab, geo_id, ab_unit, br.region.abundance, br.polygon))
+
+# list of connections weighed by abundance unit
+fall.con.ab <- fall.edge.df.ab %>% group_by(cluster, next.cluster) %>% 
+  summarize(weight = sum(ab_unit)) 
+
+# Fall graph weighed using eBird relative abundance 
+
+# Create a fall network with weighed edges
+fall.graph.weighed.ab <- graph_from_data_frame(fall.con.ab, directed = T, vertices = meta.fall)
+
+plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70))
+plot(fall.graph.weighed.ab, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
+     edge.width = fall.con.ab$weight/500, edge.arrow.size = 0, edge.arrow.width = 0,  
+     layout = fall.location, rescale = F, asp = 0, xlim = c(-170, -30),
+     ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)),
+     vertex.color = type.palette[meta.fall$node.type.num], add = T)
+legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
+       col = type.palette[unique(meta.fall$node.type.num)],
+       pch = 16)
+
+################################################################################
+# relative abundance propagation on in the spring season 
+################################################################################
+
+# create abundance units for each individual bird tracked in the spring
+# these units will be used to propagate the relative abundance from the breeding regions
+spring.breed.ab <- merge(spring.breed, dplyr::select(ab.per.region, geo_id, br.region.abundance, br.polygon), by = "geo_id") %>%
+  group_by(br.polygon) %>% mutate(ab_unit = br.region.abundance/ n())
+
+# We add the abundance units to our dataset of movements
+spring.edge.df.ab <- merge(spring.edge.df, dplyr::select(spring.breed.ab, geo_id, ab_unit, br.region.abundance, br.polygon))
+
+# list of connections weighed by abundance unit
+spring.con.ab <- spring.edge.df.ab %>% group_by(cluster, next.cluster) %>% 
+  summarize(weight = sum(ab_unit)) 
+
+# spring graph weight using eBird relative abundance 
+
+# Create a fall network with weighed edges
+spring.graph.weighed.ab <- graph_from_data_frame(spring.con.ab, directed = T, vertices = meta.spring)
+
+plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70))
+plot(spring.graph.weighed.ab, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
+     edge.width = spring.con.ab$weight/500, edge.arrow.size = 0, edge.arrow.width = 0,  
+     layout = spring.location, rescale = F, asp = 0, xlim = c(-170, -30),
+     ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(spring.con.ab)),
+     vertex.color = type.palette[meta.spring$node.type.num], add = T)
+legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
+       col = type.palette[unique(meta.spring$node.type.num)],
+       pch = 16)
