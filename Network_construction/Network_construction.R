@@ -146,10 +146,7 @@ write.csv(ref_data,"C:/Users/Jelan/OneDrive/Desktop/University/University of Gue
 
 # Either import a file with manual clusters, or create cluster in R
 
-
-# Create clusters for fall stopover locations and first nonbreeding location in R 
-# first we must filter our location data to retain only those relevant to the fall migration 
-
+# first we must filter our location data to retain only those relevant to the fall migration
 fall.stat <- geo.all %>% filter(sitenum > 0, site_type %in% c("Stopover","Nonbreeding"),
                                 period %in% c("Post-breeding migration","Non-breeding period"),
                                 Recorded_North_South_mig %in% c("Both", "South and partial North", "South"))
@@ -160,6 +157,8 @@ fall.stat <- merge(fall.stat, fall.timings.nb, by = "geo_id")
 
 #only retain the stopovers and the first nonbreeding sites occupied
 fall.stat <- fall.stat %>% group_by(geo_id) %>% filter(StartTime <= NB.first.site.arrival)
+
+# Uncomment this code to generate clusters using the hclust function
 
 # code by stack overflow user jlhoward (https://stackoverflow.com/questions/21095643/approaches-for-spatial-geodesic-latitude-longitude-clustering-in-r-with-geodesic)
 # Calculates the geodesic distance between points and creates a distance matrix
@@ -179,6 +178,18 @@ fall.clust <- hclust(dist.matrix)
 plot(fall.clust)
 fall.stat$cluster  <- cutree(fall.clust, k = 18)
 
+# Export fall stopovers for manual clustering in QGIS
+#fall.stat.sites <- st_as_sf(fall.stat[,1:12], coords = c("Lon.50.", "Lat.50."))
+#st_crs(fall.stat.sites) <- st_crs(wrld_simpl)
+#st_write(fall.stat.sites, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/fall_stat_sites.shp", append=FALSE)
+
+# # Import clusters created manually
+# fall.manual.cluster <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/Fall_manual_clusters.csv")
+# 
+# # Merge cluster info with original dataset
+# fall.stat$cluster <- fall.manual.cluster$Cluster
+# fall.stat$cluster.Region <- fall.manual.cluster$ClusterReg
+
 # Add breeding sites with separate clusters
 fall.breed.n <- geo.all  %>% filter(site_type == "Breeding",
                                       period %in% c("Post-breeding migration","Non-breeding period")) %>% 
@@ -192,11 +203,6 @@ fall.breed$cluster <- rep(seq(max(fall.stat$cluster) + 1, max(fall.stat$cluster)
 
 fall.stat <- rbind(fall.stat, fall.breed) %>% arrange(geo_id, StartTime)
 
-# # export fall stat sites for manual clustering
-# fall.stat.sites <- st_as_sf(fall.stat[,1:12], coords = c("Lon.50.", "Lat.50."))
-# st_crs(fall.stat.sites) <- st_crs(wrld_simpl)
-# st_write(fall.stat.sites, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/fall_stat_sites.shp")
-
 # plot stopover and nonbreeding nodes
 
 ggplot(st_as_sf(wrld_simpl))+
@@ -207,8 +213,7 @@ ggplot(st_as_sf(wrld_simpl))+
   theme_bw() +
   theme(text = element_text(size = 16))
 
-# plot the clusters 
-
+# plot the fall clusters 
 ggplot(st_as_sf(wrld_simpl))+
   geom_sf(colour = NA, fill = "lightgray") +
   coord_sf(xlim = c(-170, -30),ylim = c(-15, 70)) +
@@ -249,7 +254,7 @@ fall.node.type <- fall.stat %>% group_by(cluster, site_type) %>%
     site_type == "Breeding" ~ 1,
     site_type == "Nonbreeding" ~ 2,
     site_type == "Stopover" ~ 3
-  ))
+  )) %>% distinct(cluster, .keep_all = TRUE) #must verify whether sites have equal maxima of uses
 
 # Create a layout with node locations 
 meta.fall <- data.frame("vertex" = seq(min(fall.edge.df$cluster), max(fall.edge.df$cluster)), 
@@ -292,7 +297,7 @@ plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70))
 plot(fall.graph.weighed, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
      edge.width = fall.con$weight/1.5, edge.arrow.size = 0, edge.arrow.width = 0,  
      layout = fall.location, rescale = F, asp = 0, xlim = c(-170, -30),
-     ylim = c(-15, 70), edge.curved = rep(c(-0.3, 0.3), nrow(fall.con)),
+     ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con)),
      vertex.color = type.palette[meta.fall$node.type.num], add = T)
 legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
        col = type.palette[unique(meta.fall$node.type.num)],
@@ -622,26 +627,36 @@ ab.extract <- terra::extract(bpw.fall.ab$breeding, abundance.regions, fun = sum,
 ab.extract$ID <- abundance.regions$geo_id
 ab.extract$breedregionname <- abundance.regions$breedregio
 
-# Create a dataframe with the abundance per region
+# Create a dataframe with the relative abundance per region
 ab.per.region <- merge(as.data.frame(abundance.regions), ab.extract, by.x = "geo_id", by.y = "ID") %>%
   dplyr::select(-geometry, -breedregio) %>%
-  rename(br.region.abundance = breeding, br.polygon = breedregionname)
+  rename(br.region.r.abundance = breeding, br.polygon = breedregionname) %>%
+  mutate(br.region.prop.total.population = br.region.r.abundance/ sum(unique(br.region.r.abundance)))
 
 ################################################################################
 # relative abundance propagation on in the fall season 
 ################################################################################
 
-# create abundance units for each individual bird tracked in the fall
+# calculate the relative abundance for each breeding node (relative abundance of region/number of breeding nodes in region)
+# then create abundance units for each individual bird tracked in the fall
 # these units will be used to propagate the relative abundance from the breeding regions
-fall.breed.ab <- merge(fall.breed, dplyr::select(ab.per.region, geo_id, br.region.abundance, br.polygon), by = "geo_id") %>%
-  group_by(br.polygon) %>% mutate(ab_unit = br.region.abundance/ n())
+fall.breed.ab <- merge(fall.breed, dplyr::select(ab.per.region, geo_id, br.region.prop.total.population, br.polygon), by = "geo_id") %>%
+  group_by(br.polygon) %>% mutate(br.node.prop.total.population = br.region.prop.total.population/ n_distinct(study.site))%>%
+  ungroup() %>% group_by(study.site) %>%
+  mutate(ab.unit = br.node.prop.total.population/n_distinct(geo_id))
+
+View(fall.breed.ab %>% dplyr::select(geo_id, StartTime, EndTime, Lon.50.,
+                                     Lat.50., br.polygon,
+                                     br.region.prop.total.population,
+                                     br.node.prop.total.population,
+                                     ab.unit))
 
 # We add the abundance units to our dataset of movements
-fall.edge.df.ab <- merge(fall.edge.df, dplyr::select(fall.breed.ab, geo_id, ab_unit, br.region.abundance, br.polygon))
+fall.edge.df.ab <- merge(fall.edge.df, dplyr::select(fall.breed.ab, geo_id, ab.unit, br.region.prop.total.population, br.polygon))
 
 # list of connections weighed by abundance unit
 fall.con.ab <- fall.edge.df.ab %>% group_by(cluster, next.cluster) %>% 
-  summarize(weight = sum(ab_unit)) 
+  summarize(weight = sum(ab.unit)) 
 
 # Fall graph weighed using eBird relative abundance 
 
@@ -649,42 +664,66 @@ fall.con.ab <- fall.edge.df.ab %>% group_by(cluster, next.cluster) %>%
 fall.graph.weighed.ab <- graph_from_data_frame(fall.con.ab, directed = T, vertices = meta.fall)
 
 plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70))
-plot(fall.graph.weighed.ab, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
-     edge.width = fall.con.ab$weight/500, edge.arrow.size = 0, edge.arrow.width = 0,  
+plot(fall.graph.weighed.ab, vertex.size = 200, vertex.size2 = 200,
+     edge.width = fall.con.ab$weight*10, edge.arrow.size = 0, edge.arrow.width = 0,  
      layout = fall.location, rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)),
-     vertex.color = type.palette[meta.fall$node.type.num], add = T)
+     vertex.color = type.palette[meta.fall$node.type.num], vertex.label.dist = 30,
+     add = T)
 legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
        col = type.palette[unique(meta.fall$node.type.num)],
        pch = 16)
+
+# Save elements necessary to build Fall network
+write_graph(fall.graph.weighed.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.graph.edge.list.txt",
+            format = c("edgelist"))
+write.csv(meta.fall, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.node.metadata.csv")
+write.csv(fall.con.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.edge.weights.csv")
 
 ################################################################################
 # relative abundance propagation on in the spring season 
 ################################################################################
 
-# create abundance units for each individual bird tracked in the spring
+# calculate the relative abundance for each breeding node (relative abundance of region/number of breeding nodes in region)
+# then create abundance units for each individual bird tracked in the spring
 # these units will be used to propagate the relative abundance from the breeding regions
-spring.breed.ab <- merge(spring.breed, dplyr::select(ab.per.region, geo_id, br.region.abundance, br.polygon), by = "geo_id") %>%
-  group_by(br.polygon) %>% mutate(ab_unit = br.region.abundance/ n())
+spring.breed.ab <- merge(spring.breed, dplyr::select(ab.per.region, geo_id, br.region.prop.total.population, br.polygon), by = "geo_id") %>%
+  group_by(br.polygon) %>% mutate(br.node.prop.total.population = br.region.prop.total.population/ n_distinct(study.site))%>%
+  ungroup() %>% group_by(study.site) %>%
+  mutate(ab.unit = br.node.prop.total.population/n_distinct(geo_id))
+
+View(spring.breed.ab %>% dplyr::select(geo_id, StartTime, EndTime, Lon.50.,
+                                     Lat.50., br.polygon,
+                                     br.region.prop.total.population,
+                                     br.node.prop.total.population,
+                                     ab.unit))
 
 # We add the abundance units to our dataset of movements
-spring.edge.df.ab <- merge(spring.edge.df, dplyr::select(spring.breed.ab, geo_id, ab_unit, br.region.abundance, br.polygon))
+spring.edge.df.ab <- merge(spring.edge.df, dplyr::select(spring.breed.ab, geo_id, ab.unit, br.region.prop.total.population, br.polygon))
 
 # list of connections weighed by abundance unit
 spring.con.ab <- spring.edge.df.ab %>% group_by(cluster, next.cluster) %>% 
-  summarize(weight = sum(ab_unit)) 
+  summarize(weight = sum(ab.unit)) 
 
-# spring graph weight using eBird relative abundance 
+# spring graph weighed using eBird relative abundance 
 
-# Create a fall network with weighed edges
+# Create a spring network with weighed edges
 spring.graph.weighed.ab <- graph_from_data_frame(spring.con.ab, directed = T, vertices = meta.spring)
 
 plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70))
-plot(spring.graph.weighed.ab, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
-     edge.width = spring.con.ab$weight/500, edge.arrow.size = 0, edge.arrow.width = 0,  
+plot(spring.graph.weighed.ab, vertex.size = 200, vertex.size2 = 200,
+     edge.width = spring.con.ab$weight*40, edge.arrow.size = 0, edge.arrow.width = 0,  
      layout = spring.location, rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(spring.con.ab)),
-     vertex.color = type.palette[meta.spring$node.type.num], add = T)
+     vertex.color = type.palette[meta.spring$node.type.num], vertex.label.dist = 30, 
+       add = T)
 legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
        col = type.palette[unique(meta.spring$node.type.num)],
        pch = 16)
+
+# Save elements necessary to build spring network
+write_graph(spring.graph.weighed.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.graph.edge.list.txt",
+            format = c("edgelist"))
+write.csv(meta.spring, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.node.metadata.csv")
+write.csv(spring.con.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.edge.weights.csv")
+

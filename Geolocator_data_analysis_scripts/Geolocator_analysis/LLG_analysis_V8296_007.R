@@ -588,7 +588,35 @@ dev.off()
 # open jpeg
 jpeg(paste0(dir, "/", geo.id,"_grouped_threshold_model_lon_lat.png"), width = 1024 , height = 990)
 
+par(mfrow=c(2,1))
 
+plot(sm$StartTime, sm$"Lon.50.", ylab = "Longitude", xlab = "", yaxt = "n", type = "n", ylim = c(min(sm$Lon.50.) - 10, max(sm$Lon.50.) + 10))
+axis(2, las = 2)
+polygon(x=c(sm$StartTime,rev(sm$StartTime)), y=c(sm$`Lon.2.5.`,rev(sm$`Lon.97.5.`)), border="gray", col="gray")
+lines(sm$StartTim,sm$"Lon.50.", lwd = 2)
+abline(v = fall.equi, lwd = 2, lty = 2, col = "orange")
+abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
+
+#Add points for stopovers 
+points(sm$StartTime, sm$"Lon.50.", pch=21, bg=colours[sitenum+1], 
+       cex = ifelse(sitenum>0, 3, 0), col = "firebrick", lwd = 2.5)
+
+#The text in the symbols indicates the estimated number of days spent at each stopover location 
+text(sm$StartTime, sm$"Lon.50.", ifelse(sitenum>0, as.integer(((sm$EndTime - sm$StartTime)/86400)), ""), col="black") 
+
+plot(sm$StartTime, sm$"Lat.50.", ylab = "Latitude", xlab = "", yaxt = "n", type = "n", ylim = c(min(sm$Lat.50.) - 10, max(sm$Lat.50.) + 10))
+axis(2, las = 2)
+polygon(x=c(sm$StartTime,rev(sm$StartTime)), y=c(sm$`Lat.2.5.`,rev(sm$`Lat.97.5.`)), border="gray", col="gray")
+lines(sm$StartTim,sm$"Lat.50.", lwd = 2)
+abline(v = fall.equi, lwd = 2, lty = 2, col = "orange")
+abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
+
+#Add points for stopovers 
+points(sm$StartTime, sm$"Lat.50.", pch=21, bg=colours[sitenum+1], 
+       cex = ifelse(sitenum>0, 3, 0), col = "firebrick", lwd = 2.5)
+
+#The text in the symbols indicates the estimated number of days spent at each stopover location 
+text(sm$StartTime, sm$"Lat.50.", ifelse(sitenum>0, as.integer(((sm$EndTime - sm$StartTime)/86400)), ""), col="black")
 
 #Close jpeg
 dev.off()
@@ -626,8 +654,9 @@ save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
 geo.ref[(geo.ref$geo.id == geo.id),]$In_habitat_median_zenith_angle <- zenith
 geo.ref[(geo.ref$geo.id == geo.id),]$Hill_Ekstrom_median_angle <- zenith_sd 
+geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- arr.nbr
+geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- dep.nbr
 write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE) 
-
 
 # Examine twilights ############################################################
 

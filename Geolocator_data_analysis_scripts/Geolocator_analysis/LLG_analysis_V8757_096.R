@@ -95,7 +95,7 @@ twl_in$Twilight <- as.POSIXct(twl_in$Twilight, tz = "UTC")
 
 # Period over which to calculate the time shift. It should be while the bird is
 # still in the breeding grounds
-period <- as.POSIXct(c("2012-08-01", "2012-08-20"), tz = "UTC")
+period <- as.POSIXct(c("2012-08-01", "2012-09-20"), tz = "UTC")
 
 # plot the period over the light image
 lightImage( tagdata = lig,
@@ -133,7 +133,7 @@ tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
                        offset = offset, lwd = 3, col = adjustcolor("orange", alpha.f = 0.5))
 dev.off()
 
-# # Detect twilight times, for now do not edit twilight times  
+# # Detect twilight times, for now do not edit twilight times
 # twl <- preprocessLight(lig,
 #                        threshold = threshold,
 #                        offset = offset,
@@ -143,21 +143,8 @@ dev.off()
 # 
 # # Adjust sunset times by 120 second sampling interval
 # twl <- twilightAdjust(twilights = twl, interval = 120)
-# 
-# # Automatically adjust or mark false twilights
-# twl <- twilightEdit(twilights = twl,
-#                     window = 4,
-#                     outlier.mins = 35,
-#                     stationary.mins = 25,
-#                     plot = TRUE)
-# 
-# # Visualize light and twilight time-series
-# lightImage(lig, offset = 19)
-# tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
-#               col = ifelse(twl$Rise, "dodgerblue", "firebrick"))
 
-
-# Save the twilight times 
+# Save the twilight times
 # write.csv(twl, paste0(dir,"/",geo.id , "_twl_times.csv"))
 
 ###############################################################################
@@ -167,6 +154,18 @@ dev.off()
 # Import file with twilight times  
 twl <- read.csv(paste0(dir,"/", geo.id, "_twl_times.csv"))
 twl$Twilight <- as.POSIXct(twl$Twilight, tz = "UTC")
+
+# Automatically adjust or mark false twilights
+twl <- twilightEdit(twilights = twl,
+                    window = 4,
+                    outlier.mins = 15,
+                    stationary.mins = 25,
+                    plot = TRUE)
+
+# Visualize light and twilight time-series
+lightImage(lig, offset = 19)
+tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
+              col = ifelse(twl$Rise, "dodgerblue", "firebrick"))
 
 # Calibration ##################################################################
 
@@ -216,8 +215,8 @@ geo_twl <- export2GeoLight(twl)
 # 
 # (zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
 
-startDate <- "2012-11-10"
-endDate   <- "2013-05-20"
+startDate <- "2012-11-20"
+endDate   <- "2013-05-23"
 
 start = min(which(as.Date(twl$Twilight) == startDate))
 end = max(which(as.Date(twl$Twilight) == endDate))
@@ -240,7 +239,7 @@ z0 <- trackMidpts(x0_r)
 save(x0_r, file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
 
 # Check the following times of arrival and departure using a plot 
-arr.nbr <- "2012-11-05" 
+arr.nbr <- "2012-11-03" 
 dep.nbr <- "2013-05-23" 
 
 # open jpeg
@@ -302,7 +301,7 @@ abline(v = spring.equi, col = "orange")
 dev.off()
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol=0.14)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol=0.2)
 
 x0 <- path$x
 z0 <- trackMidpts(x0)
@@ -332,11 +331,11 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-cL <- changeLight(twl=geo_twl, quantile= 0.86, summary = F, days = 3, plot = T)
+cL <- changeLight(twl=geo_twl, quantile= 0.87, summary = F, days = 3, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
 #mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths_med[1: length(zeniths_med)-1], distThreshold = 250)
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = 500)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = 250)
 
 #back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 
@@ -524,7 +523,6 @@ text(sm[,"Lon.50."], sm[,"Lat.50."], ifelse(sitenum>0, as.integer(((sm$EndTime -
 #Show dates
 #text(sm[,"Lon.50."], sm[,"Lat.50."], ifelse(sitenum>0, as.character(sm$StartTime), ""), col="red", pos = 1) 
 
- 
 #Close jpeg
 dev.off()
 
@@ -637,4 +635,6 @@ geo.ref[(geo.ref$geo.id == geo.id),]$In_habitat_median_zenith_angle <- zenith
 geo.ref[(geo.ref$geo.id == geo.id),]$Hill_Ekstrom_median_angle <- zenith_sd 
 geo.ref[(geo.ref$geo.id == geo.id),]$Fall_carrib_edits <- FALSE
 geo.ref[(geo.ref$geo.id == geo.id),]$Time_shift_hours <- shift$shift
+geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- arr.nbr
+geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- dep.nbr
 write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE) 

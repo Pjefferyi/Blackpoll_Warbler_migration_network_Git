@@ -452,6 +452,9 @@ sm$geo_id <- geo.id
 sm <- sm %>% mutate(period= case_when(StartTime <= anytime("2020-04-30 10:29:15", asUTC = T, tz = "GMT")  ~ "Non-breeding period",
                                       StartTime > anytime("2020-04-30 10:29:15", asUTC = T, tz = "GMT") ~ "Pre-breeding migration"))
 
+# We remove the last stationary location detected, as it likely was identified only because the geolocator stopped working at that location.
+sm <- sm[(sm$StartTime <= "2020-06-19 07:06:00"),]
+
 #Save the output of the model 
 save(sm, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))
 save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
@@ -468,4 +471,5 @@ geo.ref[(geo.ref$geo.id == geo.id),]$In_habitat_median_zenith_angle <- zenith
 geo.ref[(geo.ref$geo.id == geo.id),]$Hill_Ekstrom_median_angle <- NA
 geo.ref[(geo.ref$geo.id == geo.id),]$Fall_carrib_edits <- FALSE
 geo.ref[(geo.ref$geo.id == geo.id),]$Time_shift_hours <- NA
+geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- dep.nbr
 write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE) 

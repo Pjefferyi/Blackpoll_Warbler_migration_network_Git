@@ -548,6 +548,8 @@ save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
 geo.ref[(geo.ref$geo.id == geo.id),]$In_habitat_median_zenith_angle <- zenith
 geo.ref[(geo.ref$geo.id == geo.id),]$Hill_Ekstrom_median_angle <- zenith_sd 
+geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- arr.nbr
+geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- dep.nbr
 write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE) 
 
 # Examine twilights ############################################################

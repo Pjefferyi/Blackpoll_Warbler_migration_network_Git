@@ -368,6 +368,7 @@ xlim <- range(x0[,1])+c(-5,5)
 ylim <- range(x0[,2])+c(-5,5)
 
 index <- ifelse(stationary, 1, 2)
+#mask <- earthseaMask2(xlim, ylim, index=index, twl, pacific = FALSE)
 mask <- earthseaMask(xlim, ylim, n = 1, index=index)
 
 # We will give locations on land a higher prior 
@@ -552,6 +553,8 @@ save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
 geo.ref[(geo.ref$geo.id == geo.id),]$In_habitat_median_zenith_angle <- zenith
 geo.ref[(geo.ref$geo.id == geo.id),]$Hill_Ekstrom_median_angle <- zenith_sd 
+geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- arr.nbr
+geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- dep.nbr
 write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE) 
 
 # Examine twilights ############################################################

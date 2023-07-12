@@ -227,7 +227,7 @@ zeniths_med <- zenith_twl_med$zenith
 path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol= 0)
 
 x0_ad <- path$x
-z0 <- trackMidpts(x0_ad)\
+z0 <- trackMidpts(x0_ad)
 
 #Save raw path (no linear interpolation around the equinox)
 save(x0_ad, file = paste0(dir,"/", geo.id, "adjusted_initial_path_raw.csv"))
@@ -250,7 +250,7 @@ abline(v = spring.equi, col = "orange")
 dev.off()
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol=0.1)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol=0.11)
 
 x0 <- path$x
 z0 <- trackMidpts(x0)
@@ -356,6 +356,7 @@ ylim <- range(x0[,2])+c(-5,5)
 
 index <- ifelse(stationary, 1, 2)
 mask <- earthseaMask(xlim, ylim, n = 1, index=index)
+#mask <- earthseaMask2(xlim, ylim, index=index, twl, pacific = FALSE)
 
 # We will give locations on land a higher prior 
 ## Define the log prior for x and z
@@ -542,6 +543,8 @@ save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
 geo.ref[(geo.ref$geo.id == geo.id),]$In_habitat_median_zenith_angle <- zenith
 geo.ref[(geo.ref$geo.id == geo.id),]$Hill_Ekstrom_median_angle <- zenith_sd 
+geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- arr.nbr
+geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- dep.nbr
 write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE) 
 
 # Examine twilights ############################################################
@@ -564,8 +567,6 @@ f2.end <- "2016-10-17"
 #Third flight
 f3.start <- "2016-10-01"
 f3.end <- "2016-10-02"
-
-
 
 # Plot lat, lon and light transitions  
 jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition.png"), width = 1024 , height = 990, quality = 100, res = 200)

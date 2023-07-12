@@ -249,7 +249,7 @@ abline(v = fall.equi, col = "orange")
 dev.off()
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol=0.06)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol=0.05)
 
 #Adjusted tol until second stopover was located over North Carolina rather than further South. 
 x0 <- path$x
@@ -538,6 +538,49 @@ save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
 geo.ref[(geo.ref$geo.id == geo.id),]$In_habitat_median_zenith_angle <- zenith
 geo.ref[(geo.ref$geo.id == geo.id),]$Hill_Ekstrom_median_angle <- zenith_sd 
+geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- arr.nbr
 write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE) 
 
 # Examine twilights ############################################################
+
+#load the adjusted threshold path path x0_ad
+load(file = paste0(dir,"/", geo.id, "adjusted_initial_path_raw.csv"))
+
+#Fall transoceanic flight
+start <- "2016-09-15"
+end <- "2016-10-21"
+
+#first flight
+f1.start <- "2016-10-01"
+f1.end <- "2016-10-03"
+
+#second flight
+f2.start <- "2016-10-09"
+f2.end <- "2016-10-10"
+
+# Plot lat, lon and light transitions  
+jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition.png"), width = 1024 , height = 990, quality = 100, res = 200)
+
+par(cex.lab=1.4)
+par(cex.axis=1.4)
+par(mfrow=c(3,1), mar = c(5,5,0.1,5))
+plot(lig$Date[lig$Date > start & lig$Date < end], lig$Light[lig$Date > start & lig$Date < end], type = "o",
+     ylab = "Light level", xlab = "Time")
+rect(anytime(f1.start), min(lig$Light)-2, anytime(f1.end), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime(f2.start), min(lig$Light)-2, anytime(f2.end), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
+
+plot(twl$Twilight[twl$Twilight> start & twl$Twilight < end], x0_ad[,1][twl$Twilight > start & twl$Twilight < end],
+     ylab = "Longitude", xlab = "Time")
+rect(anytime(f1.start), min(x0_ad[,1])-2, anytime(f1.end), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime(f2.start), min(x0_ad[,1])-2, anytime(f2.end), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
+
+plot(twl$Twilight[twl$Twilight > start & twl$Twilight < end], x0_ad[,2][twl$Twilight > start & twl$Twilight < end],
+     ylab = "Latitude", xlab = "Time")
+rect(anytime(f1.start), min(x0_ad[,2])-2, anytime(f1.end), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime(f2.start), min(x0_ad[,2])-2, anytime(f2.end), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
+par(cex.lab= 1)
+par(cex.axis= 1)
+
+dev.off()
+
+# There seem to have been a stopover over the carribean between October 3rd approximately, and October October 9th

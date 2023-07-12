@@ -315,8 +315,7 @@ x0 <- cbind(tapply(path$x[,1],twl$group,median),
 
 #set fixed locations 
 fixedx <- rep_len(FALSE, length.out = nrow(x0))
-fixedx[1] <- TRUE
-# We only fix the first location because the track is incomplete 
+fixedx[1] <- TRUE # We only fix the first location because the track is incomplete 
 
 x0[fixedx,1] <- lon.calib
 x0[fixedx,2] <- lat.calib
@@ -579,6 +578,7 @@ dev.off()
 geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
 geo.ref[(geo.ref$geo.id == geo.id),]$In_habitat_median_zenith_angle <- zenith
 geo.ref[(geo.ref$geo.id == geo.id),]$Hill_Ekstrom_median_angle <- zenith_sd 
+geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- arr.nbr
 write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE) 
 
 

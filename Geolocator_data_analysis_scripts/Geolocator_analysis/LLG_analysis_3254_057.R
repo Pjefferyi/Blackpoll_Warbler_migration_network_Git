@@ -326,10 +326,11 @@ x0 <- cbind(tapply(path$x[,1],twl$group,median),
 
 #set fixed locations 
 fixedx <- rep_len(FALSE, length.out = nrow(x0))
+#fixedx[1] <- TRUE # We don't fix the last location estimate because the track is incomplete  
+
+# We fixed the first and last location because the geolocator stopped working close to it's breeding site
 fixedx[1] <- TRUE
-
-# We don't fix the last location estimate because the track is incomplete  
-
+fixedx[c(1, length(fixedx))] <- TRUE
 
 x0[fixedx,1] <- lon.calib
 x0[fixedx,2] <- lat.calib
@@ -547,6 +548,9 @@ save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
 geo.ref[(geo.ref$geo.id == geo.id),]$In_habitat_median_zenith_angle <- zenith
 geo.ref[(geo.ref$geo.id == geo.id),]$Hill_Ekstrom_median_angle <- zenith_sd 
+geo.ref[(geo.ref$geo.id == geo.id),]$path.elongated <- TRUE
+geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- arr.nbr
+geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- dep.nbr
 write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE) 
 
 # Examine twilights ############################################################
