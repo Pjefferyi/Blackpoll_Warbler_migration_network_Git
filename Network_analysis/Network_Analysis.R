@@ -36,7 +36,7 @@ legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
 ## Fall network analysis ###########################################################
 
 ## Fall betweenness centrality (exclude breeding sites)
-fall.betw.c <- betweenness(fall.graph, directed = F, weights = NA)
+fall.betw.c <- betweenness(fall.graph, directed = T, weights = fall.con.ab$weight)
 
 # plot of the betweenness centrality of each node 
 betw.c.palette <- hcl.colors(n = length(seq(1, max(fall.betw.c))), palette = "Reds 3", rev = T) 
@@ -152,7 +152,7 @@ type.palette <- rainbow(3)
 plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70))
 plot(spring.graph, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
      edge.width = spring.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
-     layout = spring.location, rescale = F, asp = 0, xlim = c(-170, -30),
+     layout = as.matrix(meta.spring[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(spring.con.ab)),
      vertex.color = type.palette[meta.spring$node.type.num], add = T)
 legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
@@ -160,6 +160,32 @@ legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
        pch = 16)
 
 ##Spring network analysis ###########################################################
+
+## Spring betweenness centrality (exclude breeding sites)
+spring.betw.c <- betweenness(fall.graph, directed = F, weights = NA)
+
+# plot of the betweenness centrality of each node 
+betw.c.palette <- hcl.colors(n = length(seq(1, max(spring.betw.c))), palette = "Reds 3", rev = T) 
+
+plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70))
+plot(spring.graph, vertex.size = 200, vertex.size2 = 200, vertex.label.dist = 30,
+     edge.width = spring.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
+     layout = as.matrix(meta.spring[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
+     ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(spring.con.ab)),
+     vertex.color = betw.c.palette[round(spring.betw.c)], add = T)
+
+## spring degree centrality
+spring.degree.c <- degree(spring.graph, mode = "all")
+
+# plot of the degree centrality of each node 
+spring.deg.c.palette <- hcl.colors(n = length(seq(1, max(spring.degree.c ))), palette = "Reds 3", rev = T) 
+
+plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70))
+plot(spring.graph, vertex.size = 200, vertex.size2 = 200, vertex.label.dist = 30,
+     edge.width = spring.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
+     layout = as.matrix(meta.spring[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
+     ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(spring.con.ab)),
+     vertex.color = spring.deg.c.palette[spring.degree.c], add = T)
 
 # community detection using propogating labels ----------
 spring.communities.lab <- cluster_label_prop(spring.graph, weights = spring.con.ab$weight)
@@ -172,9 +198,9 @@ plot(spring.communities.lab, spring.graph)
 spring.comm.pal <- brewer.pal(n = n_distinct(spring.communities.lab$membership), name = "Paired") 
 
 plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70))
-plot(spring.graph, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
+plot(spring.graph, vertex.size = 200, vertex.size2 = 200, vertex.label.dist = 30,
      edge.width = spring.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
-     layout = spring.location, rescale = F, asp = 0, xlim = c(-170, -30),
+     layout = as.matrix(meta.spring[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(spring.con.ab)),
      vertex.color = spring.comm.pal[ spring.communities.lab$membership], add = T)
 
@@ -189,7 +215,7 @@ plot(spring.communities.bet, spring.graph)
 spring.comm.pal <- brewer.pal(n = n_distinct(spring.communities.bet$membership), name = "Paired") 
 
 plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70))
-plot(spring.graph.weighed.ab, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
+plot(spring.graph.weighed.ab, vertex.size = 200, vertex.size2 = 200, vertex.label.dist = 30,
      edge.width = spring.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
      layout = as.matrix(meta.spring[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(spring.con.ab)),

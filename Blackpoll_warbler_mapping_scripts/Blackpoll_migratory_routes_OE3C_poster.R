@@ -102,10 +102,10 @@ fig1 <- ggplot(st_as_sf(wrld_simpl))+
         panel.grid.minor = element_blank()) +
   theme(legend.position = c(0.2, 0.4)) +
   xlab("Longitude") + 
-  ylab("Latitude")+
-  theme(text = element_text(size = 20)) +
-   geom_text(data = geo.fall.stat[(geo.fall.stat$Range_region == "Eastern"),], aes(x = Lon.50., y = Lat.50., group = geo_id),
-            label = geo.fall.stat[(geo.fall.stat$Range_region == "Eastern"),]$geo_id, size = 3)
+  ylab("Latitude")#+
+  # theme(text = element_text(size = 20)) +
+  #  geom_text(data = geo.fall.stat[(geo.fall.stat$Range_region == "Eastern"),], aes(x = Lon.50., y = Lat.50., group = geo_id),
+  #           label = geo.fall.stat[(geo.fall.stat$Range_region == "Eastern"),]$geo_id, size = 3)
 
 ggsave("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Conferences/OE3C_2023/Poster/Figure1.png",
        fig1,
