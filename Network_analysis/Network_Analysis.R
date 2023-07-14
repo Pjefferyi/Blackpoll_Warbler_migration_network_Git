@@ -36,7 +36,7 @@ plot(fall.graph, vertex.size = 200, vertex.size2 = 200,
      layout = as.matrix(meta.fall[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)),
      vertex.color = type.palette[meta.fall$node.type.num], vertex.label.dist = 30,
-     add = T)
+     add = T, vertex.label = NA)
 legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
        col = type.palette[unique(meta.fall$node.type.num)],
        pch = 16)
@@ -55,12 +55,12 @@ plot(fall.graph, vertex.size = 200, vertex.size2 = 200, vertex.label.dist = 30,
      edge.width = fall.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
      layout = as.matrix(meta.fall[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)),
-     vertex.color = betw.c.palette[as.character(round(fall.betw.c))], add = T)
+     vertex.color = betw.c.palette[as.character(round(fall.betw.c))], add = T, vertex.label = NA)
 
 ## Fall degree centrality
 fall.degree.c <- degree(fall.graph, mode = "all")
 
-# plot of the betweenness centrality of each node 
+# plot of the degree centrality of each node 
 deg.c.palette <- hcl.colors(n = length(seq(1, max(fall.degree.c ))), palette = "Reds 3", rev = T) 
 
 plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70), col = "#F2F2F2", lwd = 0.5)
@@ -68,7 +68,7 @@ plot(fall.graph, vertex.size = 200, vertex.size2 = 200, vertex.label.dist = 30,
      edge.width = fall.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
      layout = as.matrix(meta.fall[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)),
-     vertex.color = deg.c.palette[fall.degree.c], add = T)
+     vertex.color = deg.c.palette[fall.degree.c], add = T, vertex.label = NA)
 
 ### community detection using propogating labels ----------
 fall.communities.lab <- cluster_label_prop(fall.graph, weights = fall.con.ab$weight)
@@ -77,7 +77,7 @@ fall.communities.lab <- cluster_label_prop(fall.graph, weights = fall.con.ab$wei
 plot(fall.communities.lab, fall.graph)
 
 # plot communities on map
-fall.comm.pal <- rainbow(n_distinct(fall.communities.lab$membership))
+fall.comm.pal <- rainbow(length(seq(1, max(fall.communities.lab$membership))))
 
 plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70))
 plot(fall.graph, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
@@ -93,7 +93,7 @@ fall.communities.bet <- cluster_edge_betweenness(fall.graph, fall.con.ab$weight,
 plot(fall.communities.bet, fall.graph)
 
 # plot communities on map
-fall.comm.pal <- brewer.pal(n = n_distinct(fall.communities.bet $membership), name = "Paired") 
+fall.comm.pal <- rainbow(length(seq(1, max(fall.communities.bet $membership))))
 
 plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70))
 plot(fall.graph, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
@@ -103,41 +103,76 @@ plot(fall.graph, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
      vertex.color = fall.comm.pal[fall.communities.bet$membership], add = T)
 
 ### community detection using infomap -----------
-fall.communities.info <- cluster_infomap(graph = as.undirected(fall.graph),
+fall.communities.info <- cluster_infomap(graph = fall.graph,
                                                   modularity = T,
                                          nb.trials = 100)
 # plot communities
 plot(fall.communities.info, fall.graph)
 
 # plot communities on map
-fall.comm.pal <- brewer.pal(n = n_distinct(fall.communities$membership), name = "Paired") 
+fall.comm.pal <-  rainbow(length(seq(1, max(fall.communities.info$membership))))
 
 plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70))
 plot(fall.graph.weighed.ab, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
      edge.width = fall.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
      layout = as.matrix(meta.fall[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)),
-     vertex.color = fall.comm.pal$membership, add = T)
-
+     vertex.color = fall.comm.pal[fall.communities.info$membership], add = T)
 
 ### community detection using multilevel optimization of modularity -----------
 fall.communities.louvain <- cluster_louvain(graph = as.undirected(fall.graph))
 
-meta.fall$community <- fall.communities.info$membership
+meta.fall$community <- fall.communities.louvain$membership
 
 # plot communities
-plot(fall.communities.info, fall.graph)
+plot(fall.communities.louvain, fall.graph)
 
 # plot communities on map
-fall.comm.pal <- brewer.pal(n = n_distinct(fall.communities.louvain$membership), name = "Paired") 
+fall.comm.pal <- rainbow(length(seq(1, max(fall.communities.louvain$membership))))
 
 plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70))
 plot(fall.graph.weighed.ab, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
      edge.width = fall.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
      layout = as.matrix(meta.fall[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)),
-     vertex.color = fall.communities.louvain$membership, add = T)
+     vertex.color = fall.comm.pal[fall.communities.louvain$membership], add = T)
 
+### Time spent in each node during the fall ---
+
+# Load edge metadata
+fall.stat.data <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.stationary.data.csv")
+fall.stat.data$StartTime <- anytime(fall.stat.data$StartTime, asUTC = T)
+fall.stat.data$EndTime <- anytime(fall.stat.data$EndTime, asUTC = T)
+
+fall.stat <- fall.stat %>% mutate(next.cluster = case_when(
+  lead(cluster) != cluster & lead(geo_id) == geo_id ~ lead(cluster),
+  .default = NA)) 
+
+# calculate the average time that individuals spent stationary in each node (ONLY FOR STOPS CONSIDERED AS STOPOVERS)
+fall.node.time <- fall.stat %>% dplyr::select(cluster, next.cluster, geo_id, StartTime,
+                                              Lon.50., Lon.2.5., Lon.97.5., Lat.50.,
+                                              Lat.2.5., Lat.97.5., EndTime,
+                                              sitenum, duration, period,study.site,
+                                              Range_region, NB_count, period,
+                                              site_type) %>%
+  mutate(duration = ifelse(site_type == "Stopover", duration, 0)) %>%
+  group_by(geo_id, cluster) %>% summarise(time.cluster.occupied = sum(duration)) %>%
+  group_by(cluster) %>% summarise(mean.time.cluster.occupied = mean(time.cluster.occupied))
+
+# add the times calculated to the node metadata
+meta.fall$time.occupied <- fall.node.time$mean.time.cluster.occupied
+
+# plot of the average time spent in each node 
+time.palette <- hcl.colors(n = length(seq(0, max(meta.fall$time.occupied +1))), palette = "Blues3", rev = T) 
+names(time.palette) <- seq(0, max(meta.fall$time.occupied +1))
+
+plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70), col = "#F2F2F2", lwd = 0.5)
+plot(fall.graph, vertex.size = 200, vertex.size2 = 200, vertex.label.dist = 30,
+     edge.width = fall.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
+     layout = as.matrix(meta.fall[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
+     ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)),
+     vertex.color = time.palette[as.character(round(meta.fall$time.occupied))], add = T, vertex.label = NA)
+  
 # Prepare for spring network analysis ############################################
 
 # Load the spring graph
@@ -177,7 +212,7 @@ plot(spring.graph, vertex.size = 200, vertex.size2 = 200, vertex.label.dist = 30
      edge.width = spring.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
      layout = as.matrix(meta.spring[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(spring.con.ab)),
-     vertex.color = betw.c.palette[as.character(round(spring.betw.c))], add = T)
+     vertex.color = betw.c.palette[as.character(round(spring.betw.c))], add = T, vertex.label = NA)
 
 ## spring degree centrality
 spring.degree.c <- degree(spring.graph, mode = "all")
@@ -190,9 +225,9 @@ plot(spring.graph, vertex.size = 200, vertex.size2 = 200, vertex.label.dist = 30
      edge.width = spring.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
      layout = as.matrix(meta.spring[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(spring.con.ab)),
-     vertex.color = spring.deg.c.palette[spring.degree.c], add = T)
+     vertex.color = spring.deg.c.palette[spring.degree.c], add = T, vertex.label = NA)
 
-# community detection using propogating labels ----------
+# community detection using propagating labels ----------
 spring.communities.lab <- cluster_label_prop(spring.graph, weights = spring.con.ab$weight)
 meta.spring$community <- spring.communities.lab$membership
 
@@ -200,14 +235,15 @@ meta.spring$community <- spring.communities.lab$membership
 plot(spring.communities.lab, spring.graph)
 
 # plot communities on map
-spring.comm.pal <- brewer.pal(n = n_distinct(spring.communities.lab$membership), name = "Paired") 
+spring.comm.pal <- rainbow(length(seq(1, max(spring.communities.lab$membership))))
 
-plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70))
+plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70), col = "#F2F2F2")
 plot(spring.graph, vertex.size = 200, vertex.size2 = 200, vertex.label.dist = 30,
      edge.width = spring.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
      layout = as.matrix(meta.spring[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(spring.con.ab)),
-     vertex.color = spring.comm.pal[ spring.communities.lab$membership], add = T)
+     vertex.color = spring.comm.pal[spring.communities.lab$membership], add = T,
+     vertex.label = NA)
 
 # community detection using edge betweenness -----------
 spring.communities.bet <- cluster_edge_betweenness(spring.graph, weights = spring.con.ab$weight, directed = T)
@@ -217,14 +253,51 @@ meta.spring$community <- spring.communities.bet$membership
 plot(spring.communities.bet, spring.graph)
 
 # plot communities on map
-spring.comm.pal <- brewer.pal(n = n_distinct(spring.communities.bet$membership), name = "Paired") 
+spring.comm.pal <- rainbow(length(seq(1, max(spring.communities.bet$membership))))
 
 plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70))
 plot(spring.graph.weighed.ab, vertex.size = 200, vertex.size2 = 200, vertex.label.dist = 30,
      edge.width = spring.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
      layout = as.matrix(meta.spring[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(spring.con.ab)),
-     vertex.color = spring.comm.pal [spring.communities.bet$membership], add = T)
+     vertex.color = spring.comm.pal[spring.communities.bet$membership], add = T,
+     vertex.label = NA)
+
+### Time spent in each node during the spring ---
+
+# Load edge metadata
+spring.stat.data <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/spring.stationary.data.csv")
+spring.stat.data$StartTime <- anytime(spring.stat.data$StartTime, asUTC = T)
+spring.stat.data$EndTime <- anytime(spring.stat.data$EndTime, asUTC = T)
+
+spring.stat <- spring.stat %>% mutate(next.cluster = case_when(
+  lead(cluster) != cluster & lead(geo_id) == geo_id ~ lead(cluster),
+  .default = NA)) 
+
+# calculate the average time that individuals spent stationary in each node (ONLY FOR STOPS CONSIDERED AS STOPOVERS)
+spring.node.time <- spring.stat %>% dplyr::select(cluster, next.cluster, geo_id, StartTime,
+                                              Lon.50., Lon.2.5., Lon.97.5., Lat.50.,
+                                              Lat.2.5., Lat.97.5., EndTime,
+                                              sitenum, duration, period,study.site,
+                                              Range_region, NB_count, period,
+                                              site_type) %>%
+  mutate(duration = ifelse(site_type == "Stopover", duration, 0)) %>%
+  group_by(geo_id, cluster) %>% summarise(time.cluster.occupied = sum(duration)) %>%
+  group_by(cluster) %>% summarise(mean.time.cluster.occupied = mean(time.cluster.occupied))
+
+# add the times calculated to the node metadata
+meta.spring$time.occupied <- spring.node.time$mean.time.cluster.occupied
+
+# plot of the average time spent in each node 
+time.palette <- hcl.colors(n = length(seq(0, max(meta.spring$time.occupied +1))), palette = "Blues3", rev = T) 
+names(time.palette) <- seq(0, max(meta.spring$time.occupied +1))
+
+plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70), col = "#F2F2F2", lwd = 0.5)
+plot(spring.graph, vertex.size = 200, vertex.size2 = 200, vertex.label.dist = 30,
+     edge.width = spring.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
+     layout = as.matrix(meta.spring[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
+     ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(spring.con.ab)),
+     vertex.color = time.palette[as.character(round(meta.spring$time.occupied))], add = T, vertex.label = NA)
 
 # Code snippets ################################################################
 

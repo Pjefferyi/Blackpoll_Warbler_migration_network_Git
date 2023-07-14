@@ -206,7 +206,6 @@ fall.breed$cluster <- rep(seq(max(fall.stat$cluster) + 1, max(fall.stat$cluster)
 
 fall.stat <- bind_rows(fall.stat, fall.breed) %>% arrange(geo_id, StartTime)
 
-
 # plot stopover and nonbreeding nodes
 
 ggplot(st_as_sf(wrld_simpl))+
@@ -223,11 +222,18 @@ ggplot(st_as_sf(wrld_simpl))+
   coord_sf(xlim = c(-170, -30),ylim = c(-15, 70)) +
   geom_errorbar(data = fall.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
   geom_errorbar(data = fall.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
-  geom_path(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5) +
-  geom_point(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, colour = as.factor(cluster))) +
+  #geom_path(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5) +
+  geom_point(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, colour = as.factor(cluster)), cex = 2) +
   labs(colour = "Cluster") +
   theme_bw() +
-  theme(text = element_text(size = 16))
+  theme(text = element_text(size = 16), legend.position = "None")
+
+# # Optional: add edge from nonbreeding site back to the breeding site of origin
+# fall.breed.return <- fall.breed %>% group_by(geo_id) %>%
+#   mutate(sitenum = max(fall.stat[(fall.stat$geo_id == geo_id),]$sitenum))
+# fall.breed.return[,c("StartTime", "EndTime", "duration")] <- NA
+# fall.breed.return[,c("period")] <- "Post-breeding migration"
+# fall.stat <- bind_rows(fall.stat, fall.breed.return) %>% arrange(geo_id, sitenum)
 
 # Generate the network from our location data and clusters #####################
 
@@ -380,11 +386,20 @@ ggplot(st_as_sf(wrld_simpl))+
 ggplot(st_as_sf(wrld_simpl))+
   geom_sf(colour = NA, fill = "lightgray") +
   coord_sf(xlim = c(-170, -30),ylim = c(-15, 70)) +
-  geom_path(data = spring.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5) +
-  geom_point(data = spring.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, colour = as.factor(cluster))) +
+  geom_errorbar(data = spring.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
+  geom_errorbar(data = spring.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
+  #geom_path(data = spring.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5) +
+  geom_point(data = spring.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, colour = as.factor(cluster)), cex = 1.5) +
   labs(colour = "Cluster") +
   theme_bw() +
-  theme(text = element_text(size = 16))
+  theme(text = element_text(size = 16), legend.position = "None")
+
+# # Optional: add edge from nonbreeding site back to the breeding site of origin
+# spring.breed.return <- spring.breed %>% group_by(geo_id) %>%
+#   mutate(sitenum = 1)
+# spring.breed.return[,c("StartTime", "EndTime", "duration")] <- NA
+# spring.breed.return[,c("period")] <- "Pre-breeding migration"
+# spring.stat <- bind_rows(spring.stat, spring.breed.return) %>% arrange(geo_id, sitenum)
 
 # Generate the network from our location data and clusters #####################
 
@@ -688,6 +703,7 @@ write_graph(fall.graph.weighed.ab, "C:/Users/Jelan/OneDrive/Desktop/University/U
             format = c("edgelist"))
 write.csv(meta.fall, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.node.metadata.csv")
 write.csv(fall.con.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.edge.weights.csv")
+write.csv(fall.stat, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.stationary.data.csv")
 
 ################################################################################
 # relative abundance propagation on in the spring season 
@@ -735,4 +751,4 @@ write_graph(spring.graph.weighed.ab, "C:/Users/Jelan/OneDrive/Desktop/University
             format = c("edgelist"))
 write.csv(meta.spring, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.node.metadata.csv")
 write.csv(spring.con.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.edge.weights.csv")
-
+write.csv(spring.stat, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.stationary.data.csv")
