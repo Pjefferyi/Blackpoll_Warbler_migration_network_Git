@@ -182,15 +182,16 @@ fall.stat <- fall.stat %>% group_by(geo_id) %>% filter(StartTime <= NB.first.sit
 # # Export fall stopovers for manual clustering in QGIS
 # fall.stat.sites <- st_as_sf(fall.stat[,1:12], coords = c("Lon.50.", "Lat.50."))
 # st_crs(fall.stat.sites) <- st_crs(wrld_simpl)
-# st_write(fall.stat.sites, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/fall_stat_sites.shp", append=FALSE)
+# st_write(fall.stat.sites, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/fall_stat_sitesV2.shp", append=FALSE)
 
 # Import clusters created manually
-fall.manual.cluster <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/Fall_manual_clusters.csv")
-fall.manual.cluster <- fall.manual.cluster %>% filter(sitenum > 1)
+fall.manual.cluster <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/Tables/Fall_manual_clusters_conservativeV2.csv")
+fall.manual.cluster <- fall.manual.cluster %>% rename(cluster = Cluster, cluster.region = ClusterReg) %>%
+  mutate(cluster.region= as.factor(cluster.region)) %>%
+  mutate(cluster = as.numeric(cluster.region))
 
 # Merge cluster info with original dataset
-fall.stat <- merge(fall.stat, fall.manual.cluster[,c("geo_id", "sitenum", "Cluster")], by = c("geo_id", "sitenum"))
-fall.stat <- fall.stat %>% rename(cluster = Cluster)
+fall.stat <- merge(fall.stat, fall.manual.cluster[,c("geo_id", "sitenum", "cluster", "cluster.region")], by = c("geo_id", "sitenum"))
 
 # Add breeding sites with separate clusters
 fall.breed.n <- geo.all  %>% filter(site_type == "Breeding",
@@ -204,6 +205,7 @@ fall.breed <- geo.all  %>% filter(site_type == "Breeding",
 fall.breed$cluster <- rep(seq(max(fall.stat$cluster) + 1, max(fall.stat$cluster) + nrow(fall.breed.n)), fall.breed.n$geo_per_site)
 
 fall.stat <- bind_rows(fall.stat, fall.breed) %>% arrange(geo_id, StartTime)
+
 
 # plot stopover and nonbreeding nodes
 
@@ -219,6 +221,8 @@ ggplot(st_as_sf(wrld_simpl))+
 ggplot(st_as_sf(wrld_simpl))+
   geom_sf(colour = NA, fill = "lightgray") +
   coord_sf(xlim = c(-170, -30),ylim = c(-15, 70)) +
+  geom_errorbar(data = fall.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
+  geom_errorbar(data = fall.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
   geom_path(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5) +
   geom_point(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, colour = as.factor(cluster))) +
   labs(colour = "Cluster") +
@@ -342,7 +346,7 @@ geo.dist = function(df) {
 dist.matrix <- geo.dist(spring.stat[,c("Lon.50.","Lat.50.")])
 spring.clust <- hclust(dist.matrix)
 plot(spring.clust)
-spring.stat$cluster  <- cutree(spring.clust, k = 16)
+spring.stat$cluster  <- cutree(spring.clust, k = 20)
 
 # Add breeding sites with separate clusters
 spring.breed.n <- geo.all  %>% filter(site_type == "Breeding",
@@ -360,7 +364,7 @@ spring.stat <-rbind(spring.stat, spring.breed) %>% arrange(geo_id, StartTime)
 # # export spring stat sites for manual clustering
 # spring.stat.sites <- st_as_sf(spring.stat[,1:12], coords = c("Lon.50.", "Lat.50."))
 # st_crs(spring.stat.sites) <- st_crs(wrld_simpl)
-# st_write(spring.stat.sites, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/spring_stat_sites.shp")
+# st_write(spring.stat.sites, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/spring_stat_sitesV2.shp")
 
 # plot stopover and nonbreeding nodes 
 
@@ -413,7 +417,7 @@ spring.node.type <- spring.stat %>% group_by(cluster, site_type) %>%
     site_type == "Breeding" ~ 1,
     site_type == "Nonbreeding" ~ 2,
     site_type == "Stopover" ~ 3
-  ))
+  )) %>% distinct(cluster, .keep_all = TRUE) #must verify whether sites have equal maxima of uses
 
 # Create a layout with node locations 
 meta.spring <- data.frame("vertex" = seq(min(spring.stat$cluster), max(spring.stat$cluster)), 
@@ -608,7 +612,7 @@ st_crs(breed.sites) <- st_crs(wrld_simpl)
 # st_write(breed.sites, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Relative_abundance_propagation/bpw_breeding_sites.shp")
 
 # import breeding regions polygon and join attributes with breeding site data 
-abundance.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Relative_abundance_propagation/bpw_abundance_regions.shp")
+abundance.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Relative_abundance_propagation/bpw_abundance_regionsV2.shp")
 abundance.regions <- st_join(abundance.regions, breed.sites)
 
 # import breeding season abundance data
@@ -670,7 +674,7 @@ fall.graph.weighed.ab <- graph_from_data_frame(fall.con.ab, directed = T, vertic
 
 plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70))
 plot(fall.graph.weighed.ab, vertex.size = 200, vertex.size2 = 200,
-     edge.width = fall.con.ab$weight*10, edge.arrow.size = 0, edge.arrow.width = 0,  
+     edge.width = fall.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
      layout = fall.location, rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)),
      vertex.color = type.palette[meta.fall$node.type.num], vertex.label.dist = 30,

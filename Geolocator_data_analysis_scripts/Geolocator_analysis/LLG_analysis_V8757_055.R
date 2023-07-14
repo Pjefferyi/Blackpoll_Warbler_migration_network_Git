@@ -406,7 +406,7 @@ xlim <- range(x0[,1])+c(-5,5)
 ylim <- range(x0[,2])+c(-5,5)
 
 index <- ifelse(stationary, 1, 2)
-mask <- earthseaMask(xlim, ylim, n = 1, index=index)
+mask <- earthseaMask(xlim, ylim, n = 10, index=index)
 #mask <- earthseaMask2(xlim, ylim, index=index, twl, pacific = FALSE)
 
 # We will give locations on land a higher prior 

@@ -200,9 +200,9 @@ alpha <- calib[3:4]
 
 # Alternative calibration #######################################################
 
-# #convert to geolight format
-# geo_twl <- export2GeoLight(twl)
-# 
+#convert to geolight format
+ geo_twl <- export2GeoLight(twl)
+
 # # this is just to find places where birds have been for a long time, would not use these parameters for stopover identification, detailed can be found in grouped model section
 # cL <- changeLight(twl =geo_twl, quantile=0.8, summary = F, days = 10, plot = T)
 # # merge site helps to put sites together that are separated by single outliers.
@@ -215,11 +215,11 @@ alpha <- calib[3:4]
 # #find the dates that the bird arrives and leaves this stationary site
 # start <- min(which(mS$site == stationarySite))
 # end   <- max(which(mS$site == stationarySite))
-#
-#(zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
+# 
+# (zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
 
 startDate <- "2013-10-20"
-endDate   <- "2014-04-15"
+endDate   <- "2014-05-05"
 
 start = min(which(as.Date(twl$Twilight) == startDate))
 end = max(which(as.Date(twl$Twilight) == endDate))
@@ -342,7 +342,7 @@ cL <- changeLight(twl=geo_twl, quantile=0.90, summary = F, days = 2, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
 #mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths0[1:length(zeniths0) -1], distThreshold = 500)
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = 250)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = 500)
 
 ##back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 

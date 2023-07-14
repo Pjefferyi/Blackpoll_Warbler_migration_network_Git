@@ -5,7 +5,7 @@
 # usethis::create_github_token()
 # usethis::edit_r_environ()
 #devtools::install_github("SMBC-NZP/MigConnectivity")
-library(SMBC-NZP/MigConnectivity)
+library(MigConnectivity)
 
 # load requried packages 
 library(tidyverse)

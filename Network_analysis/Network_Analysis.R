@@ -4,6 +4,7 @@ library(anytime)
 library(dplyr)
 library(ggplot2)
 library(sf)
+library(rgdal)
 library(terra)
 library(RColorBrewer)
 
@@ -18,13 +19,20 @@ meta.fall <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of 
 # Load fall graph edge weights
 fall.con.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.edge.weights.csv")
 
+# For fall nodes where latitudinal accuracy is low, set location close to the coast
+meta.fall[c(10, 24, 18),]$Lat.50. <- c(34, 42, 44.4)
+
+# Import polygon of the region affected by the equinox
+equinox_region <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Mapping_components/Data/Fall_Equinox_affected_regionV3.shp")
+
 # Plot the fall graph 
 data("wrld_simpl")
 type.palette <- rainbow(3)  
 
-plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70))
+plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70), col = "#F2F2F2", lwd = 0.5)
+plot(as_Spatial(equinox_region), add = T, col = "#FCF2CF", lwd = 0.5)
 plot(fall.graph, vertex.size = 200, vertex.size2 = 200,
-     edge.width = fall.con.ab$weight*10, edge.arrow.size = 0, edge.arrow.width = 0,  
+     edge.width = fall.con.ab$weight*40, edge.arrow.size = 0, edge.arrow.width = 0,  
      layout = as.matrix(meta.fall[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)),
      vertex.color = type.palette[meta.fall$node.type.num], vertex.label.dist = 30,
@@ -36,17 +44,18 @@ legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
 ## Fall network analysis ###########################################################
 
 ## Fall betweenness centrality (exclude breeding sites)
-fall.betw.c <- betweenness(fall.graph, directed = T, weights = fall.con.ab$weight)
+fall.betw.c <- betweenness(fall.graph, directed = T, weights = 1/fall.con.ab$weight)
 
 # plot of the betweenness centrality of each node 
-betw.c.palette <- hcl.colors(n = length(seq(1, max(fall.betw.c))), palette = "Reds 3", rev = T) 
+betw.c.palette <- hcl.colors(n = length(seq(0, max(fall.betw.c))), palette = "Reds 3", rev = T) 
+names(betw.c.palette) <- seq(0, max(fall.betw.c))
 
-plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70))
+plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70), col = "#F2F2F2", lwd = 0.5)
 plot(fall.graph, vertex.size = 200, vertex.size2 = 200, vertex.label.dist = 30,
      edge.width = fall.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
      layout = as.matrix(meta.fall[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)),
-     vertex.color = betw.c.palette[round(fall.betw.c)], add = T)
+     vertex.color = betw.c.palette[as.character(round(fall.betw.c))], add = T)
 
 ## Fall degree centrality
 fall.degree.c <- degree(fall.graph, mode = "all")
@@ -54,7 +63,7 @@ fall.degree.c <- degree(fall.graph, mode = "all")
 # plot of the betweenness centrality of each node 
 deg.c.palette <- hcl.colors(n = length(seq(1, max(fall.degree.c ))), palette = "Reds 3", rev = T) 
 
-plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70))
+plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70), col = "#F2F2F2", lwd = 0.5)
 plot(fall.graph, vertex.size = 200, vertex.size2 = 200, vertex.label.dist = 30,
      edge.width = fall.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
      layout = as.matrix(meta.fall[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
@@ -63,7 +72,6 @@ plot(fall.graph, vertex.size = 200, vertex.size2 = 200, vertex.label.dist = 30,
 
 ### community detection using propogating labels ----------
 fall.communities.lab <- cluster_label_prop(fall.graph, weights = fall.con.ab$weight)
-meta.fall$community <- fall.communities.lab$membership
 
 # plot communities
 plot(fall.communities.lab, fall.graph)
@@ -72,15 +80,14 @@ plot(fall.communities.lab, fall.graph)
 fall.comm.pal <- rainbow(n_distinct(fall.communities.lab$membership))
 
 plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70))
-plot(fall.graph.weighed.ab, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
+plot(fall.graph, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
      edge.width = fall.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
-     layout = fall.location, rescale = F, asp = 0, xlim = c(-170, -30),
+     layout = as.matrix(meta.fall[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)),
      vertex.color = fall.comm.pal[fall.communities.lab$membership], add = T)
 
 ### community detection using edge betweenness -----------
 fall.communities.bet <- cluster_edge_betweenness(fall.graph, fall.con.ab$weight, directed  = T)
-meta.fall$community <- fall.communities.bet$membership
 
 # plot communities
 plot(fall.communities.bet, fall.graph)
@@ -89,19 +96,16 @@ plot(fall.communities.bet, fall.graph)
 fall.comm.pal <- brewer.pal(n = n_distinct(fall.communities.bet $membership), name = "Paired") 
 
 plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70))
-plot(fall.graph.weighed.ab, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
+plot(fall.graph, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
      edge.width = fall.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
-     layout = fall.location, rescale = F, asp = 0, xlim = c(-170, -30),
+     layout = as.matrix(meta.fall[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)),
-     vertex.color = fall.comm.pal[fall.communities.bet $membership], add = T)
+     vertex.color = fall.comm.pal[fall.communities.bet$membership], add = T)
 
 ### community detection using infomap -----------
 fall.communities.info <- cluster_infomap(graph = as.undirected(fall.graph),
                                                   modularity = T,
                                          nb.trials = 100)
-
-meta.fall$community <- fall.communities.info$membership
-
 # plot communities
 plot(fall.communities.info, fall.graph)
 
@@ -111,9 +115,9 @@ fall.comm.pal <- brewer.pal(n = n_distinct(fall.communities$membership), name = 
 plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70))
 plot(fall.graph.weighed.ab, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
      edge.width = fall.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
-     layout = fall.location, rescale = F, asp = 0, xlim = c(-170, -30),
+     layout = as.matrix(meta.fall[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)),
-     vertex.color = fall.communities.info$membership, add = T)
+     vertex.color = fall.comm.pal$membership, add = T)
 
 
 ### community detection using multilevel optimization of modularity -----------
@@ -130,7 +134,7 @@ fall.comm.pal <- brewer.pal(n = n_distinct(fall.communities.louvain$membership),
 plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70))
 plot(fall.graph.weighed.ab, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
      edge.width = fall.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
-     layout = fall.location, rescale = F, asp = 0, xlim = c(-170, -30),
+     layout = as.matrix(meta.fall[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)),
      vertex.color = fall.communities.louvain$membership, add = T)
 
@@ -145,13 +149,13 @@ meta.spring <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University o
 # Load spring graph edge weights
 spring.con.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.edge.weights.csv")
 
-# Plot the springgraph 
+# Plot the spring graph 
 data("wrld_simpl")
 type.palette <- rainbow(3)  
 
-plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70))
+plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70), col = "#F2F2F2", lwd = 0.5)
 plot(spring.graph, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
-     edge.width = spring.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
+     edge.width = spring.con.ab$weight*20, edge.arrow.size = 0, edge.arrow.width = 0,  
      layout = as.matrix(meta.spring[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(spring.con.ab)),
      vertex.color = type.palette[meta.spring$node.type.num], add = T)
@@ -162,17 +166,18 @@ legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
 ##Spring network analysis ###########################################################
 
 ## Spring betweenness centrality (exclude breeding sites)
-spring.betw.c <- betweenness(fall.graph, directed = F, weights = NA)
+spring.betw.c <- betweenness(spring.graph, directed = T, weights = 1/spring.con.ab$weight)
 
 # plot of the betweenness centrality of each node 
-betw.c.palette <- hcl.colors(n = length(seq(1, max(spring.betw.c))), palette = "Reds 3", rev = T) 
+betw.c.palette <- hcl.colors(n = length(seq(0, max(spring.betw.c))), palette = "Reds 3", rev = T) 
+names(betw.c.palette) <- seq(0, max(spring.betw.c))
 
-plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70))
+plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70), col = "#F2F2F2", lwd = 0.5)
 plot(spring.graph, vertex.size = 200, vertex.size2 = 200, vertex.label.dist = 30,
      edge.width = spring.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
      layout = as.matrix(meta.spring[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(spring.con.ab)),
-     vertex.color = betw.c.palette[round(spring.betw.c)], add = T)
+     vertex.color = betw.c.palette[as.character(round(spring.betw.c))], add = T)
 
 ## spring degree centrality
 spring.degree.c <- degree(spring.graph, mode = "all")
@@ -180,7 +185,7 @@ spring.degree.c <- degree(spring.graph, mode = "all")
 # plot of the degree centrality of each node 
 spring.deg.c.palette <- hcl.colors(n = length(seq(1, max(spring.degree.c ))), palette = "Reds 3", rev = T) 
 
-plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70))
+plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70), col = "#F2F2F2", lwd = 0.5)
 plot(spring.graph, vertex.size = 200, vertex.size2 = 200, vertex.label.dist = 30,
      edge.width = spring.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
      layout = as.matrix(meta.spring[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
@@ -205,7 +210,7 @@ plot(spring.graph, vertex.size = 200, vertex.size2 = 200, vertex.label.dist = 30
      vertex.color = spring.comm.pal[ spring.communities.lab$membership], add = T)
 
 # community detection using edge betweenness -----------
-spring.communities.bet <- cluster_edge_betweenness(spring.graph, spring.con.ab$weight, directed  = T)
+spring.communities.bet <- cluster_edge_betweenness(spring.graph, weights = spring.con.ab$weight, directed = T)
 meta.spring$community <- spring.communities.bet$membership
 
 # plot communities
@@ -220,3 +225,10 @@ plot(spring.graph.weighed.ab, vertex.size = 200, vertex.size2 = 200, vertex.labe
      layout = as.matrix(meta.spring[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(spring.con.ab)),
      vertex.color = spring.comm.pal [spring.communities.bet$membership], add = T)
+
+# Code snippets ################################################################
+
+# code to display a color vector COL by stack exchange user G5W (https://stackoverflow.com/questions/48641985/plot-a-vector-of-colors-in-r)
+# plot(NULL, xlim=c(0,length(COL)), ylim=c(0,1), 
+#      xlab="", ylab="", xaxt="n", yaxt="n")
+# rect(0:(length(COL)-1), 0, 1:length(COL), 1, col=COL)
