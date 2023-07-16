@@ -124,13 +124,27 @@ shiftSpan <- function(twl, lig, period, est.zenith, dep.lon, dep.lat){
 
 # findLocData ##################################################################
 
-findLocData <- function(geo.ids = NULL, check_col_length = F, ref_path = c()){
-  
-  # Create a list of path to all files with location data 
+# Function to retrieve the location data obtained using SGAT's GroupedThresholdModel for each geolocator 
+# If the output of the model were edited to account the results of the light data review
+# then the function will automatically extract the edited location data
+
+findLocData <- function(geo.ids = NULL, check_col_length = F){
+
+  # Create a list of path to all files with location data
   folder_paths <- list.files("/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geolocator_data", full.names = T)
   geo_names <- list.files("/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geolocator_data")
   
   location_set <- data.frame()
+  
+  # We must detect any geolocators where the geolocator data was edited
+  # based on the result of the light data analysis to detect carribean stopovers. 
+  ref.data <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv")
+  with_edits = ref.data[(ref.data$Fall_carrib_edits == T),]$geo.id
+  
+  # If no vector of geo.ids was provided, extract data for all geolocators in dataset
+  if (is.null(geo.ids)){
+    geo.ids = unique(ref.data$geo.id)
+  }
   
   # Check the number of columns in the dataset for each geolocator 
   if (check_col_length == T){
@@ -150,11 +164,6 @@ findLocData <- function(geo.ids = NULL, check_col_length = F, ref_path = c()){
     return()
   }
   
-  if (!is.na(ref_path)){
-    ref.data <- read.csv(ref_path)
-    with_edits = ref.data[(ref.data$Fall_carrib_edits == T),]$geo.id
-  }  
-  
   for (i in seq(1:length(folder_paths))){
     # load the data from each file and add it to dataset if it is in geo_ids 
     if (geo_names[i] %in% geo.ids | is.null(geo.ids)){
@@ -171,40 +180,80 @@ findLocData <- function(geo.ids = NULL, check_col_length = F, ref_path = c()){
     }
   }
   
-  # Add reference data 
-  if (!is.na(ref_path)){
-    
-    ref.data <- read.csv(ref_path)
-    
-    # Only retain relevant rows
-    # ref.data <- ref.data[,c("geo.id",
-    #                         "deploy.latitude",
-    #                         "deploy.longitude",
-    #                         "study.site",
-    #                         "Range_region")]
-    
-    #Join the region and location data (inner join)
-    location_set <- merge(location_set, ref.data, by.x = "geo_id", by.y = "geo.id")
-  }
-  
+  # Add reference data to location data 
+  location_set <- merge(location_set, ref.data, by.x = "geo_id", by.y = "geo.id")
+
   return(location_set)
 }
 
 # Test calls  for findLocData ##################################################
 
+# check length of the location dataframe of a specific geolocator
+# r1 <- findLocData(geo.ids = c("V8757_055"), check_col_length = T)
+
 # check length of the dataframes with the data for each geolocator 
-# r1 <- findLocData(geo.ids = c(), check_col_length = T)
+# r2 <- findLocData(check_col_length = T)
 
 # Extract location data for specific geolocators 
-# r2 <- findLocData(geo.ids = c("V8757_010", "V8296_004"), check_col_length = F)
+# r3 <- findLocData(geo.ids = c("V8757_010", "V8296_004"), check_col_length = F)
 
-# Extract location data for specific geolocators with reference information 
+# Extract location data for all geolocators 
+# r4 <- findLocData()
 
-# path <- "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv"   
-# r3 <- findLocData(geo.ids = c("V8757_010", "V8296_004"), check_col_length = F, ref_path = path)
+# findThresLocData ##################################################################
 
-# path <- "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv"   
-# r4 <- findLocData(geo.ids = c("V8757_010", "V8296_004", "V8296_005"), check_col_length = F, ref_path = path)
+# Function to retrieve threshold location data for each geolocator 
+
+findThresLocData <- function(geo.ids = NULL){
+  
+  # Create a list of path to all files with location data 
+  folder_paths <- list.files("/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geolocator_data", full.names = T)
+  geo_names <- list.files("/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geolocator_data")
+  
+  location_set <- data.frame()
+  
+  #load the geolocator reference data/metadata
+  ref.data <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv")
+
+  # If no vector of geo.ids was provided, extract data for all geolocators in dataset
+  if (is.null(geo.ids)){
+    geo.ids = unique(ref.data$geo.id)
+  }
+  
+  for (i in seq(1:length(folder_paths))){
+    # load the data from each file and add it to dataset if it is in geo_ids 
+    if (geo_names[i] %in% geo.ids | is.null(geo.ids)){
+        
+        print(geo_names[i])
+      
+        #extract twilight and threshold location data 
+        thresloc.path <- paste0(folder_paths[i], "/",geo_names[i],"_initial_path_raw.csv")
+        twl.path <- paste0(folder_paths[i], "/",geo_names[i],"_twl_times.csv")
+        
+        load(file = thresloc.path)
+        twl <- read.csv(file = twl.path)
+        
+        # merge twilight data (for timing) with threshold location data 
+        time.loc.data <- cbind(twl[c("X", "Twilight")], as.data.frame(x0_r)) %>% 
+          mutate(geo_id = geo_names[i])
+        
+        location_set <- rbind(location_set, time.loc.data)
+    }
+  }
+  
+  # Add reference data 
+  location_set <- merge(location_set, ref.data, by.x = "geo_id", by.y = "geo.id")
+    
+  return(location_set)
+}
+
+# Test calls  for findThresLocData #############################################
+
+# Extract threshold location data for specific geolocators
+r1 <- findThresLocData(geo.ids = c("V8757_010"))
+
+# Extract threshold location data for all geolocators 
+r2 <- findThresLocData()
 
 # MapLocData ###################################################################
 

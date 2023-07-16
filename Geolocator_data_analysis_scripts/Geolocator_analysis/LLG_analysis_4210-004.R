@@ -213,12 +213,12 @@ dev.off()
 # Use approximate timings of arrival and departure from the breeding grounds
 # Assign different zenith angles to different periods of the tracking period 
 zenith.med.Br <- zenith 
-zenith.med.Nbr <- zenith - 0.9
+zenith.med.Nbr <- zenith - 1.1
 zenith.med.Mig <- zenith  
 
 zenith0.Br <- zenith0
-zenith0.Nbr <- zenith0 + 0.9
-zenith0.Mig <- zenith0 + 0.9 
+zenith0.Nbr <- zenith0 + 1.1
+zenith0.Mig <- zenith0 + 1.1
 
 # Add column to twl with the median zenith angles for different periods of the tracking period 
 twl <- mutate(twl, season = cut(Twilight, breaks = c(min(Twilight) - days(1), 
@@ -263,7 +263,7 @@ abline(v = spring.equi, col = "orange")
 dev.off()
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol=0.12)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol=0.06)
 
 #Adjusted tol until second stopover was located over North Carolina rather than further South. 
 x0 <- path$x
