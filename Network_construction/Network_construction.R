@@ -1,5 +1,5 @@
 # clear objects from workspace
-rm(list=ls())
+#rm(list=ls())
 
 #Load libraries
 library(tidyverse)
@@ -64,7 +64,7 @@ geo.all <- findLocData(geo.ids = c("V8757_010",
                                    "B",
                                    "C",
                                    #"E",
-                                   "D"), check_col_length = F, ref_path = ref_path)
+                                   "D"), check_col_length = F)
 
 # Define nodes as breeding, stopover, or non-breeding ##########################
 
@@ -627,7 +627,7 @@ st_crs(breed.sites) <- st_crs(wrld_simpl)
 # st_write(breed.sites, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Relative_abundance_propagation/bpw_breeding_sites.shp")
 
 # import breeding regions polygon and join attributes with breeding site data 
-abundance.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Relative_abundance_propagation/bpw_abundance_regionsV2.shp")
+abundance.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Relative_abundance_propagation/bpw_abundance_regions.shp")
 abundance.regions <- st_join(abundance.regions, breed.sites)
 
 # import breeding season abundance data
@@ -669,11 +669,11 @@ fall.breed.ab <- merge(fall.breed, dplyr::select(ab.per.region, geo_id, br.regio
   ungroup() %>% group_by(study.site) %>%
   mutate(ab.unit = br.node.prop.total.population/n_distinct(geo_id))
 
-View(fall.breed.ab %>% dplyr::select(geo_id, StartTime, EndTime, Lon.50.,
-                                     Lat.50., br.polygon,
-                                     br.region.prop.total.population,
-                                     br.node.prop.total.population,
-                                     ab.unit))
+#View(fall.breed.ab %>% dplyr::select(geo_id, StartTime, EndTime, Lon.50.,
+#                                      Lat.50., br.polygon,
+#                                      br.region.prop.total.population,
+#                                      br.node.prop.total.population,
+#                                      ab.unit))
 
 # We add the abundance units to our dataset of movements
 fall.edge.df.ab <- merge(fall.edge.df, dplyr::select(fall.breed.ab, geo_id, ab.unit, br.region.prop.total.population, br.polygon))
@@ -717,11 +717,11 @@ spring.breed.ab <- merge(spring.breed, dplyr::select(ab.per.region, geo_id, br.r
   ungroup() %>% group_by(study.site) %>%
   mutate(ab.unit = br.node.prop.total.population/n_distinct(geo_id))
 
-View(spring.breed.ab %>% dplyr::select(geo_id, StartTime, EndTime, Lon.50.,
-                                     Lat.50., br.polygon,
-                                     br.region.prop.total.population,
-                                     br.node.prop.total.population,
-                                     ab.unit))
+# View(spring.breed.ab %>% dplyr::select(geo_id, StartTime, EndTime, Lon.50.,
+#                                      Lat.50., br.polygon,
+#                                      br.region.prop.total.population,
+#                                      br.node.prop.total.population,
+#                                      ab.unit))
 
 # We add the abundance units to our dataset of movements
 spring.edge.df.ab <- merge(spring.edge.df, dplyr::select(spring.breed.ab, geo_id, ab.unit, br.region.prop.total.population, br.polygon))
@@ -752,3 +752,10 @@ write_graph(spring.graph.weighed.ab, "C:/Users/Jelan/OneDrive/Desktop/University
 write.csv(meta.spring, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.node.metadata.csv")
 write.csv(spring.con.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.edge.weights.csv")
 write.csv(spring.stat, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.stationary.data.csv")
+
+
+################################################################################
+# Population proportion by site during the fall season 
+################################################################################
+
+# Create a numeric vector with the proportion of 
