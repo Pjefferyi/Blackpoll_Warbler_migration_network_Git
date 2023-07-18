@@ -19,9 +19,8 @@ library(maptools)
 library(ebirdst)
 library(geosphere)
 
-################################################################################
-# Data preparation 
-################################################################################
+
+# Data preparation ################################################################################
 
 # run the network preparation script
 source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Network_construction.R")
@@ -89,9 +88,7 @@ nSamples <- 100
 # plot(as_Spatial(fall.br.regions), add = T)
 # plot(as_Spatial(fall.br.sf), add  = T)
 
-################################################################################
-### Estimation and resampling of uncertainty for transition probabilities (psi)
-################################################################################
+# Estimation and resampling of uncertainty for transition probabilities (psi) ################################################################################
 
 # GL_psi <- estTransition(isGL=TRUE,
 #                         geoBias = geo.bias,
@@ -109,9 +106,9 @@ nSamples <- 100
 #save(GL_psi, file = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_analysis/estTransition_ouput.R")
 load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_analysis/estTransition_ouput.R")
 
-################################################################################
-# Retrieve the relative abundance in each breeding site/region for the fall network
-################################################################################
+
+# Retrieve the relative abundance in each breeding site/region for the fall network ################################################################################
+
 
 # import breeding season abundance data
 bpw.fall.ab <- load_raster("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_imports/2021/bkpwar",
@@ -128,10 +125,24 @@ bpw.fall.ab <- load_raster("C:/Users/Jelan/OneDrive/Desktop/University/Universit
 
 # extract the relative abundance for each site 
 fall.br.site.ab <- terra::extract(bpw.fall.ab$breeding, fall.br.regions, fun = sum,
-                             na.rm=TRUE, ID  = T)
+                             na.rm=TRUE, ID  = T) %>%
+  mutate(breeding = breeding/sum(breeding))
+  
+# Compute distance matrixes ####################################################
+fall.br.centroids <- centroid(as_Spatial(fall.br.regions))
+fall.br.dists <- distFromPos(fall.br.centroids, "plane")
 
-################################################################################
-# Compute distance matrixes
-################################################################################
+fall.nbr.centroids <- centroid(as_Spatial(fall.nbr.regions))
+fall.nbr.dists <- distFromPos(fall.nbr.centroids, "plane")
 
 
+# Estimate the strength of migratory connectivity ##############################
+
+MC_metric <- estStrength(targetDist = fall.nbr.dists , # targetSites distance matrix
+                         originDist = fall.br.dists , # originSites distance matrix
+                         targetSites = fall.nbr.sf, # Non-breeding target sites
+                         originSites = fall.br.sf, # Breeding origin sites
+                         psi = GL_psi,
+                         originRelAbund = fall.br.site.ab$breeding,
+                         nSamples = 1000,
+                         sampleSize = nrow(fall.br.sf))
