@@ -72,56 +72,56 @@ threshold <- 1.5
 # visualize threshold over light levels  
 thresholdOverLight(lig, threshold, span =c(0, 25000))
 
-# FIND TIME SHIFT ##############################################################
-
-#This geolocator has a a time shift visible on this plot
-lightImage( tagdata = lig,
-            offset = offset,
-            zlim = c(0, 64))
-
-tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
-                       offset = offset, lwd = 3, col = adjustcolor("orange", alpha.f = 0.5))
-
-# we will do an initial twilight annotation to find identify the time interval
-# by which we need to shift time
-# There should be not need to edit, delete or insert twilights for this
-# twl_in <- preprocessLight(lig,
-#                           threshold = threshold,
-#                           offset = offset,
-#                           lmax = 64,         # max. light value
-#                           gr.Device = "x11", # MacOS version (and windows)
-#                           dark.min = 60)
+# # FIND TIME SHIFT ##############################################################
 # 
-# #write.csv(twl_in, paste0(dir,"/", geo.id,"_twl_times_initial.csv"))
-twl_in <- read.csv(paste0(dir,"/", geo.id,"_twl_times_initial.csv"))
-twl_in$Twilight <- as.POSIXct(twl_in$Twilight, tz = "UTC")
-
-# Period over which to calculate the time shift. It should be while the bird is
-# still in the breeding grounds
-period <- as.POSIXct(c("2016-08-01", "2016-08-30"), tz = "UTC")
-
-# plot the period over the light image
-lightImage( tagdata = lig,
-            offset = offset,
-            zlim = c(0, 64))
-
-tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
-                       offset = offset, lwd = 3, col = adjustcolor("orange", alpha.f = 0.5))
-
-abline(v = period, lwd = 2, lty = 2, col = "orange")
-
-# calculate the time shift
-shift <- shiftSpan(twl = twl_in, lig = lig, period = period, est.zenith = 92,
-                   dep.lon = lon.calib,
-                   dep.lat = lat.calib)
-
-
-# verify the that the time shift measured makes sense 
-shift
-
-#adjust  the based on the time shift detected 
-#lig$Date <- lig$Date - (shift$shift)
-#lig$Date <- lig$Date + 5.5*60*60
+# #This geolocator has a a time shift visible on this plot
+# lightImage( tagdata = lig,
+#             offset = offset,
+#             zlim = c(0, 64))
+# 
+# tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
+#                        offset = offset, lwd = 3, col = adjustcolor("orange", alpha.f = 0.5))
+# 
+# # we will do an initial twilight annotation to find identify the time interval
+# # by which we need to shift time
+# # There should be not need to edit, delete or insert twilights for this
+# # twl_in <- preprocessLight(lig,
+# #                           threshold = threshold,
+# #                           offset = offset,
+# #                           lmax = 64,         # max. light value
+# #                           gr.Device = "x11", # MacOS version (and windows)
+# #                           dark.min = 60)
+# # 
+# # #write.csv(twl_in, paste0(dir,"/", geo.id,"_twl_times_initial.csv"))
+# twl_in <- read.csv(paste0(dir,"/", geo.id,"_twl_times_initial.csv"))
+# twl_in$Twilight <- as.POSIXct(twl_in$Twilight, tz = "UTC")
+# 
+# # Period over which to calculate the time shift. It should be while the bird is
+# # still in the breeding grounds
+# period <- as.POSIXct(c("2016-08-01", "2016-08-30"), tz = "UTC")
+# 
+# # plot the period over the light image
+# lightImage( tagdata = lig,
+#             offset = offset,
+#             zlim = c(0, 64))
+# 
+# tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
+#                        offset = offset, lwd = 3, col = adjustcolor("orange", alpha.f = 0.5))
+# 
+# abline(v = period, lwd = 2, lty = 2, col = "orange")
+# 
+# # calculate the time shift
+# shift <- shiftSpan(twl = twl_in, lig = lig, period = period, est.zenith = 92,
+#                    dep.lon = lon.calib,
+#                    dep.lat = lat.calib)
+# 
+# 
+# # verify the that the time shift measured makes sense 
+# shift
+# 
+# #adjust  the based on the time shift detected 
+# #lig$Date <- lig$Date - (shift$shift)
+# #lig$Date <- lig$Date + 5.5*60*60
 
 #TWILIGHT ANNOTATION ##########################################################
 
@@ -146,13 +146,13 @@ dev.off()
 # 
 # # Adjust sunset times by 120 second sampling interval
 # twl <- twilightAdjust(twilights = twl, interval = 120)
-
+# 
 # # Visualize light and twilight time-series
 # lightImage(lig, offset = 19)
 # tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
 #               col = ifelse(twl$Rise, "dodgerblue", "firebrick"))
-
-# Save the twilight times
+# 
+# #Save the twilight times
 # write.csv(twl, paste0(dir,"/",geo.id , "_twl_times.csv"))
 
 ###############################################################################

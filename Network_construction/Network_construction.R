@@ -156,8 +156,9 @@ fall.stat <- geo.all %>% filter(sitenum > 0, site_type %in% c("Stopover","Nonbre
 fall.timings.nb <- geo.all %>% filter(NB_count == 1) %>% dplyr::select(NB.first.site.arrival = StartTime)
 fall.stat <- merge(fall.stat, fall.timings.nb, by = "geo_id")
 
-#only retain the stopovers and the first nonbreeding sites occupied
-fall.stat <- fall.stat %>% group_by(geo_id) %>% filter(StartTime <= NB.first.site.arrival)
+#only retain the stopovers and the first nonbreeding sites occupied, and filter out stopovers that are within 250 km of breeding site 
+fall.stat <- fall.stat %>% group_by(geo_id) %>% filter(StartTime <= NB.first.site.arrival) %>% group_by(geo_id) %>% 
+  filter(distHaversine(cbind(Lon.50.,Lat.50.), cbind(deploy.longitude, deploy.latitude)) > 250000)
 
 # # Uncomment this code to generate clusters using the hclust function
 # 
@@ -182,10 +183,10 @@ fall.stat <- fall.stat %>% group_by(geo_id) %>% filter(StartTime <= NB.first.sit
 # # Export fall stopovers for manual clustering in QGIS
 # fall.stat.sites <- st_as_sf(fall.stat[,1:12], coords = c("Lon.50.", "Lat.50."))
 # st_crs(fall.stat.sites) <- st_crs(wrld_simpl)
-# st_write(fall.stat.sites, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/fall_stat_sitesV2.shp", append=FALSE)
+# st_write(fall.stat.sites, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/fall_stat_sites4.shp", append=FALSE)
 
 # Import clusters created manually
-fall.manual.cluster <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/Tables/Fall_manual_clusters_conservativeV2.csv")
+fall.manual.cluster <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/Tables/Fall_manual_clusters_conservativeV3.csv")
 fall.manual.cluster <- fall.manual.cluster %>% rename(cluster = Cluster, cluster.region = ClusterReg) %>%
   mutate(cluster.region= as.factor(cluster.region)) %>%
   mutate(cluster = as.numeric(cluster.region))
@@ -220,9 +221,9 @@ ggplot(st_as_sf(wrld_simpl))+
 ggplot(st_as_sf(wrld_simpl))+
   geom_sf(colour = NA, fill = "lightgray") +
   coord_sf(xlim = c(-170, -30),ylim = c(-15, 70)) +
-  geom_errorbar(data = fall.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
-  geom_errorbar(data = fall.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
-  #geom_path(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5) +
+  #geom_errorbar(data = fall.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
+  #geom_errorbar(data = fall.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
+  geom_path(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5) +
   geom_point(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, colour = as.factor(cluster)), cex = 2) +
   labs(colour = "Cluster") +
   theme_bw() +
@@ -262,11 +263,14 @@ fall.node.lat <- fall.stat %>% group_by(cluster) %>%
 # We also assess which use was the more common for a node (breeding, nonbreeding, or stopover)
 # The most common use will be the one assigned to the node
 fall.node.type <- fall.stat %>% group_by(cluster, site_type) %>%
-  summarize(use = n()) %>% filter(use == max(use)) %>% mutate(site_type_num = case_when(
+  summarize(use = n()) %>% filter(use == max(use)) %>% 
+  mutate(site_type = factor(site_type, levels = c("Breeding", "Nonbreeding", "Stopover")))%>%
+  arrange(site_type) %>%
+  mutate(site_type_num = case_when(
     site_type == "Breeding" ~ 1,
     site_type == "Nonbreeding" ~ 2,
     site_type == "Stopover" ~ 3
-  )) %>% distinct(cluster, .keep_all = TRUE) #must verify whether sites have equal maxima of uses
+  )) %>% distinct(cluster, .keep_all = TRUE) %>% arrange(cluster) #must verify whether sites have equal maxima of uses
 
 # Create a layout with node locations 
 meta.fall <- data.frame("vertex" = seq(min(fall.edge.df$cluster), max(fall.edge.df$cluster)), 
@@ -274,6 +278,9 @@ meta.fall <- data.frame("vertex" = seq(min(fall.edge.df$cluster), max(fall.edge.
                    "Lat.50." = fall.node.lat$node.lat,
                    "node.type" = fall.node.type$site_type,
                    "node.type.num" = fall.node.type$site_type_num)
+
+# For fall nodes where latitudinal accuracy is low, set location close to the coast
+meta.fall[c(10, 12, 17),]$Lat.50. <- c(34, 42, 44.4)
 
 fall.location <- as.matrix(meta.fall[, c("Lon.50.", "Lat.50.")])
 
@@ -333,8 +340,9 @@ spring.stat <- geo.all %>% filter(sitenum > 0, site_type %in% c("Stopover","Nonb
 spring.timings.nb <- geo.all %>% group_by(geo_id) %>% filter(NB_count == max(NB_count, na.rm = T)) %>% dplyr::select(NB.last.site.arrival = StartTime)
 spring.stat <- merge(spring.stat, spring.timings.nb, by = "geo_id")
 
-#only retain the stopovers and the first nonbreeding sites occupied
-spring.stat <- spring.stat %>% group_by(geo_id) %>% filter(StartTime >= NB.last.site.arrival)
+#only retain the stopovers and the first nonbreeding sites occupied, and filter out stopovers that are within 250 km of breeding site 
+spring.stat <- spring.stat %>% group_by(geo_id) %>% filter(StartTime >= NB.last.site.arrival) %>% group_by(geo_id) %>% 
+  filter(distHaversine(cbind(Lon.50.,Lat.50.), cbind(deploy.longitude, deploy.latitude)) > 250000)
 
 # code by stack overflow user jlhoward (https://stackoverflow.com/questions/21095643/approaches-for-spatial-geodesic-latitude-longitude-clustering-in-r-with-geodesic)
 # Calculates the geodesic distance between points and creates a distance matrix
@@ -352,7 +360,7 @@ geo.dist = function(df) {
 dist.matrix <- geo.dist(spring.stat[,c("Lon.50.","Lat.50.")])
 spring.clust <- hclust(dist.matrix)
 plot(spring.clust)
-spring.stat$cluster  <- cutree(spring.clust, k = 20)
+spring.stat$cluster  <- cutree(spring.clust, k = 16)
 
 # Add breeding sites with separate clusters
 spring.breed.n <- geo.all  %>% filter(site_type == "Breeding",
@@ -370,7 +378,7 @@ spring.stat <-rbind(spring.stat, spring.breed) %>% arrange(geo_id, StartTime)
 # # export spring stat sites for manual clustering
 # spring.stat.sites <- st_as_sf(spring.stat[,1:12], coords = c("Lon.50.", "Lat.50."))
 # st_crs(spring.stat.sites) <- st_crs(wrld_simpl)
-# st_write(spring.stat.sites, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/spring_stat_sitesV2.shp")
+# st_write(spring.stat.sites, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/spring_stat_sitesV2.shp", append = F)
 
 # plot stopover and nonbreeding nodes 
 
@@ -380,7 +388,7 @@ ggplot(st_as_sf(wrld_simpl))+
   geom_path(data = spring.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5) +
   geom_point(data = spring.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, colour = site_type))+ 
   theme_bw() +
-  theme(text = element_text(size = 16))
+  theme(text = element_text(size = 14))
 
 # plot the clusters 
 ggplot(st_as_sf(wrld_simpl))+
@@ -428,11 +436,14 @@ spring.node.lat <- spring.stat %>% group_by(cluster) %>%
 # We also assess which use was the more common for a node (breeding, nonbreeding, or stopover)
 # The most common use will be the one assigned to the node
 spring.node.type <- spring.stat %>% group_by(cluster, site_type) %>%
-  summarize(use = n()) %>% filter(use == max(use)) %>% mutate(site_type_num = case_when(
+  summarize(use = n()) %>% filter(use == max(use)) %>% 
+  mutate(site_type = factor(site_type, levels = c("Breeding", "Nonbreeding", "Stopover")))%>%
+  arrange(site_type) %>%
+  mutate(site_type_num = case_when(
     site_type == "Breeding" ~ 1,
     site_type == "Nonbreeding" ~ 2,
     site_type == "Stopover" ~ 3
-  )) %>% distinct(cluster, .keep_all = TRUE) #must verify whether sites have equal maxima of uses
+  )) %>% distinct(cluster, .keep_all = TRUE) %>% arrange(cluster) #must verify whether sites have equal maxima of uses
 
 # Create a layout with node locations 
 meta.spring <- data.frame("vertex" = seq(min(spring.stat$cluster), max(spring.stat$cluster)), 
@@ -698,13 +709,6 @@ legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
        col = type.palette[unique(meta.fall$node.type.num)],
        pch = 16)
 
-# Save elements necessary to build Fall network
-write_graph(fall.graph.weighed.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.graph.edge.list.txt",
-            format = c("edgelist"))
-write.csv(meta.fall, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.node.metadata.csv")
-write.csv(fall.con.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.edge.weights.csv")
-write.csv(fall.stat, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.stationary.data.csv")
-
 ################################################################################
 # relative abundance propagation on in the spring season 
 ################################################################################
@@ -746,16 +750,152 @@ legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
        col = type.palette[unique(meta.spring$node.type.num)],
        pch = 16)
 
-# Save elements necessary to build spring network
-write_graph(spring.graph.weighed.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.graph.edge.list.txt",
-            format = c("edgelist"))
-write.csv(meta.spring, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.node.metadata.csv")
-write.csv(spring.con.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.edge.weights.csv")
-write.csv(spring.stat, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.stationary.data.csv")
-
-
 ################################################################################
 # Population proportion by site during the fall season 
 ################################################################################
 
-# Create a numeric vector with the proportion of 
+# Create a dataframe with the proportion of individuals from each section of the blackpoll warbler's range in each node
+fall.stat.ab <- merge(fall.stat, fall.breed.ab[,c("geo_id", "ab.unit")], by = "geo_id")
+
+fall.ab.by.origin <- fall.stat.ab %>% group_by(cluster, Range_region) %>%
+  summarize(region.ab.units = sum(ab.unit)) %>% ungroup() %>%
+  complete(cluster, Range_region, fill = list(region.ab.units = 0))
+  
+# Convert data from wide to long
+fall.ab.by.origin <- fall.ab.by.origin %>% pivot_wider(names_from = Range_region, values_from = region.ab.units) %>%
+  rename(prop.ab.eastern = Eastern,
+         prop.ab.central = Central,
+         prop.ab.west = West)
+
+# Merge abundance data with the node metadata
+meta.fall.ab <- merge(meta.fall, fall.ab.by.origin, by.x = "vertex", by.y = "cluster") 
+
+#create a column that can be converted to a numeric vector
+meta.fall.ab <- transform(meta.fall.ab, num.reg.ab.vector = asplit(cbind(prop.ab.central, prop.ab.eastern, prop.ab.west), 1))
+
+# Plot of proportional node use during the fall migration 
+
+# Create vector of vertex shapes 
+meta.fall.ab <- meta.fall.ab %>% rowwise() %>%
+  mutate(shape_single = length(which(c(prop.ab.central, 
+                                prop.ab.eastern, 
+                                prop.ab.west)==0))) %>%
+  ungroup() %>%
+  mutate(shape_single = ifelse(shape_single == 2 & node.type != "Breeding", "circle", "none")) %>%
+  mutate(shape_single_breeding = ifelse(node.type == "Breeding", "square", "none"))%>%
+  mutate(shape_multiple = ifelse(shape_single == "none" & shape_single_breeding == "none", "pie", "none")) %>%
+  mutate(shape_colour_single = case_when(shape_single != "none" & prop.ab.central != 0 ~ "#D55E00",
+                                         shape_single != "none" & prop.ab.eastern != 0 ~ "#009E73",
+                                         shape_single != "none" & prop.ab.west != 0 ~ "#0072B2",
+                                         .default = NA)) %>%
+  mutate(shape_colour_single_breeding = case_when(shape_single_breeding != "none" & prop.ab.central != 0 ~ "#D55E00",
+                                         shape_single_breeding != "none" & prop.ab.eastern != 0 ~ "#009E73",
+                                         shape_single_breeding != "none" & prop.ab.west != 0 ~ "#0072B2",
+                                         .default = NA))
+
+# Create a palette for site use by range region  
+reg.ab.palette <- list(c("#D55E00", "#009E73", "#0072B2"))
+
+plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),],
+     xlim = c(-170, -35), ylim = c(-10, 65), col = "#F7F7F7", lwd = 0.5)
+
+plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),],
+      xlim = c(-170, -35), ylim = c(-10, 65), col = NA, lwd = 0.5, add = T)
+
+plot(fall.graph.weighed.ab, vertex.size = 300, vertex.size2 = 200,
+     vertex.shape = meta.fall.ab$shape_single_breeding, vertex.color = meta.fall.ab$shape_colour_single_breeding,
+     edge.arrow.width = 0,edge.width = fall.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,
+     layout = fall.location, rescale = F, asp = 0, xlim = c(-170, -30),
+     ylim = c(-15, 70), vertex.label = NA, edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)), add = T)
+
+plot(fall.graph.weighed.ab, vertex.size = 400, vertex.size2 = 200,
+     vertex.shape = meta.fall.ab$shape_single, vertex.color = meta.fall.ab$shape_colour_single,
+     edge.arrow.width = 0,edge.width = 0, edge.arrow.size = 0, edge.arrow.width = 0,
+     layout = fall.location, rescale = F, asp = 0, xlim = c(-170, -30),
+     ylim = c(-15, 70), vertex.label = NA, edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)), add = T)
+
+plot(fall.graph.weighed.ab, vertex.size = 500, vertex.size2 = 200,
+     vertex.shape = meta.fall.ab$shape_multiple, vertex.pie = meta.fall.ab$num.reg.ab.vector,
+     vertex.pie.color = reg.ab.palette,edge.width = 0,edge.arrow.size = 0, edge.arrow.width = 0,
+     layout = fall.location, rescale = F, asp = 0, xlim = c(-170, -30),
+     ylim = c(-15, 70), vertex.label.dist = 30, vertex.label = NA, add = T)
+
+legend("bottomleft", title = as.expression(bquote(bold("Breeding range region"))), legend = c("Western", "Central", "Eastern"),
+       col = reg.ab.palette[[1]],
+       pch = 15, cex = 1, box.lwd = 0)
+
+################################################################################
+# Population proportion by site during the spring season 
+################################################################################
+
+# Create a dataframe with the proportion of individuals from each section of the blackpoll warbler's range in each node
+spring.stat.ab <- merge(spring.stat, spring.breed.ab[,c("geo_id", "ab.unit")], by = "geo_id")
+
+spring.ab.by.origin <- spring.stat.ab %>% group_by(cluster, Range_region) %>%
+  summarize(region.ab.units = sum(ab.unit)) %>% ungroup() %>%
+  complete(cluster, Range_region, fill = list(region.ab.units = 0))
+
+# Convert data from wide to long
+spring.ab.by.origin <- spring.ab.by.origin %>% pivot_wider(names_from = Range_region, values_from = region.ab.units) %>%
+  rename(prop.ab.eastern = Eastern,
+         prop.ab.central = Central,
+         prop.ab.west = West)
+
+# Merge abundance data with the node metadata
+meta.spring.ab <- merge(meta.spring, spring.ab.by.origin, by.x = "vertex", by.y = "cluster") 
+
+#create a column that can be converted to a numeric vector
+meta.spring.ab <- transform(meta.spring.ab, num.reg.ab.vector = asplit(cbind(prop.ab.central, prop.ab.eastern, prop.ab.west), 1))
+
+# Plot of proportional node use during the spring migration 
+
+# Create vector of vertex shapes 
+meta.spring.ab <- meta.spring.ab %>% rowwise() %>%
+  mutate(shape_single = length(which(c(prop.ab.central, 
+                                       prop.ab.eastern, 
+                                       prop.ab.west)==0))) %>%
+  ungroup() %>%
+  mutate(shape_single = ifelse(shape_single == 2, "circle", "none")) %>%
+  mutate(shape_single = ifelse(shape_single == "circle" & node.type == "Breeding", "csquare", shape_single))%>%
+  mutate(shape_multiple = ifelse(shape_single == "none", "pie", "none")) %>%
+  mutate(shape_colour_single = case_when(shape_single != "none" & prop.ab.central != 0 ~ "#D55E00",
+                                         shape_single != "none" & prop.ab.eastern != 0 ~ "#009E73",
+                                         shape_single != "none" & prop.ab.west != 0 ~ "#0072B2",
+                                         .default = NA))
+
+# Create a palette for site use by range region  
+reg.ab.palette <- list(c("#D55E00", "#009E73", "#0072B2"))
+
+plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),],
+     xlim = c(-165, -35), ylim = c(-10, 65), col = "#F7F7F7", lwd = 0.5)
+
+plot(spring.graph.weighed.ab, vertex.size = 400, vertex.size2 = 200,
+     vertex.shape = meta.spring.ab$shape_single, vertex.color = meta.spring.ab$shape_colour_single,
+     edge.arrow.width = 0,edge.width = spring.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,
+     layout = spring.location, rescale = F, asp = 0, xlim = c(-170, -30),
+     ylim = c(-15, 70), vertex.label = NA, edge.curved = rep(c(-0.05, 0.05), nrow(spring.con.ab)), add = T)
+
+plot(spring.graph.weighed.ab, vertex.size = 400, vertex.size2 = 200,
+     vertex.shape = meta.spring.ab$shape_multiple, vertex.pie = meta.spring.ab$num.reg.ab.vector,
+     vertex.pie.color = reg.ab.palette,edge.width = 0,edge.arrow.size = 0, edge.arrow.width = 0,
+     layout = spring.location, rescale = F, asp = 0, xlim = c(-170, -30),
+     ylim = c(-15, 70), vertex.label.dist = 30, vertex.label = NA, add = T)
+
+################################################################################
+# Export data from the network construction
+################################################################################
+
+# Save elements necessary to build Fall network
+write_graph(fall.graph.weighed.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.graph.edge.list.txt",
+            format = c("edgelist"))
+write.csv(dplyr::select(meta.fall.ab, !num.reg.ab.vector), "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.node.metadata.csv")
+write.csv(fall.con.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.edge.weights.csv")
+write.csv(fall.stat, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.stationary.data.csv")
+
+# Save elements necessary to build spring network
+write_graph(spring.graph.weighed.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.graph.edge.list.txt",
+            format = c("edgelist"))
+write.csv(dplyr::select(meta.spring.ab, !num.reg.ab.vector), "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.node.metadata.csv")
+write.csv(spring.con.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.edge.weights.csv")
+write.csv(spring.stat, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.stationary.data.csv")
+

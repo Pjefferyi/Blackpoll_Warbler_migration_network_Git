@@ -42,7 +42,7 @@ fall.nbr<- fall.stat %>% group_by(geo_id) %>%
 
 fall.nbr.sf <- st_as_sf(fall.nbr, coords = c("Lon.50.", "Lat.50."), crs = crs(wrld_simpl))
 fall.nbr.sf <- st_transform(fall.nbr.sf, CRS(proj)) 
-#st_write(fall.nbr.sf, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/bpw_nbr_sites.shp")
+st_write(fall.nbr.sf, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/bpw_nbr_sites.shp", append = F )
 
 # Origin sites 
 fall.br.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Relative_abundance_propagation/bpw_abundance_regions.shp") %>%
@@ -78,7 +78,7 @@ nSamples <- 100
 
 ## Verify that the breeding and nonbreeding sites and points for the fall makes sense
 
-# # Nonbreeding 
+# # Nonbreeding
 # plot(spTransform(wrld_simpl, CRS(proj)), xlim = c(-19312101/6, 19889532/6), ylim = c(-19793221/6, 19659061/6))
 # plot(as_Spatial(fall.nbr.regions), add = T)
 # plot(as_Spatial(fall.nbr.sf), add  = T)
@@ -90,17 +90,17 @@ nSamples <- 100
 
 # Estimation and resampling of uncertainty for transition probabilities (psi) ################################################################################
 
-# GL_psi <- estTransition(isGL=TRUE,
-#                         geoBias = geo.bias,
-#                         geoVCov = geo.vcov,
-#                         targetSites = fall.nbr.regions,
-#                         originSites = fall.br.regions,
-#                         originPoints = fall.br.sf,
-#                         targetPoints = fall.nbr.sf,
-#                         verbose = 2,
-#                         nSamples = nSamples,
-#                         resampleProjection = CRS(proj),
-#                         maxTries = 10000)
+GL_psi <- estTransition(isGL=TRUE,
+                        geoBias = geo.bias,
+                        geoVCov = geo.vcov,
+                        targetSites = fall.nbr.regions,
+                        originSites = fall.br.regions,
+                        originPoints = fall.br.sf,
+                        targetPoints = fall.nbr.sf,
+                        verbose = 2,
+                        nSamples = nSamples,
+                        resampleProjection = CRS(proj),
+                        maxTries = 10000)
 
 # Save the output of estTransition
 #save(GL_psi, file = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_analysis/estTransition_ouput.R")
@@ -117,7 +117,7 @@ bpw.fall.ab <- load_raster("C:/Users/Jelan/OneDrive/Desktop/University/Universit
                            resolution = "lr") %>%
  terra::project(crs(proj))
 
-# # Plot of breeding regions over relative abundance surface 
+# # Plot of breeding regions over relative abundance surface
 # plot(bpw.fall.ab$breeding, , xlim = c(-19312101/3, 19889532/6), ylim = c(-19793221/8, 19659061/2))
 # plot(spTransform(wrld_simpl, CRS(proj)), add = T)
 # plot(as_Spatial(fall.br.regions), add = T)
@@ -136,7 +136,7 @@ fall.nbr.centroids <- centroid(as_Spatial(fall.nbr.regions))
 fall.nbr.dists <- distFromPos(fall.nbr.centroids, "plane")
 
 
-# Estimate the strength of migratory connectivity ##############################
+# Estimate the strength of migratory connectivity metric #######################
 
 MC_metric <- estStrength(targetDist = fall.nbr.dists , # targetSites distance matrix
                          originDist = fall.br.dists , # originSites distance matrix
@@ -146,3 +146,22 @@ MC_metric <- estStrength(targetDist = fall.nbr.dists , # targetSites distance ma
                          originRelAbund = fall.br.site.ab$breeding,
                          nSamples = 1000,
                          sampleSize = nrow(fall.br.sf))
+
+#Save output
+#save(MC_metric , file = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_analysis/MC_metric.R")
+
+# Estimate the Mantel correlation ##############################################
+
+rM_metric <- estMantel(isGL= T,#Logical vector: light-level GL(T)/GPS(F)
+                                 geoBias = geo.bias, # Geolocator location bias
+                                 geoVCov = geo.vcov, # Location covariance matrix
+                                 targetSites = fall.nbr.regions, # Non-breeding target sites
+                                 originPoints = fall.br.sf, # Capture Locations
+                                 targetPoints = fall.nbr.sf, # Target locations
+                                 verbose = 1,   # output options
+                                 nBoot = 100, # This is set low for example
+                                 maxTries = 1000,
+                                 resampleProjection = CRS(proj))
+
+#Save output 
+#save(rM_metric , file = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_analysis/rM_metric.R")
