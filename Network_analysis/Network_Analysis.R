@@ -268,7 +268,7 @@ plot(spring.graph, vertex.size = 200, vertex.size2 = 200, vertex.label.dist = 30
      edge.color= adjustcolor("darkgray", alpha.f = 0.6), add = T, vertex.label = NA)
 
 ## spring weighed degree centrality ----
-spring.strength.c <- strength(spring.graph, mode = "all", weight = spring.con.ab$weight)
+spring.strength.c <- strength(spring.graph, mode = "in", weight = spring.con.ab$weight)
 
 # plot of the weighed centrality of each node 
 deg.c.palette <- hcl.colors(n = length(seq(0, max(spring.strength.c + 0.01), 0.01)), palette = "Reds 3", rev = T) 

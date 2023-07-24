@@ -344,41 +344,50 @@ spring.stat <- merge(spring.stat, spring.timings.nb, by = "geo_id")
 spring.stat <- spring.stat %>% group_by(geo_id) %>% filter(StartTime >= NB.last.site.arrival) %>% group_by(geo_id) %>% 
   filter(distHaversine(cbind(Lon.50.,Lat.50.), cbind(deploy.longitude, deploy.latitude)) > 250000)
 
-# code by stack overflow user jlhoward (https://stackoverflow.com/questions/21095643/approaches-for-spatial-geodesic-latitude-longitude-clustering-in-r-with-geodesic)
-# Calculates the geodesic distance between points and creates a distance matrix
-geo.dist = function(df) {
-  require(geosphere)
-  d <- function(i,z){         # z[1:2] contain long, lat
-    dist <- rep(0,nrow(z))
-    dist[i:nrow(z)] <- distHaversine(z[i:nrow(z),1:2],z[i,1:2])
-    return(dist)
-  }
-  dm <- do.call(cbind,lapply(1:nrow(df),d,df))
-  return(as.dist(dm))
-}
-
-dist.matrix <- geo.dist(spring.stat[,c("Lon.50.","Lat.50.")])
-spring.clust <- hclust(dist.matrix)
-plot(spring.clust)
-spring.stat$cluster  <- cutree(spring.clust, k = 16)
-
-# Add breeding sites with separate clusters
-spring.breed.n <- geo.all  %>% filter(site_type == "Breeding",
-                                 period %in% c("Pre-breeding migration","Non-breeding period")) %>% 
-  group_by(study.site) %>% summarize(geo_per_site = n())
-
-spring.breed <- geo.all  %>% filter(site_type == "Breeding",
-                                      period %in% c("Pre-breeding migration","Non-breeding period"))%>%
-  arrange(study.site, geo_id, StartTime) 
-
-spring.breed$cluster <- rep(seq(max(spring.stat$cluster) + 1, max(spring.stat$cluster) + nrow(spring.breed.n)), spring.breed.n$geo_per_site)
-
-spring.stat <-rbind(spring.stat, spring.breed) %>% arrange(geo_id, StartTime)
+# # code by stack overflow user jlhoward (https://stackoverflow.com/questions/21095643/approaches-for-spatial-geodesic-latitude-longitude-clustering-in-r-with-geodesic)
+# # Calculates the geodesic distance between points and creates a distance matrix
+# geo.dist = function(df) {
+#   require(geosphere)
+#   d <- function(i,z){         # z[1:2] contain long, lat
+#     dist <- rep(0,nrow(z))
+#     dist[i:nrow(z)] <- distHaversine(z[i:nrow(z),1:2],z[i,1:2])
+#     return(dist)
+#   }
+#   dm <- do.call(cbind,lapply(1:nrow(df),d,df))
+#   return(as.dist(dm))
+# }
+# 
+# dist.matrix <- geo.dist(spring.stat[,c("Lon.50.","Lat.50.")])
+# spring.clust <- hclust(dist.matrix)
+# plot(spring.clust)
+# spring.stat$cluster  <- cutree(spring.clust, k = 16)
 
 # # export spring stat sites for manual clustering
 # spring.stat.sites <- st_as_sf(spring.stat[,1:12], coords = c("Lon.50.", "Lat.50."))
 # st_crs(spring.stat.sites) <- st_crs(wrld_simpl)
 # st_write(spring.stat.sites, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/spring_stat_sitesV2.shp", append = F)
+
+# Import clusters created manually
+spring.manual.cluster <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/Tables/Spring_manual_clusters.csv")
+spring.manual.cluster <- spring.manual.cluster %>% rename(cluster = Cluster, cluster.region = ClusterReg) %>%
+  mutate(cluster.region= as.factor(cluster.region)) %>%
+  mutate(cluster = as.numeric(cluster.region))
+
+# Merge cluster info with original dataset
+spring.stat <- merge(spring.stat, spring.manual.cluster[,c("geo_id", "sitenum", "cluster", "cluster.region")], by = c("geo_id", "sitenum"))
+
+# Add breeding sites with separate clusters
+spring.breed.n <- geo.all  %>% filter(site_type == "Breeding",
+                                      period %in% c("Pre-breeding migration","Non-breeding period")) %>% 
+  group_by(study.site) %>% summarize(geo_per_site = n())
+
+spring.breed <- geo.all  %>% filter(site_type == "Breeding",
+                                    period %in% c("Pre-breeding migration","Non-breeding period")) %>%
+  arrange(study.site, geo_id, StartTime)
+
+spring.breed$cluster <- rep(seq(max(spring.stat$cluster) + 1, max(spring.stat$cluster) + nrow(spring.breed.n)), spring.breed.n$geo_per_site)
+
+spring.stat <- bind_rows(spring.stat, spring.breed) %>% arrange(geo_id, StartTime)
 
 # plot stopover and nonbreeding nodes 
 
@@ -770,6 +779,12 @@ fall.ab.by.origin <- fall.ab.by.origin %>% pivot_wider(names_from = Range_region
 # Merge abundance data with the node metadata
 meta.fall.ab <- merge(meta.fall, fall.ab.by.origin, by.x = "vertex", by.y = "cluster") 
 
+# Also add a column with the overall abundance at each site 
+fall.stat.ab.per.site <- fall.stat.ab %>% group_by(cluster) %>% 
+  summarize(r.abundance.at.cluster = sum (ab.unit))
+
+meta.fall.ab <- merge(meta.fall.ab, fall.stat.ab.per.site, by.x = "vertex", by.y = "cluster")
+
 #create a column that can be converted to a numeric vector
 meta.fall.ab <- transform(meta.fall.ab, num.reg.ab.vector = asplit(cbind(prop.ab.central, prop.ab.eastern, prop.ab.west), 1))
 
@@ -843,6 +858,12 @@ spring.ab.by.origin <- spring.ab.by.origin %>% pivot_wider(names_from = Range_re
 
 # Merge abundance data with the node metadata
 meta.spring.ab <- merge(meta.spring, spring.ab.by.origin, by.x = "vertex", by.y = "cluster") 
+
+# Also add a column with the overall abundance at each site 
+spring.stat.ab.per.site <- spring.stat.ab %>% group_by(cluster) %>% 
+  summarize(r.abundance.at.cluster = sum (ab.unit))
+
+meta.spring.ab <- merge(meta.spring.ab, spring.stat.ab.per.site, by.x = "vertex", by.y = "cluster")
 
 #create a column that can be converted to a numeric vector
 meta.spring.ab <- transform(meta.spring.ab, num.reg.ab.vector = asplit(cbind(prop.ab.central, prop.ab.eastern, prop.ab.west), 1))
