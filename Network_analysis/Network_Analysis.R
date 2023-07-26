@@ -55,11 +55,11 @@ legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
 ## Fall network analysis ###########################################################
 
 ## Fall betweenness centrality (exclude breeding sites)
-fall.betw.c <- betweenness(fall.graph, directed = T, weights = fall.con.ab$weight)
+fall.betw.c <- betweenness(fall.graph, directed = T, weights = NA)
 
 # plot of the betweenness centrality of each node 
-betw.c.palette <- hcl.colors(n = length(seq(0, max(fall.betw.c))), palette = "Reds 3", rev = T) 
-names(betw.c.palette) <- seq(0, max(fall.betw.c))
+betw.c.palette <- hcl.colors(n = length(seq(0, max(fall.betw.c) + 1)), palette = "Reds 3", rev = T) 
+names(betw.c.palette) <- seq(0, max(fall.betw.c) +1)
 
 plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70), col = "#F2F2F2", lwd = 0.5)
 plot(fall.graph, vertex.size = 200, vertex.size2 = 200, vertex.label.dist = 30,
@@ -92,18 +92,13 @@ names(deg.c.palette) <- seq(0, max(fall.strength.c+ 0.01), 0.001)
 plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),], 
      xlim = c(-170, -30), ylim = c(-15, 70), col = "#F2F2F2", lwd = 0.5)
 
-plot(fall.graph, vertex.size = 200, vertex.size2 = 200, vertex.label.dist = 30,
+plot(fall.graph, vertex.size = 200, vertex.size2 = 200, vertex.label= NA,
      edge.width = fall.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
      layout = as.matrix(meta.fall.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)),
      vertex.color = deg.c.palette[as.character(round(fall.strength.c, digits = 3))],
      edge.color = adjustcolor("darkgray", alpha.f = 0.6), add = T, vertex.label = round(fall.strength.c, digits = 2))
 
-legend_image <- as.raster(matrix(rev(deg.c.palette), ncol=1))
-plot(c(0,2),c(0,1),type = 'n', axes = F,xlab = '', ylab = '')
-title(main = 'Weighed degree centrality', cex = 0.01)
-text(x=1.5, y = seq(0,1,l=5), labels = seq(0,1,l=5))
-rasterImage(legend_image, 0, 0, 1,1)
 
 ### community detection using propogating labels ----------
 fall.communities.lab <- cluster_label_prop(fall.graph, weights = fall.con.ab$weight)
@@ -239,18 +234,18 @@ plot(spring.graph, vertex.label = NA, vertex.size = 300, vertex.size2 = 200,
 ##Spring network analysis ###########################################################
 
 ## Spring betweenness centrality (exclude breeding sites)
-spring.betw.c <- betweenness(spring.graph, directed = T, weights = 1/spring.con.ab$weight)
+spring.betw.c <- betweenness(spring.graph, directed = T, weights = NA)
 
 # plot of the betweenness centrality of each node 
-betw.c.palette <- hcl.colors(n = length(seq(0, max(spring.betw.c))), palette = "Reds 3", rev = T) 
-names(betw.c.palette) <- seq(0, max(spring.betw.c))
+betw.c.palette <- hcl.colors(n = length(seq(0, max(spring.betw.c)+1)), palette = "Reds 3", rev = T) 
+names(betw.c.palette) <- seq(0, max(spring.betw.c)+1)
 
 plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70), col = "#F2F2F2", lwd = 0.5)
 plot(spring.graph, vertex.size = 200, vertex.size2 = 200, vertex.label.dist = 30,
      edge.width = spring.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
      layout = as.matrix(meta.spring.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(spring.con.ab)),
-     vertex.color = betw.c.palette[as.character(round(spring.betw.c))], add = T, vertex.label = NA)
+     vertex.color = betw.c.palette[as.character(round(spring.betw.c))], add = T, vertex.label= NA)
 
 ## spring degree centrality
 spring.degree.c <- degree(spring.graph, mode = "in")
@@ -268,7 +263,7 @@ plot(spring.graph, vertex.size = 200, vertex.size2 = 200, vertex.label.dist = 30
      edge.color= adjustcolor("darkgray", alpha.f = 0.6), add = T, vertex.label = NA)
 
 ## spring weighed degree centrality ----
-spring.strength.c <- strength(spring.graph, mode = "in", weight = spring.con.ab$weight)
+spring.strength.c <- strength(spring.graph, mode = "all", weight = spring.con.ab$weight)
 
 # plot of the weighed centrality of each node 
 deg.c.palette <- hcl.colors(n = length(seq(0, max(spring.strength.c + 0.01), 0.01)), palette = "Reds 3", rev = T) 

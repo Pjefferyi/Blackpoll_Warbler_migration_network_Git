@@ -262,15 +262,29 @@ fall.node.lat <- fall.stat %>% group_by(cluster) %>%
 
 # We also assess which use was the more common for a node (breeding, nonbreeding, or stopover)
 # The most common use will be the one assigned to the node
-fall.node.type <- fall.stat %>% group_by(cluster, site_type) %>%
-  summarize(use = n()) %>% filter(use == max(use)) %>% 
-  mutate(site_type = factor(site_type, levels = c("Breeding", "Nonbreeding", "Stopover")))%>%
-  arrange(site_type) %>%
+# fall.node.type <- fall.stat %>% group_by(cluster, site_type) %>%
+#   summarize(use = n()) %>% filter(use == max(use)) %>% 
+#   mutate(site_type = factor(site_type, levels = c("Breeding", "Nonbreeding", "Stopover")))%>%
+#   arrange(site_type) %>%
+#   mutate(site_type_num = case_when(
+#     site_type == "Breeding" ~ 1,
+#     site_type == "Nonbreeding" ~ 2,
+#     site_type == "Stopover" ~ 3
+#   )) %>% distinct(cluster, .keep_all = TRUE) %>% arrange(cluster) #must verify whether sites have equal maxima of uses
+
+fall.node.type <- fall.stat %>% group_by(cluster) %>%
+  summarize(count.breeding = length(site_type[site_type == "Breeding"]),
+            count.stopover = length(site_type[site_type == "Stopover"]),
+            count.nonbreeding = length(site_type[site_type == "Nonbreeding"])) %>%
   mutate(site_type_num = case_when(
-    site_type == "Breeding" ~ 1,
-    site_type == "Nonbreeding" ~ 2,
-    site_type == "Stopover" ~ 3
-  )) %>% distinct(cluster, .keep_all = TRUE) %>% arrange(cluster) #must verify whether sites have equal maxima of uses
+    count.breeding > 0  ~ 1,
+    count.stopover > 0 & count.nonbreeding == 0 ~ 2,
+    count.nonbreeding > 0 ~ 3)) %>%
+  mutate(site_type = case_when(
+    site_type_num == 1  ~ "Breeding",
+    site_type_num == 2 ~ "Stopover",
+    site_type_num == 3 ~ "Nonbreeding")) %>%
+  mutate(site_type = factor(site_type, levels = c("Breeding", "Nonbreeding", "Stopover")))
 
 # Create a layout with node locations 
 meta.fall <- data.frame("vertex" = seq(min(fall.edge.df$cluster), max(fall.edge.df$cluster)), 
@@ -444,15 +458,29 @@ spring.node.lat <- spring.stat %>% group_by(cluster) %>%
 
 # We also assess which use was the more common for a node (breeding, nonbreeding, or stopover)
 # The most common use will be the one assigned to the node
-spring.node.type <- spring.stat %>% group_by(cluster, site_type) %>%
-  summarize(use = n()) %>% filter(use == max(use)) %>% 
-  mutate(site_type = factor(site_type, levels = c("Breeding", "Nonbreeding", "Stopover")))%>%
-  arrange(site_type) %>%
+# spring.node.type <- spring.stat %>% group_by(cluster, site_type) %>%
+#   summarize(use = n()) %>% filter(use == max(use)) %>%
+#   mutate(site_type = factor(site_type, levels = c("Breeding", "Nonbreeding", "Stopover")))%>%
+#   arrange(site_type) %>%
+#   mutate(site_type_num = case_when(
+#     site_type == "Breeding" ~ 1,
+#     site_type == "Nonbreeding" ~ 2,
+#     site_type == "Stopover" ~ 3
+#   )) %>% distinct(cluster, .keep_all = TRUE) %>% arrange(cluster) #must verify whether sites have equal maxima of uses
+
+spring.node.type <- spring.stat %>% group_by(cluster) %>%
+  summarize(count.breeding = length(site_type[site_type == "Breeding"]),
+            count.stopover = length(site_type[site_type == "Stopover"]),
+            count.nonbreeding = length(site_type[site_type == "Nonbreeding"])) %>%
   mutate(site_type_num = case_when(
-    site_type == "Breeding" ~ 1,
-    site_type == "Nonbreeding" ~ 2,
-    site_type == "Stopover" ~ 3
-  )) %>% distinct(cluster, .keep_all = TRUE) %>% arrange(cluster) #must verify whether sites have equal maxima of uses
+         count.breeding > 0  ~ 1,
+         count.stopover > 0 & count.nonbreeding == 0 ~ 2,
+         count.nonbreeding > 0 ~ 3)) %>%
+  mutate(site_type = case_when(
+    site_type_num == 1  ~ "Breeding",
+    site_type_num == 2 ~ "Stopover",
+    site_type_num == 3 ~ "Nonbreeding")) %>%
+  mutate(site_type = factor(site_type, levels = c("Breeding", "Nonbreeding", "Stopover")))
 
 # Create a layout with node locations 
 meta.spring <- data.frame("vertex" = seq(min(spring.stat$cluster), max(spring.stat$cluster)), 
@@ -620,13 +648,13 @@ plot(wrld_simpl, add = T)
 NB.con <- NB.edge.df %>% group_by(cluster, next.cluster) %>% 
   summarize(weight = n()) 
 
-# Create a new spring network
+# Create a  network for nonbreeding movements 
 NB.graph.weighed <- graph_from_data_frame(NB.con, directed = T, vertices = meta.NB )
 is_weighted(NB.graph.weighed)
 
 plot(wrld_simpl, xlim = c(-90, -30), ylim = c(-15, 20))
 plot(NB.graph.weighed, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
-     edge.width = NB.con$weight/1.5, edge.arrow.size = 0.5, edge.arrow.width = 1.2,  
+     edge.width = NB.con$weight, edge.arrow.size = 0.10, edge.arrow.width = 1,  
      layout = NB.location, rescale = F, asp = 0, edge.curved = rep(c(-0.3, 0.3), nrow(NB.con)),
      vertex.color = type.palette[meta.NB $node.type.num], add = T)
 

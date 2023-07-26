@@ -90,17 +90,17 @@ nSamples <- 100
 
 # Estimation and resampling of uncertainty for transition probabilities (psi) ################################################################################
 
-GL_psi <- estTransition(isGL=TRUE,
-                        geoBias = geo.bias,
-                        geoVCov = geo.vcov,
-                        targetSites = fall.nbr.regions,
-                        originSites = fall.br.regions,
-                        originPoints = fall.br.sf,
-                        targetPoints = fall.nbr.sf,
-                        verbose = 2,
-                        nSamples = nSamples,
-                        resampleProjection = CRS(proj),
-                        maxTries = 10000)
+# GL_psi <- estTransition(isGL=TRUE,
+#                         geoBias = geo.bias,
+#                         geoVCov = geo.vcov,
+#                         targetSites = fall.nbr.regions,
+#                         originSites = fall.br.regions,
+#                         originPoints = fall.br.sf,
+#                         targetPoints = fall.nbr.sf,
+#                         verbose = 2,
+#                         nSamples = nSamples,
+#                         resampleProjection = CRS(proj),
+#                         maxTries = 10000)
 
 # Save the output of estTransition
 #save(GL_psi, file = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_analysis/estTransition_ouput.R")
