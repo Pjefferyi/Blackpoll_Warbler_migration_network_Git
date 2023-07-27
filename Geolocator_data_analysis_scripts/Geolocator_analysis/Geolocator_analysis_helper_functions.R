@@ -353,9 +353,9 @@ plotLocVec <- function(data, stati_only = F, timing = c("Post-breeding migration
 
 # findSlicesData ##################################################################
 
-# Function to recover thedata required to obtain the density estimates for each geolocator 
+# Function to recover the data required to obtain the density estimates for each geolocator 
 
-findSlicesData <- function(periods, xlim = c(-170, -40), ylim = c(-40, 75)  ){
+findSlicesData <- function(periods, xlim = c(-170, -40), ylim = c(-40, 75)){
   
   # Create a list of path to all files with fit data 
   paths <- list.files("/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geolocator_data",
