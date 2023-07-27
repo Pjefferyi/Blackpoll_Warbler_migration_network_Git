@@ -31,7 +31,7 @@ bpw_range <-  read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of 
 
 # Plot the fall graph 
 data("wrld_simpl")
-type.palette <- viridis(3)  
+type.palette <- c("#440154FF", "#FDE725FF", "#21908CFF")
 
 plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),],
      xlim = c(-165, -35), ylim = c(-10, 65), col = "#F7F7F7", lwd = 0.5)
@@ -55,7 +55,7 @@ legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
 ## Fall network analysis ###########################################################
 
 ## Fall betweenness centrality (exclude breeding sites)
-fall.betw.c <- betweenness(fall.graph, directed = T, weights = NA)
+fall.betw.c <- betweenness(fall.graph, directed = T, weights = 1/fall.con.ab$weight)
 
 # plot of the betweenness centrality of each node 
 betw.c.palette <- hcl.colors(n = length(seq(0, max(fall.betw.c) + 1)), palette = "Reds 3", rev = T) 
@@ -178,7 +178,7 @@ fall.stat <- fall.stat %>% mutate(next.cluster = case_when(
   lead(cluster) != cluster & lead(geo_id) == geo_id ~ lead(cluster),
   .default = NA)) 
 
-# calculate the average time that individuals spent stationary in each node (ONLY FOR STOPS CONSIDERED AS STOPOVERS)
+# # calculate the number of days spent at each stopover divided by the number of bird that were present (ONLY FOR STOPS CONSIDERED AS STOPOVERS)
 fall.node.time <- fall.stat %>% dplyr::select(cluster, next.cluster, geo_id, StartTime,
                                               Lon.50., Lon.2.5., Lon.97.5., Lat.50.,
                                               Lat.2.5., Lat.97.5., EndTime,
@@ -203,8 +203,39 @@ plot(fall.graph, vertex.size = 300, vertex.size2 = 200, vertex.label.dist = 30,
      layout = as.matrix(meta.fall.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)),
      vertex.color = time.palette[as.character(round(meta.fall.ab$time.occupied))],
-     edge.color = adjustcolor("darkgray", alpha.f = 0.6), add = T, vertex.label = round(meta.fall.ab$time.occupied))
-  
+     edge.color = adjustcolor("darkgray", alpha.f = 0.6), add = T, vertex.label = NA)
+
+### estimated proportion of blackpoll warblers in each node ----
+r.ab.palette <- hcl.colors(n = length(seq(0, max(meta.fall.ab$r.abundance.at.cluster + 0.01), 0.001)), palette = "Reds 3", rev = T) 
+names(r.ab.palette) <- seq(0, max(meta.fall.ab$r.abundance.at.cluster + 0.01), 0.001)
+
+plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),], 
+     xlim = c(-170, -30), ylim = c(-15, 70), col = "#F2F2F2", lwd = 0.5)
+
+plot(fall.graph, vertex.size = 300, vertex.size2 = 200, vertex.label= NA,
+     edge.width = fall.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
+     layout = as.matrix(meta.fall.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
+     ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)),
+     vertex.color = r.ab.palette[as.character(round(meta.fall.ab$r.abundance.at.cluster, digits = 3))],
+     edge.color = adjustcolor("darkgray", alpha.f = 0.6), add = T)
+
+### Number of breeding populations in each node ----
+fall.n.br <- fall.stat %>% group_by(cluster) %>% summarize(n.br.pops = n_distinct(study.site)) 
+meta.fall.ab <- merge(meta.fall.ab, fall.n.br[, c("cluster", "n.br.pops")], by.x = "vertex", by.y = "cluster")
+
+r.n.br.palette <- hcl.colors(n = length(seq(1, max(meta.fall.ab$n.br.pops), 1)), palette = "Reds 3", rev = T) 
+names(r.n.br.palette) <- seq(1, max(meta.fall.ab$n.br.pops), 1)
+
+plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),], 
+     xlim = c(-170, -30), ylim = c(-15, 70), col = "#F2F2F2", lwd = 0.5)
+
+plot(fall.graph, vertex.size = 200, vertex.size2 = 200, vertex.label= NA,
+     edge.width = fall.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
+     layout = as.matrix(meta.fall.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
+     ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)),
+     vertex.color = r.n.br.palette [as.character(meta.fall.ab$n.br.pops)],
+     edge.color = adjustcolor("darkgray", alpha.f = 0.6), add = T)
+
 # Prepare for spring network analysis ############################################
 
 # Load the spring graph
@@ -218,7 +249,7 @@ spring.con.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University
 
 # Plot the spring graph 
 data("wrld_simpl")
-type.palette <- viridis(3)  
+type.palette <- c("#440154FF", "#FDE725FF", "#21908CFF")
 
 plot(wrld_simpl, xlim = c(-165, -35), ylim = c(-10, 65), col = "#F2F2F2", lwd = 0.5)
 plot(spring.graph, vertex.label = NA, vertex.size = 300, vertex.size2 = 200,
@@ -326,7 +357,7 @@ spring.stat <- spring.stat %>% mutate(next.cluster = case_when(
   lead(cluster) != cluster & lead(geo_id) == geo_id ~ lead(cluster),
   .default = NA)) 
 
-# calculate the average time that individuals spent stationary in each node (ONLY FOR STOPS CONSIDERED AS STOPOVERS)
+# calculate the number of days spent at each stopover divided by the number of bird that were present (ONLY FOR STOPS CONSIDERED AS STOPOVERS)
 spring.node.time <- spring.stat %>% dplyr::select(cluster, next.cluster, geo_id, StartTime,
                                               Lon.50., Lon.2.5., Lon.97.5., Lat.50.,
                                               Lat.2.5., Lat.97.5., EndTime,
@@ -351,7 +382,38 @@ plot(spring.graph, vertex.size = 300, vertex.size2 = 200, vertex.label.dist = 30
      layout = as.matrix(meta.spring.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(spring.con.ab)),
      vertex.color = time.palette[as.character(round(meta.spring.ab$time.occupied))],
-     edge.color = adjustcolor("darkgray", alpha.f = 0.6), add = T, vertex.label = round(meta.spring.ab$time.occupied))
+     edge.color = adjustcolor("darkgray", alpha.f = 0.6), add = T, vertex.label = NA) # round(meta.spring.ab$time.occupied))
+
+### estimated proportion of blackpoll warblers in each node ----
+r.ab.palette <- hcl.colors(n = length(seq(0, max(meta.spring.ab$r.abundance.at.cluster + 0.01), 0.001)), palette = "Reds 3", rev = T) 
+names(r.ab.palette) <- seq(0, max(meta.spring.ab$r.abundance.at.cluster + 0.01), 0.001)
+
+plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),], 
+     xlim = c(-170, -30), ylim = c(-15, 70), col = "#F2F2F2", lwd = 0.5)
+
+plot(spring.graph, vertex.size = 200, vertex.size2 = 200, vertex.label= NA,
+     edge.width = spring.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
+     layout = as.matrix(meta.spring.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
+     ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(spring.con.ab)),
+     vertex.color = r.ab.palette[as.character(round(meta.spring.ab$r.abundance.at.cluster, digits = 3))],
+     edge.color = adjustcolor("darkgray", alpha.f = 0.6), add = T)
+
+### Number of breeding populations in each node ----
+spring.n.br <- spring.stat %>% group_by(cluster) %>% summarize(n.br.pops = n_distinct(study.site)) 
+meta.spring.ab <- merge(meta.spring.ab, spring.n.br[, c("cluster", "n.br.pops")], by.x = "vertex", by.y = "cluster")
+
+r.n.br.palette <- hcl.colors(n = length(seq(1, max(meta.spring.ab$n.br.pops), 1)), palette = "Reds 3", rev = T) 
+names(r.n.br.palette) <- seq(1, max(meta.spring.ab$n.br.pops), 1)
+
+plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),], 
+     xlim = c(-170, -30), ylim = c(-15, 70), col = "#F2F2F2", lwd = 0.5)
+
+plot(spring.graph, vertex.size = 200, vertex.size2 = 200, vertex.label= NA,
+     edge.width = spring.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
+     layout = as.matrix(meta.spring.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
+     ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(spring.con.ab)),
+     vertex.color = r.n.br.palette [as.character(meta.spring.ab$n.br.pops)],
+     edge.color = adjustcolor("darkgray", alpha.f = 0.6), add = T)
 
 # Code snippets ################################################################
 

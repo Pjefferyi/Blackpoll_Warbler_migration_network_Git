@@ -582,8 +582,8 @@ sm$geo_id <- geo.id
 
 #add a column that categorizes the locations (based on the groupthreshold model output)
 sm <- sm %>% mutate(period= case_when(StartTime < anytime("2012-11-19 10:10:18", asUTC = T, tz = "GMT")  ~ "Post-breeding migration",
-                                      StartTime >= anytime("2012-11-19 10:10:18", asUTC = T, tz = "GMT") & StartTime < anytime("2013-04-08 10:27:45", asUTC = T, tz = "GMT") ~ "Non-breeding period",
-                                      StartTime > anytime("2013-04-08 10:27:45", asUTC = T, tz = "GMT") ~ "Pre-breeding migration"))
+                                      StartTime >= anytime("2012-11-19 10:10:18", asUTC = T, tz = "GMT") & StartTime < anytime("2013-05-23 22:45:45", asUTC = T, tz = "GMT") ~ "Non-breeding period",
+                                      StartTime > anytime("2013-05-23 22:45:45", asUTC = T, tz = "GMT") ~ "Pre-breeding migration"))
 
 #Save the output of the model 
 save(sm, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))
