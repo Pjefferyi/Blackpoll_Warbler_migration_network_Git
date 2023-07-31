@@ -80,7 +80,7 @@ for (i in unique(geo.all$geo_id)){
   jpeg(paste0("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Conferences/AOS_2023/AOS_poster/Appendix_figures/",i,"_locations.jpg"),units = "cm", width = 15, height = 15,  quality = 100, res = 600)
   
   geo.data <- geo.all %>% filter(geo_id == i) 
-  path.palette <- colorRampPalette(c("yellow", "red"))(max(geo.data$sitenum) * 2)
+  path.palette <- colorRampPalette(c("yellow", "red"))(max(geo.data$sitenum) * 1.5)
   stat.position = geo.data %>% filter(sitenum > 0)
   
   equinox.time <- anytime(paste0(year(as.character(geo.data$StartTime[1])),
