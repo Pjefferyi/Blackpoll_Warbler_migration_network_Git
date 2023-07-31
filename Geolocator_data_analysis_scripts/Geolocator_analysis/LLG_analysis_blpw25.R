@@ -212,14 +212,13 @@ dev.off()
 zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith0,
                             Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad,
-                            Date > anytime(dep.nbr) ~ zenith0_ad) + 4)
+                            Date > anytime(dep.nbr) ~ zenith0_ad + 3))
 
 zeniths0 <- zenith_twl_zero$zenith
 
 zenith_twl_med <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith,
                             Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith_sd,
-                            #Date > anytime(dep.nbr) ~ mean(c(zenith, zenith_sd))))
 Date > anytime(dep.nbr) ~ zenith))
 
 zeniths_med <- zenith_twl_med$zenith
@@ -363,13 +362,14 @@ xlim <- range(x0[,1])+c(-5,5)
 ylim <- range(x0[,2])+c(-5,5)
 
 index <- ifelse(stationary, 1, 2)
-mask <- earthseaMask(xlim, ylim, n = 10, index=index)
-
+#mask <- earthseaMask(xlim, ylim, n = 1, index=index)
+mask <- earthseaMask3(xlim, ylim, index=index, twl, pacific = FALSE, res = "lr")
 # We will give locations on land a higher prior 
 ## Define the log prior for x and z
 logp <- function(p) {
   f <- mask(p)
-  ifelse(is.na(f), -1000, log(1))
+  #ifelse(is.na(f), -1000, log(2))
+  ifelse(is.na(f), -1000, f)
 }
 # Define the Estelle model ####################################################
 model <- groupedThresholdModel(twl$Twilight,
@@ -381,7 +381,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                x0 = x0, # median point for each group (defined by twl$group)
                                z0 = z0, # middle points between the x0 points
                                zenith = zeniths0,
-                               #logp.x = logp,# land sea mask
+                               logp.x = logp,# land sea mask
                                fixedx = fixedx)
 
 
@@ -405,7 +405,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                alpha = alpha, 
                                beta =  beta,
                                x0 = x0, z0 = z0,
-                               #logp.x = logp,
+                               logp.x = logp,
                                missing=twl$Missing,
                                zenith = zeniths0,
                                fixedx = fixedx)

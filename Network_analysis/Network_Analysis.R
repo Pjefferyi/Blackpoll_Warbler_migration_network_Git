@@ -188,7 +188,9 @@ fall.node.time <- fall.stat %>% dplyr::select(cluster, next.cluster, geo_id, Sta
   mutate(duration = ifelse(site_type == "Stopover", duration, 0)) %>%
   group_by(geo_id, cluster) %>% summarise(time.cluster.occupied = sum(duration)) %>%
   group_by(cluster) %>% summarise(mean.time.cluster.occupied = mean(time.cluster.occupied))
-
+  #group_by(cluster) %>% summarise(sum.time.cluster.occupied = sum(time.cluster.occupied))
+  
+  
 # add the times calculated to the node metadata
 meta.fall.ab$time.occupied <- fall.node.time$mean.time.cluster.occupied
 
@@ -367,6 +369,7 @@ spring.node.time <- spring.stat %>% dplyr::select(cluster, next.cluster, geo_id,
   mutate(duration = ifelse(site_type == "Stopover", duration, 0)) %>%
   group_by(geo_id, cluster) %>% summarise(time.cluster.occupied = sum(duration)) %>%
   group_by(cluster) %>% summarise(mean.time.cluster.occupied = mean(time.cluster.occupied))
+  #group_by(cluster) %>% summarise(sum.time.cluster.occupied = sum(time.cluster.occupied))
 
 # add the times calculated to the node metadata
 meta.spring.ab$time.occupied <- spring.node.time$mean.time.cluster.occupied

@@ -50,7 +50,7 @@ fall.br.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/Universit
   st_cast("MULTIPOLYGON")
 
 # Target sites 
-fall.nbr.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/Nonbreedingregions.shp") %>%
+fall.nbr.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/NonbreedingregionsV2.shp") %>%
   st_transform(CRS(proj))%>%
   st_cast("MULTIPOLYGON")
 
@@ -78,29 +78,29 @@ nSamples <- 100
 
 ## Verify that the breeding and nonbreeding sites and points for the fall makes sense
 
-# # Nonbreeding
-# plot(spTransform(wrld_simpl, CRS(proj)), xlim = c(-19312101/6, 19889532/6), ylim = c(-19793221/6, 19659061/6))
-# plot(as_Spatial(fall.nbr.regions), add = T)
-# plot(as_Spatial(fall.nbr.sf), add  = T)
-# 
-# # Breeding
-# plot(spTransform(wrld_simpl, CRS(proj)), xlim = c(-19312101/6, 19889532/6), ylim = c(-19793221/8, 19659061/2))
-# plot(as_Spatial(fall.br.regions), add = T)
-# plot(as_Spatial(fall.br.sf), add  = T)
+# Nonbreeding
+plot(spTransform(wrld_simpl, CRS(proj)), xlim = c(-19312101/6, 19889532/6), ylim = c(-19793221/6, 19659061/6))
+plot(as_Spatial(fall.nbr.regions), add = T)
+plot(as_Spatial(fall.nbr.sf), add  = T)
+
+# Breeding
+plot(spTransform(wrld_simpl, CRS(proj)), xlim = c(-19312101/6, 19889532/6), ylim = c(-19793221/8, 19659061/2))
+plot(as_Spatial(fall.br.regions), add = T)
+plot(as_Spatial(fall.br.sf), add  = T)
 
 # Estimation and resampling of uncertainty for transition probabilities (psi) ################################################################################
 
-# GL_psi <- estTransition(isGL=TRUE,
-#                         geoBias = geo.bias,
-#                         geoVCov = geo.vcov,
-#                         targetSites = fall.nbr.regions,
-#                         originSites = fall.br.regions,
-#                         originPoints = fall.br.sf,
-#                         targetPoints = fall.nbr.sf,
-#                         verbose = 2,
-#                         nSamples = nSamples,
-#                         resampleProjection = CRS(proj),
-#                         maxTries = 10000)
+GL_psi <- estTransition(isGL=TRUE,
+                        geoBias = geo.bias,
+                        geoVCov = geo.vcov,
+                        targetSites = fall.nbr.regions,
+                        originSites = fall.br.regions,
+                        originPoints = fall.br.sf,
+                        targetPoints = fall.nbr.sf,
+                        verbose = 2,
+                        nSamples = nSamples,
+                        resampleProjection = CRS(proj),
+                        maxTries = 10000)
 
 # Save the output of estTransition
 #save(GL_psi, file = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_analysis/estTransition_ouput.R")

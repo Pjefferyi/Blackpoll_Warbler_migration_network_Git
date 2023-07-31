@@ -183,7 +183,7 @@ fall.stat <- fall.stat %>% group_by(geo_id) %>% filter(StartTime <= NB.first.sit
 # # Export fall stopovers for manual clustering in QGIS
 # fall.stat.sites <- st_as_sf(fall.stat[,1:12], coords = c("Lon.50.", "Lat.50."))
 # st_crs(fall.stat.sites) <- st_crs(wrld_simpl)
-# st_write(fall.stat.sites, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/fall_stat_sites4.shp", append=FALSE)
+# st_write(fall.stat.sites, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/fall_stat_sites5.shp", append=FALSE)
 
 # Import clusters created manually
 fall.manual.cluster <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/Tables/Fall_manual_clusters_conservativeV3.csv")
@@ -845,23 +845,23 @@ plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),],
 plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),],
       xlim = c(-170, -35), ylim = c(-10, 65), col = NA, lwd = 0.5, add = T)
 
-plot(fall.graph.weighed.ab, vertex.size = 300, vertex.size2 = 200,
+plot(fall.graph.weighed.ab, vertex.size = meta.fall.ab$r.abundance.at.cluster, vertex.size2 = 200,
      vertex.shape = meta.fall.ab$shape_single_breeding, vertex.color = meta.fall.ab$shape_colour_single_breeding,
      edge.arrow.width = 0,edge.width = fall.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,
      layout = fall.location, rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), vertex.label = NA, edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)), add = T)
 
-plot(fall.graph.weighed.ab, vertex.size = 400, vertex.size2 = 200,
+plot(fall.graph.weighed.ab, vertex.size = meta.fall.ab$r.abundance.at.cluster, vertex.size2 = 200,
      vertex.shape = meta.fall.ab$shape_single, vertex.color = meta.fall.ab$shape_colour_single,
      edge.arrow.width = 0,edge.width = 0, edge.arrow.size = 0, edge.arrow.width = 0,
      layout = fall.location, rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), vertex.label = NA, edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)), add = T)
 
-plot(fall.graph.weighed.ab, vertex.size = 500, vertex.size2 = 200,
+plot(fall.graph.weighed.ab, vertex.size = meta.fall.ab$r.abundance.at.cluster, vertex.size2 = 200,
      vertex.shape = meta.fall.ab$shape_multiple, vertex.pie = meta.fall.ab$num.reg.ab.vector,
      vertex.pie.color = reg.ab.palette,edge.width = 0,edge.arrow.size = 0, edge.arrow.width = 0,
      layout = fall.location, rescale = F, asp = 0, xlim = c(-170, -30),
-     ylim = c(-15, 70), vertex.label.dist = 30, vertex.label = NA, add = T)
+     ylim = c(-15, 70), vertex.label = NA, vertex.label.dist = 30, add = T)
 
 legend("bottomleft", title = as.expression(bquote(bold("Breeding range region"))), legend = c("Western", "Central", "Eastern"),
        col = reg.ab.palette[[1]],
@@ -918,7 +918,7 @@ reg.ab.palette <- list(c("#D55E00", "#009E73", "#0072B2"))
 plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),],
      xlim = c(-165, -35), ylim = c(-10, 65), col = "#F7F7F7", lwd = 0.5)
 
-plot(spring.graph.weighed.ab, vertex.size = 400, vertex.size2 = 200,
+plot(spring.graph.weighed.ab, vertex.size = 400, vertex.size2 = 400,
      vertex.shape = meta.spring.ab$shape_single, vertex.color = meta.spring.ab$shape_colour_single,
      edge.arrow.width = 0,edge.width = spring.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,
      layout = spring.location, rescale = F, asp = 0, xlim = c(-170, -30),
