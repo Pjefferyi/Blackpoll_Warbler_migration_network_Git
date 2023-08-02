@@ -183,10 +183,10 @@ fall.stat <- fall.stat %>% group_by(geo_id) %>% filter(StartTime <= NB.first.sit
 # # Export fall stopovers for manual clustering in QGIS
 # fall.stat.sites <- st_as_sf(fall.stat[,1:12], coords = c("Lon.50.", "Lat.50."))
 # st_crs(fall.stat.sites) <- st_crs(wrld_simpl)
-# st_write(fall.stat.sites, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/fall_stat_sites5.shp", append=FALSE)
+# st_write(fall.stat.sites, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/layers/fall_stat_sites5.shp", append=FALSE)
 
 # Import clusters created manually
-fall.manual.cluster <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/Tables/Fall_manual_clusters_conservativeV3.csv")
+fall.manual.cluster <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/Tables/Fall_manual_clusters_conservativeV4.csv")
 fall.manual.cluster <- fall.manual.cluster %>% rename(cluster = Cluster, cluster.region = ClusterReg) %>%
   mutate(cluster.region= as.factor(cluster.region)) %>%
   mutate(cluster = as.numeric(cluster.region))
@@ -294,7 +294,7 @@ meta.fall <- data.frame("vertex" = seq(min(fall.edge.df$cluster), max(fall.edge.
                    "node.type.num" = fall.node.type$site_type_num)
 
 # For fall nodes where latitudinal accuracy is low, set location close to the coast
-meta.fall[c(10, 12, 17),]$Lat.50. <- c(34, 42, 44.4)
+meta.fall[c(8, 21, 14),]$Lat.50. <- c(36, 42, 44.4)
 
 fall.location <- as.matrix(meta.fall[, c("Lon.50.", "Lat.50.")])
 
@@ -350,7 +350,7 @@ spring.stat <- geo.all %>% filter(sitenum > 0, site_type %in% c("Stopover","Nonb
                                 Recorded_North_South_mig %in% c("Both","North", "South and partial North"),
                                 !(geo_id %in% c("V8296_007", "V8296_008")))
 
-#get the timing of the lastnonbreeding area
+#get the timing of the last nonbreeding area
 spring.timings.nb <- geo.all %>% group_by(geo_id) %>% filter(NB_count == max(NB_count, na.rm = T)) %>% dplyr::select(NB.last.site.arrival = StartTime)
 spring.stat <- merge(spring.stat, spring.timings.nb, by = "geo_id")
 
@@ -379,10 +379,10 @@ spring.stat <- spring.stat %>% group_by(geo_id) %>% filter(StartTime >= NB.last.
 # # export spring stat sites for manual clustering
 # spring.stat.sites <- st_as_sf(spring.stat[,1:12], coords = c("Lon.50.", "Lat.50."))
 # st_crs(spring.stat.sites) <- st_crs(wrld_simpl)
-# st_write(spring.stat.sites, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/spring_stat_sitesV2.shp", append = F)
+# st_write(spring.stat.sites, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/Layers/spring_stat_sitesV2.shp", append = F)
 
 # Import clusters created manually
-spring.manual.cluster <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/Tables/Spring_manual_clusters.csv")
+spring.manual.cluster <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/Tables/Spring_manual_clusters_V2.csv")
 spring.manual.cluster <- spring.manual.cluster %>% rename(cluster = Cluster, cluster.region = ClusterReg) %>%
   mutate(cluster.region= as.factor(cluster.region)) %>%
   mutate(cluster = as.numeric(cluster.region))
@@ -845,19 +845,19 @@ plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),],
 plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),],
       xlim = c(-170, -35), ylim = c(-10, 65), col = NA, lwd = 0.5, add = T)
 
-plot(fall.graph.weighed.ab, vertex.size = meta.fall.ab$r.abundance.at.cluster, vertex.size2 = 200,
+plot(fall.graph.weighed.ab, vertex.size = 400, vertex.size2 = 200,
      vertex.shape = meta.fall.ab$shape_single_breeding, vertex.color = meta.fall.ab$shape_colour_single_breeding,
      edge.arrow.width = 0,edge.width = fall.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,
      layout = fall.location, rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), vertex.label = NA, edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)), add = T)
 
-plot(fall.graph.weighed.ab, vertex.size = meta.fall.ab$r.abundance.at.cluster, vertex.size2 = 200,
+plot(fall.graph.weighed.ab, vertex.size = 400, vertex.size2 = 200,
      vertex.shape = meta.fall.ab$shape_single, vertex.color = meta.fall.ab$shape_colour_single,
      edge.arrow.width = 0,edge.width = 0, edge.arrow.size = 0, edge.arrow.width = 0,
      layout = fall.location, rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), vertex.label = NA, edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)), add = T)
 
-plot(fall.graph.weighed.ab, vertex.size = meta.fall.ab$r.abundance.at.cluster, vertex.size2 = 200,
+plot(fall.graph.weighed.ab, vertex.size = 400, vertex.size2 = 200,
      vertex.shape = meta.fall.ab$shape_multiple, vertex.pie = meta.fall.ab$num.reg.ab.vector,
      vertex.pie.color = reg.ab.palette,edge.width = 0,edge.arrow.size = 0, edge.arrow.width = 0,
      layout = fall.location, rescale = F, asp = 0, xlim = c(-170, -30),

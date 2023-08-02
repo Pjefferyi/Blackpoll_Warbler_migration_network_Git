@@ -1,6 +1,6 @@
 # source: Deluca et al. 2019
-# tag number: blpw25
-# site: Whitehorse, Yukon
+# tag number: B
+# site: Mt. Mansfield, Vermont, USA
 
 #load packages
 require(readr)
@@ -33,7 +33,7 @@ rm(list=ls())
 # Load helper functions 
 source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis/Geolocator_analysis_helper_functions.R")
 
-geo.id <- "blpw25"
+geo.id <- "B"
 
 # data directory
 dir <- paste0("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geolocator_data/", geo.id)
@@ -99,13 +99,13 @@ dev.off()
 # 
 # # Adjust sunset times by 120 second sampling interval
 # twl <- twilightAdjust(twilights = twl, interval = 120)
-# 
+
 # # Visualize light and twilight time-series
 # lightImage(lig, offset = 19)
 # tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
 #               col = ifelse(twl$Rise, "dodgerblue", "firebrick"))
 
-# Save the twilight times 
+# Save the twilight times
 # write.csv(twl, paste0(dir,"/",geo.id , "_twl_times.csv"))
 
 ###############################################################################
@@ -133,8 +133,8 @@ lightImage( tagdata = lig,
 tsimageDeploymentLines(twl$Twilight, lon.calib, lat.calib, offset, lwd = 2, col = "orange")
 
 #calibration period before the migration 
-tm.calib1 <- as.POSIXct(c("2016-07-01", "2016-08-20"), tz = "UTC")
-tm.calib2 <- as.POSIXct(c("2017-06-01", "2017-06-10"), tz = "UTC")
+tm.calib1 <- as.POSIXct(c("2013-07-01", "2013-08-20"), tz = "UTC")
+tm.calib2 <- as.POSIXct(c("2014-05-25", "2014-06-10"), tz = "UTC")
 
 abline(v = tm.calib1, lwd = 2, lty = 2, col = "orange")
 abline(v = tm.calib2, lwd = 2, lty = 2, col = "orange")
@@ -153,43 +153,52 @@ alpha <- calib[3:4]
 
 # Alternative calibration #######################################################
 
-#convert to geolight format
-geo_twl <- export2GeoLight(twl)
+# #convert to geolight format
+# geo_twl <- export2GeoLight(twl)
+# 
+# #this is just to find places where birds have been for a long time, would not use these parameters for stopover identification, detailed can be found in grouped model section
+# cL <- changeLight(twl =geo_twl, quantile=0.9, summary = F, days = 10, plot = T)
+# 
+# #merge site helps to put sites together that are separated by single outliers.
+# mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 250)
+# 
+# #specify which site is the stationary one
+# site           <- mS$site[mS$site>0] # get rid of movement periods
+# stationarySite <- which(table(site) == max(table(site))) # find the site where bird is the longest
+# 
+# #find the dates that the bird arrives and leaves this stationary site
+# start <- min(which(mS$site == stationarySite))
+# end   <- max(which(mS$site == stationarySite))
+# 
+# (zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
 
-# this is just to find places where birds have been for a long time, would not use these parameters for stopover identification, detailed can be found in grouped model section
-cL <- changeLight(twl =geo_twl, quantile=0.9, summary = F, days = 10, plot = T)
-# merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
+startDate <- "2013-10-24"
+endDate   <- "2014-04-15"
 
-#specify which site is the stationary one
-site           <- mS$site[mS$site>0] # get rid of movement periods
-stationarySite <- which(table(site) == max(table(site))) # find the site where bird is the longest
-
-#find the dates that the bird arrives and leaves this stationary site
-start <- min(which(mS$site == stationarySite))
-end   <- max(which(mS$site == stationarySite))
+start = min(which(as.Date(twl$Twilight) == startDate))
+end = max(which(as.Date(twl$Twilight) == endDate))
 
 (zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
 
-# The Hill-ekstrom zenith and in-habitat zenith angles differ by less than 0.5 degrees
-# Alternative calibration is not necessary
+# The Hill-ekstrom zenith and in-habitat zenith angles differ by more than 0.5 degrees
+# Alternative calibration is necessary
 
 # adjust the zenith angles calculated from the breeding sites for the non-breeding sites
-zenith0_ad <- zenith0 + abs(zenith_sd - zenith)
+zenith0_ad <- zenith0 + abs(zenith - zenith_sd)
 zenith_ad  <- zenith_sd
 
 # Find approximate  timing of arrival and departure from the nonbreeding grounds 
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol= 0.00)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol= 0)
 
 x0_r<- path$x
 z0 <- trackMidpts(x0_r)
 
 #Save raw path (no linear interpolation around the equinox)
-save(x0_r, file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
+#save(x0_r, file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
 
 # Check the following times of arrival and departure using a plot 
-arr.nbr <- "2016-10-24" 
-dep.nbr <- "2017-04-25" 
+arr.nbr <- "2013-10-24" 
+dep.nbr <- "2014-04-22" 
 
 # open jpeg
 jpeg(paste0(dir, "/", geo.id, "_LatLon_scatterplot.png"), width = 1024, height = 990)
@@ -208,18 +217,20 @@ abline(v = spring.equi, col = "orange")
 
 dev.off()
 
-# Using approximate timings of arrival and departure from the breeding grounds
+# Adjust zenith angles using approximate timings of arrival and departure from the breeding grounds
 zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith0,
                             Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad,
                             Date > anytime(dep.nbr) ~ zenith0_ad))
+#Date > anytime(dep.nbr) ~ zenith0))
 
-zeniths0 <- zenith_twl_zero$zenith +1
+zeniths0 <- zenith_twl_zero$zenith
 
 zenith_twl_med <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith,
                             Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith_sd,
-                            Date > anytime(dep.nbr) ~ zenith))
+                            Date > anytime(dep.nbr) ~ zenith_sd))
+#Date > anytime(dep.nbr) ~ zenith))
 
 zeniths_med <- zenith_twl_med$zenith
 
@@ -249,15 +260,8 @@ abline(v = spring.equi, col = "orange")
 
 dev.off()
 
-# Movement model ###############################################################
-
-#this movement model should be based on the estimated migration speed of the blackpoll warbler 
-beta  <- c(0.7, 0.05)
-matplot(0:100, dgamma(0:100, beta[1], beta[2]),
-        type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
-
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol=0.08)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol=0.16)
 
 #Adjusted tol until second stopover was located over North Carolina rather than further South. 
 x0 <- path$x
@@ -288,10 +292,14 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-cL <- changeLight(twl=geo_twl, quantile=0.86, summary = F, days = 3, plot = T)
+cL <- changeLight(twl=geo_twl, quantile=0.9, summary = F, days = 2, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = 250)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = 500)
+# mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths0[1:length(zeniths0) -1], distThreshold = 500)
+# mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths_med[1:length(zeniths_med) -1], distThreshold = 500)
+# mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = 500)
+
 
 ##back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 
@@ -323,6 +331,7 @@ sitenum[stationary==F] <- 0
 #set initial path
 x0 <- cbind(tapply(path$x[,1],twl$group,median), 
             tapply(path$x[,2],twl$group,median))
+
 
 #set fixed locations 
 fixedx <- rep_len(FALSE, length.out = nrow(x0))
@@ -362,15 +371,17 @@ xlim <- range(x0[,1])+c(-5,5)
 ylim <- range(x0[,2])+c(-5,5)
 
 index <- ifelse(stationary, 1, 2)
-mask <- earthseaMask(xlim, ylim, n = 10, index=index)
-#mask <- earthseaMask3(xlim, ylim, index=index, twl, pacific = FALSE, res = "lr")
+#mask <- earthseaMask(xlim, ylim, n = 10, index=index)
+mask <- earthseaMask3(xlim, ylim, res = "lr", index=index, span = 3, twl = twl)
+
 # We will give locations on land a higher prior 
 ## Define the log prior for x and z
 logp <- function(p) {
   f <- mask(p)
-  ifelse(is.na(f), -1000, log(2))
-  #ifelse(is.na(f), -1000, f)
+  #ifelse(is.na(f), -1000, log(2))
+  ifelse(is.na(f), -1000, f)
 }
+
 # Define the Estelle model ####################################################
 model <- groupedThresholdModel(twl$Twilight,
                                twl$Rise,
@@ -380,7 +391,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                beta =  beta,
                                x0 = x0, # median point for each group (defined by twl$group)
                                z0 = z0, # middle points between the x0 points
-                               zenith = zeniths0,
+                               zenith = zenith0,
                                logp.x = logp,# land sea mask
                                fixedx = fixedx)
 
@@ -407,7 +418,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                x0 = x0, z0 = z0,
                                logp.x = logp,
                                missing=twl$Missing,
-                               zenith = zeniths0,
+                               zenith = zenith0,
                                fixedx = fixedx)
 
 for (k in 1:3) {
@@ -472,9 +483,6 @@ text(sm[,"Lon.50."], sm[,"Lat.50."], ifelse(sitenum>0, as.integer(((sm$EndTime -
 #Show dates
 #text(sm[,"Lon.50."], sm[,"Lat.50."], ifelse(sitenum>0, as.character(sm$StartTime), ""), col="red", pos = 1) 
 
-#Add points from the initial path
-points(dtx0[sitenum > 0,], pch = 16, cex = 1, col = "green")
-
 #Close jpeg
 dev.off()
 
@@ -533,9 +541,9 @@ points(stat.loc$Lon.50., stat.loc$Lat.50., pch = 16, cex = 1.5, col = "firebrick
 sm$geo_id <- geo.id
 
 #add a column that categorizes the locations (based on the groupthreshold model output)
-sm <- sm %>% mutate(period= case_when(StartTime < anytime("2016-10-22 10:44:58", asUTC = T, tz = "GMT")  ~ "Post-breeding migration",
-                                      StartTime >= anytime("2016-10-22 10:44:58", asUTC = T, tz = "GMT") & StartTime < anytime("2017-04-24 22:41:03" , asUTC = T, tz = "GMT") ~ "Non-breeding period",
-                                      StartTime > anytime("2017-04-24 22:41:03", asUTC = T, tz = "GMT") ~ "Pre-breeding migration"))
+sm <- sm %>% mutate(period= case_when(StartTime < anytime("2013-09-21 22:34:42", asUTC = T, tz = "GMT")  ~ "Post-breeding migration",
+                                      StartTime >= anytime("2013-09-21 22:34:42", asUTC = T, tz = "GMT") & StartTime < anytime("2014-04-19 10:26:30" , asUTC = T, tz = "GMT") ~ "Non-breeding period",
+                                      StartTime > anytime("2014-04-19 10:26:30", asUTC = T, tz = "GMT") ~ "Pre-breeding migration"))
 
 #Save the output of the model 
 save(sm, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))
@@ -545,13 +553,80 @@ save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 #load(file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))
 #load(file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 
+# Examine twilights ############################################################
+
+#load the adjusted threshold path path x0_ad
+load(file = paste0(dir,"/", geo.id, "adjusted_initial_path_raw.csv"))
+
+#Fall transoceanic flight
+start <- "2013-09-01"
+end <- "2013-11-01"
+
+#first flight
+f1.start <- "2013-10-01"
+f1.end <- "2013-10-03"
+
+#second flight
+f2.start <- "2013-10-23"
+f2.end <- "2013-10-24"
+
+# Plot lat, lon and light transitions  
+jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition.png"), width = 1024 , height = 990, quality = 100, res = 200)
+
+par(cex.lab=1.4)
+par(cex.axis=1.4)
+par(mfrow=c(3,1), mar = c(5,5,0.1,5))
+plot(lig$Date[lig$Date > start & lig$Date < end], lig$Light[lig$Date > start & lig$Date < end], type = "o",
+     ylab = "Light level", xlab = "Time")
+rect(anytime(f1.start), min(lig$Light)-2, anytime(f1.end), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime(f2.start), min(lig$Light)-2, anytime(f2.end), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
+
+plot(twl$Twilight[twl$Twilight> start & twl$Twilight < end], x0_ad[,1][twl$Twilight > start & twl$Twilight < end],
+     ylab = "Longitude", xlab = "Time")
+rect(anytime(f1.start), min(x0_ad[,1])-2, anytime(f1.end), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime(f2.start), min(x0_ad[,1])-2, anytime(f2.end), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
+
+plot(twl$Twilight[twl$Twilight > start & twl$Twilight < end], x0_ad[,2][twl$Twilight > start & twl$Twilight < end],
+     ylab = "Latitude", xlab = "Time")
+rect(anytime(f1.start), min(x0_ad[,2])-2, anytime(f1.end), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime(f2.start), min(x0_ad[,2])-2, anytime(f2.end), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
+par(cex.lab= 1)
+par(cex.axis= 1)
+
+dev.off()
+
+# A stopover can be identified between approximately 2019-10-03 and 2019-10-23 
+
+# Add the new stopover to the location summary obtained at the end of the geolocator analysis
+sm.fall.edit <- insertLoc(data = sm,
+                          lat.at.loc = 18.90,
+                          start.date = f1.end ,
+                          end.date = f2.start , 
+                          period = "Post-breeding migration",
+                          thresh.locs = x0_ad,
+                          twl = twl,
+                          geo_id = geo.id,
+                          sep1 = days(3),
+                          sep2 = days (1))
+
+#plot the final stationary locations 
+sm.fall.stat <- sm.fall.edit[(sm.fall.edit$sitenum > 0), ]
+
+par(mfrow=c(1,1))
+
+data(wrld_simpl)
+plot(wrld_simpl, xlim=xlim, ylim=ylim, col = "grey95")
+points(sm.fall.edit$Lon.50., sm.fall.edit$Lat.50., pch = 16, cex = 0, col = "firebrick", type = "o")
+points(sm.fall.stat$Lon.50., sm.fall.stat$Lat.50., pch = 16, cex = 1.5, col = "firebrick")
+
+#Save the final location summary
+save(sm.fall.edit , file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary_fall_edit.csv"))
+
 # Record details for the geolocator analysis ###################################
 geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
 geo.ref[(geo.ref$geo.id == geo.id),]$In_habitat_median_zenith_angle <- zenith
-geo.ref[(geo.ref$geo.id == geo.id),]$Hill_Ekstrom_median_angle <- zenith_sd 
+geo.ref[(geo.ref$geo.id == geo.id),]$Hill_Ekstrom_median_angle <- zenith_sd
+geo.ref[(geo.ref$geo.id == geo.id),]$Fall_carrib_edits <- TRUE
 geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- arr.nbr
 geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- dep.nbr
 write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE) 
-
-# Examine twilights ############################################################
-

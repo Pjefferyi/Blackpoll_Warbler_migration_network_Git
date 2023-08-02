@@ -175,7 +175,7 @@ end   <- max(which(mS$site == stationarySite))
 # Alternative calibration is not necessary
 
 # adjust the zenith angles calculated from the breeding sites for the non-breeding sites
-zenith0_ad <- zenith0 + abs(zenith_sd - zenith)
+zenith0_ad <- zenith0 + zenith_sd - zenith
 zenith_ad  <- zenith_sd
 
 # Find approximate  timing of arrival and departure from the nonbreeding grounds 
@@ -212,14 +212,14 @@ dev.off()
 zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith0,
                             Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad,
-                            Date > anytime(dep.nbr) ~ zenith0_ad))
+                            Date > anytime(dep.nbr) ~ zenith0_ad + 3))
 
-zeniths0 <- zenith_twl_zero$zenith +1
+zeniths0 <- zenith_twl_zero$zenith
 
 zenith_twl_med <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith,
                             Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith_sd,
-                            Date > anytime(dep.nbr) ~ zenith))
+Date > anytime(dep.nbr) ~ zenith))
 
 zeniths_med <- zenith_twl_med$zenith
 
@@ -288,7 +288,7 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-cL <- changeLight(twl=geo_twl, quantile=0.86, summary = F, days = 3, plot = T)
+cL <- changeLight(twl=geo_twl, quantile=0.9, summary = F, days = 3, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
 mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = 250)
@@ -362,15 +362,17 @@ xlim <- range(x0[,1])+c(-5,5)
 ylim <- range(x0[,2])+c(-5,5)
 
 index <- ifelse(stationary, 1, 2)
-mask <- earthseaMask(xlim, ylim, n = 10, index=index)
-#mask <- earthseaMask3(xlim, ylim, index=index, twl, pacific = FALSE, res = "lr")
+#mask <- earthseaMask(xlim, ylim, n = 10, index=index)
+mask <- earthseaMask3(xlim, ylim, res = "lr", index=index, span = 3, twl = twl)
+
 # We will give locations on land a higher prior 
 ## Define the log prior for x and z
 logp <- function(p) {
   f <- mask(p)
-  ifelse(is.na(f), -1000, log(2))
-  #ifelse(is.na(f), -1000, f)
+  #ifelse(is.na(f), -1000, log(2))
+  ifelse(is.na(f), -1000, f)
 }
+
 # Define the Estelle model ####################################################
 model <- groupedThresholdModel(twl$Twilight,
                                twl$Rise,
