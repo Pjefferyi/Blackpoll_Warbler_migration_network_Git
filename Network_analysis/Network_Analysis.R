@@ -29,7 +29,7 @@ equinox_region <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University
 # Import polygons of BPW range
 bpw_range <-  read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Birdlife_international_species_distribution/SppDataRequest.shp")
 
-# Plot the fall graph 
+# Plot the fall graph ###########################################################
 data("wrld_simpl")
 type.palette <- c("#440154FF", "#FDE725FF", "#21908CFF")
 
@@ -47,7 +47,60 @@ plot(fall.graph, vertex.size = 300, vertex.size2 = 200,
      layout = as.matrix(meta.fall.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)),
      vertex.color = type.palette[meta.fall.ab$node.type.num], vertex.label.dist = 30,
+     add = T, vertex.label.dist = 30, edge.color = adjustcolor("darkgray", alpha.f = 0.6))
+legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
+       col = type.palette[unique(meta.fall.ab$node.type.num)],
+       pch = 19, title = "Node type",cex = 0.8)
+
+# Plot the fall graph with node use pie charts #################################
+
+# Create a palette for site use by range region  
+use.palette <- list(c("#440154FF", "#FDE725FF", "#21908CFF"))
+
+#create a column that can be converted to a numeric vector
+meta.fall.ab <- transform(meta.fall.ab, use.ab.vector = asplit(cbind(use.breeding.ab,  use.stopover.ab, use.nonbreeding.ab), 1))
+
+# Create vector of vertex shapes 
+meta.fall.ab <- meta.fall.ab %>% rowwise() %>%
+  mutate(shape_single.use = length(which(c(use.breeding.ab, 
+                                           use.nonbreeding.ab, 
+                                           use.stopover.ab)==0))) %>%
+  ungroup() %>%
+  mutate(shape_single.use = ifelse(shape_single.use == 2, "circle", "none")) %>%
+  mutate(shape_multiple.use = ifelse(shape_single.use== "none", "pie", "none")) %>%
+  mutate(shape_colour_multiple.use = case_when(shape_single.use != "none" & use.breeding.ab != 0 ~ type.palette[1] ,
+                                         shape_single != "none" & use.stopover.ab != 0 ~ type.palette[2] ,
+                                         shape_single != "none" & use.nonbreeding.ab != 0 ~ type.palette[3] ,
+                                         .default = NA)) %>%
+  mutate(shape_colour_single.use = case_when(shape_single.use!= "circle" & use.breeding.ab != 0 ~ type.palette[1],
+                                             shape_single.use != "circle" & use.stopover.ab != 0 ~ type.palette[2],
+                                             shape_single.use != "circle" & use.nonbreeding.ab!= 0 ~ type.palette[3],
+                                                  .default = NA))
+
+
+plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),],
+     xlim = c(-165, -35), ylim = c(-10, 65), col = "#F7F7F7", lwd = 0.5)
+
+plot(as_Spatial(equinox_region), add = T, col = "#D9D5B2", lwd = 0.000000001)
+
+plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),],
+     xlim = c(-165, -35), ylim = c(-10, 65), col = NA, lwd = 0.5, add = T)
+
+plot(fall.graph, vertex.size = 300, vertex.size2 = 200,
+     edge.width = fall.con.ab$weight*40, edge.arrow.size = 0, edge.arrow.width = 0,  
+     layout = as.matrix(meta.fall.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
+     ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)),
+     vertex.color = type.palette[meta.fall.ab$node.type.num], vertex.label.dist = 30,
+     add = T, vertex.label = NA, edge.color = adjustcolor("darkgray", alpha.f = 0.6),
+     vertex.shape = meta.fall.ab$shape_single.use)
+
+plot(fall.graph, vertex.size = 300, vertex.size2 = 200,
+     edge.width = 0, edge.arrow.size = 0, edge.arrow.width = 0,
+     vertex.shape = meta.fall.ab$shape_multiple.use, vertex.pie = meta.fall.ab$ use.ab.vector,
+     layout = as.matrix(meta.fall.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
+     ylim = c(-15, 70), vertex.pie.color = use.palette, vertex.color = NA,
      add = T, vertex.label = NA, edge.color = adjustcolor("darkgray", alpha.f = 0.6))
+
 legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
        col = type.palette[unique(meta.fall.ab$node.type.num)],
        pch = 19, title = "Node type",cex = 0.8)
@@ -83,7 +136,7 @@ plot(fall.graph, vertex.size = 200, vertex.size2 = 200, vertex.label.dist = 30,
      edge.color = adjustcolor("darkgray", alpha.f = 0.6), add = T, vertex.label = NA)
 
 # Fall weighed degree centrality ----
-fall.strength.c <- strength(fall.graph, mode = "out", weight = fall.con.ab$weight)
+fall.strength.c <- strength(fall.graph, mode = "in", weight = fall.con.ab$weight)
 
 # plot of the strength centrality of each node 
 deg.c.palette <- hcl.colors(n = length(seq(0, max(fall.strength.c + 0.01), 0.001)), palette = "Reds 3", rev = T) 
@@ -263,6 +316,60 @@ plot(spring.graph, vertex.label = NA, vertex.size = 300, vertex.size2 = 200,
 # legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
 #        col = type.palette[unique(meta.spring.ab$node.type.num)],
 #        pch = 19, )
+
+
+# Plot the spring graph with node use pie charts #################################
+
+# Create a palette for site use by range region  
+use.palette <- list(c("#440154FF", "#FDE725FF", "#21908CFF"))
+
+#create a column that can be converted to a numeric vector
+meta.spring.ab <- transform(meta.spring.ab, use.ab.vector = asplit(cbind(use.breeding.ab,  use.stopover.ab, use.nonbreeding.ab), 1))
+
+# Create vector of vertex shapes 
+meta.spring.ab <- meta.spring.ab %>% rowwise() %>%
+  mutate(shape_single.use = length(which(c(use.breeding.ab, 
+                                           use.nonbreeding.ab, 
+                                           use.stopover.ab)==0))) %>%
+  ungroup() %>%
+  mutate(shape_single.use = ifelse(shape_single.use == 2, "circle", "none")) %>%
+  mutate(shape_multiple.use = ifelse(shape_single.use== "none", "pie", "none")) %>%
+  mutate(shape_colour_multiple.use = case_when(shape_single.use != "none" & use.breeding.ab != 0 ~ type.palette[1] ,
+                                               shape_single != "none" & use.stopover.ab != 0 ~ type.palette[2] ,
+                                               shape_single != "none" & use.nonbreeding.ab != 0 ~ type.palette[3] ,
+                                               .default = NA)) %>%
+  mutate(shape_colour_single.use = case_when(shape_single.use!= "circle" & use.breeding.ab != 0 ~ type.palette[1],
+                                             shape_single.use != "circle" & use.stopover.ab != 0 ~ type.palette[2],
+                                             shape_single.use != "circle" & use.nonbreeding.ab!= 0 ~ type.palette[3],
+                                             .default = NA))
+
+
+plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),],
+     xlim = c(-165, -35), ylim = c(-10, 65), col = "#F7F7F7", lwd = 0.5)
+
+plot(as_Spatial(equinox_region), add = T, col = "#D9D5B2", lwd = 0.000000001)
+
+plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),],
+     xlim = c(-165, -35), ylim = c(-10, 65), col = NA, lwd = 0.5, add = T)
+
+plot(spring.graph, vertex.size = 300, vertex.size2 = 200,
+     edge.width = spring.con.ab$weight*40, edge.arrow.size = 0, edge.arrow.width = 0,  
+     layout = as.matrix(meta.spring.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
+     ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(spring.con.ab)),
+     vertex.color = type.palette[meta.spring.ab$node.type.num], vertex.label.dist = 30,
+     add = T, vertex.label = NA, edge.color = adjustcolor("darkgray", alpha.f = 0.6),
+     vertex.shape = meta.spring.ab$shape_single.use)
+
+plot(spring.graph, vertex.size = 300, vertex.size2 = 200,
+     edge.width = 0, edge.arrow.size = 0, edge.arrow.width = 0,
+     vertex.shape = meta.spring.ab$shape_multiple.use, vertex.pie = meta.spring.ab$ use.ab.vector,
+     layout = as.matrix(meta.spring.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
+     ylim = c(-15, 70), vertex.pie.color = use.palette, vertex.color = NA,
+     add = T, vertex.label = NA, edge.color = adjustcolor("darkgray", alpha.f = 0.6))
+
+legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
+       col = type.palette[unique(meta.spring.ab$node.type.num)],
+       pch = 19, title = "Node type",cex = 0.8)
 
 ##Spring network analysis ###########################################################
 

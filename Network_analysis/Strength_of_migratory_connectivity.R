@@ -36,7 +36,7 @@ fall.br.sf <- st_as_sf(fall.br, coords = c("Lon.50.", "Lat.50."), crs = crs(wrld
 fall.br.sf <- st_transform(fall.br.sf, CRS(proj)) 
 
 # fall network nonbreeding points
-fall.nbr<- fall.stat %>% group_by(geo_id) %>% 
+fall.nbr<- fall.stat.ab %>% group_by(geo_id) %>% 
   filter(sitenum == max(sitenum)) %>%
   arrange(geo_id) 
 

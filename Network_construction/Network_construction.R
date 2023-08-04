@@ -210,7 +210,7 @@ fall.stat <- bind_rows(fall.stat, fall.breed) %>% arrange(geo_id, StartTime)
 # plot stopover and nonbreeding nodes
 
 ggplot(st_as_sf(wrld_simpl))+
-  geom_sf(colour = NA, fill = "lightgray") +
+  geom_sf(colour = "black", fill = "lightgray") +
   coord_sf(xlim = c(-170, -30),ylim = c(-15, 70)) +
   geom_path(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5) +
   geom_point(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, colour = site_type)) +
@@ -287,7 +287,8 @@ fall.node.type <- fall.stat %>% group_by(cluster) %>%
   mutate(site_type = factor(site_type, levels = c("Breeding", "Nonbreeding", "Stopover")))
 
 # Create a layout with node locations 
-meta.fall <- data.frame("vertex" = seq(min(fall.edge.df$cluster), max(fall.edge.df$cluster)), 
+meta.fall <- data.frame("vertex" = seq(1, max(fall.edge.df$cluster)), 
+                        #data.frame("vertex" = seq(min(fall.edge.df$cluster), max(fall.edge.df$cluster)), 
                    "Lon.50." = fall.node.lon$node.lon,
                    "Lat.50." = fall.node.lat$node.lat,
                    "node.type" = fall.node.type$site_type,
@@ -929,6 +930,55 @@ plot(spring.graph.weighed.ab, vertex.size = 400, vertex.size2 = 200,
      vertex.pie.color = reg.ab.palette,edge.width = 0,edge.arrow.size = 0, edge.arrow.width = 0,
      layout = spring.location, rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), vertex.label.dist = 30, vertex.label = NA, add = T)
+
+
+################################################################################
+# In the fall: calculate the proportion of individual using a node as a stopover
+# Or as a a nonbreeding node
+################################################################################
+
+# calculate the ab.units of birds using nodes as breeding, nonbreeding and stopover areas
+fall.use.per.node <- fall.stat.ab %>% group_by(cluster, site_type, geo_id) %>%
+  summarize(ab.units = sum(ab.unit)) %>%
+  group_by(cluster, site_type) %>%
+  summarize(sum.use = sum(ab.units)) %>% ungroup() %>%
+  complete(cluster, site_type, fill = list(sum.use = 0))
+  
+# Convert data from wide to long
+fall.use.per.node <- fall.use.per.node  %>% pivot_wider(names_from = site_type, values_from = sum.use) %>%
+  rename(use.breeding.ab = Breeding,
+         use.stopover.ab = Stopover,
+         use.nonbreeding.ab = Nonbreeding)
+
+# Merge use data with the node metadata
+meta.fall.ab <- merge(meta.fall.ab, fall.use.per.node , by.x = "vertex", by.y = "cluster") 
+
+#create a column that can be converted to a numeric vector
+#meta.fall.ab <- transform(meta.fall.ab, use.ab.vector = asplit(cbind(use.breeding.ab,  use.stopover.ab, use.nonbreeding.ab), 1))
+
+################################################################################
+# In the spring: calculate the proportion of individual using a node as a stopover
+# Or as a a nonbreeding node
+################################################################################
+
+# calculate the ab.units of birds using nodes as breeding, nonbreeding and stopover areas
+spring.use.per.node <- spring.stat.ab %>% group_by(cluster, site_type, geo_id) %>%
+  summarize(ab.units = sum(ab.unit)) %>%
+  group_by(cluster, site_type) %>%
+  summarize(sum.use = sum(ab.units)) %>% ungroup() %>%
+  complete(cluster, site_type, fill = list(sum.use = 0))
+
+# Convert data from wide to long
+spring.use.per.node <- spring.use.per.node  %>% pivot_wider(names_from = site_type, values_from = sum.use) %>%
+  rename(use.breeding.ab = Breeding,
+         use.stopover.ab = Stopover,
+         use.nonbreeding.ab = Nonbreeding)
+
+# Merge use data with the node metadata
+meta.spring.ab <- merge(meta.spring.ab, spring.use.per.node , by.x = "vertex", by.y = "cluster") 
+
+#create a column that can be converted to a numeric vector
+#meta.spring.ab <- transform(meta.spring.ab, use.ab.vector = asplit(cbind(use.breeding.ab,  use.stopover.ab, use.nonbreeding.ab), 1))
 
 ################################################################################
 # Export data from the network construction
