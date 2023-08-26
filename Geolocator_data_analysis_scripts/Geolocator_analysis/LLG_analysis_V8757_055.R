@@ -28,10 +28,10 @@ library(GeoLocTools)
 setupGeolocation()
 
 # clear object from workspace
-rm(list=ls())
+# rm(list=ls())
 
 # Load helper functions 
-source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis/Geolocator_analysis_helper_functions.R")
+source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis_helper_functions.R")
 
 geo.id <- "V8757_055"
 
@@ -147,13 +147,7 @@ dev.off()
 # # Adjust sunset times by 120 second sampling interval
 # twl <- twilightAdjust(twilights = twl, interval = 120)
 # 
-# # Automatically adjust or mark false twilights
-# twl <- twilightEdit(twilights = twl,
-#                     window = 4,
-#                     outlier.mins = 45,
-#                     stationary.mins = 25,
-#                     plot = TRUE)
-# 
+#
 # # Visualize light and twilight time-series
 # lightImage(lig, offset = 19)
 # tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
@@ -170,6 +164,20 @@ dev.off()
 # Import file with twilight times  
 twl <- read.csv(paste0(dir,"/", geo.id, "_twl_times.csv"))
 twl$Twilight <- as.POSIXct(twl$Twilight, tz = "UTC")
+
+
+#Automatically adjust or mark false twilights
+twl <- twilightEdit(twilights = twl,
+                    window = 4,
+                    outlier.mins = 35,
+                    stationary.mins = 25,
+                    plot = TRUE)
+
+# read parameters that will be used during the analysis
+niter <- ref_data$MCMC.iter[which(ref_data$geo.id == geo.id)]
+nthin <- ref_data$MCMC.thin[which(ref_data$geo.id == geo.id)]
+chains <- ref_data$MCMC.chains[which(ref_data$geo.id == geo.id)]
+nday <- ref_data$changeLight.days[which(ref_data$geo.id == geo.id)]
 
 # Calibration ##################################################################
 
@@ -332,7 +340,7 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-cL <- changeLight(twl=geo_twl, quantile=0.87, summary = F, days = 2, plot = T)
+cL <- changeLight(twl=geo_twl, quantile=0.87, summary = F, days = nday, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
 mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = 250)
@@ -406,15 +414,17 @@ xlim <- range(x0[,1])+c(-5,5)
 ylim <- range(x0[,2])+c(-5,5)
 
 index <- ifelse(stationary, 1, 2)
-mask <- earthseaMask(xlim, ylim, n = 10, index=index)
-#mask <- earthseaMask2(xlim, ylim, index=index, twl, pacific = FALSE)
+#mask <- earthseaMask(xlim, ylim, n = 10, index=index)
+mask <- earthseaMask3(xlim, ylim, res = "lr", index=index, span = 4, twl = twl)
 
 # We will give locations on land a higher prior 
 ## Define the log prior for x and z
 logp <- function(p) {
   f <- mask(p)
-  ifelse(is.na(f), -1000, log(2))
+  #ifelse(is.na(f), -1000, log(2))
+  ifelse(is.na(f), -1000, 100*f)
 }
+
 
 # Define the Estelle model ####################################################
 model <- groupedThresholdModel(twl$Twilight,
@@ -435,7 +445,7 @@ x.proposal <- mvnorm(S = diag(c(0.005, 0.005)), n = nrow(x0))
 z.proposal <- mvnorm(S = diag(c(0.005, 0.005)), n = nrow(z0))
 
 # Fit the model
-fit <- estelleMetropolis(model, x.proposal, z.proposal, iters = 1000, thin = 20)
+fit <- estelleMetropolis(model, x.proposal, z.proposal, iters = niters, thin = nthin)
 
 #Tuning ########################################################################
 
@@ -459,7 +469,7 @@ for (k in 1:3) {
   x.proposal <- mvnorm(chainCov(fit$x), s = 0.3)
   z.proposal <- mvnorm(chainCov(fit$z), s = 0.3)
   fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = chainLast(fit$x),
-                           z0 = chainLast(fit$z), iters = 300, thin = 20)
+                           z0 = chainLast(fit$z), iters = niters, thin = nthin, chain = chains)
 }
 
 ## Check if chains mix
@@ -473,7 +483,7 @@ x.proposal <- mvnorm(chainCov(fit$x), s = 0.3)
 z.proposal <- mvnorm(chainCov(fit$z), s = 0.3)
 
 fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = chainLast(fit$x),
-                         z0 = chainLast(fit$z), iters = 2000, thin = 20, chain = 1)
+                         z0 = chainLast(fit$z), iters = niters, thin = nthin, chain = chains)
 
 #Summarize results #############################################################
 

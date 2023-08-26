@@ -28,11 +28,11 @@ library(GeoLocTools)
 setupGeolocation()
 
 # clear object from workspace
-rm(list=ls())
+# rm(list=ls())
 
 # Load helper functions 
-source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis/Geolocator_analysis_helper_functions.R")
-
+# Load helper functions 
+source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis_helper_functions.R")
 geo.id <- "V8757_010"
 
 # data directory
@@ -144,7 +144,6 @@ dev.off()
 # # Adjust sunset times by 120 second sampling interval
 # twl <- twilightAdjust(twilights = twl, interval = 120)
 
-
 # # Visualize light and twilight time-series
 # lightImage(lig, offset = 19)
 # tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
@@ -167,6 +166,12 @@ twl <- twilightEdit(twilights = twl,
                     outlier.mins = 35,
                     stationary.mins = 25,
                     plot = TRUE)
+
+# read parameters that will be used during the analysis
+niter <- ref_data$MCMC.iter[which(ref_data$geo.id == geo.id)]
+nthin <- ref_data$MCMC.thin[which(ref_data$geo.id == geo.id)]
+chains <- ref_data$MCMC.chains[which(ref_data$geo.id == geo.id)]
+nday <- ref_data$changeLight.days[which(ref_data$geo.id == geo.id)]
 
 # Calibration ##################################################################
 
@@ -324,7 +329,7 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-cL <- changeLight(twl=geo_twl, quantile=0.70, summary = F, days = 2, plot = T)
+cL <- changeLight(twl=geo_twl, quantile=0.70, summary = F, days = nday, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
 
@@ -396,78 +401,23 @@ matplot(0:100, dgamma(0:100, beta[1], beta[2]),
         type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
 
 # Create a Land mask for the group model #######################################
-earthseaMask <- function(xlim, ylim, n = 2, pacific=FALSE, index) {
-  
-  if (pacific) { wrld_simpl <- nowrapRecenter(wrld_simpl, avoidGEOS = TRUE)}
-  
-  # create empty raster with desired resolution
-  r = raster(nrows = n * diff(ylim), ncols = n * diff(xlim), xmn = xlim[1],
-             xmx = xlim[2], ymn = ylim[1], ymx = ylim[2], crs = proj4string(wrld_simpl))
-  
-  # create a raster for the stationary period, in this case by giving land a value of 1
-  rs = cover(rasterize(elide(wrld_simpl, shift = c(-360, 0)), r, 1, silent = TRUE),
-             rasterize(wrld_simpl, r, 1, silent = TRUE), 
-             rasterize(elide(wrld_simpl,shift = c(360, 0)), r, 1, silent = TRUE))
-  
-  #load weekly rasters of blackpoll warbler abundance
-  ab.ras <- load_raster("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_imports/2021/bkpwar",
-                        product = "abundance",
-                        period = "weekly",
-                        resolution = "lr")
-  
-  names(ab.ras) <- as.numeric(strftime(names(ab.ras), format = "%j"))
-  names(ab.ras)[1] <- 0
-  names(ab.ras)[length(names(ab.ras))] <- 366
-  
-  #project the abundance rasters
-  ab.ras.pr <- project(ab.ras, crs(rs), method = "near") 
-  
-  values(ab.ras.pr)[is.nan(values(ab.ras.pr))] <- NA
-  
-  # get bincodes linking geolocator twilight measurment times to the weeks of  
-  # each abundance layer 
-  t.times <- (twl %>% filter(group != lag(group, default = -1)))$Twilight
-  doy <- as.numeric(strftime(t.times, format = "%j"))
-  t.code <- .bincode(doy, as.numeric(names(ab.ras)))
-  
-  xbin = seq(xmin(ab.ras.pr),xmax(ab.ras.pr),length=ncol(ab.ras.pr)+1)
-  ybin = seq(ymin(ab.ras.pr),ymax(ab.ras.pr),length=nrow(ab.ras.pr)+1)
-  ab.arr <- as.array(ab.ras.pr)
-  
-  p <- dtx0
-  
-  # We multiply the result by the index to have a value of NA when the birds are not moving 
-  function(p){
-    
-    ifelse(stationary, 
-           ab.arr[cbind(length(ybin)-.bincode(p[,2],ybin), .bincode(p[,1],xbin), t.code)],
-           0)
-  }
-}
-#create the mask using the function 
 
+#Set limits of the mask
 xlim <- range(x0[,1])+c(-5,5)
 ylim <- range(x0[,2])+c(-5,5)
 
-index <- ifelse(stationary, T, F)
-
-# testing #################
-#  dtsm <- sm[,c("Lon.50.","Lat.50.")]
-# # dtsm$index <- index
-# # dtx0$index <- index
-# # 
-#  i <- dtsm[,1:2]
-#  logp(i) 
-############################
-
-mask <- earthseaMask(xlim, ylim, n = 10, index=index)
+index <- ifelse(stationary, 1, 2)
+#mask <- earthseaMask(xlim, ylim, n = 10, index=index)
+mask <- earthseaMask3(xlim, ylim, res = "lr", index=index, span = 4, twl = twl)
 
 # We will give locations on land a higher prior 
 ## Define the log prior for x and z
 logp <- function(p) {
   f <- mask(p)
-  ifelse(is.na(f), -1000, f)
+  #ifelse(is.na(f), -1000, log(2))
+  ifelse(is.na(f), -1000, 100*f)
 }
+
 # Define the Estelle model ####################################################
 model <- groupedThresholdModel(twl$Twilight,
                                twl$Rise,
@@ -511,7 +461,7 @@ for (k in 1:3) {
   x.proposal <- mvnorm(chainCov(fit$x), s = 0.3)
   z.proposal <- mvnorm(chainCov(fit$z), s = 0.3)
   fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = chainLast(fit$x),
-                           z0 = chainLast(fit$z), iters = 300, thin = 20)
+                           z0 = chainLast(fit$z), iters = 300, thin = 20, chain = chains)
 }
 
 ## Check if chains mix
@@ -525,7 +475,7 @@ x.proposal <- mvnorm(chainCov(fit$x), s = 0.3)
 z.proposal <- mvnorm(chainCov(fit$z), s = 0.3)
 
 fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = chainLast(fit$x),
-                         z0 = chainLast(fit$z), iters = 2000, thin = 20, chain = 1)
+                         z0 = chainLast(fit$z), iters = 2000, thin = 20, chain = chains)
 
 #Summarize results #############################################################
 

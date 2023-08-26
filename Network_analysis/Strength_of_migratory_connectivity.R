@@ -79,14 +79,39 @@ nSamples <- 100
 ## Verify that the breeding and nonbreeding sites and points for the fall makes sense
 
 # Nonbreeding
-plot(spTransform(wrld_simpl, CRS(proj)), xlim = c(-19312101/6, 19889532/6), ylim = c(-19793221/6, 19659061/6))
-plot(as_Spatial(fall.nbr.regions), add = T)
-plot(as_Spatial(fall.nbr.sf), add  = T)
+plot(spTransform(wrld_simpl, CRS(proj)), xlim = c(-19312101/6, 19889532/6), ylim = c(-19793221/6, 19659061/6),
+     main = "Blackpoll warbler nonbreeding regions")
+plot(as_Spatial(fall.nbr.regions), col = "yellow", add = T)
+plot(as_Spatial(fall.nbr.sf), col = "blue", add  = T)
 
+# Nonbreeding regions ggplot
+ggplot(st_as_sf(wrld_simpl))+
+  geom_sf(colour = "black", fill = "lightgray")+
+  geom_sf(data = st_transform(fall.nbr.regions), aes(fill = ClusterReg), col = "black", alpha = 0.5)+
+  scale_fill_discrete(name = "Nonbreeding regions") +
+  geom_sf(data = st_transform(fall.nbr.sf), aes(col = "Individual nonbreeding locations (1 bird each)"), shape = 4, cex = 3)+
+  scale_colour_manual(values = c("Individual nonbreeding locations (1 bird each)" = "blue"), name = "") +
+  coord_sf(xlim = c(-90, -30),ylim = c(-15, 20))+
+  theme_bw()+
+  theme()+
+  ggtitle("Blackpoll warbler nonbreeding regions")
+  
 # Breeding
 plot(spTransform(wrld_simpl, CRS(proj)), xlim = c(-19312101/6, 19889532/6), ylim = c(-19793221/8, 19659061/2))
 plot(as_Spatial(fall.br.regions), add = T)
 plot(as_Spatial(fall.br.sf), add  = T)
+
+# Breeding regions ggplot
+ggplot(st_as_sf(wrld_simpl))+
+  geom_sf(colour = "black", fill = "lightgray")+
+  geom_sf(data = st_transform(fall.br.regions), aes(fill = breedregio), col = "black", alpha = 0.5)+
+  scale_fill_discrete(name = "Breeding regions") +
+  geom_sf(data = st_transform(fall.br.sf), aes(col = "Geolocator deployment sites"), shape = 4, cex = 3)+
+  scale_colour_manual(values = c("Geolocator deployment sites" = "blue"), name = "") +
+  coord_sf(xlim = c(-170, -30),ylim = c(40, 90))+
+  theme_bw()+
+  theme()+
+  ggtitle("Blackpoll warbler breeding regions")
 
 # Estimation and resampling of uncertainty for transition probabilities (psi) ################################################################################
 

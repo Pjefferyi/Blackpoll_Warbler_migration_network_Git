@@ -28,10 +28,10 @@ library(GeoLocTools)
 setupGeolocation()
 
 # clear object from workspace
-rm(list=ls())
+# rm(list=ls())
 
 # Load helper functions 
-source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis/Geolocator_analysis_helper_functions.R")
+source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis_helper_functions.R")
 
 geo.id <- "4068_017"
 
@@ -123,6 +123,12 @@ twl <- twilightEdit(twilights = twl,
                     stationary.mins = 25,
                     plot = TRUE)
 
+# read parameters that will be used during the analysis
+niter <- ref_data$MCMC.iter[which(ref_data$geo.id == geo.id)]
+nthin <- ref_data$MCMC.thin[which(ref_data$geo.id == geo.id)]
+chains <- ref_data$MCMC.chains[which(ref_data$geo.id == geo.id)]
+nday <- ref_data$changeLight.days[which(ref_data$geo.id == geo.id)]
+
 # Calibration ##################################################################
 
 # We start with calibration based on the stationary periods before and after the migration
@@ -209,7 +215,7 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-cL <- changeLight(twl=geo_twl, quantile=0.80, summary = F, days = 4, plot = T)
+cL <- changeLight(twl=geo_twl, quantile=0.80, summary = F, days = nday, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
 mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
@@ -282,14 +288,17 @@ xlim <- range(x0[,1])+c(-5,5)
 ylim <- range(x0[,2])+c(-5,5)
 
 index <- ifelse(stationary, 1, 2)
-mask <- earthseaMask(xlim, ylim, n = 1, index=index)
+#mask <- earthseaMask(xlim, ylim, n = 10, index=index)
+mask <- earthseaMask3(xlim, ylim, res = "lr", index=index, span = 4, twl = twl)
 
 # We will give locations on land a higher prior 
 ## Define the log prior for x and z
 logp <- function(p) {
   f <- mask(p)
-  ifelse(is.na(f), -1000, log(2))
+  #ifelse(is.na(f), -1000, log(2))
+  ifelse(is.na(f), -1000, 100*f)
 }
+
 # Define the Estelle model ####################################################
 model <- groupedThresholdModel(twl$Twilight,
                                twl$Rise,
@@ -309,7 +318,7 @@ x.proposal <- mvnorm(S = diag(c(0.005, 0.005)), n = nrow(x0))
 z.proposal <- mvnorm(S = diag(c(0.005, 0.005)), n = nrow(z0))
 
 # Fit the model
-fit <- estelleMetropolis(model, x.proposal, z.proposal, iters = 1000, thin = 20)
+fit <- estelleMetropolis(model, x.proposal, z.proposal, iters = niters, thin = nthin)
 
 #Tuning ########################################################################
 
@@ -333,7 +342,7 @@ for (k in 1:3) {
   x.proposal <- mvnorm(chainCov(fit$x), s = 0.3)
   z.proposal <- mvnorm(chainCov(fit$z), s = 0.3)
   fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = chainLast(fit$x),
-                           z0 = chainLast(fit$z), iters = 300, thin = 20)
+                           z0 = chainLast(fit$z), iters = niters, thin = nthin, chain = chains)
 }
 
 ## Check if chains mix
@@ -347,7 +356,7 @@ x.proposal <- mvnorm(chainCov(fit$x), s = 0.3)
 z.proposal <- mvnorm(chainCov(fit$z), s = 0.3)
 
 fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = chainLast(fit$x),
-                         z0 = chainLast(fit$z), iters = 2000, thin = 20, chain = 1)
+                         z0 = chainLast(fit$z), iters = niters, thin = nthin, chain = chains)
 
 #Summarize results #############################################################
 
