@@ -281,15 +281,15 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-cL <- changeLight(twl=geo_twl, quantile=0.86, summary = F, days = nday, plot = T)
+cL <- changeLight(twl=geo_twl, quantile=0.90, summary = F, days = nday, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 250)
+mS <- mergeSites2(geo_twl, site = cL$site, distThreshold = 250, degElevation = 90-zenith0, alpha = calib[3:4] , method = "gamma", map = wrld_simpl)
 
 ##back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
-twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 
+twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2], tz = "UTC"), 
                       Rise     = c(ifelse(geo_twl[,3]==1, TRUE, FALSE), ifelse(geo_twl[,3]==1, FALSE, TRUE)),
-                      Site     = rep(mS$site,2))
+                      Site     = append(rep(mS$site,2), c(0,0)))
 twl.rev <- subset(twl.rev, !duplicated(Twilight), sort = Twilight)
 
 grouped <- rep(FALSE, nrow(twl.rev))
@@ -385,7 +385,7 @@ x.proposal <- mvnorm(S = diag(c(0.005, 0.005)), n = nrow(x0))
 z.proposal <- mvnorm(S = diag(c(0.005, 0.005)), n = nrow(z0))
 
 # Fit the model
-fit <- estelleMetropolis(model, x.proposal, z.proposal, iters = niters, thin = nthin)
+fit <- estelleMetropolis(model, x.proposal, z.proposal, iters = niter, thin = nthin)
 
 #Tuning ########################################################################
 
@@ -409,7 +409,7 @@ for (k in 1:3) {
   x.proposal <- mvnorm(chainCov(fit$x), s = 0.3)
   z.proposal <- mvnorm(chainCov(fit$z), s = 0.3)
   fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = chainLast(fit$x),
-                           z0 = chainLast(fit$z), iters = niters, thin = nthin, chain = chains)
+                           z0 = chainLast(fit$z), iters = niter, thin = nthin, chain = chains)
 }
 
 ## Check if chains mix
@@ -423,7 +423,7 @@ x.proposal <- mvnorm(chainCov(fit$x), s = 0.3)
 z.proposal <- mvnorm(chainCov(fit$z), s = 0.3)
 
 fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = chainLast(fit$x),
-                         z0 = chainLast(fit$z), iters = niters, thin = nthin, chain = chains)
+                         z0 = chainLast(fit$z), iters = niter, thin = nthin, chain = chains)
 
 #Summarize results #############################################################
 
