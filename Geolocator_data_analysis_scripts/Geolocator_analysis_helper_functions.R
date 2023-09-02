@@ -15,6 +15,7 @@ library(ggmap)
 library(terra)
 library(spData)
 library(sf)
+library(cluster)
 
 #load and install and load geolocator packages 
 # install_github("eldarrak/FLightR")
@@ -636,7 +637,7 @@ runGeoScripts <- function(scripts = c()){
 paths <- list.files("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis",
                     pattern = "LLG_analysis", recursive = T, full.names = T)
 
-#runGeoScripts(scripts = paths[2:length(paths)])
+#runGeoScripts(scripts = paths[40:length(paths)])
 
 # insertLoc ####################################################################
 
@@ -691,3 +692,140 @@ insertLoc <- function(data, lat.at.loc, start.date, end.date, period, thresh.loc
   return(data.mod)
 }
 
+# clusterLocs ####################################################################
+
+# Function to cluster stationary location estimates
+# Clusters are made smaller until a certain minimum value is reached
+# This value should be selected on the basis of geolocator uncertainty (~ 300)
+
+# This function is based on the methods described by Lagasse et al. 2022: https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0270957#sec015
+# It returns a number of clusters: k 
+
+clusterLocs <- function(locs, maxdiam = 300){
+  
+  # locs: Input locations should be in a dafatframe with reference information 
+  # maxdiam: the maximum diameter of clusters (measured as the mean distance between the two furthest location in each cluster) in km
+  
+  # function to Calculate the geodesic distance between points and creates a distance matrix
+  geo.dist = function(df) {
+    require(geosphere)
+    d <- function(i,z){         # z[1:2] contain long, lat
+      dist <- rep(0,nrow(z))
+      dist[i:nrow(z)] <- distHaversine(z[i:nrow(z),1:2],z[i,1:2])
+      return(dist/1000)
+    }
+    dm <- do.call(cbind,lapply(1:nrow(df),d,df))
+    return(as.dist(dm))
+  }
+  
+  # calculate distance matrix for all stationary locations 
+  dist.matrix <- geo.dist(locs[,c("Lon.50.","Lat.50.")])
+
+  # set intial values for the number of clusters and their maximum diameter
+  runs = 1
+  k = 1
+  diam = Inf 
+  
+  # increase the number of clusters until the mean diameter of the cluster is less than the maximum value
+  while (diam > maxdiam){
+    
+    # cluster stationary location and add locations to dataframe 
+    clust <- pam(dist.matrix, k, diss  = T, cluster.only =  T)
+    locs$cluster <- clust
+    
+    # for each cluster, calculate the diameter
+    diam.list <- c()
+    
+    for (i in unique(clust)){
+      # Get the stationary locations in each subset 
+      clust.subset <- locs %>% dplyr::filter(cluster == i)
+      
+      if (nrow(clust.subset) == 1){
+        subset.dist.matrix <- 0
+      } else {
+        
+        # Generate distance matrix
+        subset.dist.matrix <- geo.dist(clust.subset [,c("Lon.50.","Lat.50.")])
+        
+        # Calculate the cluster diameter (here defined as the distance between the two furtherst locations in the cluster)
+        diam.list <- append(diam.list, max(subset.dist.matrix))
+      }
+    }
+    
+    diam <- mean(diam.list)
+    print(paste("mean diameter =", as.character(diam), "km"))
+    print(paste("Run #", as.character(runs)))
+    print(paste("k =", as.character(k)))
+    runs <-  runs + 1 
+    k = k + 1 
+  }
+  
+  return(k-1)
+}
+
+# test cases for clusterlocs ###################################################
+
+# # path to reference data file 
+# ref_path <- "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv"
+# ref_data <- read.csv(ref_path)
+# 
+# # location data 
+# geo.all <- findLocData(geo.ids = c("V8757_010",
+#                                    "V8296_004",
+#                                    "V8296_005",
+#                                    "V8296_006",
+#                                    "V8757_055",
+#                                    "V8757_018",
+#                                    "V8757_021",
+#                                    "V8296_015",
+#                                    "V8296_017",
+#                                    "V8296_026",
+#                                    "V8296_025",
+#                                    "V8296_007",
+#                                    "V8296_008",
+#                                    "V8757_019",
+#                                    "V8757_096",
+#                                    "V8757_134",
+#                                    "V8757_029",
+#                                    "V8757_078",
+#                                    "blpw09",
+#                                    "blpw12",
+#                                    "3254_001",
+#                                    "4068_014",
+#                                    "blpw14",
+#                                    "3254_003",
+#                                    "3254_008",
+#                                    "3254_011",
+#                                    "3254_057",
+#                                    "blpw15",
+#                                    "blpw25",
+#                                    "4105_008",
+#                                    "4105_009",
+#                                    "4105_016",
+#                                    "4105_017",
+#                                    "4210_002",
+#                                    "4210_004",
+#                                    "4210_006",
+#                                    "4210_010",
+#                                    "WRMA04173",
+#                                    "A",
+#                                    "B",
+#                                    "C",
+#                                    #"E",
+#                                    "D"), check_col_length = F)
+# 
+# # First extract stationary locations for the fall 
+# geo.all <- geo.all %>% group_by(geo_id) %>% mutate(site_type = case_when(
+#   (sitenum == 1 | sitenum == max(sitenum)) & Recorded_North_South_mig == "Both" ~ "Breeding",
+#   sitenum == 1 & Recorded_North_South_mig %in% c("South and partial North", "South" ) ~ "Breeding",
+#   (sitenum == max(sitenum)) & Recorded_North_South_mig == "North" ~ "Breeding",
+#   (sitenum == max(sitenum)) & Recorded_North_South_mig == "South and partial North" & path.elongated == T ~ "Breeding",
+#   period == "Non-breeding period" & (duration >= 14 | sitenum == 1 | sitenum == max(sitenum)) ~ "Nonbreeding",
+#   .default = "Stopover"))
+# 
+# fall.stat <- geo.all %>% filter(sitenum > 0, site_type %in% c("Stopover","Nonbreeding"),
+#                                 period %in% c("Post-breeding migration","Non-breeding period"),
+#                                 Recorded_North_South_mig %in% c("Both", "South and partial North", "South"))
+# 
+# # Run clustering function
+# k <- clusterLocs(locs = fall.stat, maxdiam = 700)
