@@ -9,6 +9,7 @@ library(terra)
 library(RColorBrewer)
 library(ggnetwork)
 library(intergraph)
+library(clustAnalytics)
 
 source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Network_construction.R")
 
@@ -115,7 +116,7 @@ betw.c.palette <- hcl.colors(n = length(seq(0, max(fall.betw.c) + 1)), palette =
 names(betw.c.palette) <- seq(0, max(fall.betw.c) +1)
 
 plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70), col = "#F2F2F2", lwd = 0.5)
-plot(fall.graph, vertex.size = 200, vertex.size2 = 200, vertex.label.dist = 30,
+plot(fall.graph, vertex.size = 300, vertex.size2 = 200, vertex.label.dist = 30,
      edge.width = fall.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
      layout = as.matrix(meta.fall.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)),
@@ -128,7 +129,7 @@ fall.degree.c <- degree(fall.graph, mode = "all")
 deg.c.palette <- hcl.colors(n = length(seq(1, max(fall.degree.c ))), palette = "Reds 3", rev = T) 
 
 plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70), col = "#F2F2F2", lwd = 0.5)
-plot(fall.graph, vertex.size = 200, vertex.size2 = 200, vertex.label.dist = 30,
+plot(fall.graph, vertex.size = 300, vertex.size2 = 200, vertex.label.dist = 30,
      edge.width = fall.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
      layout = as.matrix(meta.fall.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)),
@@ -154,7 +155,12 @@ plot(fall.graph, vertex.size = 200, vertex.size2 = 200, vertex.label= NA,
 
 
 ### community detection using propogating labels ----------
-fall.communities.lab <- cluster_label_prop(fall.graph, weights = fall.con.ab$weight)
+E(fall.graph)$weight <- fall.con.ab$weight
+
+undirected.fall.graph <- as.undirected(fall.graph, mode = "collapse",
+                                      edge.attr.comb = "sum")
+
+fall.communities.lab <- cluster_label_prop(undirected.fall.graph, weights = E(undirected.fall.graph)$weight)
 
 # plot communities
 plot(fall.communities.lab, fall.graph)
@@ -169,8 +175,17 @@ plot(fall.graph, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)),
      vertex.color = fall.comm.pal[fall.communities.lab$membership], add = T)
 
+# Network analystics 
+  evaluate_significance(g = undirected.fall.graph,
+  no_clustering_coef = FALSE,
+  gt_clustering = NULL,
+  w_max = NULL)
+  
+  boot_alg_list(g = undirected.fall.graph)
+  evaluate_significance_r(g = undirected.fall.graph)
+
 ### community detection using edge betweenness -----------
-fall.communities.bet <- cluster_edge_betweenness(fall.graph, fall.con.ab$weight, directed  = T)
+fall.communities.bet <- cluster_edge_betweenness(fall.graph, fall.con.ab$weight, directed  = F)
 
 # plot communities
 plot(fall.communities.bet, fall.graph)
@@ -203,7 +218,7 @@ plot(fall.graph.weighed.ab, vertex.label = NA, vertex.size = 200, vertex.size2 =
      vertex.color = fall.comm.pal[fall.communities.info$membership], add = T)
 
 ### community detection using multilevel optimization of modularity -----------
-fall.communities.louvain <- cluster_louvain(graph = as.undirected(fall.graph))
+fall.communities.louvain <- cluster_louvain(graph = undirected.fall.graph)
 
 meta.fall.ab$community <- fall.communities.louvain$membership
 
@@ -231,7 +246,7 @@ fall.stat <- fall.stat %>% mutate(next.cluster = case_when(
   lead(cluster) != cluster & lead(geo_id) == geo_id ~ lead(cluster),
   .default = NA)) 
 
-# # calculate the number of days spent at each stopover divided by the number of bird that were present (ONLY FOR STOPS CONSIDERED AS STOPOVERS)
+# calculate the number of days spent at each stopover divided by the number of bird that were present (ONLY FOR STOPS CONSIDERED AS STOPOVERS)
 fall.node.time <- fall.stat %>% dplyr::select(cluster, next.cluster, geo_id, StartTime,
                                               Lon.50., Lon.2.5., Lon.97.5., Lat.50.,
                                               Lat.2.5., Lat.97.5., EndTime,
@@ -242,7 +257,6 @@ fall.node.time <- fall.stat %>% dplyr::select(cluster, next.cluster, geo_id, Sta
   group_by(geo_id, cluster) %>% summarise(time.cluster.occupied = sum(duration)) %>%
   group_by(cluster) %>% summarise(mean.time.cluster.occupied = mean(time.cluster.occupied))
   #group_by(cluster) %>% summarise(sum.time.cluster.occupied = sum(time.cluster.occupied))
-  
   
 # add the times calculated to the node metadata
 meta.fall.ab$time.occupied <- fall.node.time$mean.time.cluster.occupied

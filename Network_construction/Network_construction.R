@@ -229,12 +229,12 @@ ggplot(st_as_sf(wrld_simpl))+
   theme_bw() +
   theme(text = element_text(size = 16), legend.position = "None")
 
-# Optional: add edge from nonbreeding site back to the breeding site of origin
-fall.breed.return <- fall.breed %>% group_by(geo_id) %>%
-  mutate(sitenum = max(fall.stat[(fall.stat$geo_id == geo_id),]$sitenum))
-fall.breed.return[,c("StartTime", "EndTime", "duration")] <- NA
-fall.breed.return[,c("period")] <- "Post-breeding migration"
-fall.stat <- bind_rows(fall.stat, fall.breed.return) %>% arrange(geo_id, sitenum)
+# # Optional: add edge from nonbreeding site back to the breeding site of origin
+# fall.breed.return <- fall.breed %>% group_by(geo_id) %>%
+#   mutate(sitenum = max(fall.stat[(fall.stat$geo_id == geo_id),]$sitenum))
+# fall.breed.return[,c("StartTime", "EndTime", "duration")] <- NA
+# fall.breed.return[,c("period")] <- "Post-breeding migration"
+# fall.stat <- bind_rows(fall.stat, fall.breed.return) %>% arrange(geo_id, sitenum)
 
 # Generate the network from our location data and clusters #####################
 
@@ -426,12 +426,12 @@ ggplot(st_as_sf(wrld_simpl))+
   theme_bw() +
   theme(text = element_text(size = 16), legend.position = "None")
 
-# Optional: add edge from nonbreeding site back to the breeding site of origin
-spring.breed.return <- spring.breed %>% group_by(geo_id) %>%
-  mutate(sitenum = 1)
-spring.breed.return[,c("StartTime", "EndTime", "duration")] <- NA
-spring.breed.return[,c("period")] <- "Pre-breeding migration"
-spring.stat <- bind_rows(spring.stat, spring.breed.return) %>% arrange(geo_id, sitenum)
+# # Optional: add edge from nonbreeding site back to the breeding site of origin
+# spring.breed.return <- spring.breed %>% group_by(geo_id) %>%
+#   mutate(sitenum = 1)
+# spring.breed.return[,c("StartTime", "EndTime", "duration")] <- NA
+# spring.breed.return[,c("period")] <- "Pre-breeding migration"
+# spring.stat <- bind_rows(spring.stat, spring.breed.return) %>% arrange(geo_id, sitenum)
 
 # Generate the network from our location data and clusters #####################
 
