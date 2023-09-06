@@ -28,10 +28,10 @@ library(GeoLocTools)
 setupGeolocation()
 
 # clear object from workspace
-rm(list=ls())
+# rm(list=ls())
 
 # Load helper functions 
-source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis/Geolocator_analysis_helper_functions.R")
+source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis_helper_functions.R")
 
 geo.id <- "E"
 
@@ -122,6 +122,12 @@ twl <- twilightEdit(twilights = twl,
                     outlier.mins = 35,
                     stationary.mins = 25,
                     plot = TRUE)
+
+# read parameters that will be used during the analysis
+niter <- ref_data$MCMC.iter[which(ref_data$geo.id == geo.id)]
+nthin <- ref_data$MCMC.thin[which(ref_data$geo.id == geo.id)]
+chains <- ref_data$MCMC.chains[which(ref_data$geo.id == geo.id)]
+nday <- ref_data$changeLight.days[which(ref_data$geo.id == geo.id)]
 
 # Calibration ##################################################################
 
@@ -218,7 +224,7 @@ dev.off()
 # Adjust zenith angles using approximate timings of arrival and departure from the breeding grounds
 zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith0,
-                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad,
+                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad-1,
                             Date > anytime(dep.nbr) ~ zenith0_ad))
 #Date > anytime(dep.nbr) ~ zenith0))
 
@@ -226,7 +232,7 @@ zeniths0 <- zenith_twl_zero$zenith
 
 zenith_twl_med <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith,
-                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith_sd,
+                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith_sd-1,
                             Date > anytime(dep.nbr) ~ zenith_sd))
 #Date > anytime(dep.nbr) ~ zenith))
 
@@ -259,7 +265,7 @@ abline(v = spring.equi, col = "orange")
 dev.off()
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol=0.25)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol=0.26)
 
 #Adjusted tol until second stopover was located over North Carolina rather than further South. 
 x0 <- path$x
@@ -290,15 +296,15 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-cL <- changeLight(twl=geo_twl, quantile=0.9, summary = F, days = 2, plot = T)
+cL <- changeLight(twl=geo_twl, quantile=0.86, summary = F, days = nday, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 250)
+mS <- mergeSites2(geo_twl, site = cL$site, distThreshold = 250, degElevation = 90-zenith0, alpha = calib[3:4] , method = "gamma", map = wrld_simpl)
 
 ##back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
-twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 
+twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2], tz = "UTC"), 
                       Rise     = c(ifelse(geo_twl[,3]==1, TRUE, FALSE), ifelse(geo_twl[,3]==1, FALSE, TRUE)),
-                      Site     = rep(mS$site,2))
+                      Site     = append(rep(mS$site,2), c(0,0)))
 twl.rev <- subset(twl.rev, !duplicated(Twilight), sort = Twilight)
 
 grouped <- rep(FALSE, nrow(twl.rev))
@@ -364,13 +370,14 @@ xlim <- range(x0[,1])+c(-5,5)
 ylim <- range(x0[,2])+c(-5,5)
 
 index <- ifelse(stationary, 1, 2)
-mask <- earthseaMask(xlim, ylim, n = 1, index=index)
+mask <- earthseaMask(xlim, ylim, n = 10, index=index)
+#mask <- earthseaMask3(xlim, ylim, res = "lr", index=index, span = 4, twl = twl)
 
 # We will give locations on land a higher prior 
 ## Define the log prior for x and z
 logp <- function(p) {
   f <- mask(p)
-  ifelse(is.na(f), -1000, log(2))
+  ifelse(is.na(f), -1000, 100*f)
 }
 
 # Define the Estelle model ####################################################
@@ -392,7 +399,7 @@ x.proposal <- mvnorm(S = diag(c(0.005, 0.005)), n = nrow(x0))
 z.proposal <- mvnorm(S = diag(c(0.005, 0.005)), n = nrow(z0))
 
 # Fit the model
-fit <- estelleMetropolis(model, x.proposal, z.proposal, iters = 1000, thin = 20)
+fit <- estelleMetropolis(model, x.proposal, z.proposal, iters = niter, thin = nthin)
 
 #Tuning ########################################################################
 
@@ -416,7 +423,7 @@ for (k in 1:3) {
   x.proposal <- mvnorm(chainCov(fit$x), s = 0.3)
   z.proposal <- mvnorm(chainCov(fit$z), s = 0.3)
   fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = chainLast(fit$x),
-                           z0 = chainLast(fit$z), iters = 300, thin = 20)
+                           z0 = chainLast(fit$z), iters = niter, thin = nthin, chain = chains)
 }
 
 ## Check if chains mix
@@ -430,7 +437,7 @@ x.proposal <- mvnorm(chainCov(fit$x), s = 0.3)
 z.proposal <- mvnorm(chainCov(fit$z), s = 0.3)
 
 fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = chainLast(fit$x),
-                         z0 = chainLast(fit$z), iters = 2000, thin = 20, chain = 1)
+                         z0 = chainLast(fit$z), iters = niter, thin = nthin, chain = chains)
 
 #Summarize results #############################################################
 
