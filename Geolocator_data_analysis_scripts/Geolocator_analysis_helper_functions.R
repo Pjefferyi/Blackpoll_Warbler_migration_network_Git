@@ -637,7 +637,7 @@ runGeoScripts <- function(scripts = c()){
 paths <- list.files("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis",
                     pattern = "LLG_analysis", recursive = T, full.names = T)
 
-#runGeoScripts(scripts = paths[40:length(paths)])
+#runGeoScripts(scripts = paths[1:length(paths)])
 
 # insertLoc ####################################################################
 

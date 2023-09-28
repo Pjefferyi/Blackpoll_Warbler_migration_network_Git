@@ -3,6 +3,7 @@
 
 #Load libraries
 library(tidyverse)
+library(tidyterra)
 library(igraph)
 library(lubridate)
 library(anytime)
@@ -68,6 +69,7 @@ geo.all <- findLocData(geo.ids = c("V8757_010",
 
 # Define nodes as breeding, stopover, or non-breeding ##########################
 
+# Define the different site types 
 geo.all <- geo.all %>% group_by(geo_id) %>% mutate(site_type = case_when(
   (sitenum == 1 | sitenum == max(sitenum)) & Recorded_North_South_mig == "Both" ~ "Breeding",
   sitenum == 1 & Recorded_North_South_mig %in% c("South and partial North", "South" ) ~ "Breeding",
@@ -118,13 +120,13 @@ names(paths) <- geonames
 # Parameters to set prior to the data extraction #####################################################
 
 # site for which we will extrcat probability density rasters 
-site.type <- "Nonbreeding"
+site.type <- "Spring stopover"
 
 # A grid with the dimensions of our rasters 
-xlim = c(-170, -40)
-ylim = c(-15, 70)
+xlim = c(-180, 180)
+ylim = c(-90, 90)
 
-r <- raster(ncol = sum(diff(xlim))*4, nrow = sum(diff(ylim))*4, xmn = xlim[1], xmx = xlim[2],
+r <- raster(ncol = sum(diff(xlim))*2, nrow = sum(diff(ylim))*2, xmn = xlim[1], xmx = xlim[2],
             
             ymn = ylim[1], ymx = ylim[2])
 
@@ -154,7 +156,10 @@ for (bird in (geonames)){
     geo.info <- geo.all[(geo.all$geo_id == bird),]
     time.index <- which(geo.info$site_type == site.type)
     
-    sk <-  slice(s, k = time.index-1) 
+    sk <-  SGAT::slice(s, k = time.index-1) 
+    
+    #sliceInterval(s, k = time.index-1, mcmc = s$mcmc)
+    #sliceIndices(s, s$mcmc)
     
     dist.list[bird] <- sk
     
@@ -164,36 +169,86 @@ for (bird in (geonames)){
 # remove null elements 
 dist.list <-dist.list[!sapply(dist.list ,is.null)]
 
-#plot rasters 
-for (i in seq(1, length(dist.list))){
-  plot(dist.list[[i]], main = names(dist.list[i]))
+# plot rasters
+# for (i in seq(1, length(dist.list))){
+#  plot(dist.list[[i]], main = names(dist.list[i]))
+# }
+
+# Convert the rasters to binary surface (1/0), where pixels with a value of 1 fall in the 95% credibility interval
+
+# We create a function
+
+binSurface <- function(surface, prob){
+  
+  surface <- rast(surface)
+  
+  # 95% probability 
+  problim <- quantile(values(surface), probs = prob, na.rm = T)
+  
+  #edit raster surface
+  values(surface)[values(surface) < problim] <- 0
+  values(surface)[values(surface) >= problim] <- 1
+  values(surface)[is.na(values(surface))] <- 0
+
+  
+  #return raster
+  return(surface)
 }
 
+#function test case 
+#y <- binSurface(dist.list[[1]], prob = c(0.95))
+#plot(y)
 
+# apply the function to all the rasters 
+for (i in seq(1, length(dist.list))){
+  dist.list[[i]] <- binSurface(dist.list[[i]], prob = c(0.95)) 
+}
 
+# convert the raster list of a terra raster dataset 
+surface.sds <- sds(dist.list)
 
+# sum the rasters 
+surface.sum <- app(surface.sds, fun = sum)
 
+#apply a water mask and turn zos into NA
+surface.sum <- terra::mask(x = surface.sum, mask = vect(wrld_simpl))
 
+# # plot the summarized raster surface, in this case it shows the estimated bumber of bird in each pixel
+# ggplot(st_as_sf(wrld_simpl))+
+#   geom_sf(fill = "white", colour = "darkgray") +
+#   coord_sf(xlim = c(-88, -30),ylim = c(30, -15)) +
+#   geom_spatraster(data = surface.sum) +
+#   #scale_fill_continuous(low = adjustcolor("white", alpha = 1), high = "firebrick", na.value = "white")+
+#   scale_fill_gradientn(colours = rev(terrain.colors(255)), na.value = "white")+
+#   geom_sf(fill = NA, colour = "black") +
+#   coord_sf(xlim = c(-88, -30),ylim = c(30, -15)) +
+#   theme_bw() +
+#   theme(panel.grid.major = element_blank(),
+#         panel.grid.minor = element_blank(),
+#         #axis.title.x=element_blank(),
+#         #axis.text.x=element_blank(),
+#         #axis.ticks.x=element_blank(),
+#         #axis.title.y=element_blank(),
+#         #axis.text.y=element_blank(),
+#         #axis.ticks.y=element_blank(),
+#         legend.position = c(0.75, 0.75)) +
+#   theme(text = element_text(size = 14))+
+#   labs(fill = "#Birds")
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+ggplot(st_as_sf(wrld_simpl))+
+  geom_sf(fill = "white", colour = "darkgray") +
+  coord_sf(xlim = c(-170, -30),ylim = c(80, -15)) +
+  geom_spatraster(data = surface.sum) +
+  #scale_fill_gradient2(low = adjustcolor("white", alpha = 0), high = "firebrick", na.value = "white")+
+  scale_fill_gradientn(colours = rev(terrain.colors(255)), na.value = "white")+
+  geom_sf(fill = NA, colour = "black") +
+  coord_sf(xlim = c(-170, -30),ylim = c(80, -15)) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        legend.position = c(0.1, 0.25)) +
+  theme(text = element_text(size = 14))+
+  labs(fill = "#Birds")
 
 # Notes 
 load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geolocator_data/3254_001/3254_001_SGAT_GroupedThreshold_summary.csv")

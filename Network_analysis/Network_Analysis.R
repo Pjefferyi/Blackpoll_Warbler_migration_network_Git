@@ -13,6 +13,9 @@ library(clustAnalytics)
 
 source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Network_construction.R")
 
+
+# NOTE: THIS SCRIPT IS OPTIMIZED FOR DATA FROM THE FILE: Geolocator_analysis_V3_BI_mask
+
 # Prepare for fall network analysis ############################################
 
 # Load the fall graph
@@ -154,7 +157,7 @@ plot(fall.graph, vertex.size = 200, vertex.size2 = 200, vertex.label= NA,
      edge.color = adjustcolor("darkgray", alpha.f = 0.6), add = T, vertex.label = round(fall.strength.c, digits = 2))
 
 
-### community detection using propogating labels ----------
+### community detection using propagating labels ----------
 E(fall.graph)$weight <- fall.con.ab$weight
 
 undirected.fall.graph <- as.undirected(fall.graph, mode = "collapse",
@@ -182,13 +185,35 @@ plot(fall.graph, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
   w_max = NULL)
   
   boot_alg_list(g = undirected.fall.graph)
-  evaluate_significance_r(g = undirected.fall.graph)
+  
+### community detection using the walktrap algorithm -----------
+E(fall.graph)$weight <- fall.con.ab$weight
 
+undirected.fall.graph <- as.undirected(fall.graph, mode = "collapse",
+                                       edge.attr.comb = "sum")
+
+fall.communities.lab <- cluster_walktrap(undirected.fall.graph, weights = E(undirected.fall.graph)$weight,
+                                         steps = 10, modularity = T)
+
+# plot communities
+plot(fall.communities.lab, fall.graph)
+
+# plot communities on map
+fall.comm.pal <- rainbow(length(seq(1, max(fall.communities.lab$membership))))
+
+plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70))
+plot(fall.graph, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
+     edge.width = fall.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
+     layout = as.matrix(meta.fall.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
+     ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)),
+     vertex.color = fall.comm.pal[fall.communities.lab$membership], add = T)
+  
+  
 ### community detection using edge betweenness -----------
 fall.communities.bet <- cluster_edge_betweenness(fall.graph, fall.con.ab$weight, directed  = F)
 
 # plot communities
-plot(fall.communities.bet, fall.graph)
+plot(fall.communities.bet, spring.graph)
 
 # plot communities on map
 fall.comm.pal <- rainbow(length(seq(1, max(fall.communities.bet $membership))))
@@ -218,7 +243,7 @@ plot(fall.graph.weighed.ab, vertex.label = NA, vertex.size = 200, vertex.size2 =
      vertex.color = fall.comm.pal[fall.communities.info$membership], add = T)
 
 ### community detection using multilevel optimization of modularity -----------
-fall.communities.louvain <- cluster_louvain(graph = undirected.fall.graph)
+fall.communities.louvain <- cluster_louvain(graph = undirected.fall.graph, resolution = 1)
 
 meta.fall.ab$community <- fall.communities.louvain$membership
 
@@ -434,7 +459,14 @@ plot(spring.graph, vertex.size = 200, vertex.size2 = 200, vertex.label.dist = 30
      edge.color = adjustcolor("darkgray", alpha.f = 0.6), add = T, vertex.label = NA)
 
 # community detection using propagating labels ----------
-spring.communities.lab <- cluster_label_prop(spring.graph, weights = spring.con.ab$weight)
+E(spring.graph)$weight <- spring.con.ab$weight
+
+undirected.spring.graph <- as.undirected(spring.graph, mode = "collapse",
+                                       edge.attr.comb = "sum")
+
+spring.communities.lab <- cluster_label_prop(undirected.spring.graph, weights = E(undirected.spring.graph)$weight)
+
+#spring.communities.lab <- cluster_label_prop(spring.graph, weights = spring.con.ab$weight)
 meta.spring.ab$community <- spring.communities.lab$membership
 
 # plot communities
