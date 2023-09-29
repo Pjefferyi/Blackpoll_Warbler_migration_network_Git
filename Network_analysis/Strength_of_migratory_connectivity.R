@@ -36,21 +36,21 @@ fall.br.sf <- st_as_sf(fall.br, coords = c("Lon.50.", "Lat.50."), crs = crs(wrld
 fall.br.sf <- st_transform(fall.br.sf, CRS(proj)) 
 
 # fall network nonbreeding points
-fall.nbr<- fall.stat.ab %>% group_by(geo_id) %>% 
-  filter(sitenum == max(sitenum)) %>%
+fall.nbr <- fall.stat.ab %>% group_by(geo_id) %>% 
+  filter(sitenum == max(sitenum), !is.na(StartTime), !is.na(EndTime)) %>%
   arrange(geo_id) 
 
 fall.nbr.sf <- st_as_sf(fall.nbr, coords = c("Lon.50.", "Lat.50."), crs = crs(wrld_simpl))
 fall.nbr.sf <- st_transform(fall.nbr.sf, CRS(proj)) 
-st_write(fall.nbr.sf, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/bpw_nbr_sites.shp", append = F )
+#st_write(fall.nbr.sf, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/bpw_nbr_sites.shp", append = F)
 
 # Origin sites 
-fall.br.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Relative_abundance_propagation/bpw_abundance_regions.shp") %>%
+fall.br.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Relative_abundance_propagation/bpw_abundance_regions_adjusted.shp") %>%
   st_transform(CRS(proj)) %>%
   st_cast("MULTIPOLYGON")
 
 # Target sites 
-fall.nbr.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/NonbreedingregionsV2.shp") %>%
+fall.nbr.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/NonbreedingregionsV3.shp") %>%
   st_transform(CRS(proj))%>%
   st_cast("MULTIPOLYGON")
 
@@ -87,7 +87,7 @@ plot(as_Spatial(fall.nbr.sf), col = "blue", add  = T)
 # Nonbreeding regions ggplot
 ggplot(st_as_sf(wrld_simpl))+
   geom_sf(colour = "black", fill = "lightgray")+
-  geom_sf(data = st_transform(fall.nbr.regions), aes(fill = ClusterReg), col = "black", alpha = 0.5)+
+  geom_sf(data = st_transform(fall.nbr.regions), aes(fill = region), col = "black", alpha = 0.5)+
   scale_fill_discrete(name = "Nonbreeding regions") +
   geom_sf(data = st_transform(fall.nbr.sf), aes(col = "Individual nonbreeding locations (1 bird each)"), shape = 4, cex = 3)+
   scale_colour_manual(values = c("Individual nonbreeding locations (1 bird each)" = "blue"), name = "") +
@@ -104,7 +104,7 @@ plot(as_Spatial(fall.br.sf), add  = T)
 # Breeding regions ggplot
 ggplot(st_as_sf(wrld_simpl))+
   geom_sf(colour = "black", fill = "lightgray")+
-  geom_sf(data = st_transform(fall.br.regions), aes(fill = breedregio), col = "black", alpha = 0.5)+
+  geom_sf(data = st_transform(fall.br.regions), aes(fill = region), col = "black", alpha = 0.5)+
   scale_fill_discrete(name = "Breeding regions") +
   geom_sf(data = st_transform(fall.br.sf), aes(col = "Geolocator deployment sites"), shape = 4, cex = 3)+
   scale_colour_manual(values = c("Geolocator deployment sites" = "blue"), name = "") +
@@ -129,11 +129,10 @@ GL_psi <- estTransition(isGL=TRUE,
 
 # Save the output of estTransition
 #save(GL_psi, file = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_analysis/estTransition_ouput.R")
-load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_analysis/estTransition_ouput.R")
+#load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_analysis/estTransition_ouput.R")
 
 
 # Retrieve the relative abundance in each breeding site/region for the fall network ################################################################################
-
 
 # import breeding season abundance data
 bpw.fall.ab <- load_raster("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_imports/2021/bkpwar",
@@ -159,7 +158,6 @@ fall.br.dists <- distFromPos(fall.br.centroids, "plane")
 
 fall.nbr.centroids <- centroid(as_Spatial(fall.nbr.regions))
 fall.nbr.dists <- distFromPos(fall.nbr.centroids, "plane")
-
 
 # Estimate the strength of migratory connectivity metric #######################
 

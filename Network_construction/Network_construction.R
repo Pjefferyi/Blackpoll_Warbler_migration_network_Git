@@ -229,12 +229,12 @@ ggplot(st_as_sf(wrld_simpl))+
   theme_bw() +
   theme(text = element_text(size = 16), legend.position = "None")
 
-# # Optional: add edge from nonbreeding site back to the breeding site of origin
-# fall.breed.return <- fall.breed %>% group_by(geo_id) %>%
-#   mutate(sitenum = max(fall.stat[(fall.stat$geo_id == geo_id),]$sitenum))
-# fall.breed.return[,c("StartTime", "EndTime", "duration")] <- NA
-# fall.breed.return[,c("period")] <- "Post-breeding migration"
-# fall.stat <- bind_rows(fall.stat, fall.breed.return) %>% arrange(geo_id, sitenum)
+# Optional: add edge from nonbreeding site back to the breeding site of origin
+fall.breed.return <- fall.breed %>% group_by(geo_id) %>%
+  mutate(sitenum = max(fall.stat[(fall.stat$geo_id == geo_id),]$sitenum))
+fall.breed.return[,c("StartTime", "EndTime", "duration")] <- NA
+fall.breed.return[,c("period")] <- "Post-breeding migration"
+fall.stat <- bind_rows(fall.stat, fall.breed.return) %>% arrange(geo_id, sitenum)
 
 # Generate the network from our location data and clusters #####################
 
@@ -426,12 +426,12 @@ ggplot(st_as_sf(wrld_simpl))+
   theme_bw() +
   theme(text = element_text(size = 16), legend.position = "None")
 
-# # Optional: add edge from nonbreeding site back to the breeding site of origin
-# spring.breed.return <- spring.breed %>% group_by(geo_id) %>%
-#   mutate(sitenum = 1)
-# spring.breed.return[,c("StartTime", "EndTime", "duration")] <- NA
-# spring.breed.return[,c("period")] <- "Pre-breeding migration"
-# spring.stat <- bind_rows(spring.stat, spring.breed.return) %>% arrange(geo_id, sitenum)
+# Optional: add edge from nonbreeding site back to the breeding site of origin
+spring.breed.return <- spring.breed %>% group_by(geo_id) %>%
+  mutate(sitenum = 1)
+spring.breed.return[,c("StartTime", "EndTime", "duration")] <- NA
+spring.breed.return[,c("period")] <- "Pre-breeding migration"
+spring.stat <- bind_rows(spring.stat, spring.breed.return) %>% arrange(geo_id, sitenum)
 
 # Generate the network from our location data and clusters #####################
 
@@ -698,11 +698,11 @@ points(geo.breed$Lon.50., geo.breed$Lat.50., cex = 1, col = "blue", pch = 19)
 # extract the abundance for each region,
 ab.extract <- terra::extract(bpw.fall.ab$breeding, abundance.regions, fun = sum, na.rm=TRUE)
 ab.extract$ID <- abundance.regions$geo_id
-ab.extract$breedregionname <- abundance.regions$breedregio
+ab.extract$breedregionname <- abundance.regions$region
 
 # Create a dataframe with the relative abundance per region
 ab.per.region <- merge(as.data.frame(abundance.regions), ab.extract, by.x = "geo_id", by.y = "ID") %>%
-  dplyr::select(-geometry, -breedregio) %>%
+  dplyr::select(-geometry, -region) %>%
   rename(br.region.r.abundance = breeding, br.polygon = breedregionname) %>%
   mutate(br.region.prop.total.population = br.region.r.abundance/ sum(unique(br.region.r.abundance)))
 
