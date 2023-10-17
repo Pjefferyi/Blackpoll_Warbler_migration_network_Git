@@ -7,21 +7,21 @@ library(tidyr)
 # Load helper functions 
 source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis_helper_functions.R")
 
-# Load fall data for use as an example 
-fall.graph <- read_graph("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/fall.graph.edge.list.txt", directed = TRUE)
+# Load spring data for use as an example 
+spring.graph <- read_graph("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/spring.graph.edge.list.txt", directed = TRUE)
 
-# Load fall graph node metadata 
-meta.fall.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/fall.node.metadata.csv")
+# Load spring graph node metadata 
+meta.spring.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/spring.node.metadata.csv")
 
-# Load fall graph edge weights
-fall.con.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/fall.edge.weights.csv")
+# Load spring graph edge weights
+spring.con.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/spring.edge.weights.csv")
 
-# Add weights to the fall graph, and convert the fall graph to an undirected graph 
-E(fall.graph)$weight <- fall.con.ab$weight
-undirected.fall.graph <- as.undirected(fall.graph, mode = "collapse",
+# Add weights to the spring graph, and convert the spring graph to an undirected graph 
+E(spring.graph)$weight <- spring.con.ab$weight
+undirected.spring.graph <- as.undirected(spring.graph, mode = "collapse",
                                        edge.attr.comb = "sum")
 
-fall.communities.lab <- cluster_label_prop(undirected.fall.graph, weights = E(undirected.fall.graph)$weight)
+spring.communities.lab <- cluster_label_prop(undirected.spring.graph, weights = E(undirected.spring.graph)$weight)
 
 ############################### clustering parameters ##########################
 
@@ -49,17 +49,17 @@ runAlg <- function(iterations, graph){
   return(comb)
 }
 
-comb <- runAlg(iterations = algiter, graph = as.undirected(fall.graph))  
+comb <- runAlg(iterations = algiter, graph = as.undirected(spring.graph))  
 
 ############################## Part 2 ##########################################
 rows <- list()
 
 # generate adjacency matrix by looping through node combinations and summing the number of times that they are in the same cluster 
-for (i in 1:vcount(fall.graph)){
+for (i in 1:vcount(spring.graph)){
   
-  eq <- 1:vcount(fall.graph)
+  eq <- 1:vcount(spring.graph)
   
-  for (j in 1:vcount(fall.graph)){
+  for (j in 1:vcount(spring.graph)){
   
     eq[j] <- sum(comb[1:algiter,i] == comb[1:algiter,j], na.rm=TRUE)
   }
@@ -68,7 +68,7 @@ for (i in 1:vcount(fall.graph)){
 }
   
 # adjacency matrix 
-ad.mat <- matrix(unlist(rows), ncol=vcount(fall.graph), byrow=TRUE)
+ad.mat <- matrix(unlist(rows), ncol=vcount(spring.graph), byrow=TRUE)
 
 ######################### part 3 ###############################################
 
@@ -87,14 +87,14 @@ comms <- cluster_label_prop(ad.graph)
 plot(comms, ad.graph)
 
 # plot communities on map
-fall.comm.pal <- rainbow(length(seq(1, max(comms$membership))))
+spring.comm.pal <- rainbow(length(seq(1, max(comms$membership))))
 
 plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70))
-plot(fall.graph, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
-     edge.width = fall.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
-     layout = as.matrix(meta.fall.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
-     ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)),
-     vertex.color = fall.comm.pal[comms$membership], add = T)
+plot(spring.graph, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
+     edge.width = spring.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
+     layout = as.matrix(meta.spring.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
+     ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(spring.con.ab)),
+     vertex.color = spring.comm.pal[comms$membership], add = T)
 
 ###################### part 4 ##################################################
 
@@ -140,14 +140,14 @@ comms.f <- cluster_label_prop(iter.graph )
 plot(comms.f, iter.graph )
 
 # plot communities on map
-fall.comm.pal <- rainbow(length(seq(1, max(comms.f$membership))))
+spring.comm.pal <- rainbow(length(seq(1, max(comms.f$membership))))
 
 plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70))
-plot(fall.graph, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
-     edge.width = fall.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
-     layout = as.matrix(meta.fall.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
-     ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)),
-     vertex.color = fall.comm.pal[comms$membership], add = T)
+plot(spring.graph, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
+     edge.width = spring.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
+     layout = as.matrix(meta.spring.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
+     ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(spring.con.ab)),
+     vertex.color = spring.comm.pal[comms$membership], add = T)
   
 
 modularity(comms.f)

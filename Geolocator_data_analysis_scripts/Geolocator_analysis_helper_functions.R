@@ -143,7 +143,7 @@ findLocData <- function(geo.ids = NULL, check_col_length = F, edits = T){
   # We must detect any geolocators where the geolocator data was edited
   # based on the result of the light data analysis to detect carribean stopovers. 
   ref.data <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv")
-  with_edits = ref.data[(ref.data$Fall_carrib_edits == T),]$geo.id
+  with_edits = ref.data[(ref.data$spring_carrib_edits == T),]$geo.id
   
   # If no vector of geo.ids was provided, extract data for all geolocators in dataset
   if (is.null(geo.ids)){
@@ -154,9 +154,9 @@ findLocData <- function(geo.ids = NULL, check_col_length = F, edits = T){
   if (check_col_length == T){
     for (i in seq(1:length(folder_paths))){
       if (geo_names[i] %in% with_edits & geo_names[i] %in% geo.ids){
-        file_path <- paste0(folder_paths[i], "/",geo_names[i],"_SGAT_GroupedThreshold_summary_fall_edit.csv")
+        file_path <- paste0(folder_paths[i], "/",geo_names[i],"_SGAT_GroupedThreshold_summary_spring_edit.csv")
         load(file = file_path)
-        print(ncol(sm.fall.edit))
+        print(ncol(sm.spring.edit))
       }
       if (geo_names[i] %in% geo.ids){
         file_path <- paste0(folder_paths[i], "/",geo_names[i],"_SGAT_GroupedThreshold_summary.csv")
@@ -171,11 +171,11 @@ findLocData <- function(geo.ids = NULL, check_col_length = F, edits = T){
   for (i in seq(1:length(folder_paths))){
     # load the data from each file and add it to dataset if it is in geo_ids 
     if (geo_names[i] %in% geo.ids | is.null(geo.ids)){
-      # some of the data has edits during during the fall transoceanic flight
+      # some of the data has edits during during the spring transoceanic flight
       if (geo_names[i] %in% with_edits & edits == T){
-        file_path <- paste0(folder_paths[i], "/",geo_names[i],"_SGAT_GroupedThreshold_summary_fall_edit.csv")
+        file_path <- paste0(folder_paths[i], "/",geo_names[i],"_SGAT_GroupedThreshold_summary_spring_edit.csv")
         load(file = file_path)
-        location_set <- rbind(location_set, sm.fall.edit)
+        location_set <- rbind(location_set, sm.spring.edit)
       } else {
         file_path <- paste0(folder_paths[i], "/",geo_names[i],"_SGAT_GroupedThreshold_summary.csv")
         load(file = file_path)
@@ -637,7 +637,7 @@ runGeoScripts <- function(scripts = c()){
 paths <- list.files("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis",
                     pattern = "LLG_analysis", recursive = T, full.names = T)
 
-#runGeoScripts(scripts = paths[1:length(paths)])
+#runGeoScripts(scripts = paths[36:length(paths)])
 
 # insertLoc ####################################################################
 
@@ -707,6 +707,7 @@ clusterLocs <- function(locs, maxdiam = 300){
   # maxdiam: the maximum diameter of clusters (measured as the mean distance between the two furthest location in each cluster) in km
   
   # function to Calculate the geodesic distance between points and creates a distance matrix
+  # function developed by stack overflow user jlhoward (https://stackoverflow.com/questions/21095643/approaches-for-spatial-geodesic-latitude-longitude-clustering-in-r-with-geodesic)
   geo.dist = function(df) {
     require(geosphere)
     d <- function(i,z){         # z[1:2] contain long, lat
@@ -760,7 +761,7 @@ clusterLocs <- function(locs, maxdiam = 300){
     k = k + 1 
   }
   
-  return(k-1)
+  return(list("k" = k-1, "clusters" = clust))
 }
 
 # test cases for clusterlocs ###################################################
@@ -814,7 +815,7 @@ clusterLocs <- function(locs, maxdiam = 300){
 #                                    #"E",
 #                                    "D"), check_col_length = F)
 # 
-# # First extract stationary locations for the fall 
+# # First extract stationary locations for the spring 
 # geo.all <- geo.all %>% group_by(geo_id) %>% mutate(site_type = case_when(
 #   (sitenum == 1 | sitenum == max(sitenum)) & Recorded_North_South_mig == "Both" ~ "Breeding",
 #   sitenum == 1 & Recorded_North_South_mig %in% c("South and partial North", "South" ) ~ "Breeding",
@@ -823,9 +824,143 @@ clusterLocs <- function(locs, maxdiam = 300){
 #   period == "Non-breeding period" & (duration >= 14 | sitenum == 1 | sitenum == max(sitenum)) ~ "Nonbreeding",
 #   .default = "Stopover"))
 # 
-# fall.stat <- geo.all %>% filter(sitenum > 0, site_type %in% c("Stopover","Nonbreeding"),
+# spring.stat <- geo.all %>% filter(sitenum > 0, site_type %in% c("Stopover","Nonbreeding"),
 #                                 period %in% c("Post-breeding migration","Non-breeding period"),
 #                                 Recorded_North_South_mig %in% c("Both", "South and partial North", "South"))
 # 
 # # Run clustering function
-# k <- clusterLocs(locs = fall.stat, maxdiam = 700)
+# k <- clusterLocs(locs = spring.stat, maxdiam = 700)
+
+# consensusCluster #############################################################
+
+ # Input graph must be weighed and undirected 
+
+concensusCluster <- function(graph, thresh = 0.5, algiter = 100){
+ 
+  ############################### Part 1 #########################################
+  
+  # Function to run the algorithm on the network n times 
+  runAlg <- function(iterations, i.graph){
+    
+    comb.dt <- data.frame(comb = rep(NA, algiter ))
+    
+    for (i in seq(1:iterations)){
+      
+      comms <- cluster_label_prop(graph)
+      mem <- comms$membership
+      
+      comb.dt$comb[i] <- list(mem)
+    }
+    
+    # convert the output dataframe to a matrix
+    comb <- matrix(unlist(comb.dt), ncol=length(comb.dt$comb[[1]]), byrow=TRUE)
+    
+    return(comb)
+  }
+  
+  comb <- runAlg(iterations = algiter, i.graph = as.undirected(graph))  
+ 
+  ############################## Part 2 ##########################################
+  rows <- list()
+  
+  # generate adjacency matrix by looping through node combinations and summing the number of times that they are in the same cluster 
+  for (i in 1:vcount(graph)){
+    
+    eq <- 1:vcount(graph)
+    
+    for (j in 1:vcount(graph)){
+      
+      eq[j] <- sum(comb[1:algiter,i] == comb[1:algiter,j], na.rm=TRUE)
+    }
+    
+    rows[[i]] <- eq/algiter
+  }
+  
+  # adjacency matrix 
+  ad.mat <- matrix(unlist(rows), ncol=vcount(graph), byrow=TRUE)
+  
+  ######################### part 3 ###############################################
+  
+  # Set values below trheshold to 0 
+  ad.mat[ad.mat < thresh] <- 0
+  
+  #Set diag elements of matrix to 0 (to avoid loop edges)
+  diag(ad.mat) <- 0
+  
+  # transform to matrix into graph 
+  ad.graph <- graph_from_adjacency_matrix(ad.mat, weighted = T)
+  
+  ###################### part 4 ##################################################
+  
+  # Until the number of partitions returned by the clustering algorithm is greater than 0, repeat step 2 and 3
+  
+  iter.graph <- ad.graph
+  P <- 1 
+  iter <- 0 
+  
+  while (P > 1){
+    
+    # run community detection algorithm on consensus network n times 
+    comb <- runAlg(iterations = algiter, graph = as.undirected(iter.graph))  
+    P <- nrow(unique(comb))
+    
+    rows <- list()
+    # generate adjacency matrix by looping through node combinations and summing the number of times that they are in the same cluster 
+    for (i in 1:vcount(iter.graph )){
+      eq <- 1:vcount(iter.graph )
+      for (j in 1:vcount(iter.graph )){
+        eq[j] <- sum(comb[1:algiter,i] == comb[1:algiter,j], na.rm=TRUE)
+      }
+      rows[[i]] <- eq/algiter
+    }
+    # adjacency matrix 
+    ad.mat <- matrix(unlist(rows), ncol=vcount(iter.graph ), byrow=TRUE)
+    
+    # Set values bewlo trheshold to 0 
+    ad.mat[ad.mat < thresh] <- 0
+    
+    #Set diag elements of matrix to 0 (to avoid loop edges)
+    diag(ad.mat) <- 0 
+    
+    iter.graph <- graph_from_adjacency_matrix(ad.mat, weighted = T)
+    
+    #keep track of iterations 
+    iter <- iter + 1 
+  }
+  
+  return(list("community structure" = comms.f <- cluster_label_prop(iter.graph),
+              "iterations" = iter))
+}
+
+# Test calls for consensusCluster ##############################################
+  
+# Load spring data for use as an example 
+spring.graph <- read_graph("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/spring.graph.edge.list.txt", directed = TRUE)
+
+# Load spring graph node metadata 
+meta.spring.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/spring.node.metadata.csv")
+
+# Load spring graph edge weights
+spring.con.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/spring.edge.weights.csv")
+
+# Add weights to the spring graph, and convert the spring graph to an undirected graph 
+E(spring.graph)$weight <- spring.con.ab$weight
+undirected.spring.graph <- as.undirected(spring.graph, mode = "collapse",
+                                         edge.attr.comb = "sum")
+
+# Run concensusCluster function 
+cluster_output <- concensusCluster(graph = undirected.spring.graph, thresh = 0.5, algiter = 3000)
+comms <- cluster_output$`community structure`
+
+# plot concensus graph
+spring.comm.pal <- rainbow(length(seq(1, max(comms$membership))))
+
+plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),],
+     xlim = c(-165, -35), ylim = c(-10, 65), lwd = 0.5, col = "#F7F7F7")
+plot(spring.graph, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
+     edge.width = spring.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
+     layout = as.matrix(meta.spring.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
+     ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(spring.con.ab)),
+     vertex.color = spring.comm.pal[comms$membership], 
+     edge.color = adjustcolor("darkgray", alpha.f = 0.6), add = T)
+

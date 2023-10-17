@@ -10,8 +10,9 @@ library(RColorBrewer)
 library(ggnetwork)
 library(intergraph)
 library(clustAnalytics)
+library(tnet)
 
-source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Network_construction.R")
+#source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Network_construction.R")
 
 
 # NOTE: THIS SCRIPT IS OPTIMIZED FOR DATA FROM THE FILE: Geolocator_analysis_V3_BI_mask
@@ -51,7 +52,7 @@ plot(fall.graph, vertex.size = 300, vertex.size2 = 200,
      layout = as.matrix(meta.fall.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)),
      vertex.color = type.palette[meta.fall.ab$node.type.num], vertex.label.dist = 30,
-     add = T, vertex.label.dist = 30, edge.color = adjustcolor("darkgray", alpha.f = 0.6))
+     add = T, edge.color = adjustcolor("darkgray", alpha.f = 0.6), vertex.label = NA)
 legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
        col = type.palette[unique(meta.fall.ab$node.type.num)],
        pch = 19, title = "Node type",cex = 0.8)
@@ -156,8 +157,45 @@ plot(fall.graph, vertex.size = 200, vertex.size2 = 200, vertex.label= NA,
      vertex.color = deg.c.palette[as.character(round(fall.strength.c, digits = 3))],
      edge.color = adjustcolor("darkgray", alpha.f = 0.6), add = T, vertex.label = round(fall.strength.c, digits = 2))
 
+# Fall degree centrality using the method developed by Opshal et al. ---
+E(fall.graph)$weight <- fall.con.ab$weight
+fall.edge.list <- cbind(get.edgelist(fall.graph) , round( E(fall.graph)$weight, 3 ))
+fall.net <- as.tnet(fall.edge.list, type = "weighted one-mode tnet")
 
-### community detection using propagating labels ----------
+fall.degree.TO <- degree_w(fall.edge.list, measure=c("degree", "output", "alpha"), type = "in", alpha = 0.5)
+
+deg.TO.palette <- hcl.colors(n = length(seq(0, max(fall.degree.TO[,"alpha"]+ 0.0001),0.0001)), palette = "Reds 3", rev = T) 
+names(deg.TO.palette) <- seq(0, max(fall.degree.TO[,"alpha"] + 0.0001),0.0001)
+
+plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),], 
+     xlim = c(-170, -30), ylim = c(-15, 70), col = "#F2F2F2", lwd = 0.5,
+     main = "Degree centrality")
+
+plot(fall.graph, vertex.size = 200, vertex.size2 = 200, vertex.label= NA,
+     edge.width = fall.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
+     layout = as.matrix(meta.fall.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
+     ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)),
+     vertex.color = deg.TO.palette[as.character(round(fall.degree.TO[,"alpha"],4))],
+     edge.color = adjustcolor("darkgray", alpha.f = 0.6), add = T, vertex.label = round(fall.strength.c, digits = 4))
+ 
+# Fall betweenness centrality using the method developed by Opshal et al. ---
+fall.betweenness.TO <- betweenness_w(fall.edge.list, directed = T, alpha = 0.5)
+
+betweenness.TO.palette <- hcl.colors(n = length(seq(0, max(fall.betweenness.TO[,"betweenness"]),1)), palette = "Reds 3", rev = T) 
+names(betweenness.TO.palette) <- seq(0, max(fall.betweenness.TO[,"betweenness"]),1)
+
+plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),], 
+     xlim = c(-170, -30), ylim = c(-15, 70), col = "#F2F2F2", lwd = 0.5,
+     main = "Betweenness centrality")
+
+plot(fall.graph, vertex.size = 200, vertex.size2 = 200, vertex.label= NA,
+     edge.width = fall.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
+     layout = as.matrix(meta.fall.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
+     ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)),
+     vertex.color = betweenness.TO.palette[as.character(fall.betweenness.TO[,"betweenness"])],
+     edge.color = adjustcolor("darkgray", alpha.f = 0.6), add = T, vertex.label = round(fall.strength.c, digits = 4))
+
+### community detection using propagating labels ----------  
 E(fall.graph)$weight <- fall.con.ab$weight
 
 undirected.fall.graph <- as.undirected(fall.graph, mode = "collapse",
@@ -345,7 +383,9 @@ spring.con.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University
 data("wrld_simpl")
 type.palette <- c("#440154FF", "#FDE725FF", "#21908CFF")
 
-plot(wrld_simpl, xlim = c(-165, -35), ylim = c(-10, 65), col = "#F2F2F2", lwd = 0.5)
+plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),],
+    xlim = c(-165, -35), ylim = c(-10, 65), col = "#F7F7F7", lwd = 0.5)
+
 plot(spring.graph, vertex.label = NA, vertex.size = 300, vertex.size2 = 200,
      edge.width = spring.con.ab$weight*20, edge.arrow.size = 0, edge.arrow.width = 0,  
      layout = as.matrix(meta.spring.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
@@ -457,6 +497,26 @@ plot(spring.graph, vertex.size = 200, vertex.size2 = 200, vertex.label.dist = 30
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(spring.con.ab)),
      vertex.color = deg.c.palette[as.character(round(spring.strength.c, digits = 2))],
      edge.color = adjustcolor("darkgray", alpha.f = 0.6), add = T, vertex.label = NA)
+
+# spring degree centrality using the method developed by Opshal et al. ---
+E(spring.graph)$weight <- spring.con.ab$weight
+spring.edge.list <- cbind(get.edgelist(spring.graph) , round( E(spring.graph)$weight, 3 ))
+spring.net <- as.tnet(spring.edge.list, type = "weighted one-mode tnet")
+
+spring.degree.TO <- degree_w(spring.edge.list, measure=c("degree", "output", "alpha"), type = "in", alpha = 0.5)
+
+deg.TO.palette <- hcl.colors(n = length(seq(0, max(spring.degree.TO[,"alpha"]+ 0.0001),0.0001)), palette = "Reds 3", rev = T) 
+names(deg.TO.palette) <- seq(0, max(spring.degree.TO[,"alpha"] + 0.0001),0.0001)
+
+plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),], 
+     xlim = c(-170, -30), ylim = c(-15, 70), col = "#F2F2F2", lwd = 0.5)
+
+plot(spring.graph, vertex.size = 200, vertex.size2 = 200, vertex.label= NA,
+     edge.width = spring.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
+     layout = as.matrix(meta.spring.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
+     ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(spring.con.ab)),
+     vertex.color = deg.TO.palette[as.character(round(spring.degree.TO[,"alpha"],4))],
+     edge.color = adjustcolor("darkgray", alpha.f = 0.6), add = T, vertex.label = round(spring.strength.c, digits = 4))
 
 # community detection using propagating labels ----------
 E(spring.graph)$weight <- spring.con.ab$weight

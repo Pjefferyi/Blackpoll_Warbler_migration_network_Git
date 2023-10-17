@@ -13,7 +13,7 @@ library(sf)
 library(maptools)
 library(ebirdst)
 
-source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis/Geolocator_analysis_helper_functions.R")
+source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis_helper_functions.R")
 
 # Import data ##################################################################
 
@@ -160,25 +160,9 @@ fall.stat <- merge(fall.stat, fall.timings.nb, by = "geo_id")
 fall.stat <- fall.stat %>% group_by(geo_id) %>% filter(StartTime <= NB.first.site.arrival) %>% group_by(geo_id) %>% 
   filter(distHaversine(cbind(Lon.50.,Lat.50.), cbind(deploy.longitude, deploy.latitude)) > 250000)
 
-# # Uncomment this code to generate clusters using the hclust function
-# 
-# # code by stack overflow user jlhoward (https://stackoverflow.com/questions/21095643/approaches-for-spatial-geodesic-latitude-longitude-clustering-in-r-with-geodesic)
-# # Calculates the geodesic distance between points and creates a distance matrix
-# geo.dist = function(df) {
-#   require(geosphere)
-#   d <- function(i,z){         # z[1:2] contain long, lat
-#     dist <- rep(0,nrow(z))
-#     dist[i:nrow(z)] <- distHaversine(z[i:nrow(z),1:2],z[i,1:2])
-#     return(dist)
-#   }
-#   dm <- do.call(cbind,lapply(1:nrow(df),d,df))
-#   return(as.dist(dm))
-# }
-# 
-# dist.matrix <- geo.dist(fall.stat[,c("Lon.50.","Lat.50.")])
-# fall.clust <- hclust(dist.matrix)
-# plot(fall.clust)
-# fall.stat$cluster  <- cutree(fall.clust, k = 18)
+# # Uncomment this code to generate clusters using the pam function
+# cluster.data <- clusterLocs(locs = fall.stat, maxdiam = 700)
+# fall.stat$cluster <- cluster.data$clusters
 
 # # Export fall stopovers for manual clustering in QGIS
 # fall.stat.sites <- st_as_sf(fall.stat[,1:12], coords = c("Lon.50.", "Lat.50."))
@@ -191,7 +175,7 @@ fall.manual.cluster <- fall.manual.cluster %>% rename(cluster = Cluster, cluster
   mutate(cluster.region= as.factor(cluster.region)) %>%
   mutate(cluster = as.numeric(cluster.region))
 
-# Merge cluster info with original dataset
+# Merge manual cluster info with original dataset
 fall.stat <- merge(fall.stat, fall.manual.cluster[,c("geo_id", "sitenum", "cluster", "cluster.region")], by = c("geo_id", "sitenum"))
 
 # Add breeding sites with separate clusters
@@ -229,12 +213,12 @@ ggplot(st_as_sf(wrld_simpl))+
   theme_bw() +
   theme(text = element_text(size = 16), legend.position = "None")
 
-# Optional: add edge from nonbreeding site back to the breeding site of origin
-fall.breed.return <- fall.breed %>% group_by(geo_id) %>%
-  mutate(sitenum = max(fall.stat[(fall.stat$geo_id == geo_id),]$sitenum))
-fall.breed.return[,c("StartTime", "EndTime", "duration")] <- NA
-fall.breed.return[,c("period")] <- "Post-breeding migration"
-fall.stat <- bind_rows(fall.stat, fall.breed.return) %>% arrange(geo_id, sitenum)
+#Optional: add edge from nonbreeding site back to the breeding site of origin
+# fall.breed.return <- fall.breed %>% group_by(geo_id) %>%
+#   mutate(sitenum = max(fall.stat[(fall.stat$geo_id == geo_id),]$sitenum))
+# fall.breed.return[,c("StartTime", "EndTime", "duration")] <- NA
+# fall.breed.return[,c("period")] <- "Post-breeding migration"
+# fall.stat <- bind_rows(fall.stat, fall.breed.return) %>% arrange(geo_id, sitenum)
 
 # Generate the network from our location data and clusters #####################
 
@@ -295,8 +279,8 @@ meta.fall <- data.frame("vertex" = seq(1, max(fall.edge.df$cluster)),
                    "node.type.num" = fall.node.type$site_type_num)
 
 # For fall nodes where latitudinal accuracy is low, set location close to the coast
-meta.fall[c(8, 21, 14),]$Lat.50. <- c(36, 42, 44.4)
-
+ meta.fall[c(8, 21, 14),]$Lat.50. <- c(36, 42, 44.4)
+ 
 fall.location <- as.matrix(meta.fall[, c("Lon.50.", "Lat.50.")])
 
 # Create the fall network
@@ -359,37 +343,23 @@ spring.stat <- merge(spring.stat, spring.timings.nb, by = "geo_id")
 spring.stat <- spring.stat %>% group_by(geo_id) %>% filter(StartTime >= NB.last.site.arrival) %>% group_by(geo_id) %>% 
   filter(distHaversine(cbind(Lon.50.,Lat.50.), cbind(deploy.longitude, deploy.latitude)) > 250000)
 
-# # code by stack overflow user jlhoward (https://stackoverflow.com/questions/21095643/approaches-for-spatial-geodesic-latitude-longitude-clustering-in-r-with-geodesic)
-# # Calculates the geodesic distance between points and creates a distance matrix
-# geo.dist = function(df) {
-#   require(geosphere)
-#   d <- function(i,z){         # z[1:2] contain long, lat
-#     dist <- rep(0,nrow(z))
-#     dist[i:nrow(z)] <- distHaversine(z[i:nrow(z),1:2],z[i,1:2])
-#     return(dist)
-#   }
-#   dm <- do.call(cbind,lapply(1:nrow(df),d,df))
-#   return(as.dist(dm))
-# }
-# 
-# dist.matrix <- geo.dist(spring.stat[,c("Lon.50.","Lat.50.")])
-# spring.clust <- hclust(dist.matrix)
-# plot(spring.clust)
-# spring.stat$cluster  <- cutree(spring.clust, k = 16)
+# Uncomment this code to generate clusters using the pam function
+cluster.data <- clusterLocs(locs = spring.stat, maxdiam = 700)
+spring.stat$cluster <- cluster.data$clusters
 
 # # export spring stat sites for manual clustering
 # spring.stat.sites <- st_as_sf(spring.stat[,1:12], coords = c("Lon.50.", "Lat.50."))
 # st_crs(spring.stat.sites) <- st_crs(wrld_simpl)
 # st_write(spring.stat.sites, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/Layers/spring_stat_sitesV2.shp", append = F)
 
-# Import clusters created manually
-spring.manual.cluster <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/Tables/Spring_manual_clusters_V2.csv")
-spring.manual.cluster <- spring.manual.cluster %>% rename(cluster = Cluster, cluster.region = ClusterReg) %>%
-  mutate(cluster.region= as.factor(cluster.region)) %>%
-  mutate(cluster = as.numeric(cluster.region))
-
-# Merge cluster info with original dataset
-spring.stat <- merge(spring.stat, spring.manual.cluster[,c("geo_id", "sitenum", "cluster", "cluster.region")], by = c("geo_id", "sitenum"))
+# # Import clusters created manually
+# spring.manual.cluster <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/Tables/Spring_manual_clusters_V2.csv")
+# spring.manual.cluster <- spring.manual.cluster %>% rename(cluster = Cluster, cluster.region = ClusterReg) %>%
+#   mutate(cluster.region= as.factor(cluster.region)) %>%
+#   mutate(cluster = as.numeric(cluster.region))
+# 
+# # Merge manual cluster info with original dataset
+# spring.stat <- merge(spring.stat, spring.manual.cluster[,c("geo_id", "sitenum", "cluster", "cluster.region")], by = c("geo_id", "sitenum"))
 
 # Add breeding sites with separate clusters
 spring.breed.n <- geo.all  %>% filter(site_type == "Breeding",
@@ -427,11 +397,11 @@ ggplot(st_as_sf(wrld_simpl))+
   theme(text = element_text(size = 16), legend.position = "None")
 
 # Optional: add edge from nonbreeding site back to the breeding site of origin
-spring.breed.return <- spring.breed %>% group_by(geo_id) %>%
-  mutate(sitenum = 1)
-spring.breed.return[,c("StartTime", "EndTime", "duration")] <- NA
-spring.breed.return[,c("period")] <- "Pre-breeding migration"
-spring.stat <- bind_rows(spring.stat, spring.breed.return) %>% arrange(geo_id, sitenum)
+# spring.breed.return <- spring.breed %>% group_by(geo_id) %>%
+#   mutate(sitenum = 1)
+# spring.breed.return[,c("StartTime", "EndTime", "duration")] <- NA
+# spring.breed.return[,c("period")] <- "Pre-breeding migration"
+# spring.stat <- bind_rows(spring.stat, spring.breed.return) %>% arrange(geo_id, sitenum)
 
 # Generate the network from our location data and clusters #####################
 
@@ -864,9 +834,9 @@ plot(fall.graph.weighed.ab, vertex.size = 400, vertex.size2 = 200,
      layout = fall.location, rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), vertex.label = NA, vertex.label.dist = 30, add = T)
 
-legend("bottomleft", title = as.expression(bquote(bold("Breeding range region"))), legend = c("Western", "Central", "Eastern"),
-       col = reg.ab.palette[[1]],
-       pch = 15, cex = 1, box.lwd = 0)
+# legend("bottomleft", title = as.expression(bquote(bold("Breeding range region"))), legend = c("Western", "Central", "Eastern"),
+#        col = c( "#0072B2","#D55E00", "#009E73"), #reg.ab.palette[[1]],
+#        pch = 15, cex = 1, box.lwd = 0)
 
 ################################################################################
 # Population proportion by site during the spring season 
