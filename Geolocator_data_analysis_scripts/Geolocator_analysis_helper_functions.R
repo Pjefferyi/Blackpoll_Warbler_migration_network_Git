@@ -9,6 +9,7 @@ library(remotes)
 library(anytime)
 library(lubridate)
 library(ebirdst)
+library(igraph)
 
 #load spatial packages 
 library(ggmap)
@@ -143,7 +144,8 @@ findLocData <- function(geo.ids = NULL, check_col_length = F, edits = T){
   # We must detect any geolocators where the geolocator data was edited
   # based on the result of the light data analysis to detect carribean stopovers. 
   ref.data <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv")
-  with_edits = ref.data[(ref.data$spring_carrib_edits == T),]$geo.id
+  with_edits = ref.data[(ref.data$Fall_carrib_edits == T),]$geo.id
+  
   
   # If no vector of geo.ids was provided, extract data for all geolocators in dataset
   if (is.null(geo.ids)){
@@ -154,9 +156,9 @@ findLocData <- function(geo.ids = NULL, check_col_length = F, edits = T){
   if (check_col_length == T){
     for (i in seq(1:length(folder_paths))){
       if (geo_names[i] %in% with_edits & geo_names[i] %in% geo.ids){
-        file_path <- paste0(folder_paths[i], "/",geo_names[i],"_SGAT_GroupedThreshold_summary_spring_edit.csv")
+        file_path <- paste0(folder_paths[i], "/",geo_names[i],"_SGAT_GroupedThreshold_summary_fall_edit.csv")
         load(file = file_path)
-        print(ncol(sm.spring.edit))
+        print(ncol(sm.fall.edit))
       }
       if (geo_names[i] %in% geo.ids){
         file_path <- paste0(folder_paths[i], "/",geo_names[i],"_SGAT_GroupedThreshold_summary.csv")
@@ -171,14 +173,16 @@ findLocData <- function(geo.ids = NULL, check_col_length = F, edits = T){
   for (i in seq(1:length(folder_paths))){
     # load the data from each file and add it to dataset if it is in geo_ids 
     if (geo_names[i] %in% geo.ids | is.null(geo.ids)){
-      # some of the data has edits during during the spring transoceanic flight
+      # some of the data has edits during during the fall transoceanic flight
       if (geo_names[i] %in% with_edits & edits == T){
-        file_path <- paste0(folder_paths[i], "/",geo_names[i],"_SGAT_GroupedThreshold_summary_spring_edit.csv")
+        file_path <- paste0(folder_paths[i], "/",geo_names[i],"_SGAT_GroupedThreshold_summary_fall_edit.csv")
         load(file = file_path)
-        location_set <- rbind(location_set, sm.spring.edit)
+        print(file_path)
+        location_set <- rbind(location_set, sm.fall.edit)
       } else {
         file_path <- paste0(folder_paths[i], "/",geo_names[i],"_SGAT_GroupedThreshold_summary.csv")
         load(file = file_path)
+        print(file_path)
         location_set <- rbind(location_set, sm)
       } 
     }
@@ -815,7 +819,7 @@ clusterLocs <- function(locs, maxdiam = 300){
 #                                    #"E",
 #                                    "D"), check_col_length = F)
 # 
-# # First extract stationary locations for the spring 
+# # First extract stationary locations for the fall
 # geo.all <- geo.all %>% group_by(geo_id) %>% mutate(site_type = case_when(
 #   (sitenum == 1 | sitenum == max(sitenum)) & Recorded_North_South_mig == "Both" ~ "Breeding",
 #   sitenum == 1 & Recorded_North_South_mig %in% c("South and partial North", "South" ) ~ "Breeding",
@@ -824,12 +828,12 @@ clusterLocs <- function(locs, maxdiam = 300){
 #   period == "Non-breeding period" & (duration >= 14 | sitenum == 1 | sitenum == max(sitenum)) ~ "Nonbreeding",
 #   .default = "Stopover"))
 # 
-# spring.stat <- geo.all %>% filter(sitenum > 0, site_type %in% c("Stopover","Nonbreeding"),
+# fall.stat <- geo.all %>% filter(sitenum > 0, site_type %in% c("Stopover","Nonbreeding"),
 #                                 period %in% c("Post-breeding migration","Non-breeding period"),
 #                                 Recorded_North_South_mig %in% c("Both", "South and partial North", "South"))
 # 
 # # Run clustering function
-# k <- clusterLocs(locs = spring.stat, maxdiam = 700)
+# k <- clusterLocs(locs = fall.stat, maxdiam = 700)
 
 # consensusCluster #############################################################
 
@@ -934,33 +938,33 @@ concensusCluster <- function(graph, thresh = 0.5, algiter = 100){
 
 # Test calls for consensusCluster ##############################################
   
-# Load spring data for use as an example 
-spring.graph <- read_graph("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/spring.graph.edge.list.txt", directed = TRUE)
-
-# Load spring graph node metadata 
-meta.spring.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/spring.node.metadata.csv")
-
-# Load spring graph edge weights
-spring.con.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/spring.edge.weights.csv")
-
-# Add weights to the spring graph, and convert the spring graph to an undirected graph 
-E(spring.graph)$weight <- spring.con.ab$weight
-undirected.spring.graph <- as.undirected(spring.graph, mode = "collapse",
-                                         edge.attr.comb = "sum")
-
-# Run concensusCluster function 
-cluster_output <- concensusCluster(graph = undirected.spring.graph, thresh = 0.5, algiter = 3000)
-comms <- cluster_output$`community structure`
-
-# plot concensus graph
-spring.comm.pal <- rainbow(length(seq(1, max(comms$membership))))
-
-plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),],
-     xlim = c(-165, -35), ylim = c(-10, 65), lwd = 0.5, col = "#F7F7F7")
-plot(spring.graph, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
-     edge.width = spring.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
-     layout = as.matrix(meta.spring.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
-     ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(spring.con.ab)),
-     vertex.color = spring.comm.pal[comms$membership], 
-     edge.color = adjustcolor("darkgray", alpha.f = 0.6), add = T)
+# # Load fall data for use as an example 
+# fall.graph <- read_graph("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/fall.graph.edge.list.txt", directed = TRUE)
+# 
+# # Load fall graph node metadata 
+# meta.fall.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/fall.node.metadata.csv")
+# 
+# # Load fall graph edge weights
+# fall.con.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/fall.edge.weights.csv")
+# 
+# # Add weights to the fall graph, and convert the fall graph to an undirected graph 
+# E(fall.graph)$weight <- fall.con.ab$weight
+# undirected.fall.graph <- as.undirected(fall.graph, mode = "collapse",
+#                                          edge.attr.comb = "sum")
+# 
+# # Run concensusCluster function 
+# cluster_output <- concensusCluster(graph = undirected.fall.graph, thresh = 0.5, algiter = 3000)
+# comms <- cluster_output$`community structure`
+# 
+# # plot concensus graph
+# fall.comm.pal <- rainbow(length(seq(1, max(comms$membership))))
+# 
+# plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),],
+#      xlim = c(-165, -35), ylim = c(-10, 65), lwd = 0.5, col = "#F7F7F7")
+# plot(fall.graph, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
+#      edge.width = fall.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
+#      layout = as.matrix(meta.fall.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
+#      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)),
+#      vertex.color = fall.comm.pal[comms$membership], 
+#      edge.color = adjustcolor("darkgray", alpha.f = 0.6), add = T)
 

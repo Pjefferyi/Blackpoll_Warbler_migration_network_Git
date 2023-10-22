@@ -66,7 +66,7 @@ geo.all <- findLocData(geo.ids = c("V8757_010",
                                    #"E",
                                    "D"), check_col_length = F)
 
-# Define nodes as breeding, stopover, or non-breeding ##########################
+# Define stationary periods as breeding, stopover, or non-breeding #############
 
 geo.all <- geo.all %>% group_by(geo_id) %>% mutate(site_type = case_when(
   (sitenum == 1 | sitenum == max(sitenum)) & Recorded_North_South_mig == "Both" ~ "Breeding",
@@ -192,7 +192,6 @@ fall.breed$cluster <- rep(seq(max(fall.stat$cluster) + 1, max(fall.stat$cluster)
 fall.stat <- bind_rows(fall.stat, fall.breed) %>% arrange(geo_id, StartTime)
 
 # plot stopover and nonbreeding nodes
-
 ggplot(st_as_sf(wrld_simpl))+
   geom_sf(colour = "black", fill = "lightgray") +
   coord_sf(xlim = c(-170, -30),ylim = c(-15, 70)) +
@@ -279,7 +278,7 @@ meta.fall <- data.frame("vertex" = seq(1, max(fall.edge.df$cluster)),
                    "node.type.num" = fall.node.type$site_type_num)
 
 # For fall nodes where latitudinal accuracy is low, set location close to the coast
- meta.fall[c(8, 21, 14),]$Lat.50. <- c(36, 42, 44.4)
+meta.fall[c(8, 21, 14),]$Lat.50. <- c(36, 42, 44.4)
  
 fall.location <- as.matrix(meta.fall[, c("Lon.50.", "Lat.50.")])
 
