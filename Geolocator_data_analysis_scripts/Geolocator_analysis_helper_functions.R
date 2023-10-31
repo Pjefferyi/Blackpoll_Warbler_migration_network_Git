@@ -9,7 +9,6 @@ library(remotes)
 library(anytime)
 library(lubridate)
 library(ebirdst)
-library(igraph)
 
 #load spatial packages 
 library(ggmap)
@@ -53,7 +52,7 @@ thresholdOverLight <- function(data, threshold, span = c()){
 # Shift time recordings  #######################################################
 
 # Function to identify the span of a time shift in a geolocator relative to the 
-# expect Greenwich Mean time
+# expected Greenwich Mean time
 
 # This function works by finding the difference between noon (or midnight) 
 # in the times recorded by the geolocator in the breeding grounds, and the expected times
@@ -146,7 +145,6 @@ findLocData <- function(geo.ids = NULL, check_col_length = F, edits = T){
   ref.data <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv")
   with_edits = ref.data[(ref.data$Fall_carrib_edits == T),]$geo.id
   
-  
   # If no vector of geo.ids was provided, extract data for all geolocators in dataset
   if (is.null(geo.ids)){
     geo.ids = unique(ref.data$geo.id)
@@ -177,12 +175,10 @@ findLocData <- function(geo.ids = NULL, check_col_length = F, edits = T){
       if (geo_names[i] %in% with_edits & edits == T){
         file_path <- paste0(folder_paths[i], "/",geo_names[i],"_SGAT_GroupedThreshold_summary_fall_edit.csv")
         load(file = file_path)
-        print(file_path)
         location_set <- rbind(location_set, sm.fall.edit)
       } else {
         file_path <- paste0(folder_paths[i], "/",geo_names[i],"_SGAT_GroupedThreshold_summary.csv")
         load(file = file_path)
-        print(file_path)
         location_set <- rbind(location_set, sm)
       } 
     }
@@ -641,7 +637,7 @@ runGeoScripts <- function(scripts = c()){
 paths <- list.files("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis",
                     pattern = "LLG_analysis", recursive = T, full.names = T)
 
-#runGeoScripts(scripts = paths[36:length(paths)])
+#runGeoScripts(scripts = paths[27:length(paths)])
 
 # insertLoc ####################################################################
 
@@ -711,7 +707,6 @@ clusterLocs <- function(locs, maxdiam = 300){
   # maxdiam: the maximum diameter of clusters (measured as the mean distance between the two furthest location in each cluster) in km
   
   # function to Calculate the geodesic distance between points and creates a distance matrix
-  # function developed by stack overflow user jlhoward (https://stackoverflow.com/questions/21095643/approaches-for-spatial-geodesic-latitude-longitude-clustering-in-r-with-geodesic)
   geo.dist = function(df) {
     require(geosphere)
     d <- function(i,z){         # z[1:2] contain long, lat
@@ -765,7 +760,7 @@ clusterLocs <- function(locs, maxdiam = 300){
     k = k + 1 
   }
   
-  return(list("k" = k-1, "clusters" = clust))
+  return(list(clusters = clust, k = k-1))
 }
 
 # test cases for clusterlocs ###################################################
@@ -819,7 +814,7 @@ clusterLocs <- function(locs, maxdiam = 300){
 #                                    #"E",
 #                                    "D"), check_col_length = F)
 # 
-# # First extract stationary locations for the fall
+# # First extract stationary locations for the fall 
 # geo.all <- geo.all %>% group_by(geo_id) %>% mutate(site_type = case_when(
 #   (sitenum == 1 | sitenum == max(sitenum)) & Recorded_North_South_mig == "Both" ~ "Breeding",
 #   sitenum == 1 & Recorded_North_South_mig %in% c("South and partial North", "South" ) ~ "Breeding",
@@ -837,10 +832,10 @@ clusterLocs <- function(locs, maxdiam = 300){
 
 # consensusCluster #############################################################
 
- # Input graph must be weighed and undirected 
+# Input graph must be weighed and undirected 
 
 concensusCluster <- function(graph, thresh = 0.5, algiter = 100){
- 
+  
   ############################### Part 1 #########################################
   
   # Function to run the algorithm on the network n times 
@@ -863,7 +858,7 @@ concensusCluster <- function(graph, thresh = 0.5, algiter = 100){
   }
   
   comb <- runAlg(iterations = algiter, i.graph = as.undirected(graph))  
- 
+  
   ############################## Part 2 ##########################################
   rows <- list()
   
@@ -933,11 +928,12 @@ concensusCluster <- function(graph, thresh = 0.5, algiter = 100){
   }
   
   return(list("community structure" = comms.f <- cluster_label_prop(iter.graph),
-              "iterations" = iter))
+              "iterations" = iter,
+         "iteration matrix" = comb))
 }
 
 # Test calls for consensusCluster ##############################################
-  
+
 # # Load fall data for use as an example 
 # fall.graph <- read_graph("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/fall.graph.edge.list.txt", directed = TRUE)
 # 
@@ -967,4 +963,3 @@ concensusCluster <- function(graph, thresh = 0.5, algiter = 100){
 #      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)),
 #      vertex.color = fall.comm.pal[comms$membership], 
 #      edge.color = adjustcolor("darkgray", alpha.f = 0.6), add = T)
-

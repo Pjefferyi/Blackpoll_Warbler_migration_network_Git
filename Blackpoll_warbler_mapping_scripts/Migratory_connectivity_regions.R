@@ -38,20 +38,19 @@ ggplot(st_as_sf(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenl
   xlab("Longitude")+
   ylab("Latitude")
 
-
 # Plot of nonbreeding regions ####
 
-# Load the nonbreeding regions  
-fall.nbr.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/NonbreedingregionsV3.shp") %>%
-  st_transform(crs(wrld_simpl))%>%
-  st_cast("MULTIPOLYGON")
+# # Load the nonbreeding regions
+# fall.nbr.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/NonbreedingregionsV3.shp") %>%
+#   st_transform(crs(wrld_simpl))%>%
+#   st_cast("MULTIPOLYGON")
 
-# Get the first nonbreeding site of every bird 
-fall.nbr <- fall.stat.ab %>% group_by(geo_id) %>% 
-  filter(sitenum == max(sitenum), !is.na(StartTime), !is.na(EndTime)) %>%
-  arrange(geo_id) 
+# Get the first nonbreeding site of every bird
+fall.nbr <- geo.all %>% group_by(geo_id) %>%
+  filter(period == "Non-breeding period", duration == max(duration), !is.na(StartTime), !is.na(EndTime)) %>%
+  arrange(geo_id)
 
-# Create the plot 
+# Create the plot in base R
 plot(as_Spatial(fall.nbr.regions), col = adjustcolor(c("lightblue", "orange"), alpha = 0.8), lwd = 0.5,
      xlim = c(-90, -30), ylim = c(-10, 15))
 
@@ -65,12 +64,14 @@ points(fall.nbr$Lon.50., fall.nbr$Lat.50., pch = 1, cex = 2, col = "black")
 # Create the plot in ggplot
 ggplot(st_as_sf(wrld_simpl))+
   geom_sf(colour = "black", fill = "lightgray") +
-  geom_sf(data = fall.nbr.regions, aes(fill = region), alpha = 0.8)+
-  scale_fill_discrete(name = "Nonbreeding \n regions")+
+  geom_sf(data = fall.nbr.regions, aes(fill = region), alpha = 0.5)+
+  scale_fill_manual(name = "Nonbreeding \n regions", values = adjustcolor(c("red", "lightblue"))) +
   coord_sf( xlim = c(-90, -30), ylim = c(-10, 15)) +
-  geom_point(data = fall.nbr, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), col = "white", fill = "black", pch = 21) +
+  #geom_point(data = fall.nbr, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, shape = Range_region), fill = "black", col = "white", size = 5) +
+  scale_shape_manual(name = "Breeding \n regions", values = c(21, 22, 23))+
+  #geom_text(data = fall.nbr, mapping = aes(x = Lon.50., y = Lat.50., label = geo_id), col = "black", size = 3) +
   theme_bw() +
-  theme(text = element_text(size = 16), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        panel.background = element_blank()) +
+ theme(text = element_text(size = 16), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+         panel.background = element_blank(), legend.key= element_rect(fill="transparent")) +
   xlab("Longitude")+
   ylab("Latitude")

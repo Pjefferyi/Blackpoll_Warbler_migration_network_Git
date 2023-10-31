@@ -18,9 +18,9 @@ library(qgraph)
 
 # analyses of network communities 
 library(clustAnalytics)
+library(robin)
 
 source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Network_construction.R")
-
 
 # NOTE: THIS SCRIPT IS OPTIMIZED FOR DATA FROM THE FILE: Geolocator_analysis_V3_BI_mask
 
@@ -308,6 +308,24 @@ plot(fall.graph.weighed.ab, vertex.label = NA, vertex.size = 200, vertex.size2 =
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)),
      vertex.color = fall.comm.pal[fall.communities.louvain$membership], add = T)
 
+### community detection using the leiden algorithm -----------
+fall.communities.leiden <- cluster_leiden(graph = undirected.fall.graph, resolution = 0.005)
+
+meta.fall.ab$community <- fall.communities.leiden$membership
+
+# plot communities
+plot(fall.communities.leiden, undirected.fall.graph)
+
+# plot communities on map
+fall.comm.pal <- rainbow(length(seq(1, max(fall.communities.leiden$membership))))
+
+plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70))
+plot(fall.graph.weighed.ab, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
+     edge.width = fall.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
+     layout = as.matrix(meta.fall.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
+     ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)),
+     vertex.color = fall.comm.pal[fall.communities.leiden$membership], add = T)
+
 ### Community detection using the algorithm developed by lancichinetti and Fortunato (https://www.nature.com/articles/srep00336) ----
 E(fall.graph)$weight <- fall.con.ab$weight
 undirected.fall.graph <- as.undirected(fall.graph, mode = "collapse",
@@ -353,7 +371,29 @@ title(main = 'Bridge strength', cex.main = 0.9, line  = 0.8)
 text(x= 1.25, y = seq(0,1,l=5), labels = round(seq(0,max(bridge.c$`Bridge Strength`),l=5), digits = 1), cex = 1)
 rasterImage(legend_image, 0.75, 0, 1,1)
 
-### Assess model significance with clustanalytics ----
+### Assess cluster significance with robin ----
+
+# # Create random graph
+# graphRandom <- random(graph = undirected.fall.graph)
+# 
+# # Use concensusClusterMod helper function
+# proc <- robinRobust(graph=undirected.fall.graph, graphRandom=graphRandom, measure="vi",
+#                     method="other", FUN = concensusClusterMod, type="independent", weights = E(undirected.fall.graph)$weight)
+# 
+# plotRobin(graph=undirected.fall.graph, model1=proc$Mean, model2=proc$MeanRandom,
+#           legend=c("real data", "null model"))
+
+# Create random graph
+graphRandom <- random(graph = x)
+
+# Use concensusClusterMod helper function
+proc <- robinRobust(graph=x, graphRandom=graphRandom, measure="vi",
+                    method= "labelProp", type="independent", weights = E(x)$weight)
+
+plotRobin(graph=x, model1=proc$Mean, model2=proc$MeanRandom,
+          legend=c("real data", "null model"))
+
+### Assess cluster significance with clustanalytics ----
 
 # create multiple rewired versions of the network, apply the clustering method, then calculate scoring functions 
 
@@ -364,7 +404,7 @@ rand.data = NULL
 for (i in seq(1,iter)){
   
   # Create randomized graph
-  rewire.fall <- rewireCpp(g = undirected.fall.graph, weight_sel="max_weight", Q = 10)
+  rewire.fall <- rewireCpp(g = undirected.fall.graph, weight_sel="max_weight", Q = 1)
   
   # cluster analysis
   rewire.cluster <- concensusCluster(graph = undirected.fall.graph, thresh = 0.5, algiter = 3000)
@@ -396,7 +436,8 @@ for (i in seq(1, length(colnames(rand.data)))){
   
   score.test[i,"score.function"] <- colnames(rand.data)[i]
   score.test[i,"observed.score"] <- ob.score[,i]
-  score.test[i,"random.function.mean"] <- mean (rand.data[,i], na.rm = T)
+  score.test[i,"random.function.mean"] <- mean(rand.data[,i], na.rm = T)
+  score.test[i, "random.function.se"] <- sd(rand.data[,i], na.rm = T)/sqrt(length(rand.data[,i][!is.na(rand.data[,i])]))
   score.test[i,"statistic"] <- test.results$statistic
   score.test[i,"parameter"] <- test.results$parameter
   score.test[i,"p-value"] <- test.results$p.value
@@ -405,30 +446,17 @@ for (i in seq(1, length(colnames(rand.data)))){
     score.test[i,"score.function"] <- colnames(rand.data)[i]
     score.test[i,"observed.score"] <- ob.score[,i]
     score.test[i,"random.function.mean"] <- mean (rand.data[,i])
+    score.test[i, "random.function.se"] <- sd(rand.data[,i], na.rm = T)/sqrt(length(rand.data[,i][!is.na(rand.data[,i])]))
     score.test[i,"statistic"] <- NA
     score.test[i,"parameter"] <- NA
     score.test[i,"p-value"] <- NA
   }
 }
 
+boot_alg_list(g = undirected.fall.graph)
 
-boot_alg_list(g= undirected.fall.graph, return_data=FALSE, R=999,
-              alg_list=list(Louvain=cluster_louvain, 
-                            "label prop"= cluster_label_prop, 
-                            walktrap=cluster_walktrap)) 
-
-rewire.fall <- rewireCpp(g = undirected.fall.graph, weight_sel="max_weight")
-
-boot_alg_list(g= rewire.fall , return_data=FALSE, R=999,
-              alg_list=list(Louvain=cluster_louvain, 
-                            "label prop"= cluster_label_prop, 
-                            walktrap=cluster_walktrap)) 
-
-evaluate_significance_r(undirected.fall.graph)
-evaluate_significance(rewire.fall)
-
-#scoring_functions(undirected.fall.graph, com = comms$membership, weighted =T, type = "global")
-#scoring_functions(rewire.fall, com = concensusCluster(rewire.fall)$`community structure`$membership, weighted =T, type = "global")
+# export test results 
+write.csv(score.test, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Analysis_outuputs/fall_network_community_scoring_functions_test.csv")
 
 ### Time spent in each node during the fall ---
 
@@ -807,6 +835,67 @@ title(main = 'Bridge betweenness', cex.main = 0.9, line  = 0.8)
 text(x= 1.25, y = seq(0,1,l=5), labels = round(seq(0,max(bridge.c$`Bridge Betweenness`),l=5), digits = 1), cex = 1)
 rasterImage(legend_image, 0.75, 0, 1,1)
 
+### Assess cluster significance with clustanalytics ----
+
+# create multiple rewired versions of the network, apply the clustering method, then calculate scoring functions 
+
+iter = 100
+
+rand.data = NULL
+
+for (i in seq(1,iter)){
+  
+  # Create randomized graph
+  rewire.spring <- rewireCpp(g = undirected.spring.graph, weight_sel="max_weight", Q = 1)
+  
+  # cluster analysis
+  rewire.cluster <- concensusCluster(graph = undirected.spring.graph, thresh = 0.5, algiter = 3000)
+  rewire.comms <- rewire.cluster$`community structure`$membership
+  
+  # calculate scoring function
+  rewire.score <- scoring_functions(rewire.spring, com = rewire.comms, weighted = T, type = "global")
+  
+  # Build data.frame with results 
+  if (is.null(rand.data)){
+    rand.data <- as.data.frame(rewire.score)
+  }else{
+    rand.data <-rbind(rand.data,  as.data.frame(rewire.score))
+  }
+  
+  print(paste0("progress: ", as.character(i), " to ", as.character(iter)))
+}
+
+# test whether scoring functions differ between the observed and randomized networks
+score.test <- as.data.frame(NULL)
+
+# scoring functions for the observed graph
+ob.score <- as.data.frame(scoring_functions(undirected.spring.graph, comms$membership, type = "global"))
+
+for (i in seq(1, length(colnames(rand.data)))){
+  
+  if (!(i %in% c(13, 15))){
+    test.results <- t.test(rand.data[,i], mu = ob.score[,i])
+    
+    score.test[i,"score.function"] <- colnames(rand.data)[i]
+    score.test[i,"observed.score"] <- ob.score[,i]
+    score.test[i,"random.function.mean"] <- mean (rand.data[,i], na.rm = T)
+    score.test[i,"statistic"] <- test.results$statistic
+    score.test[i,"parameter"] <- test.results$parameter
+    score.test[i,"p-value"] <- test.results$p.value
+  }else{
+    
+    score.test[i,"score.function"] <- colnames(rand.data)[i]
+    score.test[i,"observed.score"] <- ob.score[,i]
+    score.test[i,"random.function.mean"] <- mean (rand.data[,i])
+    score.test[i,"statistic"] <- NA
+    score.test[i,"parameter"] <- NA
+    score.test[i,"p-value"] <- NA
+  }
+}
+
+# export test results 
+write.csv(score.test, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Analysis_outuputs/spring_network_community_scoring_functions_test.csv")
+
 ### Time spent in each node during the spring ---
 
 # Load edge metadata
@@ -883,3 +972,35 @@ plot(spring.graph, vertex.size = 200, vertex.size2 = 200, vertex.label= NA,
 # plot(NULL, xlim=c(0,length(COL)), ylim=c(0,1), 
 #      xlab="", ylab="", xaxt="n", yaxt="n")
 # rect(0:(length(COL)-1), 0, 1:length(COL), 1, col=COL)
+
+# mods = c()
+# 
+# for (i in seq(1,100)){
+# 
+# x <- rewire(undirected.fall.graph, with = keeping_degseq(niter = 100))
+# E(x)$weight <- sample(E(undirected.fall.graph)$weight, replace = FALSE)
+# 
+# y <- rewireCpp(g = undirected.fall.graph, Q = 1, weight_sel = "max_weight")
+# E(y)
+# 
+# x.cluster <- concensusCluster(graph = x, thresh = 0.5, algiter = 3000)
+# y.cluster <- concensusCluster(graph = y, thresh = 0.5, algiter = 3000)
+# undirected.fall.cluster <- concensusCluster(graph = undirected.fall.graph, thresh = 0.5, algiter = 3000)
+# 
+# plot(x, vertex.color = x.cluster$`community structure`$membership, layout = as.matrix(meta.fall.ab[, c("Lon.50.", "Lat.50.")]), edge.width = E(x)$weight*15)
+# plot(y, vertex.color = y.cluster$`community structure`$membership, layout = as.matrix(meta.fall.ab[, c("Lon.50.", "Lat.50.")]), edge.width = E(y)$weight*15)
+# plot(undirected.fall.graph, vertex.color = undirected.fall.cluster $`community structure`$membership, layout = as.matrix(meta.fall.ab[, c("Lon.50.", "Lat.50.")]))
+# 
+# strength(x)
+# strength(y)
+# strength(undirected.fall.graph)
+# 
+# mods[i] <- modularity(x, x.cluster$`community structure`$membership)
+# scoring_functions(x, x.cluster$`community structure`$membership, type = "global")
+# scoring_functions(y, y.cluster$`community structure`$membership, type = "global")
+# }
+# 
+# hist(mods, breaks = 10)
+# abline(v = ob.score$modularity, col = "blue")
+# abline (v = mean(mods), col = "red")
+# t.test(x = mods, mu = ob.score$modularity)

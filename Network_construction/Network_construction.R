@@ -157,26 +157,26 @@ fall.timings.nb <- geo.all %>% filter(NB_count == 1) %>% dplyr::select(NB.first.
 fall.stat <- merge(fall.stat, fall.timings.nb, by = "geo_id")
 
 #only retain the stopovers and the first nonbreeding sites occupied, and filter out stopovers that are within 250 km of breeding site 
-fall.stat <- fall.stat %>% group_by(geo_id) %>% filter(StartTime <= NB.first.site.arrival) %>% group_by(geo_id) %>% 
+fall.stat <- fall.stat %>% group_by(geo_id) %>% filter(StartTime <= NB.first.site.arrival) %>% group_by(geo_id)%>% 
   filter(distHaversine(cbind(Lon.50.,Lat.50.), cbind(deploy.longitude, deploy.latitude)) > 250000)
 
-# # Uncomment this code to generate clusters using the pam function
-# cluster.data <- clusterLocs(locs = fall.stat, maxdiam = 700)
-# fall.stat$cluster <- cluster.data$clusters
+# Uncomment this code to generate clusters using the pam function
+cluster.data <- clusterLocs(locs = fall.stat, maxdiam = 400)
+fall.stat$cluster <- cluster.data$clusters
 
 # # Export fall stopovers for manual clustering in QGIS
 # fall.stat.sites <- st_as_sf(fall.stat[,1:12], coords = c("Lon.50.", "Lat.50."))
 # st_crs(fall.stat.sites) <- st_crs(wrld_simpl)
 # st_write(fall.stat.sites, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/layers/fall_stat_sites5.shp", append=FALSE)
 
-# Import clusters created manually
-fall.manual.cluster <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/Tables/Fall_manual_clusters_conservativeV4.csv")
-fall.manual.cluster <- fall.manual.cluster %>% rename(cluster = Cluster, cluster.region = ClusterReg) %>%
-  mutate(cluster.region= as.factor(cluster.region)) %>%
-  mutate(cluster = as.numeric(cluster.region))
-
-# Merge manual cluster info with original dataset
-fall.stat <- merge(fall.stat, fall.manual.cluster[,c("geo_id", "sitenum", "cluster", "cluster.region")], by = c("geo_id", "sitenum"))
+# # Import clusters created manually
+# fall.manual.cluster <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/Tables/Fall_manual_clusters_conservativeV4.csv")
+# fall.manual.cluster <- fall.manual.cluster %>% rename(cluster = Cluster, cluster.region = ClusterReg) %>%
+#   mutate(cluster.region= as.factor(cluster.region)) %>%
+#   mutate(cluster = as.numeric(cluster.region))
+# 
+# # Merge manual cluster info with original dataset
+# fall.stat <- merge(fall.stat, fall.manual.cluster[,c("geo_id", "sitenum", "cluster", "cluster.region")], by = c("geo_id", "sitenum"))
 
 # Add breeding sites with separate clusters
 fall.breed.n <- geo.all  %>% filter(site_type == "Breeding",
@@ -278,7 +278,7 @@ meta.fall <- data.frame("vertex" = seq(1, max(fall.edge.df$cluster)),
                    "node.type.num" = fall.node.type$site_type_num)
 
 # For fall nodes where latitudinal accuracy is low, set location close to the coast
-meta.fall[c(8, 21, 14),]$Lat.50. <- c(36, 42, 44.4)
+#meta.fall[c(8, 21, 14),]$Lat.50. <- c(36, 42, 44.4)
  
 fall.location <- as.matrix(meta.fall[, c("Lon.50.", "Lat.50.")])
 
@@ -339,11 +339,11 @@ spring.timings.nb <- geo.all %>% group_by(geo_id) %>% filter(NB_count == max(NB_
 spring.stat <- merge(spring.stat, spring.timings.nb, by = "geo_id")
 
 #only retain the stopovers and the first nonbreeding sites occupied, and filter out stopovers that are within 250 km of breeding site 
-spring.stat <- spring.stat %>% group_by(geo_id) %>% filter(StartTime >= NB.last.site.arrival) %>% group_by(geo_id) %>% 
-  filter(distHaversine(cbind(Lon.50.,Lat.50.), cbind(deploy.longitude, deploy.latitude)) > 250000)
+spring.stat <- spring.stat %>% group_by(geo_id) %>% filter(StartTime >= NB.last.site.arrival) %>% group_by(geo_id)%>% 
+  filter(distHaversine(cbind(Lon.50.,Lat.50.), cbind(deploy.longitude, deploy.latitude)) > 250000 | geo_id == "WRMA04173")
 
 # Uncomment this code to generate clusters using the pam function
-cluster.data <- clusterLocs(locs = spring.stat, maxdiam = 700)
+cluster.data <- clusterLocs(locs = spring.stat, maxdiam = 400)
 spring.stat$cluster <- cluster.data$clusters
 
 # # export spring stat sites for manual clustering
@@ -772,7 +772,7 @@ fall.ab.by.origin <- fall.stat.ab %>% group_by(cluster, Range_region) %>%
 fall.ab.by.origin <- fall.ab.by.origin %>% pivot_wider(names_from = Range_region, values_from = region.ab.units) %>%
   rename(prop.ab.eastern = Eastern,
          prop.ab.central = Central,
-         prop.ab.west = West)
+         prop.ab.western = Western)
 
 # Merge abundance data with the node metadata
 meta.fall.ab <- merge(meta.fall, fall.ab.by.origin, by.x = "vertex", by.y = "cluster") 
@@ -784,7 +784,7 @@ fall.stat.ab.per.site <- fall.stat.ab %>% group_by(cluster) %>%
 meta.fall.ab <- merge(meta.fall.ab, fall.stat.ab.per.site, by.x = "vertex", by.y = "cluster")
 
 #create a column that can be converted to a numeric vector
-meta.fall.ab <- transform(meta.fall.ab, num.reg.ab.vector = asplit(cbind(prop.ab.central, prop.ab.eastern, prop.ab.west), 1))
+meta.fall.ab <- transform(meta.fall.ab, num.reg.ab.vector = asplit(cbind(prop.ab.central, prop.ab.eastern, prop.ab.western), 1))
 
 # Plot of proportional node use during the fall migration 
 
@@ -792,18 +792,18 @@ meta.fall.ab <- transform(meta.fall.ab, num.reg.ab.vector = asplit(cbind(prop.ab
 meta.fall.ab <- meta.fall.ab %>% rowwise() %>%
   mutate(shape_single = length(which(c(prop.ab.central, 
                                 prop.ab.eastern, 
-                                prop.ab.west)==0))) %>%
+                                prop.ab.western)==0))) %>%
   ungroup() %>%
   mutate(shape_single = ifelse(shape_single == 2 & node.type != "Breeding", "circle", "none")) %>%
   mutate(shape_single_breeding = ifelse(node.type == "Breeding", "square", "none"))%>%
   mutate(shape_multiple = ifelse(shape_single == "none" & shape_single_breeding == "none", "pie", "none")) %>%
   mutate(shape_colour_single = case_when(shape_single != "none" & prop.ab.central != 0 ~ "#D55E00",
                                          shape_single != "none" & prop.ab.eastern != 0 ~ "#009E73",
-                                         shape_single != "none" & prop.ab.west != 0 ~ "#0072B2",
+                                         shape_single != "none" & prop.ab.western != 0 ~ "#0072B2",
                                          .default = NA)) %>%
   mutate(shape_colour_single_breeding = case_when(shape_single_breeding != "none" & prop.ab.central != 0 ~ "#D55E00",
                                          shape_single_breeding != "none" & prop.ab.eastern != 0 ~ "#009E73",
-                                         shape_single_breeding != "none" & prop.ab.west != 0 ~ "#0072B2",
+                                         shape_single_breeding != "none" & prop.ab.western != 0 ~ "#0072B2",
                                          .default = NA))
 
 # Create a palette for site use by range region  
@@ -852,7 +852,7 @@ spring.ab.by.origin <- spring.stat.ab %>% group_by(cluster, Range_region) %>%
 spring.ab.by.origin <- spring.ab.by.origin %>% pivot_wider(names_from = Range_region, values_from = region.ab.units) %>%
   rename(prop.ab.eastern = Eastern,
          prop.ab.central = Central,
-         prop.ab.west = West)
+         prop.ab.western = Western)
 
 # Merge abundance data with the node metadata
 meta.spring.ab <- merge(meta.spring, spring.ab.by.origin, by.x = "vertex", by.y = "cluster") 
@@ -864,7 +864,7 @@ spring.stat.ab.per.site <- spring.stat.ab %>% group_by(cluster) %>%
 meta.spring.ab <- merge(meta.spring.ab, spring.stat.ab.per.site, by.x = "vertex", by.y = "cluster")
 
 #create a column that can be converted to a numeric vector
-meta.spring.ab <- transform(meta.spring.ab, num.reg.ab.vector = asplit(cbind(prop.ab.central, prop.ab.eastern, prop.ab.west), 1))
+meta.spring.ab <- transform(meta.spring.ab, num.reg.ab.vector = asplit(cbind(prop.ab.central, prop.ab.eastern, prop.ab.western), 1))
 
 # Plot of proportional node use during the spring migration 
 
@@ -872,14 +872,14 @@ meta.spring.ab <- transform(meta.spring.ab, num.reg.ab.vector = asplit(cbind(pro
 meta.spring.ab <- meta.spring.ab %>% rowwise() %>%
   mutate(shape_single = length(which(c(prop.ab.central, 
                                        prop.ab.eastern, 
-                                       prop.ab.west)==0))) %>%
+                                       prop.ab.western)==0))) %>%
   ungroup() %>%
   mutate(shape_single = ifelse(shape_single == 2, "circle", "none")) %>%
   mutate(shape_single = ifelse(shape_single == "circle" & node.type == "Breeding", "csquare", shape_single))%>%
   mutate(shape_multiple = ifelse(shape_single == "none", "pie", "none")) %>%
   mutate(shape_colour_single = case_when(shape_single != "none" & prop.ab.central != 0 ~ "#D55E00",
                                          shape_single != "none" & prop.ab.eastern != 0 ~ "#009E73",
-                                         shape_single != "none" & prop.ab.west != 0 ~ "#0072B2",
+                                         shape_single != "none" & prop.ab.western != 0 ~ "#0072B2",
                                          .default = NA))
 
 # Create a palette for site use by range region  

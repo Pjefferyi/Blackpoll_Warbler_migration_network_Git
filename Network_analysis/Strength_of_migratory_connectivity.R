@@ -36,13 +36,13 @@ fall.br.sf <- st_as_sf(fall.br, coords = c("Lon.50.", "Lat.50."), crs = crs(wrld
 fall.br.sf <- st_transform(fall.br.sf, CRS(proj)) 
 
 # fall network nonbreeding points
-fall.nbr <- fall.stat.ab %>% group_by(geo_id) %>% 
-  filter(sitenum == max(sitenum), !is.na(StartTime), !is.na(EndTime)) %>%
+fall.nbr <- geo.all %>% group_by(geo_id) %>% 
+  filter(period == "Non-breeding period", duration == max(duration), !is.na(StartTime), !is.na(EndTime)) %>%
   arrange(geo_id) 
 
-fall.nbr.sf <- st_as_sf(fall.nbr, coords = c("Lon.50.", "Lat.50."), crs = crs(wrld_simpl))
+fall.nbr.sf <- st_as_sf(fall.nbr[, c("Lon.50.", "Lat.50.")], coords = c("Lon.50.", "Lat.50."), crs = crs(wrld_simpl))
 fall.nbr.sf <- st_transform(fall.nbr.sf, CRS(proj)) 
-#st_write(fall.nbr.sf, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/bpw_nbr_sites.shp", append = F)
+#st_write(fall.nbr.sf, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/bpw_nbr_sitesV2_trial2.shp", append = F)
 
 # Origin sites 
 fall.br.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Relative_abundance_propagation/bpw_abundance_regions_adjusted.shp") %>%
@@ -125,12 +125,11 @@ GL_psi <- estTransition(isGL=TRUE,
                         verbose = 2,
                         nSamples = nSamples,
                         resampleProjection = CRS(proj),
-                        maxTries = 10000)
+                        maxTries = 1000)
 
 # Save the output of estTransition
 #save(GL_psi, file = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_analysis/estTransition_ouput.R")
 #load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_analysis/estTransition_ouput.R")
-
 
 # Retrieve the relative abundance in each breeding site/region for the fall network ################################################################################
 
@@ -150,7 +149,8 @@ bpw.fall.ab <- load_raster("C:/Users/Jelan/OneDrive/Desktop/University/Universit
 # extract the relative abundance for each site 
 fall.br.site.ab <- terra::extract(bpw.fall.ab$breeding, fall.br.regions, fun = sum,
                              na.rm=TRUE, ID  = T) %>%
-  mutate(breeding = breeding/sum(breeding))
+  mutate(breeding = breeding/sum(breeding),
+         region = fall.br.regions$region)
   
 # Compute distance matrixes ####################################################
 fall.br.centroids <- centroid(as_Spatial(fall.br.regions))
