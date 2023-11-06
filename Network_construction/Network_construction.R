@@ -161,7 +161,7 @@ fall.stat <- fall.stat %>% group_by(geo_id) %>% filter(StartTime <= NB.first.sit
   filter(distHaversine(cbind(Lon.50.,Lat.50.), cbind(deploy.longitude, deploy.latitude)) > 250000)
 
 # Uncomment this code to generate clusters using the pam function
-cluster.data <- clusterLocs(locs = fall.stat, maxdiam = 400)
+cluster.data <- clusterLocs(locs = fall.stat, maxdiam = 600)
 fall.stat$cluster <- cluster.data$clusters
 
 # # Export fall stopovers for manual clustering in QGIS
@@ -343,7 +343,7 @@ spring.stat <- spring.stat %>% group_by(geo_id) %>% filter(StartTime >= NB.last.
   filter(distHaversine(cbind(Lon.50.,Lat.50.), cbind(deploy.longitude, deploy.latitude)) > 250000 | geo_id == "WRMA04173")
 
 # Uncomment this code to generate clusters using the pam function
-cluster.data <- clusterLocs(locs = spring.stat, maxdiam = 400)
+cluster.data <- clusterLocs(locs = spring.stat, maxdiam = 600)
 spring.stat$cluster <- cluster.data$clusters
 
 # # export spring stat sites for manual clustering
@@ -645,7 +645,7 @@ st_crs(breed.sites) <- st_crs(wrld_simpl)
 # st_write(breed.sites, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Relative_abundance_propagation/bpw_breeding_sites.shp")
 
 # import breeding regions polygon and join attributes with breeding site data 
-abundance.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Relative_abundance_propagation/bpw_abundance_regions.shp")
+abundance.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Relative_abundance_propagation/bpw_abundance_regions_adjusted.shp")
 abundance.regions <- st_join(abundance.regions, breed.sites)
 
 # import breeding season abundance data
@@ -659,10 +659,11 @@ bpw.fall.ab <- terra::project(bpw.fall.ab, crs(abundance.regions))
 # plot breeding regions, breeding sites/geolocator deployment sites, and abundance 
 # NOTE: the breeding site for WRMA04173 in Northern Quebec will only be used for the spring migration
 abundance.regions <- st_transform(abundance.regions , crs = crs(wrld_simpl))
-plot(bpw.fall.ab$breeding, xlim = c(-180, -30), ylim = c(30, 80))
-plot(as_Spatial(abundance.regions), col = NA, border = "darkred", add = T)
+plot(bpw.fall.ab$breeding, xlim = c(-180, -30), ylim = c(30, 80), legend = FALSE)
+plot(as_Spatial(abundance.regions), col = NA, border = "darkred", lwd = 3, add = T)
 plot(wrld_simpl[wrld_simpl$NAME %in% c("United States", "Canada"),], add = T)
-points(geo.breed$Lon.50., geo.breed$Lat.50., cex = 1, col = "blue", pch = 19)
+points(geo.breed[geo.breed$geo_id != "WRMA04173",]$Lon.50., geo.breed[geo.breed$geo_id != "WRMA04173",]$Lat.50., cex = 1, col = "black", pch = 19)
+#points(geo.breed$Lon.50., geo.breed$Lat.50., cex = 1, col = "black", pch = 19)
 
 # extract the abundance for each region,
 ab.extract <- terra::extract(bpw.fall.ab$breeding, abundance.regions, fun = sum, na.rm=TRUE)
@@ -683,9 +684,7 @@ ab.per.region <- merge(as.data.frame(abundance.regions), ab.extract, by.x = "geo
 # then create abundance units for each individual bird tracked in the fall
 # these units will be used to propagate the relative abundance from the breeding regions
 fall.breed.ab <- merge(fall.breed, dplyr::select(ab.per.region, geo_id, br.region.prop.total.population, br.polygon), by = "geo_id") %>%
-  group_by(br.polygon) %>% mutate(br.node.prop.total.population = br.region.prop.total.population/ n_distinct(study.site))%>%
-  ungroup() %>% group_by(study.site) %>%
-  mutate(ab.unit = br.node.prop.total.population/n_distinct(geo_id))
+  group_by(br.polygon) %>% mutate(ab.unit = br.region.prop.total.population/n_distinct(geo_id))
 
 #View(fall.breed.ab %>% dplyr::select(geo_id, StartTime, EndTime, Lon.50.,
 #                                      Lat.50., br.polygon,
@@ -724,9 +723,7 @@ legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
 # then create abundance units for each individual bird tracked in the spring
 # these units will be used to propagate the relative abundance from the breeding regions
 spring.breed.ab <- merge(spring.breed, dplyr::select(ab.per.region, geo_id, br.region.prop.total.population, br.polygon), by = "geo_id") %>%
-  group_by(br.polygon) %>% mutate(br.node.prop.total.population = br.region.prop.total.population/ n_distinct(study.site))%>%
-  ungroup() %>% group_by(study.site) %>%
-  mutate(ab.unit = br.node.prop.total.population/n_distinct(geo_id))
+  group_by(br.polygon) %>% mutate(ab.unit = br.region.prop.total.population/n_distinct(geo_id))
 
 # View(spring.breed.ab %>% dplyr::select(geo_id, StartTime, EndTime, Lon.50.,
 #                                      Lat.50., br.polygon,
