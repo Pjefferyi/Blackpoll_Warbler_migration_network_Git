@@ -157,7 +157,7 @@ alpha <- calib[3:4]
 geo_twl <- export2GeoLight(twl)
 
 # this is just to find places where birds have been for a long time, would not use these parameters for stopover identification, detailed can be found in grouped model section
-cL <- changeLight(twl=geo_twl, quantile=0.9, summary = F, days = 10, plot = T)
+cL <- changeLight(twl=geo_twl, quantile=0.86, summary = F, days = 10, plot = T)
 # merge site helps to put sites together that are separated by single outliers.
 mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = 1000)
 
@@ -187,7 +187,7 @@ z0 <- trackMidpts(x0_r)
 save(x0_r, file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
 
 # Check the following times of arrival and departure using a plot 
-arr.nbr <- "2018-10-20" 
+arr.nbr <- "2018-10-29" 
 dep.nbr <- "2019-04-28" 
 
 # open jpeg
@@ -218,7 +218,7 @@ zeniths0 <- zenith_twl_zero$zenith
 zenith_twl_med <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith,
                             Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith_sd,
-                            Date > anytime(dep.nbr) ~ zenith))
+                            Date > anytime(dep.nbr) ~ zenith_sd))
 
 zeniths_med <- zenith_twl_med$zenith
 
@@ -262,7 +262,7 @@ data(wrld_simpl)
 plot(x0, type = "n", xlab = "", ylab = "")
 plot(wrld_simpl, col = "grey95", add = T)
 
-points(path$x[500:702,], pch=19, col="cornflowerblue", type = "o")
+points(path$x, pch=19, col="cornflowerblue", type = "o")
 points(lon.calib, lat.calib, pch = 16, cex = 2.5, col = "firebrick")
 box()
 
@@ -336,7 +336,7 @@ geo_twl_adjusted <- export2GeoLight(twl_adjusted)
 cL <- changeLight(twl= geo_twl_adjusted, quantile= 0.7, summary = F, days = 2, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl_adjusted, site = cL$site, degElevation = 90-zenith, distThreshold = 500)
+mS <- mergeSites(twl = geo_twl_adjusted, site = cL$site, degElevation = 90-zenith, distThreshold = 250)
 
 #back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl_adjusted.rev <- data.frame(Twilight = as.POSIXct(geo_twl_adjusted[,1], geo_twl_adjusted[,2]), 
@@ -407,7 +407,7 @@ xlim <- range(x0[,1])+c(-5,5)
 ylim <- range(x0[,2])+c(-5,5)
 
 index <- ifelse(stationary, 1, 2)
-mask <- earthseaMask(xlim, ylim, n = 1, index=index)
+mask <- earthseaMask(xlim, ylim, n = 10, index=index)
 
 # We will give locations on land a higher prior 
 ## Define the log prior for x and z
@@ -423,9 +423,9 @@ model <- groupedThresholdModel(twl_adjusted$Twilight,
                                twilight.model = "ModifiedGamma",
                                alpha = alpha,
                                beta =  beta,
-                               x0 = x0, # median point for each greoup (defined by twl_adjusted$group)
+                               x0 = x0, # median point for each group (defined by twl_adjusted$group)
                                z0 = z0, # middle points between the x0 points
-                               zenith = zeniths0,
+                               zenith = zeniths0+1,
                                logp.x = logp,# land sea mask
                                fixedx = fixedx)
 
@@ -452,7 +452,7 @@ model <- groupedThresholdModel(twl_adjusted$Twilight,
                                x0 = x0, z0 = z0,
                                logp.x = logp,
                                missing=twl_adjusted$Missing,
-                               zenith = zeniths0,
+                               zenith = zeniths0+1,
                                fixedx = fixedx)
 
 for (k in 1:3) {
@@ -640,4 +640,17 @@ geo.ref[(geo.ref$geo.id == geo.id),]$Clock_drift_edits <- TRUE
 geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- arr.nbr
 geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- dep.nbr
 write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE) 
+
+
+
+
+
+
+
+
+
+
+
+
+
 

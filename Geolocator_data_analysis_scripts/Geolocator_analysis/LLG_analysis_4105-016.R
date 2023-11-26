@@ -185,7 +185,7 @@ end = max(which(as.Date(twl$Twilight) == endDate))
 # Alternative calibration is not necessary
 
 # adjust the zenith angles calculated from the breeding sites for the non-breeding sites
-zenith0_ad <- zenith0 + (zenith_sd - zenith)
+zenith0_ad <- zenith0 + abs(zenith_sd - zenith)
 zenith_ad  <- zenith_sd
 
 # Find approximate  timing of arrival and departure from the nonbreeding grounds 
@@ -198,7 +198,7 @@ z0 <- trackMidpts(x0_r)
 save(x0_r, file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
 
 # Check the following times of arrival and departure using a plot 
-arr.nbr <- "2016-10-12" 
+arr.nbr <- "2016-10-09" 
 dep.nbr <- "2017-05-24" 
 
 # open jpeg
@@ -222,16 +222,14 @@ dev.off()
 zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith0,
                             Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad,
-                            #Date > anytime(dep.nbr) ~ mean(c(zenith0, zenith0_ad))))
-                            Date > anytime(dep.nbr) ~ zenith0))
+                            Date > anytime(dep.nbr) ~ zenith0_ad))
 
 zeniths0 <- zenith_twl_zero$zenith
 
 zenith_twl_med <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith,
                             Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith_sd,
-                            #Date > anytime(dep.nbr) ~ mean(c(zenith, zenith_sd))))
-                            Date > anytime(dep.nbr) ~ zenith))
+                            Date > anytime(dep.nbr) ~ zenith_sd))
 
 zeniths_med <- zenith_twl_med$zenith
 
@@ -262,7 +260,7 @@ abline(v = spring.equi, col = "orange")
 dev.off()
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol=0.1)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol=0.08)
 
 #Adjusted tol until second stopover was located over North Carolina rather than further South. 
 x0 <- path$x
@@ -368,7 +366,7 @@ xlim <- range(x0[,1])+c(-5,5)
 ylim <- range(x0[,2])+c(-5,5)
 
 index <- ifelse(stationary, 1, 2)
-mask <- earthseaMask(xlim, ylim, n = 1, index=index)
+mask <- earthseaMask(xlim, ylim, n = 10, index=index)
 
 # We will give locations on land a higher prior 
 ## Define the log prior for x and z
@@ -478,6 +476,8 @@ text(sm[,"Lon.50."], sm[,"Lat.50."], ifelse(sitenum>0, as.integer(((sm$EndTime -
 #Show dates
 #text(sm[,"Lon.50."], sm[,"Lat.50."], ifelse(sitenum>0, as.character(sm$StartTime), ""), col="red", pos = 1) 
 
+points(dtx0[sitenum > 0,], pch = 16, cex = 1, col = "green")
+
 #Close jpeg
 dev.off()
 
@@ -548,6 +548,53 @@ save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 #load(file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))
 #load(file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 
+# Examine twilights during fall transoceanic flight ############################
+
+#load the adjusted threshold path path x0_ad
+load(file = paste0(dir,"/", geo.id, "adjusted_initial_path_raw.csv"))
+
+#Fall transoceanic flight
+start <- "2016-09-25"
+end <- "2016-11-01"
+
+#first flight
+f1.start <- "2016-10-10"
+f1.end <- "2016-10-11"
+
+#second flight
+f2.start <- "2016-10-19"
+f2.end <- "2016-10-21"
+
+# Plot lat, lon and light transitions  
+jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition.png"), width = 1024 , height = 990, quality = 100, res = 200)
+
+par(cex.lab=1.4)
+par(cex.axis=1.4)
+par(mfrow=c(3,1), mar = c(5,5,0.1,5))
+plot(lig$Date[lig$Date > start & lig$Date < end], lig$Light[lig$Date > start & lig$Date < end], type = "o",
+     ylab = "Light level", xlab = "Time")
+rect(anytime(f1.start), min(lig$Light)-2, anytime(f1.end), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime(f2.start), min(lig$Light)-2, anytime(f2.end), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
+
+plot(twl$Twilight[twl$Twilight> start & twl$Twilight < end], x0_ad[,1][twl$Twilight > start & twl$Twilight < end],
+     ylab = "Longitude", xlab = "Time")
+rect(anytime(f1.start), min(x0_ad[,1])-2, anytime(f1.end), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime(f2.start), min(x0_ad[,1])-2, anytime(f2.end), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
+
+plot(twl$Twilight[twl$Twilight > start & twl$Twilight < end], x0_ad[,2][twl$Twilight > start & twl$Twilight < end],
+     ylab = "Latitude", xlab = "Time")
+rect(anytime(f1.start), min(x0_ad[,2])-2, anytime(f1.end), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime(f2.start), min(x0_ad[,2])-2, anytime(f2.end), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
+par(cex.lab= 1)
+par(cex.axis= 1)
+
+dev.off()
+
+# The geolocator light recordings are very noisy, so it is difficult to say whether this bird made a stopover in the carribean. 
+# the light transitions suggest a stopover could have happened between October 9 and 21st 
+# but this contrasts with latitude measurements. 
+
+
 # Record details for the geolocator analysis ###################################
 geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
 geo.ref[(geo.ref$geo.id == geo.id),]$In_habitat_median_zenith_angle <- zenith
@@ -556,36 +603,3 @@ geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- arr.nbr
 geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- dep.nbr
 write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE) 
 
-# Examine twilights during fall transoceanic flight ############################
-
-# #load adjusted initial path x0
-# load(file = paste0(dir,"/", geo.id, "_initial_path.csv"))
-# 
-# #plot of light transitions during the fall migration 
-# par(mfrow=c(2,1))
-# plot(twl$Twilight[100:280], x0[100:280,1], type = "o", ylab = "longitude", xlab = "time")
-# plot(twl$Twilight[100:280], x0[100:280,2], type = "o", ylab = "latitude", xlab = "time")
-# 
-# plot(twl$Twilight, x0[,1], type = "o", ylab = "longitude", xlab = "time")
-# plot(twl$Twilight, x0[,2], type = "o", ylab = "latitude", xlab = "time")
-# 
-# #Plot light transitions during fall transoceanic flight
-# par(cex.lab=1.5)
-# par(cex.axis=1.5)
-# par(mfrow=c(3,1), mar = c(5,5,0.1,5))
-# plot(lig$Date[lig$Date < "2019-10-15" & lig$Date > "2019-09-15" ], lig$Light[lig$Date < "2019-10-15" & lig$Date > "2019-09-15" ], type = "o",
-#      ylab = "Light level", xlab = "Time")
-# rect(anytime("2019-09-27"), min(lig$Light)-2, anytime("2019-09-30"), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
-# rect(anytime("2019-10-03"), min(lig$Light)-2, anytime("2019-10-07"), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
-# 
-# plot(twl$Twilight[twl$Twilight< "2019-10-15" & twl$Twilight > "2019-09-15"], x0[,1][twl$Twilight< "2019-10-15" & twl$Twilight > "2019-09-15"],
-#      ylab = "Longitude", xlab = "Time")
-# rect(anytime("2019-09-27"), min(x0[,1])-2, anytime("2019-09-30"), max(x0[,1])+2, col = alpha("yellow", 0.2), lty=0)
-# rect(anytime("2019-10-03"), min(x0[,1])-2, anytime("2019-10-07"), max(x0[,1])+2, col = alpha("yellow", 0.2), lty=0)
-# 
-# plot(twl$Twilight[twl$Twilight< "2019-10-15" & twl$Twilight > "2019-09-15"], x0[,2][twl$Twilight< "2019-10-15" & twl$Twilight > "2019-09-15"],
-#      ylab = "Latitude", xlab = "Time")
-# rect(anytime("2019-09-27"), min(x0[,2])-2, anytime("2019-09-30"), max(x0[,2])+2, col = alpha("yellow", 0.2), lty=0) 
-# rect(anytime("2019-10-03"), min(x0[,2])-2, anytime("2019-10-07"), max(x0[,2])+2, col = alpha("yellow", 0.2), lty=0)
-# par(cex.axis=1.0)
-# par(cex.lab=1.0)

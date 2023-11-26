@@ -74,7 +74,7 @@ shiftSpan <- function(twl, lig, period, est.zenith, dep.lon, dep.lat){
     print("One or more days twilights are missing in twl")
     
   }
-
+  
   # # Sort the subset of data so that sunsrise is always reported before sunrise
   # # otherwise they may not match with the expected data 
   # ob_twl_sub <- ob_twl_sub[order(date(ob_twl_sub$Twilight), -ob_twl_sub$Rise),]
@@ -96,15 +96,15 @@ shiftSpan <- function(twl, lig, period, est.zenith, dep.lon, dep.lat){
   
   #There are some cases where we must change the subset of observed times
   if ((ob_twl_sub$Rise[1] == exp_twl_sub$rise[1] & exp_twl_sub$twilight[1] > exp_twl_sub$twilight[2])|
-    (ob_twl_sub$Rise[1] != exp_twl_sub$rise[1] & exp_twl_sub$twilight[1] < exp_twl_sub$twilight[2])){
-
-  # expected twilights must be adjusted
-  exp_twl_sub <- exp_twl_sub[-1,]
-
-  exp_twl_sub[nrow(exp_twl_sub) +1,] <- exp_twl[(exp_twl$twilight > period[2]),][1,]
-
-  # Else, if sunrise and sunset occur within the span of a single calendar day (based on GMT),
-  # we will calculate the shift using the timing of midnight
+      (ob_twl_sub$Rise[1] != exp_twl_sub$rise[1] & exp_twl_sub$twilight[1] < exp_twl_sub$twilight[2])){
+    
+    # expected twilights must be adjusted
+    exp_twl_sub <- exp_twl_sub[-1,]
+    
+    exp_twl_sub[nrow(exp_twl_sub) +1,] <- exp_twl[(exp_twl$twilight > period[2]),][1,]
+    
+    # Else, if sunrise and sunset occur within the span of a single calendar day (based on GMT),
+    # we will calculate the shift using the timing of midnight
   } 
   
   # Check that the two list of twilights are the same length 
@@ -133,7 +133,7 @@ shiftSpan <- function(twl, lig, period, est.zenith, dep.lon, dep.lat){
 # then the function will automatically extract the edited location data
 
 findLocData <- function(geo.ids = NULL, check_col_length = F, edits = T){
-
+  
   # Create a list of path to all files with location data
   folder_paths <- list.files("/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geolocator_data", full.names = T)
   geo_names <- list.files("/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geolocator_data")
@@ -186,7 +186,7 @@ findLocData <- function(geo.ids = NULL, check_col_length = F, edits = T){
   
   # Add reference data to location data 
   location_set <- merge(location_set, ref.data, by.x = "geo_id", by.y = "geo.id")
-
+  
   return(location_set)
 }
 
@@ -218,7 +218,7 @@ findThresLocData <- function(geo.ids = NULL){
   
   #load the geolocator reference data/metadata
   ref.data <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv")
-
+  
   # If no vector of geo.ids was provided, extract data for all geolocators in dataset
   if (is.null(geo.ids)){
     geo.ids = unique(ref.data$geo.id)
@@ -227,27 +227,27 @@ findThresLocData <- function(geo.ids = NULL){
   for (i in seq(1:length(folder_paths))){
     # load the data from each file and add it to dataset if it is in geo_ids 
     if (geo_names[i] %in% geo.ids | is.null(geo.ids)){
-        
-        print(geo_names[i])
       
-        #extract twilight and threshold location data 
-        thresloc.path <- paste0(folder_paths[i], "/",geo_names[i],"_initial_path_raw.csv")
-        twl.path <- paste0(folder_paths[i], "/",geo_names[i],"_twl_times.csv")
-        
-        load(file = thresloc.path)
-        twl <- read.csv(file = twl.path)
-        
-        # merge twilight data (for timing) with threshold location data 
-        time.loc.data <- cbind(twl[c("X", "Twilight")], as.data.frame(x0_r)) %>% 
-          mutate(geo_id = geo_names[i])
-        
-        location_set <- rbind(location_set, time.loc.data)
+      print(geo_names[i])
+      
+      #extract twilight and threshold location data 
+      thresloc.path <- paste0(folder_paths[i], "/",geo_names[i],"_initial_path_raw.csv")
+      twl.path <- paste0(folder_paths[i], "/",geo_names[i],"_twl_times.csv")
+      
+      load(file = thresloc.path)
+      twl <- read.csv(file = twl.path)
+      
+      # merge twilight data (for timing) with threshold location data 
+      time.loc.data <- cbind(twl[c("X", "Twilight")], as.data.frame(x0_r)) %>% 
+        mutate(geo_id = geo_names[i])
+      
+      location_set <- rbind(location_set, time.loc.data)
     }
   }
   
   # Add reference data 
   location_set <- merge(location_set, ref.data, by.x = "geo_id", by.y = "geo.id")
-    
+  
   return(location_set)
 }
 
@@ -270,7 +270,7 @@ plotLocVec <- function(data, stati_only = F, timing = c("Post-breeding migration
   
   # whether to use only stationary locations
   if (stati_only == T){
-  data <- data[(data$sitenum > 0),]
+    data <- data[(data$sitenum > 0),]
   }
   
   data <- data[(data$period %in% timing),]
@@ -287,9 +287,9 @@ plotLocVec <- function(data, stati_only = F, timing = c("Post-breeding migration
     theme(panel.grid.major = element_blank(),
           panel.grid.minor = element_blank()) +
     {if(legend ==  F)theme(legend.position = "none")}
-    
+  
 }
-    
+
 # Test calls  for mapLocData ###################################################
 
 # #call for all geolocators
@@ -457,7 +457,7 @@ earthseaMask <- function(xlim, ylim, n = 2, pacific=FALSE, index) {
   
   #load polygon of blackpoll's range
   load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Birdlife_int_Full_blackpoll_range_polygon.R")
-
+  
   #rasterize the polygon 
   range.raster <- rasterize(BLI.range.poly, rs)
   
@@ -498,13 +498,13 @@ earthseaMask2 <- function(xlim, ylim, pacific=FALSE, index, twl, res = "lr") {
                         product = "abundance",
                         period = "weekly",
                         resolution = res)
-
+  
   # names for each week as a number
   names(ab.ras) <- as.numeric(strftime(names(ab.ras), format = "%W"))
-
+  
   #project the abundance rasters
   ab.ras.pr <- terra::project(ab.ras, as.character(crs(wrld_simpl)))
-
+  
   values(ab.ras.pr)[is.nan(values(ab.ras.pr)) | values(ab.ras.pr) ==0 ] <- NA
   values(ab.ras.pr)[values(ab.ras.pr) > 0] <- 1
   
@@ -597,7 +597,7 @@ earthseaMask3 <- function(xlim, ylim, pacific=FALSE, index, twl, res = "lr", spa
     
     prior.list <- list()
     for (i in seq(1, length(t.code.list))){
-     prior.list <- append(prior.list, list(ab.arr[cbind(length(ybin)-.bincode(p[,2],ybin), .bincode(p[,1],xbin), t.code.list[[i]])]))
+      prior.list <- append(prior.list, list(ab.arr[cbind(length(ybin)-.bincode(p[,2],ybin), .bincode(p[,1],xbin), t.code.list[[i]])]))
     }
     
     ifelse(index == 1, 
@@ -628,9 +628,9 @@ runGeoScripts <- function(scripts = c()){
     if(script.name %in% scripts){
       print(i)
       source(i, local = F)
-      }
     }
   }
+}
 
 # Test calls to runGeoScripts ##################################################
 
@@ -720,7 +720,7 @@ clusterLocs <- function(locs, maxdiam = 300){
   
   # calculate distance matrix for all stationary locations 
   dist.matrix <- geo.dist(locs[,c("Lon.50.","Lat.50.")])
-
+  
   # set intial values for the number of clusters and their maximum diameter
   runs = 1
   k = 1
@@ -929,7 +929,7 @@ concensusCluster <- function(graph, thresh = 0.5, algiter = 100){
   
   return(list("community structure" = comms.f <- cluster_label_prop(iter.graph),
               "iterations" = iter,
-         "iteration matrix" = comb))
+              "iteration matrix" = comb))
 }
 
 # Test calls for consensusCluster ##############################################

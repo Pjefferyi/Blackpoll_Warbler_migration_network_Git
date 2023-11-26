@@ -28,10 +28,10 @@ library(GeoLocTools)
 setupGeolocation()
 
 # clear object from workspace
-rm(list=ls())
+#rm(list=ls())
 
 # Load helper functions 
-source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis/Geolocator_analysis_helper_functions.R")
+source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis_helper_functions.R")
 
 geo.id <- "3254_008"
 
@@ -123,6 +123,13 @@ twl <- twilightEdit(twilights = twl,
                     stationary.mins = 25,
                     plot = TRUE)
 
+# read parameters that will be used during the analysis
+niter <- ref_data$MCMC.iter[which(ref_data$geo.id == geo.id)]
+nthin <- ref_data$MCMC.thin[which(ref_data$geo.id == geo.id)]
+chains <- ref_data$MCMC.chains[which(ref_data$geo.id == geo.id)]
+nday <- ref_data$changeLight.days[which(ref_data$geo.id == geo.id)]
+
+
 # Calibration ##################################################################
 
 # We start with calibration based on the stationary periods before and after the migration
@@ -186,8 +193,8 @@ z0 <- trackMidpts(x0_r)
 save(x0_r, file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
 
 # Check the following times of arrival and departure using a plot 
-arr.nbr <- "2016-10-12" 
-dep.nbr <- "2017-04-20" 
+arr.nbr <- "2016-10-11" 
+dep.nbr <- "2017-04-05" 
 
 # open jpeg
 jpeg(paste0(dir, "/", geo.id, "_LatLon_scatterplot.png"), width = 1024, height = 990)
@@ -209,8 +216,8 @@ dev.off()
 # Using approximate timings of arrival and departure from the breeding grounds
 zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith0,
-                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad,
-                            Date > anytime(dep.nbr) ~ zenith0_ad+1))
+                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad+2,
+                            Date > anytime(dep.nbr) ~ zenith0_ad+2))
 
 zeniths0 <- zenith_twl_zero$zenith
 
@@ -262,7 +269,7 @@ data(wrld_simpl)
 plot(x0, type = "n", xlab = "", ylab = "")
 plot(wrld_simpl, col = "grey95", add = T)
 
-points(path$x, pch=19, col="cornflowerblue", type = "o")
+points(path$x[0:400,], pch=19, col="cornflowerblue", type = "o")
 points(lon.calib, lat.calib, pch = 16, cex = 2.5, col = "firebrick")
 box()
 
@@ -279,7 +286,7 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-cL <- changeLight(twl=geo_twl, quantile=0.76, summary = F, days = 2, plot = T)
+cL <- changeLight(twl=geo_twl, quantile=0.8, summary = F, days = 2, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
 mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 250)
@@ -356,14 +363,17 @@ xlim <- range(x0[,1])+c(-5,5)
 ylim <- range(x0[,2])+c(-5,5)
 
 index <- ifelse(stationary, 1, 2)
-mask <- earthseaMask(xlim, ylim, n = 1, index=index)
+mask <- earthseaMask(xlim, ylim, n = 10, index=index)
+#mask <- earthseaMask3(xlim, ylim, res = "lr", index=index, span = 4, twl = twl)
 
 # We will give locations on land a higher prior 
 ## Define the log prior for x and z
 logp <- function(p) {
   f <- mask(p)
   ifelse(is.na(f), -1000, log(2))
+  #ifelse(is.na(f), -1000, 100*f)
 }
+
 
 # Define the Estelle model ####################################################
 model <- groupedThresholdModel(twl$Twilight,
@@ -384,7 +394,7 @@ x.proposal <- mvnorm(S = diag(c(0.005, 0.005)), n = nrow(x0))
 z.proposal <- mvnorm(S = diag(c(0.005, 0.005)), n = nrow(z0))
 
 # Fit the model
-fit <- estelleMetropolis(model, x.proposal, z.proposal, iters = 1000, thin = 20)
+fit <- estelleMetropolis(model, x.proposal, z.proposal, iters = niter, thin = nthin)
 
 #Tuning ########################################################################
 
@@ -422,7 +432,7 @@ x.proposal <- mvnorm(chainCov(fit$x), s = 0.3)
 z.proposal <- mvnorm(chainCov(fit$z), s = 0.3)
 
 fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = chainLast(fit$x),
-                         z0 = chainLast(fit$z), iters = 2000, thin = 20, chain = 1)
+                         z0 = chainLast(fit$z), iters = niter, thin = nthin, chain = chains)
 
 #Summarize results #############################################################
 
@@ -465,6 +475,8 @@ text(sm[,"Lon.50."], sm[,"Lat.50."], ifelse(sitenum>0, as.integer(((sm$EndTime -
 
 #Show dates
 #text(sm[,"Lon.50."], sm[,"Lat.50."], ifelse(sitenum>0, as.character(sm$StartTime), ""), col="red", pos = 1) 
+
+points(dtx0[sitenum > 0,], pch = 16, cex = 1, col = "green")
 
 #Close jpeg
 dev.off()
@@ -535,6 +547,53 @@ save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 #load the output of the model 
 #load(file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))
 #load(file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
+
+# Examine twilights ############################################################
+
+#load the adjusted threshold path path x0_ad
+load(file = paste0(dir,"/", geo.id, "adjusted_initial_path_raw.csv"))
+
+#Fall transoceanic flight
+start <- "2016-09-10"
+end <- "2016-10-20"
+
+#first flight
+f1.start <- "2016-10-10"
+f1.end <- "2016-10-11"
+
+#Secondflight
+f2.start <- "2016-10-12"
+f2.end <- "2016-10-14"
+
+# Plot lat, lon and light transitions  
+jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition.png"), width = 1024 , height = 990, quality = 100, res = 200)
+
+par(cex.lab=1.4)
+par(cex.axis=1.4)
+par(mfrow=c(3,1), mar = c(5,5,0.1,5))
+plot(lig$Date[lig$Date > start & lig$Date < end], lig$Light[lig$Date > start & lig$Date < end], type = "o",
+     ylab = "Light level", xlab = "Time")
+rect(anytime(f1.start), min(lig$Light)-2, anytime(f1.end), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime(f2.start), min(lig$Light)-2, anytime(f2.end), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
+
+plot(twl$Twilight[twl$Twilight> start & twl$Twilight < end], x0_ad[,1][twl$Twilight > start & twl$Twilight < end],
+     ylab = "Longitude", xlab = "Time")
+rect(anytime(f1.start), min(x0_ad[,1])-2, anytime(f1.end), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime(f2.start), min(x0_ad[,1])-2, anytime(f2.end), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
+
+
+plot(twl$Twilight[twl$Twilight > start & twl$Twilight < end], x0_ad[,2][twl$Twilight > start & twl$Twilight < end],
+     ylab = "Latitude", xlab = "Time")
+rect(anytime(f1.start), min(x0_ad[,2])-2, anytime(f1.end), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime(f2.start), min(x0_ad[,2])-2, anytime(f2.end), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
+
+par(cex.lab= 1)
+par(cex.axis= 1)
+
+dev.off()
+
+# This bird seems to have departed the coast of north America on October 11th, then stopped in the Carribean for one day
+# It then flew to South America between October 12 and 14th 
 
 # Record details for the geolocator analysis ###################################
 geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 

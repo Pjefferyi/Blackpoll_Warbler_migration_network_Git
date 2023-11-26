@@ -20,7 +20,7 @@ library(qgraph)
 library(clustAnalytics)
 library(robin)
 
-source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Network_construction.R")
+#source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Network_construction.R")
 
 # NOTE: THIS SCRIPT IS OPTIMIZED FOR DATA FROM THE FILE: Geolocator_analysis_V3_BI_mask
 
@@ -776,7 +776,7 @@ E(spring.graph)$weight <- spring.con.ab$weight
 undirected.spring.graph <- as.undirected(spring.graph, mode = "collapse",
                                        edge.attr.comb = "sum")
 # Run concensusCluster function 
-cluster_output <- concensusCluster(graph = undirected.spring.graph, thresh = 0.5, algiter = 3000)
+cluster_output <- concensusCluster(graph = undirected.spring.graph, thresh = 0.6, algiter = 3000)
 comms <- cluster_output$`community structure`
 
 # plot concensus graph

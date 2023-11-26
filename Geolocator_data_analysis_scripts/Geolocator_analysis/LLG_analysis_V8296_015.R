@@ -230,7 +230,7 @@ z0 <- trackMidpts(x0_r)
 save(x0_r, file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
 
 # Check the following times of arrival and departure using a plot 
-arr.nbr <- "2019-10-18" 
+arr.nbr <- "2019-10-07" 
 
 # open jpeg
 jpeg(paste0(dir, "/", geo.id, "_LatLon_scatterplot.png"), width = 1024, height = 990)
@@ -315,7 +315,7 @@ geo_twl <- export2GeoLight(twl)
 cL <- changeLight(twl=geo_twl, quantile=0.86, summary = F, days = 2, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths0[1: length(zeniths0)-1], distThreshold = 500)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 250)
 
 #back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 
@@ -573,27 +573,40 @@ load(file = paste0(dir,"/", geo.id, "adjusted_initial_path_raw.csv"))
 start <- "2019-09-10"
 end <- "2019-10-30"
 
+#first flight
+f1.start <- "2019-09-30"
+f1.end <- "2019-10-03"
+
+#second flight
+f2.start <- "2019-10-10"
+f2.end <- "2019-10-11"
+
+
 # Plot lat, lon and light transitions  
 jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition.png"), width = 1024 , height = 990, quality = 100, res = 200)
+
 par(cex.lab=1.4)
 par(cex.axis=1.4)
 par(mfrow=c(3,1), mar = c(5,5,0.1,5))
 plot(lig$Date[lig$Date > start & lig$Date < end], lig$Light[lig$Date > start & lig$Date < end], type = "o",
      ylab = "Light level", xlab = "Time")
-rect(anytime("2019-09-29"), min(lig$Light)-2, anytime("2019-10-03"), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
-rect(anytime("2019-10-17 12:00"), min(lig$Light)-2, anytime("2019-10-17 24:00"), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime(f1.start), min(lig$Light)-2, anytime(f1.end), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime(f2.start), min(lig$Light)-2, anytime(f2.end), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
 
 plot(twl$Twilight[twl$Twilight> start & twl$Twilight < end], x0_ad[,1][twl$Twilight > start & twl$Twilight < end],
      ylab = "Longitude", xlab = "Time")
-rect(anytime("2019-09-29"), min(x0_ad[,1])-2, anytime("2019-10-03"), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
-rect(anytime("2019-10-17 12:00"), min(x0_ad[,1])-2, anytime("2019-10-17 24:00"), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime(f1.start), min(x0_ad[,1])-2, anytime(f1.end), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime(f2.start), min(x0_ad[,1])-2, anytime(f2.end), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
 
 plot(twl$Twilight[twl$Twilight > start & twl$Twilight < end], x0_ad[,2][twl$Twilight > start & twl$Twilight < end],
      ylab = "Latitude", xlab = "Time")
-rect(anytime("2019-09-29"), min(x0_ad[,2])-2, anytime("2019-10-03"), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
-rect(anytime("2019-10-17 12:00"), min(x0_ad[,2])-2, anytime("2019-10-17 24:00"), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime(f1.start), min(x0_ad[,2])-2, anytime(f1.end), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime(f2.start), min(x0_ad[,2])-2, anytime(f2.end), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
 par(cex.lab= 1)
 par(cex.axis= 1)
+
+# Latitude patterns suggest the possibility of a stopover lasting at most 15 days in the carribeans
+# However, there is also a long period with clear light transitions that suggest that a direct flight could also have occured 
 
 dev.off()
 

@@ -22,7 +22,12 @@ ref_path <- "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/The
 ref_data <- read.csv(ref_path)
 
 # location data 
-geo.all <- findLocData(geo.ids = c("V8757_010",
+geo.all <- findLocData(geo.ids = c("V7638_001",
+                                   "V7638_005",
+                                   "V7638_009",
+                                   "V7638_010",
+                                   "V7638_011",
+                                   "V8757_010",
                                    "V8296_004",
                                    "V8296_005",
                                    "V8296_006",
@@ -208,16 +213,17 @@ ggplot(st_as_sf(wrld_simpl))+
   geom_errorbar(data = fall.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
   geom_path(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5, linewidth = 0.1) +
   geom_point(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, colour = as.factor(cluster)), cex = 2) +
+  geom_text(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., label = geo_id), cex = 2)+
   labs(colour = "Cluster") +
   theme_bw() +
   theme(text = element_text(size = 16), legend.position = "None")
 
 #Optional: add edge from nonbreeding site back to the breeding site of origin
-# fall.breed.return <- fall.breed %>% group_by(geo_id) %>%
-#   mutate(sitenum = max(fall.stat[(fall.stat$geo_id == geo_id),]$sitenum))
-# fall.breed.return[,c("StartTime", "EndTime", "duration")] <- NA
-# fall.breed.return[,c("period")] <- "Post-breeding migration"
-# fall.stat <- bind_rows(fall.stat, fall.breed.return) %>% arrange(geo_id, sitenum)
+fall.breed.return <- fall.breed %>% group_by(geo_id) %>%
+  mutate(sitenum = max(fall.stat[(fall.stat$geo_id == geo_id),]$sitenum))
+fall.breed.return[,c("StartTime", "EndTime", "duration")] <- NA
+fall.breed.return[,c("period")] <- "Post-breeding migration"
+fall.stat <- bind_rows(fall.stat, fall.breed.return) %>% arrange(geo_id, sitenum)
 
 # Generate the network from our location data and clusters #####################
 
@@ -396,11 +402,11 @@ ggplot(st_as_sf(wrld_simpl))+
   theme(text = element_text(size = 16), legend.position = "None")
 
 # Optional: add edge from nonbreeding site back to the breeding site of origin
-# spring.breed.return <- spring.breed %>% group_by(geo_id) %>%
-#   mutate(sitenum = 1)
-# spring.breed.return[,c("StartTime", "EndTime", "duration")] <- NA
-# spring.breed.return[,c("period")] <- "Pre-breeding migration"
-# spring.stat <- bind_rows(spring.stat, spring.breed.return) %>% arrange(geo_id, sitenum)
+spring.breed.return <- spring.breed %>% group_by(geo_id) %>%
+  mutate(sitenum = 1)
+spring.breed.return[,c("StartTime", "EndTime", "duration")] <- NA
+spring.breed.return[,c("period")] <- "Pre-breeding migration"
+spring.stat <- bind_rows(spring.stat, spring.breed.return) %>% arrange(geo_id, sitenum)
 
 # Generate the network from our location data and clusters #####################
 

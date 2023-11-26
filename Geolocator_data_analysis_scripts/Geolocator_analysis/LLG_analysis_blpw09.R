@@ -196,7 +196,7 @@ z0 <- trackMidpts(x0_r)
 save(x0_r, file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
 
 # Check the following times of arrival and departure using a plot 
-arr.nbr <- "2016-10-25"
+arr.nbr <- "2016-10-20"
 dep.nbr <- "2017-04-27" 
 
 # open jpeg
@@ -219,8 +219,8 @@ dev.off()
 # Using approximate timings of arrival and departure from the breeding grounds
 zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith0,
-                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad,
-                            Date > anytime(dep.nbr) ~ zenith0_ad + 2))
+                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad + 2,
+                            Date > anytime(dep.nbr) ~ zenith0_ad + 2 ))
 
 zeniths0 <- zenith_twl_zero$zenith
 
@@ -289,7 +289,7 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-cL <- changeLight(twl=geo_twl, quantile=0.90, summary = F, days = 2, plot = T)
+cL <- changeLight(twl=geo_twl, quantile=0.85, summary = F, days = 2, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
 #mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths0[1:length(zeniths0) -1], distThreshold = 500)
@@ -534,8 +534,8 @@ points(stat.loc$Lon.50., stat.loc$Lat.50., pch = 16, cex = 1.5, col = "firebrick
 sm$geo_id <- geo.id
 
 #add a column that categorizes the locations (based on the groupthreshold model output)
-sm <- sm %>% mutate(period= case_when(StartTime < anytime(" 2016-10-22 10:43:15 ", asUTC = T, tz = "GMT")  ~ "Post-breeding migration",
-                                      StartTime >= anytime(" 2016-10-22 10:43:15 ", asUTC = T, tz = "GMT") & StartTime < anytime("2017-04-25 22:38:03" , asUTC = T, tz = "GMT") ~ "Non-breeding period",
+sm <- sm %>% mutate(period= case_when(StartTime < anytime("2016-10-29 22:13:30", asUTC = T, tz = "GMT")  ~ "Post-breeding migration",
+                                      StartTime >= anytime("2016-10-29 22:13:30", asUTC = T, tz = "GMT") & StartTime < anytime("2017-04-25 22:38:03" , asUTC = T, tz = "GMT") ~ "Non-breeding period",
                                       StartTime > anytime("2017-04-25 22:38:03", asUTC = T, tz = "GMT") ~ "Pre-breeding migration"))
 
 #Save the output of the model 

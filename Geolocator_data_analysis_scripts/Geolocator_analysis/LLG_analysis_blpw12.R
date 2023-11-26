@@ -186,7 +186,7 @@ z0 <- trackMidpts(x0_r)
 save(x0_r, file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
 
 # Check the following times of arrival and departure using a plot 
-arr.nbr <- "2016-10-11" #11
+arr.nbr <- "2016-10-08" #11
 dep.nbr <- "2017-04-18" 
 
 # open jpeg
@@ -250,7 +250,7 @@ abline(v = spring.equi, col = "orange")
 dev.off()
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol=0.11)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol=0.1) #0.105
 
 x0 <- path$x
 z0 <- trackMidpts(x0)
@@ -355,7 +355,7 @@ xlim <- range(x0[,1])+c(-5,5)
 ylim <- range(x0[,2])+c(-5,5)
 
 index <- ifelse(stationary, 1, 2)
-mask <- earthseaMask(xlim, ylim, n = 1, index=index)
+mask <- earthseaMask(xlim, ylim, n = 10, index=index)
 #mask <- earthseaMask2(xlim, ylim, index=index, twl, pacific = FALSE)
 
 # We will give locations on land a higher prior 
@@ -539,6 +539,51 @@ save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 #load(file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))
 #load(file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 
+# Examine twilights ############################################################
+
+#load the adjusted threshold path path x0_ad
+load(file = paste0(dir,"/", geo.id, "adjusted_initial_path_raw.csv"))
+
+#Fall transoceanic flight
+start <- "2016-09-20"
+end <- "2016-10-25"
+
+#first flight
+f1.start <- "2016-10-10"
+f1.end <- "2016-10-11"
+
+#second flight
+f2.start <- "2016-10-01"
+f2.end <- "2016-10-02"
+
+# Plot lat, lon and light transitions  
+jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition.png"), width = 1024 , height = 990, quality = 100, res = 200)
+
+par(cex.lab=1.4)
+par(cex.axis=1.4)
+par(mfrow=c(3,1), mar = c(5,5,0.1,5))
+plot(lig$Date[lig$Date > start & lig$Date < end], lig$Light[lig$Date > start & lig$Date < end], type = "o",
+     ylab = "Light level", xlab = "Time")
+rect(anytime(f1.start), min(lig$Light)-2, anytime(f1.end), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime(f2.start), min(lig$Light)-2, anytime(f2.end), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
+
+plot(twl$Twilight[twl$Twilight> start & twl$Twilight < end], x0_ad[,1][twl$Twilight > start & twl$Twilight < end],
+     ylab = "Longitude", xlab = "Time")
+rect(anytime(f1.start), min(x0_ad[,1])-2, anytime(f1.end), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime(f2.start), min(x0_ad[,1])-2, anytime(f2.end), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
+
+plot(twl$Twilight[twl$Twilight > start & twl$Twilight < end], x0_ad[,2][twl$Twilight > start & twl$Twilight < end],
+     ylab = "Latitude", xlab = "Time")
+rect(anytime(f1.start), min(x0_ad[,2])-2, anytime(f1.end), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime(f2.start), min(x0_ad[,2])-2, anytime(f2.end), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
+
+# A stopover over the Carribean is not evident, but there is no cclear pattern in the light transitions that would indicate that the bird made a three day long Direct flight from North America to South America
+
+par(cex.lab= 1)
+par(cex.axis= 1)
+
+dev.off()
+
 # Record details for the geolocator analysis ###################################
 geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
 geo.ref[(geo.ref$geo.id == geo.id),]$In_habitat_median_zenith_angle <- zenith
@@ -547,52 +592,3 @@ geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- arr.nbr
 geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- dep.nbr
 write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE) 
 
-# Examine twilights ############################################################
-
-#load the adjusted threshold path path x0_ad
-load(file = paste0(dir,"/", geo.id, "adjusted_initial_path_raw.csv"))
-
-#Fall transoceanic flight
-start <- "2016-09-01"
-end <- "2016-11-01"
-
-#first flight
-f1.start <- "2016-10-10"
-f1.end <- "2016-10-11"
-
-#second flight
-f2.start <- "2016-10-15"
-f2.end <- "2016-10-17"
-
-#Third flight
-f3.start <- "2016-10-01"
-f3.end <- "2016-10-02"
-
-# Plot lat, lon and light transitions  
-jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition.png"), width = 1024 , height = 990, quality = 100, res = 200)
-par(cex.lab=1.4)
-par(cex.axis=1.4)
-
-par(mfrow=c(3,1), mar = c(5,5,0.1,5))
-plot(lig$Date[lig$Date > start & lig$Date < end], lig$Light[lig$Date > start & lig$Date < end], type = "o",
-     ylab = "Light level", xlab = "Time")
-rect(anytime(f1.start), min(lig$Light)-2, anytime(f1.end), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
-rect(anytime(f2.start), min(lig$Light)-2, anytime(f2.end), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
-rect(anytime(f3.start), min(lig$Light)-2, anytime(f3.end), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
-
-plot(twl$Twilight[twl$Twilight> start & twl$Twilight < end], x0_ad[,1][twl$Twilight > start & twl$Twilight < end],
-     ylab = "Longitude", xlab = "Time")
-rect(anytime(f1.start), min(x0_ad[,1])-2, anytime(f1.end), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
-rect(anytime(f2.start), min(x0_ad[,1])-2, anytime(f2.end), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
-rect(anytime(f3.start), min(x0_ad[,1])-2, anytime(f3.end), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
-
-plot(twl$Twilight[twl$Twilight > start & twl$Twilight < end], x0_ad[,2][twl$Twilight > start & twl$Twilight < end],
-     ylab = "Latitude", xlab = "Time")
-rect(anytime(f1.start), min(x0_ad[,2])-2, anytime(f1.end), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
-rect(anytime(f2.start), min(x0_ad[,2])-2, anytime(f2.end), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
-rect(anytime(f3.start), min(x0_ad[,2])-2, anytime(f3.end), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
-
-par(cex.lab= 1)
-par(cex.axis= 1)
-
-dev.off()
