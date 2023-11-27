@@ -22,12 +22,7 @@ ref_path <- "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/The
 ref_data <- read.csv(ref_path)
 
 # location data 
-geo.all <- findLocData(geo.ids = c("V7638_001",
-                                   "V7638_005",
-                                   "V7638_009",
-                                   "V7638_010",
-                                   "V7638_011",
-                                   "V8757_010",
+geo.all <- findLocData(geo.ids = c("V8757_010",
                                    "V8296_004",
                                    "V8296_005",
                                    "V8296_006",
@@ -153,7 +148,7 @@ write.csv(ref_data,"C:/Users/Jelan/OneDrive/Desktop/University/University of Gue
 # Either import a file with manual clusters, or create cluster in R
 
 # first we must filter our location data to retain only those relevant to the fall migration
-fall.stat <- geo.all %>% filter(sitenum > 0, site_type %in% c("Stopover","Nonbreeding"),
+fall.stat <- geo.all %>% filter(sitenum > 0, site_type %in% c("Breeding", "Stopover","Nonbreeding"),
                                 period %in% c("Post-breeding migration","Non-breeding period"),
                                 Recorded_North_South_mig %in% c("Both", "South and partial North", "South"))
 
@@ -213,7 +208,6 @@ ggplot(st_as_sf(wrld_simpl))+
   geom_errorbar(data = fall.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
   geom_path(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5, linewidth = 0.1) +
   geom_point(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, colour = as.factor(cluster)), cex = 2) +
-  geom_text(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., label = geo_id), cex = 2)+
   labs(colour = "Cluster") +
   theme_bw() +
   theme(text = element_text(size = 16), legend.position = "None")
@@ -668,8 +662,8 @@ abundance.regions <- st_transform(abundance.regions , crs = crs(wrld_simpl))
 plot(bpw.fall.ab$breeding, xlim = c(-180, -30), ylim = c(30, 80), legend = FALSE)
 plot(as_Spatial(abundance.regions), col = NA, border = "darkred", lwd = 3, add = T)
 plot(wrld_simpl[wrld_simpl$NAME %in% c("United States", "Canada"),], add = T)
-points(geo.breed[geo.breed$geo_id != "WRMA04173",]$Lon.50., geo.breed[geo.breed$geo_id != "WRMA04173",]$Lat.50., cex = 1, col = "black", pch = 19)
-#points(geo.breed$Lon.50., geo.breed$Lat.50., cex = 1, col = "black", pch = 19)
+#points(geo.breed[geo.breed$geo_id != "WRMA04173",]$Lon.50., geo.breed[geo.breed$geo_id != "WRMA04173",]$Lat.50., cex = 1, col = "black", pch = 19)
+points(geo.breed$Lon.50., geo.breed$Lat.50., cex = 1, col = "black", pch = 19)
 
 # extract the abundance for each region,
 ab.extract <- terra::extract(bpw.fall.ab$breeding, abundance.regions, fun = sum, na.rm=TRUE)
@@ -702,8 +696,11 @@ fall.breed.ab <- merge(fall.breed, dplyr::select(ab.per.region, geo_id, br.regio
 fall.edge.df.ab <- merge(fall.edge.df, dplyr::select(fall.breed.ab, geo_id, ab.unit, br.region.prop.total.population, br.polygon))
 
 # list of connections weighed by abundance unit
-fall.con.ab <- fall.edge.df.ab %>% group_by(cluster, next.cluster) %>% 
-  summarize(weight = sum(ab.unit)) 
+# We add an edge type if optional spring edges were added to distinguish fall and spring edges 
+fall.con.ab <- fall.edge.df.ab %>% group_by(geo_id) %>%
+  mutate(edge.type = if_else(next.cluster == first(cluster), "spring", "fall")) %>%
+  group_by(cluster, next.cluster) %>% 
+  reframe(weight = sum(ab.unit), edge.type = first(edge.type)) 
 
 # Fall graph weighed using eBird relative abundance 
 
@@ -741,8 +738,11 @@ spring.breed.ab <- merge(spring.breed, dplyr::select(ab.per.region, geo_id, br.r
 spring.edge.df.ab <- merge(spring.edge.df, dplyr::select(spring.breed.ab, geo_id, ab.unit, br.region.prop.total.population, br.polygon))
 
 # list of connections weighed by abundance unit
-spring.con.ab <- spring.edge.df.ab %>% group_by(cluster, next.cluster) %>% 
-  summarize(weight = sum(ab.unit)) 
+# We add an edge type if optional fall edges were included to distinguish fall and spring edges 
+spring.con.ab <- spring.edge.df.ab %>% group_by(geo_id) %>%
+  mutate(edge.type = if_else(cluster == last(next.cluster), "fall", "spring")) %>%
+  group_by(cluster, next.cluster) %>% 
+  reframe(weight = sum(ab.unit), edge.type = first(edge.type)) 
 
 # spring graph weighed using eBird relative abundance 
 

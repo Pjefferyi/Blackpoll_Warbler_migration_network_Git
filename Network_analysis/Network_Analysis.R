@@ -1,5 +1,4 @@
 # Network analysis for the blackpoll warbler migration network
-
 library(anytime)
 library(dplyr)
 library(ggplot2)
@@ -54,12 +53,17 @@ plot(as_Spatial(equinox_region), add = T, col = "#D9D5B2", lwd = 0.000000001)
 plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),],
      xlim = c(-165, -35), ylim = c(-10, 65), col = NA, lwd = 0.5, add = T)
 
+# Edge colours for spring and fall edges (spring edges should not appear in this plot)
+edge.cols <- fall.con.ab %>% mutate(col = case_when(
+  edge.type == "fall" ~ adjustcolor("darkgray", alpha.f = 0.9),
+  edge.type == "spring" ~ NA))
+
 plot(fall.graph, vertex.size = 300, vertex.size2 = 200,
-     edge.width = fall.con.ab$weight*40, edge.arrow.size = 0, edge.arrow.width = 0,  
+     edge.width = fall.con.ab$weight*45, edge.arrow.size = 0, edge.arrow.width = 0,  
      layout = as.matrix(meta.fall.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)),
      vertex.color = type.palette[meta.fall.ab$node.type.num], vertex.label.dist = 30,
-     add = T, edge.color = adjustcolor("darkgray", alpha.f = 0.6), vertex.label = NA)
+     add = T, edge.color = edge.cols$col, vertex.label = NA)
 legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
        col = type.palette[unique(meta.fall.ab$node.type.num)],
        pch = 19, title = "Node type",cex = 0.8)
@@ -183,7 +187,7 @@ plot(fall.graph, vertex.size = 200, vertex.size2 = 200, vertex.label= NA,
      layout = as.matrix(meta.fall.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)),
      vertex.color = deg.TO.palette[as.character(round(fall.degree.TO[,"alpha"],4))],
-     edge.color = adjustcolor("darkgray", alpha.f = 0.6), add = T, vertex.label = round(fall.strength.c, digits = 4))
+     edge.color = adjustcolor("darkgray", alpha.f = 0.6), add = T, vertex.label = round(fall.degree.TO , digits = 4))
  
 legend_image <- as.raster(matrix(hcl.colors(n = length(seq(0, max(fall.degree.TO[,"alpha"]), max(fall.degree.TO[,"alpha"])/20)), palette = "Reds 3", rev = F) , ncol=1))
 plot(c(0,2),c(-0.01,1),type = 'n', axes = F,xlab = '', ylab = '')
@@ -194,8 +198,8 @@ rasterImage(legend_image, 0.75, 0, 1,1)
 # Fall betweenness centrality using the method developed by Opshal et al. ---
 fall.betweenness.TO <- betweenness_w(fall.edge.list, directed = T, alpha = 0.5)
 
-betweenness.TO.palette <- hcl.colors(n = length(seq(0, max(fall.betweenness.TO[,"betweenness"]),1)), palette = "Reds 3", rev = T) 
-names(betweenness.TO.palette) <- seq(0, max(fall.betweenness.TO[,"betweenness"]),1)
+betweenness.TO.palette <- hcl.colors(n = length(seq(0, max(fall.betweenness.TO[,"betweenness"]),0.5)), palette = "Reds 3", rev = T) 
+names(betweenness.TO.palette) <- seq(0, max(fall.betweenness.TO[,"betweenness"]),0.5)
 
 plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),], 
      xlim = c(-170, -30), ylim = c(-15, 70), col = "#F2F2F2", lwd = 0.5)
@@ -206,7 +210,7 @@ plot(fall.graph, vertex.size = 200, vertex.size2 = 200, vertex.label= NA,
      layout = as.matrix(meta.fall.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)),
      vertex.color = betweenness.TO.palette[as.character(fall.betweenness.TO[,"betweenness"])],
-     edge.color = adjustcolor("darkgray", alpha.f = 0.6), add = T, vertex.label = round(fall.strength.c, digits = 4))
+     edge.color = adjustcolor("darkgray", alpha.f = 0.6), add = T, vertex.label = round(fall.betweenness.TO, digits = 4))
 
 legend_image <- as.raster(matrix(hcl.colors(n = length(seq(0, max(fall.betweenness.TO[,"betweenness"]), 1)), palette = "Reds 3", rev = F) , ncol=1))
 plot(c(0,2),c(-0.01,1),type = 'n', axes = F,xlab = '', ylab = '')
@@ -546,16 +550,20 @@ type.palette <- c("#440154FF", "#FDE725FF", "#21908CFF")
 plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),],
     xlim = c(-165, -35), ylim = c(-10, 65), col = "#F7F7F7", lwd = 0.5)
 
+# Edge colours for spring and fall edges (fall edges should not appear in this plot)
+edge.cols <- spring.con.ab %>% mutate(col = case_when(
+  edge.type == "spring" ~ adjustcolor("darkgray", alpha.f = 0.9),
+  edge.type == "fall" ~ NA))
+
 plot(spring.graph, vertex.label = NA, vertex.size = 300, vertex.size2 = 200,
      edge.width = spring.con.ab$weight*20, edge.arrow.size = 0, edge.arrow.width = 0,  
      layout = as.matrix(meta.spring.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(spring.con.ab)),
      vertex.color = type.palette[meta.spring.ab$node.type.num],
-     edge.color= adjustcolor("darkgray", alpha.f = 0.6), add = T)
+     edge.color= edge.cols$col, add = T)
 # legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
 #        col = type.palette[unique(meta.spring.ab$node.type.num)],
 #        pch = 19, )
-
 
 # Plot the spring graph with node use pie charts #################################
 
@@ -660,7 +668,7 @@ plot(spring.graph, vertex.size = 200, vertex.size2 = 200, vertex.label.dist = 30
 
 # spring degree centrality using the method developed by Opshal et al. ---
 E(spring.graph)$weight <- spring.con.ab$weight
-spring.edge.list <- cbind(get.edgelist(spring.graph) , round( E(spring.graph)$weight, 3 ))
+spring.edge.list <- cbind(get.edgelist(spring.graph), round(E(spring.graph)$weight, 3))
 spring.net <- as.tnet(spring.edge.list, type = "weighted one-mode tnet")
 
 spring.degree.TO <- degree_w(spring.edge.list, measure=c("degree", "output", "alpha"), type = "in", alpha = 0.5)

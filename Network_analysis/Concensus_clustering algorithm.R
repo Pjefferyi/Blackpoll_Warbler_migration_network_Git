@@ -26,7 +26,7 @@ spring.communities.lab <- cluster_label_prop(undirected.spring.graph, weights = 
 ############################### clustering parameters ##########################
 
 algiter = 1000 #number of times the algorithm should be repeated 
-thresh = 0.5 # threshold 
+thresh = 0.7 # threshold 
 
 ############################### Part 1 #########################################
 
@@ -83,7 +83,7 @@ ad.graph <- graph_from_adjacency_matrix(ad.mat, weighted = T)
 plot(ad.graph)
 
 #cluster graph
-comms <- cluster_label_prop(ad.graph)
+comms <- cluster_label_prop(as.undirected(ad.graph))
 plot(comms, ad.graph)
 
 # plot communities on map
@@ -136,7 +136,7 @@ while (P > 1){
 
 #plot final community structure
 #cluster graph
-comms.f <- cluster_label_prop(iter.graph )
+comms.f <- cluster_label_prop(as.undirected(iter.graph))
 plot(comms.f, iter.graph )
 
 # plot communities on map
