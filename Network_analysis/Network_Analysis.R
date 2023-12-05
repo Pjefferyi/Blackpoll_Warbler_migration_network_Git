@@ -53,8 +53,8 @@ plot(as_Spatial(equinox_region), add = T, col = "#D9D5B2", lwd = 0.000000001)
 plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),],
      xlim = c(-165, -35), ylim = c(-10, 65), col = NA, lwd = 0.5, add = T)
 
-# Edge colours for spring and fall edges (spring edges should not appear in this plot)
-edge.cols <- fall.con.ab %>% mutate(col = case_when(
+# Prepare edge colours for spring and fall edges (spring edges should not appear in this plot)
+edge.cols.fall <- fall.con.ab %>% mutate(col = case_when(
   edge.type == "fall" ~ adjustcolor("darkgray", alpha.f = 0.9),
   edge.type == "spring" ~ NA))
 
@@ -63,7 +63,7 @@ plot(fall.graph, vertex.size = 300, vertex.size2 = 200,
      layout = as.matrix(meta.fall.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)),
      vertex.color = type.palette[meta.fall.ab$node.type.num], vertex.label.dist = 30,
-     add = T, edge.color = edge.cols$col, vertex.label = NA)
+     add = T, edge.color = edge.cols.fall$col, vertex.label = NA)
 legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
        col = type.palette[unique(meta.fall.ab$node.type.num)],
        pch = 19, title = "Node type",cex = 0.8)
@@ -173,7 +173,7 @@ E(fall.graph)$weight <- fall.con.ab$weight
 fall.edge.list <- cbind(get.edgelist(fall.graph) , round( E(fall.graph)$weight, 3 ))
 fall.net <- as.tnet(fall.edge.list, type = "weighted one-mode tnet")
 
-fall.degree.TO <- degree_w(fall.edge.list, measure=c("degree", "output", "alpha"), type = "in", alpha = 0.5)
+fall.degree.TO <- degree_w(fall.edge.list, measure=c("degree", "output", "alpha"), type = "out", alpha = 0.5)
 
 deg.TO.palette <- hcl.colors(n = length(seq(0, max(fall.degree.TO[,"alpha"]+ 0.0001),0.0001)), palette = "Reds 3", rev = T) 
 names(deg.TO.palette) <- seq(0, max(fall.degree.TO[,"alpha"] + 0.0001),0.0001)
@@ -295,7 +295,7 @@ plot(fall.graph.weighed.ab, vertex.label = NA, vertex.size = 200, vertex.size2 =
      vertex.color = fall.comm.pal[fall.communities.info$membership], add = T)
 
 ### community detection using multilevel optimization of modularity -----------
-fall.communities.louvain <- cluster_louvain(graph = undirected.fall.graph, resolution = 1)
+fall.communities.louvain <- cluster_louvain(graph = undirected.fall.graph, resolution = 0.5)
 
 meta.fall.ab$community <- fall.communities.louvain$membership
 
@@ -343,12 +343,15 @@ fall.comm.pal <- rainbow(length(seq(1, max(comms$membership))))
 
 plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),],
      xlim = c(-165, -35), ylim = c(-10, 65), lwd = 0.5, col = "#F7F7F7")
-plot(fall.graph, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
+plot(fall.graph, vertex.label = NA, vertex.size = 300, vertex.size2 = 200,
      edge.width = fall.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
      layout = as.matrix(meta.fall.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)),
      vertex.color = fall.comm.pal[comms$membership], 
-     edge.color = adjustcolor("darkgray", alpha.f = 0.6), add = T)
+     edge.color = edge.cols.fall$col, add = T)
+
+## calculate modularity ---
+modularity(fall.graph, comms$membership, weights = E(fall.graph)$weight, directed = F)
 
 ### calculate bridging centrality using the networktools package -----
 fall.graph.el <- cbind( get.edgelist(fall.graph), round( E(fall.graph)$weight, 3 ))
@@ -367,13 +370,27 @@ plot(fall.graph, vertex.size = 200, vertex.size2 = 200, vertex.label= NA,
      layout = as.matrix(meta.fall.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)),
      vertex.color = bridge.strengh.palette [as.character(round(bridge.c$`Bridge Strength`, digits = 2))],
-     edge.color = adjustcolor("darkgray", alpha.f = 0.6), add = T)
+     edge.color = edge.cols.fall$col, add = T)
 
 legend_image <- as.raster(matrix(hcl.colors(n = length(seq(0, max(bridge.c$`Bridge Strength`), 0.01)), palette = "Reds 3", rev = F) , ncol=1))
 plot(c(0,2),c(-0.01,1),type = 'n', axes = F,xlab = '', ylab = '')
 title(main = 'Bridge strength', cex.main = 0.9, line  = 0.8)
 text(x= 1.25, y = seq(0,1,l=5), labels = round(seq(0,max(bridge.c$`Bridge Strength`),l=5), digits = 1), cex = 1)
 rasterImage(legend_image, 0.75, 0, 1,1)
+
+### calculate bridging betweennness using the networktools package -----
+bridge.betw.palette  <- hcl.colors(n = length(seq(0, max(bridge.c$`Bridge Betweenness`),1)), palette = "Reds 3", rev = T) 
+names(bridge.betw.palette ) <- seq(0, max(bridge.c$`Bridge Betweenness`),1)
+
+plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),], 
+     xlim = c(-170, -30), ylim = c(-15, 70), col = "#F2F2F2", lwd = 0.5)
+
+plot(fall.graph, vertex.size = 200, vertex.size2 = 200, vertex.label= NA,
+     edge.width = fall.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
+     layout = as.matrix(meta.fall.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
+     ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)),
+     vertex.color = bridge.betw.palette [as.character(round(bridge.c$`Bridge Betweenness`, digits = 2))],
+     edge.color = edge.cols.fall$col, add = T)
 
 ### Assess cluster significance with robin ----
 
@@ -386,16 +403,6 @@ rasterImage(legend_image, 0.75, 0, 1,1)
 # 
 # plotRobin(graph=undirected.fall.graph, model1=proc$Mean, model2=proc$MeanRandom,
 #           legend=c("real data", "null model"))
-
-# Create random graph
-graphRandom <- random(graph = x)
-
-# Use concensusClusterMod helper function
-proc <- robinRobust(graph=x, graphRandom=graphRandom, measure="vi",
-                    method= "labelProp", type="independent", weights = E(x)$weight)
-
-plotRobin(graph=x, model1=proc$Mean, model2=proc$MeanRandom,
-          legend=c("real data", "null model"))
 
 ### Assess cluster significance with clustanalytics ----
 
@@ -435,7 +442,7 @@ ob.score <- as.data.frame(scoring_functions(undirected.fall.graph, comms$members
 
 for (i in seq(1, length(colnames(rand.data)))){
   
-  if (i != 15){
+  if (length(unique(rand.data[,i])) > 1){
   test.results <- t.test(rand.data[,i], mu = ob.score[,i])
   
   score.test[i,"score.function"] <- colnames(rand.data)[i]
@@ -446,7 +453,6 @@ for (i in seq(1, length(colnames(rand.data)))){
   score.test[i,"parameter"] <- test.results$parameter
   score.test[i,"p-value"] <- test.results$p.value
   }else{
-    
     score.test[i,"score.function"] <- colnames(rand.data)[i]
     score.test[i,"observed.score"] <- ob.score[,i]
     score.test[i,"random.function.mean"] <- mean (rand.data[,i])
@@ -550,8 +556,8 @@ type.palette <- c("#440154FF", "#FDE725FF", "#21908CFF")
 plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),],
     xlim = c(-165, -35), ylim = c(-10, 65), col = "#F7F7F7", lwd = 0.5)
 
-# Edge colours for spring and fall edges (fall edges should not appear in this plot)
-edge.cols <- spring.con.ab %>% mutate(col = case_when(
+# Prepare edge colours for spring and fall edges (fall edges should not appear in this plot)
+edge.cols.spring <- spring.con.ab %>% mutate(col = case_when(
   edge.type == "spring" ~ adjustcolor("darkgray", alpha.f = 0.9),
   edge.type == "fall" ~ NA))
 
@@ -560,7 +566,7 @@ plot(spring.graph, vertex.label = NA, vertex.size = 300, vertex.size2 = 200,
      layout = as.matrix(meta.spring.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(spring.con.ab)),
      vertex.color = type.palette[meta.spring.ab$node.type.num],
-     edge.color= edge.cols$col, add = T)
+     edge.color= edge.cols.spring $col, add = T)
 # legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
 #        col = type.palette[unique(meta.spring.ab$node.type.num)],
 #        pch = 19, )
@@ -779,6 +785,24 @@ plot(spring.graph.weighed.ab, vertex.size = 200, vertex.size2 = 200, vertex.labe
      vertex.color = spring.comm.pal[spring.communities.bet$membership], add = T,
      vertex.label = NA)
 
+### community detection using multilevel optimization of modularity -----------
+spring.communities.louvain <- cluster_louvain(graph = undirected.spring.graph, resolution = 0.5)
+
+meta.spring.ab$community <- spring.communities.louvain$membership
+
+# plot communities
+plot(spring.communities.louvain, spring.graph)
+
+# plot communities on map
+spring.comm.pal <- rainbow(length(seq(1, max(spring.communities.louvain$membership))))
+
+plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70))
+plot(spring.graph.weighed.ab, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
+     edge.width = spring.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
+     layout = as.matrix(meta.spring.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
+     ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(spring.con.ab)),
+     vertex.color = spring.comm.pal[spring.communities.louvain$membership], add = T)
+
 ### Community detection using the algorithm developed by lancichinetti and Fortunato (https://www.nature.com/articles/srep00336) ----
 E(spring.graph)$weight <- spring.con.ab$weight
 undirected.spring.graph <- as.undirected(spring.graph, mode = "collapse",
@@ -792,12 +816,15 @@ spring.comm.pal <- rainbow(length(seq(1, max(comms$membership))))
 
 plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),],
      xlim = c(-165, -35), ylim = c(-10, 65), lwd = 0.5, col = "#F7F7F7")
-plot(spring.graph, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
+plot(spring.graph, vertex.label = NA, vertex.size = 300, vertex.size2 = 200,
      edge.width = spring.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
      layout = as.matrix(meta.spring.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(spring.con.ab)),
      vertex.color = spring.comm.pal[comms$membership], 
-     edge.color = adjustcolor("darkgray", alpha.f = 0.6), add = T)
+     edge.color = edge.cols.spring$col, add = T)
+
+## calculate modularity ---
+modularity(spring.graph, comms$membership, weights = E(spring.graph)$weight, directed = F)
 
 ### calculate bridging centrality using the networktools package -----
 spring.graph.el <- cbind( get.edgelist(spring.graph), round( E(spring.graph)$weight, 3 ))
@@ -824,8 +851,8 @@ text(x= 1.25, y = seq(0,1,l=5), labels = round(seq(0,max(bridge.c$`Bridge Streng
 rasterImage(legend_image, 0.75, 0, 1,1)
 
 ### calculate bridge betweennness using the networktools package -----
-bridge.betw.palette  <- hcl.colors(n = length(seq(0, max(bridge.c$`Bridge Betweenness`),0.01)), palette = "Reds 3", rev = T) 
-names(bridge.betw.palette ) <- seq(0, max(bridge.c$`Bridge Betweenness`),0.01)
+bridge.betw.palette  <- hcl.colors(n = length(seq(0, max(bridge.c$`Bridge Betweenness`),1)), palette = "Reds 3", rev = T) 
+names(bridge.betw.palette ) <- seq(0, max(bridge.c$`Bridge Betweenness`),1)
 
 plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),], 
      xlim = c(-170, -30), ylim = c(-15, 70), col = "#F2F2F2", lwd = 0.5)
@@ -835,7 +862,7 @@ plot(spring.graph, vertex.size = 200, vertex.size2 = 200, vertex.label= NA,
      layout = as.matrix(meta.spring.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(spring.con.ab)),
      vertex.color = bridge.betw.palette[as.character(round(bridge.c$`Bridge Betweenness`, digits = 2))],
-     edge.color = adjustcolor("darkgray", alpha.f = 0.6), add = T)
+     edge.color = edge.cols.spring$col, add = T)
 
 legend_image <- as.raster(matrix(hcl.colors(n = length(seq(0, max(bridge.c$`Bridge Betweenness`), 0.01)), palette = "Reds 3", rev = F) , ncol=1))
 plot(c(0,2),c(-0.01,1),type = 'n', axes = F,xlab = '', ylab = '')

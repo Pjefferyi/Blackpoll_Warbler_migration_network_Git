@@ -160,23 +160,24 @@ fall.stat <- merge(fall.stat, fall.timings.nb, by = "geo_id")
 fall.stat <- fall.stat %>% group_by(geo_id) %>% filter(StartTime <= NB.first.site.arrival) %>% group_by(geo_id)%>% 
   filter(distHaversine(cbind(Lon.50.,Lat.50.), cbind(deploy.longitude, deploy.latitude)) > 250000)
 
-# Uncomment this code to generate clusters using the pam function
-cluster.data <- clusterLocs(locs = fall.stat, maxdiam = 600)
-fall.stat$cluster <- cluster.data$clusters
+# # Uncomment this code to generate clusters using the pam function
+# cluster.data <- clusterLocs(locs = fall.stat, maxdiam = 600)
+# fall.stat$cluster <- cluster.data$clusters
 
 # # Export fall stopovers for manual clustering in QGIS
-# fall.stat.sites <- st_as_sf(fall.stat[,1:12], coords = c("Lon.50.", "Lat.50."))
+# fall.stat.sites <- st_as_sf(fall.stat[,c(1:12, ncol(fall.stat))], coords = c("Lon.50.", "Lat.50."))
 # st_crs(fall.stat.sites) <- st_crs(wrld_simpl)
-# st_write(fall.stat.sites, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/layers/fall_stat_sites5.shp", append=FALSE)
+# st_write(fall.stat.sites, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/layers/fall_stat_sites6.shp", append=FALSE)
 
 # # Import clusters created manually
-# fall.manual.cluster <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/Tables/Fall_manual_clusters_conservativeV4.csv")
-# fall.manual.cluster <- fall.manual.cluster %>% rename(cluster = Cluster, cluster.region = ClusterReg) %>%
-#   mutate(cluster.region= as.factor(cluster.region)) %>%
-#   mutate(cluster = as.numeric(cluster.region))
-# 
-# # Merge manual cluster info with original dataset
-# fall.stat <- merge(fall.stat, fall.manual.cluster[,c("geo_id", "sitenum", "cluster", "cluster.region")], by = c("geo_id", "sitenum"))
+fall.manual.cluster <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/Tables/Fall_manual_clusters_conservativeV6.csv") %>%
+  rename(Cluster = cluster)
+fall.manual.cluster <- fall.manual.cluster %>% rename(cluster = Cluster, cluster.region = ClusterReg) %>%
+  mutate(cluster.region= as.factor(cluster.region)) %>%
+  mutate(cluster = as.numeric(cluster.region))
+
+# Merge manual cluster info with original dataset
+fall.stat <- merge(fall.stat, fall.manual.cluster[,c("geo_id", "sitenum", "cluster", "cluster.region")], by = c("geo_id", "sitenum"))
 
 # Add breeding sites with separate clusters
 fall.breed.n <- geo.all  %>% filter(site_type == "Breeding",
@@ -278,7 +279,7 @@ meta.fall <- data.frame("vertex" = seq(1, max(fall.edge.df$cluster)),
                    "node.type.num" = fall.node.type$site_type_num)
 
 # For fall nodes where latitudinal accuracy is low, set location close to the coast
-#meta.fall[c(8, 21, 14),]$Lat.50. <- c(36, 42, 44.4)
+meta.fall[c(10),]$Lat.50. <- c(41.5)
  
 fall.location <- as.matrix(meta.fall[, c("Lon.50.", "Lat.50.")])
 
@@ -311,11 +312,12 @@ fall.graph.weighed <- graph_from_data_frame(fall.con, directed = T, vertices = m
 is_weighted(fall.graph.weighed)
 
 plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70))
-plot(fall.graph.weighed, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
+plot(fall.graph.weighed, vertex.size = 200, vertex.size2 = 200,
      edge.width = fall.con$weight/1.5, edge.arrow.size = 0, edge.arrow.width = 0,  
      layout = fall.location, rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con)),
-     vertex.color = type.palette[meta.fall$node.type.num], add = T)
+     vertex.color = type.palette[meta.fall$node.type.num],
+     vertex.label = NA, add = T)
 legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
        col = type.palette[unique(meta.fall$node.type.num)],
        pch = 16)
@@ -812,25 +814,31 @@ meta.fall.ab <- meta.fall.ab %>% rowwise() %>%
 # Create a palette for site use by range region  
 reg.ab.palette <- list(c("#D55E00", "#009E73", "#0072B2"))
 
+# Prepare edge colours for spring and fall edges (spring edges should not appear in this plot)
+edge.cols.fall <- fall.con.ab %>% mutate(col = case_when(
+  edge.type == "fall" ~ adjustcolor("darkgray", alpha.f = 0.9),
+  edge.type == "spring" ~ NA))
+
 plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),],
      xlim = c(-170, -35), ylim = c(-10, 65), col = "#F7F7F7", lwd = 0.5)
 
 plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),],
       xlim = c(-170, -35), ylim = c(-10, 65), col = NA, lwd = 0.5, add = T)
 
-plot(fall.graph.weighed.ab, vertex.size = 400, vertex.size2 = 200,
+plot(fall.graph.weighed.ab, vertex.size = 500, vertex.size2 = 200,
      vertex.shape = meta.fall.ab$shape_single_breeding, vertex.color = meta.fall.ab$shape_colour_single_breeding,
      edge.arrow.width = 0,edge.width = fall.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,
      layout = fall.location, rescale = F, asp = 0, xlim = c(-170, -30),
-     ylim = c(-15, 70), vertex.label = NA, edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)), add = T)
+     ylim = c(-15, 70), vertex.label = NA, edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)), 
+     edge.color = edge.cols.fall$col, add = T)
 
-plot(fall.graph.weighed.ab, vertex.size = 400, vertex.size2 = 200,
+plot(fall.graph.weighed.ab, vertex.size = 500, vertex.size2 = 200,
      vertex.shape = meta.fall.ab$shape_single, vertex.color = meta.fall.ab$shape_colour_single,
      edge.arrow.width = 0,edge.width = 0, edge.arrow.size = 0, edge.arrow.width = 0,
      layout = fall.location, rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), vertex.label = NA, edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)), add = T)
 
-plot(fall.graph.weighed.ab, vertex.size = 400, vertex.size2 = 200,
+plot(fall.graph.weighed.ab, vertex.size = 500, vertex.size2 = 200,
      vertex.shape = meta.fall.ab$shape_multiple, vertex.pie = meta.fall.ab$num.reg.ab.vector,
      vertex.pie.color = reg.ab.palette,edge.width = 0,edge.arrow.size = 0, edge.arrow.width = 0,
      layout = fall.location, rescale = F, asp = 0, xlim = c(-170, -30),
@@ -888,16 +896,22 @@ meta.spring.ab <- meta.spring.ab %>% rowwise() %>%
 # Create a palette for site use by range region  
 reg.ab.palette <- list(c("#D55E00", "#009E73", "#0072B2"))
 
+# Prepare edge colours for spring and fall edges (fall edges should not appear in this plot)
+edge.cols.spring <- spring.con.ab %>% mutate(col = case_when(
+  edge.type == "spring" ~ adjustcolor("darkgray", alpha.f = 0.9),
+  edge.type == "fall" ~ NA))
+
 plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),],
      xlim = c(-165, -35), ylim = c(-10, 65), col = "#F7F7F7", lwd = 0.5)
 
-plot(spring.graph.weighed.ab, vertex.size = 400, vertex.size2 = 400,
+plot(spring.graph.weighed.ab, vertex.size = 500, vertex.size2 = 400,
      vertex.shape = meta.spring.ab$shape_single, vertex.color = meta.spring.ab$shape_colour_single,
      edge.arrow.width = 0,edge.width = spring.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,
      layout = spring.location, rescale = F, asp = 0, xlim = c(-170, -30),
-     ylim = c(-15, 70), vertex.label = NA, edge.curved = rep(c(-0.05, 0.05), nrow(spring.con.ab)), add = T)
+     ylim = c(-15, 70), vertex.label = NA, edge.curved = rep(c(-0.05, 0.05), nrow(spring.con.ab)), 
+     edge.color = edge.cols.spring$col, add = T)
 
-plot(spring.graph.weighed.ab, vertex.size = 400, vertex.size2 = 200,
+plot(spring.graph.weighed.ab, vertex.size = 500, vertex.size2 = 200,
      vertex.shape = meta.spring.ab$shape_multiple, vertex.pie = meta.spring.ab$num.reg.ab.vector,
      vertex.pie.color = reg.ab.palette,edge.width = 0,edge.arrow.size = 0, edge.arrow.width = 0,
      layout = spring.location, rescale = F, asp = 0, xlim = c(-170, -30),

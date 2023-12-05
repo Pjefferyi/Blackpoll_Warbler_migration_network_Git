@@ -122,12 +122,6 @@ twl <- twilightEdit(twilights = twl,
                     stationary.mins = 25,
                     plot = TRUE)
 
-# read parameters that will be used during the analysis
-niter <- ref_data$MCMC.iter[which(ref_data$geo.id == geo.id)]
-nthin <- ref_data$MCMC.thin[which(ref_data$geo.id == geo.id)]
-chains <- ref_data$MCMC.chains[which(ref_data$geo.id == geo.id)]
-nday <- ref_data$changeLight.days[which(ref_data$geo.id == geo.id)]
-
 # Calibration ##################################################################
 
 # We start with calibration based on the stationary periods before and after the migration
@@ -216,15 +210,15 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-cL <- changeLight(twl=geo_twl, quantile=0.90, summary = F, days = nday, plot = T)
+cL <- changeLight(twl=geo_twl, quantile=0.90, summary = F, days = 2, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites2(geo_twl, site = cL$site, distThreshold = 250, degElevation = 90-zenith0, alpha = calib[3:4] , method = "gamma", map = wrld_simpl)
+mS <- mergeSites(geo_twl, site = cL$site, distThreshold = 250, degElevation = 90-zenith0, alpha = calib[3:4])
 
 ##back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
-twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2], tz = "UTC"), 
+twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 
                       Rise     = c(ifelse(geo_twl[,3]==1, TRUE, FALSE), ifelse(geo_twl[,3]==1, FALSE, TRUE)),
-                      Site     = append(rep(mS$site,2), c(0,0)))
+                      Site     = rep(mS$site,2))
 twl.rev <- subset(twl.rev, !duplicated(Twilight), sort = Twilight)
 
 grouped <- rep(FALSE, nrow(twl.rev))
@@ -320,7 +314,7 @@ x.proposal <- mvnorm(S = diag(c(0.005, 0.005)), n = nrow(x0))
 z.proposal <- mvnorm(S = diag(c(0.005, 0.005)), n = nrow(z0))
 
 # Fit the model
-fit <- estelleMetropolis(model, x.proposal, z.proposal, iters = niter, thin = nthin)
+fit <- estelleMetropolis(model, x.proposal, z.proposal, iters = 1000, thin = 20)
 
 #Tuning ########################################################################
 
@@ -344,7 +338,7 @@ for (k in 1:3) {
   x.proposal <- mvnorm(chainCov(fit$x), s = 0.3)
   z.proposal <- mvnorm(chainCov(fit$z), s = 0.3)
   fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = chainLast(fit$x),
-                           z0 = chainLast(fit$z), iters = niter, thin = nthin, chain = chains)
+                           z0 = chainLast(fit$z), iters = 300, thin = 20)
 }
 
 ## Check if chains mix
@@ -358,7 +352,7 @@ x.proposal <- mvnorm(chainCov(fit$x), s = 0.3)
 z.proposal <- mvnorm(chainCov(fit$z), s = 0.3)
 
 fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = chainLast(fit$x),
-                         z0 = chainLast(fit$z), iters = niter, thin = nthin, chain = chains)
+                         z0 = chainLast(fit$z), iters = 2000, thin = 20)
 
 #Summarize results #############################################################
 
@@ -381,7 +375,7 @@ r <- raster(nrows = 2 * diff(ylim), ncols = 2 * diff(xlim), xmn = xlim[1]-5,
 s <- slices(type = "intermediate", breaks = "week", mcmc = fit, grid = r)
 sk <- slice(s, sliceIndices(s))
 
-plot(sk, useRaster = F,col = c("transparent", rev(viridis::viridis(50))))
+plot(sk, useRaster = F,col = c("transparent", rev(viridis::viridis(50))), xlab = "Longitude", ylab = "Latitude")
 plot(wrld_simpl, xlim=xlim, ylim=ylim,add = T, bg = adjustcolor("black",alpha=0.1))
 
 with(sm[sitenum>0,], arrows(`Lon.50.`, `Lat.2.5.`, `Lon.50.`, `Lat.97.5.`, length = 0, lwd = 2.5, col = "firebrick"))
