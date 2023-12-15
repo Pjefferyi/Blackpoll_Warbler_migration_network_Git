@@ -240,7 +240,7 @@ z0 <- trackMidpts(x0_r)
 save(x0_r, file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
 
 # Check the following times of arrival and departure using a plot 
-arr.nbr <- "2012-11-05" 
+arr.nbr <- "2012-11-04" 
 dep.nbr <- "2013-05-13" 
 
 # open jpeg
@@ -263,8 +263,8 @@ dev.off()
 # Using approximate timings of arrival and departure from the breeding grounds
 zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith0,
-                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad-2,
-                            Date > anytime(dep.nbr) ~ zenith0))
+                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad,
+                            Date > anytime(dep.nbr) ~ zenith0_ad))
 
 zeniths0 <- zenith_twl_zero$zenith
 
@@ -516,6 +516,8 @@ text(sm[,"Lon.50."], sm[,"Lat.50."], ifelse(sitenum>0, as.integer(((sm$EndTime -
 
 #Show dates
 #text(sm[,"Lon.50."], sm[,"Lat.50."], ifelse(sitenum>0, as.character(sm$StartTime), ""), col="red", pos = 1) 
+
+points(dtx0[sitenum > 0,], pch = 16, cex = 1, col = "green")
 
 #Close jpeg
 dev.off()

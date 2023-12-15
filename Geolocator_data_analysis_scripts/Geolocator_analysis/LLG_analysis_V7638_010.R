@@ -185,7 +185,7 @@ z0 <- trackMidpts(x0_r)
 save(x0_r, file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
 
 # Check the following times of arrival and departure using a plot 
-arr.nbr <- "2018-10-25" 
+arr.nbr <- "2018-10-12" 
 dep.nbr <- "2019-04-29" 
 
 # open jpeg
@@ -215,8 +215,8 @@ zeniths0 <- zenith_twl_zero$zenith
 
 zenith_twl_med <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith,
-                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith_sd,
-                            Date > anytime(dep.nbr) ~ zenith_sd))
+                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith_sd-1,
+                            Date > anytime(dep.nbr) ~ zenith_sd-1))
 
 zeniths_med <- zenith_twl_med$zenith
 
@@ -290,7 +290,7 @@ plot(locs.nbr$timestep, locs.nbr$lon)
 abline(lm(locs.nbr$lon ~ locs.nbr$timestep))
 CD.model <- lm(locs.nbr$lon ~ locs.nbr$timestep)
 CD.model$coefficients[2] # is the rate of drift in lon/s
-CD.model$coefficients[2] * 240 # convert to time in seconds s/s
+CD.model$coefficients[2] * 240 # convert to time in seconds s/s. 1 degree of longitude is equal to 4 minutes, or 240 seconds. 
 
 # Create the adjusted time file 
 twl$timestep <- seq(1, nrow(twl))
@@ -333,7 +333,7 @@ geo_twl_adjusted <- export2GeoLight(twl_adjusted)
 cL <- changeLight(twl=geo_twl_adjusted, quantile= 0.82, summary = F, days = 2, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl_adjusted, site = cL$site, degElevation = 90-zenith, distThreshold = 500)
+mS <- mergeSites(twl = geo_twl_adjusted, site = cL$site, degElevation = 90-zenith, distThreshold = 250)
 
 #back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl_adjusted.rev <- data.frame(Twilight = as.POSIXct(geo_twl_adjusted[,1], geo_twl_adjusted[,2]), 
@@ -558,6 +558,35 @@ text(sm$StartTime, sm$"Lat.50.", ifelse(sitenum>0, as.integer(((sm$EndTime - sm$
 #Close jpeg
 dev.off()
 
+#Extract Stationary locations ##################################################
+sm$sitenum <- sitenum
+sm$duration <- as.numeric(difftime(sm$EndTime, sm$StartTime), unit = "days")
+stat.loc <- sm[sitenum > 0, ]
+
+#plot only stationary locations
+par(mfrow=c(1,1))
+
+data(wrld_simpl)
+plot(wrld_simpl, xlim=xlim, ylim=ylim, col = "grey95")
+points(sm$Lon.50., sm$Lat.50., pch = 16, cex = 0, col = "firebrick", type = "o")
+points(stat.loc$Lon.50., stat.loc$Lat.50., pch = 16, cex = 1.5, col = "firebrick")
+
+# add column with geolocator ID
+sm$geo_id <- geo.id
+
+#add a column that categorizes the locations (based on the groupthreshold model output)
+sm <- sm %>% mutate(period= case_when(StartTime < anytime("2018-10-26 22:24:44", asUTC = T, tz = "GMT")  ~ "Post-breeding migration",
+                                      StartTime >= anytime("2018-10-26 22:24:44", asUTC = T, tz = "GMT") & StartTime < anytime("2019-04-27 22:32:18", asUTC = T, tz = "GMT") ~ "Non-breeding period",
+                                      StartTime > anytime("2019-04-27 22:32:18", asUTC = T, tz = "GMT") ~ "Pre-breeding migration"))
+
+#Save the output of the model 
+save(sm, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))
+save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
+
+#load the output of the model 
+#load(file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))
+#load(file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
+
 # Examine twilights ############################################################
 
 #load the adjusted threshold path adjusted for clock drift
@@ -571,6 +600,10 @@ end <- "2018-11-15"
 f1.start <- "2018-10-13"
 f1.end <- "2018-10-15"
 
+#Second flight
+f2.start <- "2018-10-18"
+f2.end <- "2018-10-19"
+
 # Plot lat, lon and light transitions  
 jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition.png"), width = 1024 , height = 990, quality = 100, res = 200)
 
@@ -580,20 +613,22 @@ par(mfrow=c(3,1), mar = c(5,5,0.1,5))
 plot(lig$Date[lig$Date > start & lig$Date < end], lig$Light[lig$Date > start & lig$Date < end], type = "o",
      ylab = "Light level", xlab = "Time")
 rect(anytime(f1.start), min(lig$Light)-2, anytime(f1.end), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
-
+rect(anytime(f2.start), min(lig$Light)-2, anytime(f2.end), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
 plot(twl_adjusted$Twilight[twl_adjusted$Twilight> start & twl_adjusted$Twilight < end], x0[,1][twl_adjusted$Twilight > start & twl_adjusted$Twilight < end],
      ylab = "Longitude", xlab = "Time")
 rect(anytime(f1.start), min(x0_ad[,1])-2, anytime(f1.end), max(x0[,1])+2, col = alpha("yellow", 0.2), lty=0)
-
+rect(anytime(f2.start), min(lig$Light)-2, anytime(f2.end), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
 plot(twl_adjusted$Twilight[twl_adjusted$Twilight > start & twl_adjusted$Twilight < end], x0[,2][twl_adjusted$Twilight > start & twl_adjusted$Twilight < end],
      ylab = "Latitude", xlab = "Time")
 rect(anytime(f1.start), min(x0_ad[,2])-2, anytime(f1.end), max(x0[,2])+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime(f2.start), min(lig$Light)-2, anytime(f2.end), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
 par(cex.lab= 1)
 par(cex.axis= 1)
 
 dev.off()
 
-# This Bird appears to have flown directly from the coast of North America to South America without making a stopover in the carribean
+# A short stopover over the carribean appears possible here based on latitude estimmates obtained after the equinox 
+# However, there is not clear pattern that supports it in the longitude or light level data 
 
 # Record details for the geolocator analysis ###################################
 geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 

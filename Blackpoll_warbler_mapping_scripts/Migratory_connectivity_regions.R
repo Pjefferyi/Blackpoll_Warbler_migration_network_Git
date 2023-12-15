@@ -40,10 +40,16 @@ ggplot(st_as_sf(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenl
 
 # Plot of nonbreeding regions ####
 
-# # Load the nonbreeding regions
-# fall.nbr.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/NonbreedingregionsV3.shp") %>%
-#   st_transform(crs(wrld_simpl))%>%
-#   st_cast("MULTIPOLYGON")
+# # Use eBirdist to extract the blackpoll warbler's nonbreeding range polygon 
+# bkpwar.range <- load_ranges("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_imports/2021/bkpwar",
+#                          resolution = "lr",
+#                          smoothed = T)
+# nbr.range <- bkpwar.range[bkpwar.range$season == "nonbreeding",]
+# plot(nbr.range)
+
+# Export the layer created and use it to generate to separate regions in QGIS
+st_write(nbr.range, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/ebird_nonbreeding_range.shp")
+
 
 # Get the first nonbreeding site of every bird
 fall.nbr <- geo.all %>% group_by(geo_id) %>%

@@ -525,7 +525,7 @@ sm$geo_id <- geo.id
 
 #add a column that categorizes the locations (based on the groupthreshold model output)
 sm <- sm %>% mutate(period= case_when(StartTime < anytime("2018-10-27 09:55:46", asUTC = T, tz = "GMT")  ~ "Post-breeding migration",
-                                      StartTime >= anytime("2019-04-26 22:24:20", asUTC = T, tz = "GMT") & StartTime < anytime("2018-10-27 09:55:46", asUTC = T, tz = "GMT") ~ "Non-breeding period",
+                                      StartTime >= anytime("2018-10-27 09:55:46", asUTC = T, tz = "GMT") & StartTime < anytime("2019-04-26 22:24:20", asUTC = T, tz = "GMT") ~ "Non-breeding period",
                                       StartTime > anytime("2019-04-26 22:24:20", asUTC = T, tz = "GMT") ~ "Pre-breeding migration"))
 
 #Save the output of the model 

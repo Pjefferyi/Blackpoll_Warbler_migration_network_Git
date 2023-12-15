@@ -40,6 +40,11 @@ geo.all <- findLocData(geo.ids = c("V8757_010",
                                    "V8757_134",
                                    "V8757_029",
                                    "V8757_078",
+                                   "V7638_001",
+                                   "V7638_005",
+                                   "V7638_009",
+                                   "V7638_010",
+                                   "V7638_011",
                                    "blpw09",
                                    "blpw12",
                                    "3254_001",
@@ -163,7 +168,7 @@ fall.stat <- fall.stat %>% group_by(geo_id) %>% filter(StartTime <= NB.first.sit
 # # Uncomment this code to generate clusters using the pam function
 # cluster.data <- clusterLocs(locs = fall.stat, maxdiam = 600)
 # fall.stat$cluster <- cluster.data$clusters
-
+# 
 # # Export fall stopovers for manual clustering in QGIS
 # fall.stat.sites <- st_as_sf(fall.stat[,c(1:12, ncol(fall.stat))], coords = c("Lon.50.", "Lat.50."))
 # st_crs(fall.stat.sites) <- st_crs(wrld_simpl)
@@ -171,8 +176,7 @@ fall.stat <- fall.stat %>% group_by(geo_id) %>% filter(StartTime <= NB.first.sit
 
 # # Import clusters created manually
 fall.manual.cluster <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/Tables/Fall_manual_clusters_conservativeV6.csv") %>%
-  rename(Cluster = cluster)
-fall.manual.cluster <- fall.manual.cluster %>% rename(cluster = Cluster, cluster.region = ClusterReg) %>%
+  rename(cluster = Cluster, cluster.region = ClusterReg) %>%
   mutate(cluster.region= as.factor(cluster.region)) %>%
   mutate(cluster = as.numeric(cluster.region))
 
@@ -212,13 +216,13 @@ ggplot(st_as_sf(wrld_simpl))+
   labs(colour = "Cluster") +
   theme_bw() +
   theme(text = element_text(size = 16), legend.position = "None")
-
-#Optional: add edge from nonbreeding site back to the breeding site of origin
-fall.breed.return <- fall.breed %>% group_by(geo_id) %>%
-  mutate(sitenum = max(fall.stat[(fall.stat$geo_id == geo_id),]$sitenum))
-fall.breed.return[,c("StartTime", "EndTime", "duration")] <- NA
-fall.breed.return[,c("period")] <- "Post-breeding migration"
-fall.stat <- bind_rows(fall.stat, fall.breed.return) %>% arrange(geo_id, sitenum)
+# 
+# # Optional: add edge from nonbreeding site back to the breeding site of origin
+# fall.breed.return <- fall.breed %>% group_by(geo_id) %>%
+#   mutate(sitenum = max(fall.stat[(fall.stat$geo_id == geo_id),]$sitenum))
+# fall.breed.return[,c("StartTime", "EndTime", "duration")] <- NA
+# fall.breed.return[,c("period")] <- "Post-breeding migration"
+# fall.stat <- bind_rows(fall.stat, fall.breed.return) %>% arrange(geo_id, sitenum)
 
 # Generate the network from our location data and clusters #####################
 
@@ -279,7 +283,7 @@ meta.fall <- data.frame("vertex" = seq(1, max(fall.edge.df$cluster)),
                    "node.type.num" = fall.node.type$site_type_num)
 
 # For fall nodes where latitudinal accuracy is low, set location close to the coast
-meta.fall[c(10),]$Lat.50. <- c(41.5)
+meta.fall[c(17, 20),]$Lat.50. <- c(41.5, 34.4)
  
 fall.location <- as.matrix(meta.fall[, c("Lon.50.", "Lat.50.")])
 
@@ -316,8 +320,7 @@ plot(fall.graph.weighed, vertex.size = 200, vertex.size2 = 200,
      edge.width = fall.con$weight/1.5, edge.arrow.size = 0, edge.arrow.width = 0,  
      layout = fall.location, rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con)),
-     vertex.color = type.palette[meta.fall$node.type.num],
-     vertex.label = NA, add = T)
+     vertex.color = type.palette[meta.fall$node.type.num], add = T)
 legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
        col = type.palette[unique(meta.fall$node.type.num)],
        pch = 16)
@@ -345,13 +348,13 @@ spring.stat <- spring.stat %>% group_by(geo_id) %>% filter(StartTime >= NB.last.
   filter(distHaversine(cbind(Lon.50.,Lat.50.), cbind(deploy.longitude, deploy.latitude)) > 250000 | geo_id == "WRMA04173")
 
 # Uncomment this code to generate clusters using the pam function
-cluster.data <- clusterLocs(locs = spring.stat, maxdiam = 600)
+cluster.data <- clusterLocs(locs = spring.stat, maxdiam = 700)
 spring.stat$cluster <- cluster.data$clusters
 
 # # export spring stat sites for manual clustering
-# spring.stat.sites <- st_as_sf(spring.stat[,1:12], coords = c("Lon.50.", "Lat.50."))
+# spring.stat.sites <- st_as_sf(spring.stat[,c(1:12, ncol(spring.stat))], coords = c("Lon.50.", "Lat.50."))
 # st_crs(spring.stat.sites) <- st_crs(wrld_simpl)
-# st_write(spring.stat.sites, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/Layers/spring_stat_sitesV2.shp", append = F)
+# st_write(spring.stat.sites, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/Layers/spring_stat_sitesV3.shp", append = F)
 
 # # Import clusters created manually
 # spring.manual.cluster <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/Tables/Spring_manual_clusters_V2.csv")
@@ -397,12 +400,12 @@ ggplot(st_as_sf(wrld_simpl))+
   theme_bw() +
   theme(text = element_text(size = 16), legend.position = "None")
 
-# Optional: add edge from nonbreeding site back to the breeding site of origin
-spring.breed.return <- spring.breed %>% group_by(geo_id) %>%
-  mutate(sitenum = 1)
-spring.breed.return[,c("StartTime", "EndTime", "duration")] <- NA
-spring.breed.return[,c("period")] <- "Pre-breeding migration"
-spring.stat <- bind_rows(spring.stat, spring.breed.return) %>% arrange(geo_id, sitenum)
+# # Optional: add edge from nonbreeding site back to the breeding site of origin
+# spring.breed.return <- spring.breed %>% group_by(geo_id) %>%
+#   mutate(sitenum = 1)
+# spring.breed.return[,c("StartTime", "EndTime", "duration")] <- NA
+# spring.breed.return[,c("period")] <- "Pre-breeding migration"
+# spring.stat <- bind_rows(spring.stat, spring.breed.return) %>% arrange(geo_id, sitenum)
 
 # Generate the network from our location data and clusters #####################
 
@@ -557,6 +560,14 @@ ggplot(st_as_sf(wrld_simpl))+
   geom_path(data = NB.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5,
             arrow = arrow(end = "last", type = "open", length = unit(0.10, "inches"))) +
    scale_colour_gradientn(colours=rainbow(5))
+
+
+ggplot(st_as_sf(wrld_simpl))+
+  geom_sf(colour = NA, fill = "lightgray") +
+  coord_sf(xlim = c(-90, -30),ylim = c(-15, 20)) +
+  geom_point(data = NB.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, colour = Range_region)) +
+  geom_path(data = NB.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5,
+            arrow = arrow(end = "last", type = "open", length = unit(0.10, "inches"))) 
 
 # Generate the network from our location data and clusters #####################
 

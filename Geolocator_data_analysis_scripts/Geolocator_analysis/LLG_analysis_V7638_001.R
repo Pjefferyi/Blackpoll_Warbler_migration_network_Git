@@ -287,13 +287,13 @@ abline(v = anytime(dep.nbr) -days(15))
 abline(v = fall.equi, col = "orange")
 abline(v = spring.equi, col = "orange")
 
-# linear model to find the rate of drift 
+# linear model to find the rate of drift over the nonbreeding period, while the bird was stationary  
 plot(locs.nbr$timestep, locs.nbr$lon)
 abline(lm(locs.nbr$lon ~ locs.nbr$timestep))
 CD.model <- lm(locs.nbr$lon ~ locs.nbr$timestep)
 
 CD.model$coefficients[2] # is the rate of drift in lon/s
-CD.model$coefficients[2] * 240 # convert to time in seconds s/s
+CD.model$coefficients[2] * 240 # convert to time in seconds s/s. 1 degree of longitude is equal to 4 minutes, or 240 seconds. 
 
 #adjust twilight times
 twl$timestep <- seq(1, nrow(twl))
@@ -575,9 +575,9 @@ points(stat.loc$Lon.50., stat.loc$Lat.50., pch = 16, cex = 1.5, col = "firebrick
 sm$geo_id <- geo.id
 
 #add a column that categorizes the locations (based on the groupthreshold model output)
-sm <- sm %>% mutate(period= case_when(StartTime < anytime("2018-11-03 09:53:09", asUTC = T, tz = "GMT")  ~ "Post-breeding migration",
-                                      StartTime >= anytime("2019-04-27 10:03:12", asUTC = T, tz = "GMT") & StartTime < anytime("2018-10-25 22:42:47", asUTC = T, tz = "GMT") ~ "Non-breeding period",
-                                      StartTime > anytime("2019-04-27 10:03:12", asUTC = T, tz = "GMT") ~ "Pre-breeding migration"))
+sm <- sm %>% mutate(period= case_when(StartTime < anytime("2018-11-03", asUTC = T, tz = "GMT")  ~ "Post-breeding migration",
+                                      StartTime >= anytime("2018-11-03", asUTC = T, tz = "GMT") & StartTime < anytime("2019-04-27 10:02:14", asUTC = T, tz = "GMT") ~ "Non-breeding period",
+                                      StartTime > anytime("2019-04-27 10:02:14", asUTC = T, tz = "GMT") ~ "Pre-breeding migration"))
 
 #Save the output of the model 
 save(sm, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))

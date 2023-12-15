@@ -68,15 +68,29 @@ for (i in 1:vcount(spring.graph)){
 }
   
 # adjacency matrix 
-ad.mat <- matrix(unlist(rows), ncol=vcount(spring.graph), byrow=TRUE)
+ad.mat<- matrix(unlist(rows), ncol=vcount(spring.graph), byrow=TRUE)
 
 ######################### part 3 ###############################################
 
-# Set values bewlo trheshold to 0 
-ad.mat[ad.mat < thresh] <- 0
-
 #Set diag elements of matrix to 0 (to avoid loop edges)
 diag(ad.mat) <- 0
+
+# check for any disconnnected vertices (all weights < threshold)
+# connect these vertices to their neighbour with the highest weight 
+for (i in (seq(1,nrow(ad.mat)))){
+  
+  if (!(T %in% ad.mat[i,] >= thresh)){
+    
+    maxima <- which(ad.mat[i,] == max(ad.mat[,i]))
+    
+    ad.mat[i, maxima] <- thresh
+    ad.mat[maxima, i] <- thresh
+  }
+}
+
+# Set values below trheshold to 0 
+ad.mat.ini <- ad.mat
+ad.mat[ad.mat < thresh] <- 0
 
 # transform to matrix into graph 
 ad.graph <- graph_from_adjacency_matrix(ad.mat, weighted = T)
@@ -122,12 +136,26 @@ while (P > 1){
   # adjacency matrix 
   ad.mat <- matrix(unlist(rows), ncol=vcount(iter.graph ), byrow=TRUE)
   
-  # Set values bewlo trheshold to 0 
-  ad.mat[ad.mat < thresh] <- 0
-  
   #Set diag elements of matrix to 0 (to avoid loop edges)
   diag(ad.mat) <- 0 
   
+  # check for any disconnnected vertices (all weights < threshold)
+  # connect these vertices to their neighbour with the highest weight 
+  for (i in (seq(1,nrow(ad.mat)))){
+    
+    if (!(T %in% ad.mat[i,] >= thresh)){
+      
+      maxima <- which(ad.mat[i,] == max(ad.mat[,i]))
+      
+      ad.mat[i, maxima] <- thresh
+      ad.mat[maxima, i] <- thresh
+    }
+  }
+  
+  # Set values below trheshold to 0 
+  ad.mat[ad.mat < thresh] <- 0
+  
+  # Create a graph from the adjacency matrix
   iter.graph <- graph_from_adjacency_matrix(ad.mat, weighted = T)
   
   #keep track of iterations 
@@ -147,7 +175,7 @@ plot(spring.graph, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
      edge.width = spring.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
      layout = as.matrix(meta.spring.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(spring.con.ab)),
-     vertex.color = spring.comm.pal[comms$membership], add = T)
+     vertex.color = spring.comm.pal[comms.f$membership], add = T)
   
 
-modularity(comms.f)
+

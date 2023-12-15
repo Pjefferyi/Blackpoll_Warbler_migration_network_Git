@@ -325,44 +325,40 @@ save(x0, file = paste0(dir,"/", geo.id, "_initial_path.csv"))
 
 # FIX CLOCK DRIFT ##############################################################
 
-# obtain longitude measurements during the breeding period before and after the migration
-# The bird should not be moving while in these areas
-br.start1 <- twl$Twilight[1]
-br.end1 <- twl$Twilight[1] + days(14)
-
+# obtain longitude measurements during the breeding period after the migration
+# The bird should not be moving during this period
 br.end2 <- twl$Twilight[nrow(twl)]
 br.start2 <- twl$Twilight[nrow(twl)] - days(14)
 
 # Get data frame with twilight times and longitude for each period
 twl <- twl %>% mutate(lon = path$x[,1])
-twl.br1 <- twl %>% dplyr::filter(Twilight > br.start1 , Twilight <br.end1)
 twl.br2 <- twl %>% dplyr::filter(Twilight > br.start2 , Twilight < br.end2)
 
 #plot of time ranges used
 par(mfrow = c(3,1))
 plot(twl$Twilight, x0_ad[,1], ylab = "longitude")
-abline(v = br.start1)
-abline(v = br.end1)
 abline(v = br.start2)
 abline(v = br.end2)
-#abline(v = fall.equi, col = "orange")
-#abline(v = spring.equi, col = "orange")
 
 plot(twl$Twilight, x0_ad[,2], ylab = "latitude")
-abline(v = br.start1)
-abline(v = br.end1)
 abline(v = br.start2)
 abline(v = br.end2)
-#abline(v = fall.equi, col = "orange")
-#abline(v = spring.equi, col = "orange")
 
-# calculate the median stationary location before and after the migration
-med.lon.b1 <- median(twl.br1$lon)
-med.lon.b2 <- median(twl.br2$lon)
-diff.lon <- med.lon.b2 - med.lon.b1
+# get the actual breeding latitude and the medianlocation of the bird after the migration
+lon.b1 <- lon.calib
+lon.b2 <- median(twl.br2$lon)
+diff.lon <- lon.b2 - lon.b1
+
+# plot the median stationary location before and after the migration
+par(mfrow=c(1,1))
+data(wrld_simpl)
+plot(x0, type = "n", xlab = "", ylab = "")
+plot(wrld_simpl, col = "grey95", add = T)
+points(lon.b1, lat.calib, pch = 16, cex = 2.5, col = "firebrick")
+points(lon.b2, lat.calib, pch = 16, cex = 2.5, col = "green")
 
 # linearly rescale time to prevent clock drift
-diff.sec <- diff.lon * 800#convert difference in longitude to difference in longitude per day
+diff.sec <- diff.lon * 240#convert difference in longitude to difference in longitude per day
 diff.sec.change <- diff.sec/nrow(twl)
 
 timestep <- seq(1, nrow(twl))

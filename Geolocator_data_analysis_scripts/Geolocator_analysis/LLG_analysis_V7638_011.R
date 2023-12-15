@@ -524,9 +524,9 @@ points(stat.loc$Lon.50., stat.loc$Lat.50., pch = 16, cex = 1.5, col = "firebrick
 sm$geo_id <- geo.id
 
 #add a column that categorizes the locations (based on the groupthreshold model output)
-sm <- sm %>% mutate(period= case_when(StartTime < anytime("2019-02-26 22:14:48 ", asUTC = T, tz = "GMT")  ~ "Post-breeding migration",
-                                      StartTime >= anytime("2019-02-25 09:51:12 ", asUTC = T, tz = "GMT") & StartTime < anytime("2019-02-26 22:14:48 ", asUTC = T, tz = "GMT") ~ "Non-breeding period",
-                                      StartTime > anytime("2019-02-25 09:51:12 ", asUTC = T, tz = "GMT") ~ "Pre-breeding migration"))
+sm <- sm %>% mutate(period= case_when(StartTime < anytime("2018-10-11 22:24:49", asUTC = T, tz = "GMT")  ~ "Post-breeding migration",
+                                      StartTime >= anytime("2018-10-11 22:24:49", asUTC = T, tz = "GMT") & StartTime < anytime("2019-04-25 22:16:50", asUTC = T, tz = "GMT") ~ "Non-breeding period",
+                                      StartTime > anytime("2019-04-25 22:16:50", asUTC = T, tz = "GMT") ~ "Pre-breeding migration"))
 
 #Save the output of the model 
 save(sm, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))

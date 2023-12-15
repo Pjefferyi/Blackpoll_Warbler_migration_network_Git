@@ -50,6 +50,7 @@ fall.br.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/Universit
   st_cast("MULTIPOLYGON")
 
 # Target sites 
+ebird
 fall.nbr.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/NonbreedingregionsV3.shp") %>%
   st_transform(CRS(proj))%>%
   st_cast("MULTIPOLYGON")
@@ -66,6 +67,7 @@ geo.bias.dists <- Thresh.loc.data %>% group_by(geo_id) %>%
   mutate(lat.geo.bias = distHaversine(cbind(deploy.longitude,lat), cbind(deploy.longitude, deploy.latitude))) %>%
   mutate(lon.geo.bias = distHaversine(cbind(lon,deploy.latitude), cbind(deploy.longitude, deploy.latitude)))
 
+# bias in longitude and latitude estimates, in meters 
 geo.bias <- c(lon.bias = mean(geo.bias.dists$lon.geo.bias),
               lat.bias = mean(geo.bias.dists$lat.geo.bias))
 
