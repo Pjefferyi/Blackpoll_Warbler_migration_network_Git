@@ -93,7 +93,6 @@ meta.fall.ab <- meta.fall.ab %>% rowwise() %>%
                                              shape_single.use != "circle" & use.nonbreeding.ab!= 0 ~ type.palette[3],
                                                   .default = NA))
 
-
 plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),],
      xlim = c(-165, -35), ylim = c(-10, 65), col = "#F7F7F7", lwd = 0.5)
 
@@ -153,7 +152,7 @@ plot(fall.graph, vertex.size = 300, vertex.size2 = 200, vertex.label.dist = 30,
      edge.color = adjustcolor("darkgray", alpha.f = 0.6), add = T, vertex.label = NA)
 
 # Fall weighed degree centrality ----
-fall.strength.c <- strength(fall.graph, mode = "in", weight = fall.con.ab$weight)
+fall.strength.c <- strength(fall.graph, mode = "out", weight = fall.con.ab$weight)
 
 # plot of the strength centrality of each node 
 deg.c.palette <- hcl.colors(n = length(seq(0, max(fall.strength.c + 0.01), 0.001)), palette = "Reds 3", rev = T) 
@@ -248,7 +247,7 @@ undirected.fall.graph <- as.undirected(fall.graph, mode = "collapse",
                                        edge.attr.comb = "sum")
 
 fall.communities.lab <- cluster_walktrap(undirected.fall.graph, weights = E(undirected.fall.graph)$weight,
-                                         steps = 10, modularity = T)
+                                         steps = 5, modularity = T)
 
 # plot communities
 plot(fall.communities.lab, fall.graph)
@@ -337,7 +336,7 @@ E(fall.graph)$weight <- fall.con.ab$weight
 undirected.fall.graph <- as.undirected(fall.graph, mode = "collapse",
                                          edge.attr.comb = "sum")
 # Run concensusCluster function 
-cluster_output <- concensusCluster(graph = undirected.fall.graph, thresh = 0.5, algiter = 10000)
+cluster_output <- concensusCluster(graph = undirected.fall.graph, thresh = 0.5, algiter = 1000)
 comms <- cluster_output$`community structure`
 
 # plot concensus graph
@@ -423,7 +422,7 @@ for (i in seq(1,iter)){
   rewire.cluster <- concensusCluster(graph = rewire.fall, thresh = 0.5, algiter = 3000)
   rewire.comms <- rewire.cluster$`community structure`$membership
   
-  # calculate scoring function
+  # calculate scoring functionhttp://127.0.0.1:9897/graphics/plot_zoom_png?width=453&height=546
   rewire.score <- scoring_functions(rewire.fall, com = rewire.comms, weighted = T, type = "global")
   
   # Build data.frame with results 
@@ -507,7 +506,7 @@ plot(fall.graph, vertex.size = 300, vertex.size2 = 200, vertex.label.dist = 30,
      layout = as.matrix(meta.fall.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)),
      vertex.color = time.palette[as.character(round(meta.fall.ab$time.occupied))],
-     edge.color = adjustcolor("darkgray", alpha.f = 0.6), add = T, vertex.label = NA)
+     edge.color = adjustcolor("darkgray", alpha.f = 0.6), add = T, vertex.label = round(meta.fall.ab$time.occupied))
 
 ### estimated proportion of blackpoll warblers in each node ----
 r.ab.palette <- hcl.colors(n = length(seq(0, max(meta.fall.ab$r.abundance.at.cluster + 0.01), 0.001)), palette = "Reds 3", rev = T) 
@@ -638,7 +637,7 @@ plot(spring.graph, vertex.size = 300, vertex.size2 = 200, vertex.label.dist = 30
      edge.width = spring.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
      layout = as.matrix(meta.spring.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(spring.con.ab)),
-     vertex.color = betw.c.palette[as.character(round(spring.betw.c))], add = T, vertex.label= NA,
+     vertex.color = betw.c.palette[as.character(round(spring.betw.c))], add = T, vertex.label= spring.betw.c,
      edge.color = edge.cols.spring$col)
 
 ## spring degree centrality
@@ -691,7 +690,7 @@ plot(spring.graph, vertex.size = 200, vertex.size2 = 200, vertex.label= NA,
      layout = as.matrix(meta.spring.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(spring.con.ab)),
      vertex.color = deg.TO.palette[as.character(round(spring.degree.TO[,"alpha"],4))],
-     edge.color = adjustcolor("darkgray", alpha.f = 0.6), add = T, vertex.label = round(spring.strength.c, digits = 4))
+     edge.color = adjustcolor("darkgray", alpha.f = 0.6), add = T, digits = 4)
 
 # spring degree centrality using the method developed by Opshal et al. ---
 E(spring.graph)$weight <- spring.con.ab$weight
@@ -712,7 +711,7 @@ plot(spring.graph, vertex.size = 200, vertex.size2 = 200, vertex.label= NA,
      layout = as.matrix(meta.spring.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(spring.con.ab)),
      vertex.color = deg.TO.palette[as.character(round(spring.degree.TO[,"alpha"],4))],
-     edge.color = adjustcolor("darkgray", alpha.f = 0.6), add = T, vertex.label = round(spring.strength.c, digits = 4))
+     edge.color = adjustcolor("darkgray", alpha.f = 0.6), add = T)
 
 legend_image <- as.raster(matrix(hcl.colors(n = length(seq(0, max(spring.degree.TO[,"alpha"]), max(spring.degree.TO[,"alpha"])/20)), palette = "Reds 3", rev = F) , ncol=1))
 plot(c(0,2),c(-0.01,1),type = 'n', axes = F,xlab = '', ylab = '')
@@ -735,7 +734,7 @@ plot(spring.graph, vertex.size = 200, vertex.size2 = 200, vertex.label= NA,
      layout = as.matrix(meta.spring.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(spring.con.ab)),
      vertex.color = betweenness.TO.palette[as.character(spring.betweenness.TO[,"betweenness"])],
-     edge.color = adjustcolor("darkgray", alpha.f = 0.6), add = T, vertex.label = round(spring.strength.c, digits = 4))
+     edge.color = adjustcolor("darkgray", alpha.f = 0.6), add = T)
 
 legend_image <- as.raster(matrix(hcl.colors(n = length(seq(0, max(spring.betweenness.TO[,"betweenness"]), 1)), palette = "Reds 3", rev = F) , ncol=1))
 plot(c(0,2),c(-0.01,1),type = 'n', axes = F,xlab = '', ylab = '')
@@ -785,6 +784,28 @@ plot(spring.graph.weighed.ab, vertex.size = 200, vertex.size2 = 200, vertex.labe
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(spring.con.ab)),
      vertex.color = spring.comm.pal[spring.communities.bet$membership], add = T,
      vertex.label = NA)
+
+### community detection using the walktrap algorithm -----------
+E(spring.graph)$weight <- spring.con.ab$weight
+
+undirected.spring.graph <- as.undirected(spring.graph, mode = "collapse",
+                                       edge.attr.comb = "sum")
+
+spring.communities.lab <- cluster_walktrap(undirected.spring.graph, weights = E(undirected.spring.graph)$weight,
+                                         steps = 5, modularity = T)
+
+# plot communities
+plot(spring.communities.lab, spring.graph)
+
+# plot communities on map
+spring.comm.pal <- rainbow(length(seq(1, max(spring.communities.lab$membership))))
+
+plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70))
+plot(spring.graph, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
+     edge.width = spring.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,  
+     layout = as.matrix(meta.spring.ab[, c("Lon.50.", "Lat.50.")]), rescale = F, asp = 0, xlim = c(-170, -30),
+     ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(spring.con.ab)),
+     vertex.color = spring.comm.pal[spring.communities.lab$membership], add = T)
 
 # community detection using the leading eigenvector of the commuity matrix -----------
 E(spring.graph)$weight <- spring.con.ab$weight
@@ -848,7 +869,7 @@ E(spring.graph)$weight <- spring.con.ab$weight
 undirected.spring.graph <- as.undirected(spring.graph, mode = "collapse",
                                        edge.attr.comb = "sum")
 # Run concensusCluster function 
-cluster_output <- concensusCluster(graph = undirected.spring.graph, thresh = 0.5, algiter = 1000)
+cluster_output <- concensusCluster(graph = undirected.spring.graph, thresh = 0.9, algiter = 1000)
 comms <- cluster_output$`community structure`
 
 # plot concensus graph
@@ -864,7 +885,7 @@ plot(spring.graph, vertex.label = NA, vertex.size = 300, vertex.size2 = 200,
      edge.color = edge.cols.spring$col, add = T)
 
 ## calculate modularity ---
-modularity(undirected.spring.graph, comms$membership, weights = E(undirected.spring.graph)$weight, directed = F)
+modularity(spring.graph, comms$membership, weights = E(undirected.spring.graph)$weight, directed = F)
 
 ### calculate bridging centrality using the networktools package -----
 spring.graph.el <- cbind( get.edgelist(spring.graph), round( E(spring.graph)$weight, 3 ))

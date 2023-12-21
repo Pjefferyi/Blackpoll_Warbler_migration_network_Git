@@ -23,7 +23,7 @@ library(geosphere)
 # Data preparation ################################################################################
 
 # run the network preparation script
-source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Network_construction.R")
+#source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Network_construction.R")
 
 # projection for the analysis: Azimuthal Equidistant projection 
 proj <- '+proj=aeqd +lat_0=0 +lon_0=-74'
@@ -36,13 +36,13 @@ fall.br.sf <- st_as_sf(fall.br, coords = c("Lon.50.", "Lat.50."), crs = crs(wrld
 fall.br.sf <- st_transform(fall.br.sf, CRS(proj)) 
 
 # fall network nonbreeding points
-fall.nbr <- geo.all %>% group_by(geo_id) %>% 
-  filter(period == "Non-breeding period", duration == max(duration), !is.na(StartTime), !is.na(EndTime)) %>%
+fall.nbr <- fall.stat %>% group_by(geo_id) %>% 
+  filter(period == "Non-breeding period", sitenum == max(sitenum), !is.na(StartTime), !is.na(EndTime)) %>%
   arrange(geo_id) 
 
-fall.nbr.sf <- st_as_sf(fall.nbr[, c("Lon.50.", "Lat.50.")], coords = c("Lon.50.", "Lat.50."), crs = crs(wrld_simpl))
+fall.nbr.sf <- st_as_sf(fall.stat, coords = c("Lon.50.", "Lat.50."), crs = crs(wrld_simpl))
 fall.nbr.sf <- st_transform(fall.nbr.sf, CRS(proj)) 
-#st_write(fall.nbr.sf, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/bpw_nbr_sitesV2_trial2.shp", append = F)
+st_write(fall.nbr.sf, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/bpw_nbr_sitesV3.shp", delete_layer = T)
 
 # Origin sites 
 fall.br.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Relative_abundance_propagation/bpw_abundance_regions_adjusted.shp") %>%
@@ -50,7 +50,6 @@ fall.br.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/Universit
   st_cast("MULTIPOLYGON")
 
 # Target sites 
-ebird
 fall.nbr.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/NonbreedingregionsV3.shp") %>%
   st_transform(CRS(proj))%>%
   st_cast("MULTIPOLYGON")
