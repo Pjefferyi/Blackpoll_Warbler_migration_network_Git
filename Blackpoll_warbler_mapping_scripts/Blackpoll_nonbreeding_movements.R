@@ -13,7 +13,7 @@ library(maptools)
 library(ebirdst)
 library(fmdates)
 
-source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis_helper_functions.R")
+#source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis_helper_functions.R")
 
 # Import data ##################################################################
 
@@ -40,6 +40,11 @@ geo.all <- findLocData(geo.ids = c("V8757_010",
                                    "V8757_134",
                                    "V8757_029",
                                    "V8757_078",
+                                   "V7638_001",
+                                   "V7638_005",
+                                   "V7638_009",
+                                   "V7638_010",
+                                   "V7638_011",
                                    "blpw09",
                                    "blpw12",
                                    "3254_001",
@@ -65,6 +70,7 @@ geo.all <- findLocData(geo.ids = c("V8757_010",
                                    "C",
                                    #"E",
                                    "D"), check_col_length = F)
+
 
 
 # Define stationary periods as breeding, stopover, or non-breeding ##########################
@@ -109,9 +115,13 @@ NB.stat <- geo.all %>% dplyr::filter(sitenum > 0, site_type %in% c("Nonbreeding"
                    Recorded_North_South_mig %in% c("Both", "South and partial North")) %>%
   ungroup()
 
+# Add a new column specifying the number of nonbreeding movements performed by each individuals and whether or not each individual performed nonbreeding movements
+NB.stat <- NB.stat %>% group_by(geo_id) %>% mutate(no.nbrs = n()-1,
+                                                   nbr.mover = ifelse(no.nbrs  > 0, "mover", "nonmover")) %>% ungroup()
+
 # Modify the data so we have two points for each movement between two sites (which means that we will have duplicate points)
 for (i in seq(2, nrow(NB.stat)-1)){
-  if (NB.stat[i-1,]$geo_id == NB.stat[i,]$geo_id &  NB.stat[i+1,]$geo_id == NB.stat[i,]$geo_id){
+  if (NB.stat[i-1,]$geo_id == NB.stat[i,]$geo_id & NB.stat[i+1,]$geo_id == NB.stat[i,]$geo_id){
     next.group <- NB.stat[i,]
     NB.stat <- add_row(NB.stat, next.group)
   }
@@ -148,16 +158,17 @@ NB.stat <- NB.stat %>%
 NB.stat$equinox.nbr.move[1] <- "equinox free"
 NB.stat$timing.nbr.move[1] <- "winter.nbr.movements"
 
-View(NB.stat[,c("nbr.move.group","equinox.nbr.move","timing.nbr.move", "StartTime")])
+#View(NB.stat[,c("nbr.move.group","equinox.nbr.move","timing.nbr.move", "StartTime")])
 
 ggplot(st_as_sf(wrld_simpl))+
   geom_sf(colour = "black", fill = "white", lwd = 0.2) +
   coord_sf(xlim = c(-90, -45),ylim = c(-10, 15)) +
-  geom_point(data = NB.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), cex = 2, colour = "black", alpha = 0.3) +
+  geom_point(data = NB.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = as.factor(nbr.mover)), cex = 3, shape = 21, stroke = NA) +
+  scale_fill_manual(values = c("nonmover" = "#009E73", "mover" = adjustcolor("gray", alpha = 0)), name = "Locations")+
   #geom_text(data = NB.stat, mapping = aes(x = Lon.50., y = Lat.50., label = geo_id), cex = 2)+
-  geom_path(data = NB.stat, mapping = aes(x = Lon.50., y = Lat.50., group = as.factor(nbr.move.group),
-                                          linetype = equinox.nbr.move, col = timing.nbr.move),
-            arrow = arrow(end = "last", type = "closed", length = unit(0.1, "inches")), lwd = 0.5) +
+  geom_path(data = NB.stat, mapping = aes(x = Lon.50., y = Lat.50., group = as.factor(nbr.move.group), 
+            linetype = equinox.nbr.move, col = timing.nbr.move),
+            arrow = arrow(end = "last", type = "closed", length = unit(0.1, "inches")), lwd = 0.8) +
   scale_color_manual(values = c("#E66100", "#5D3A9B"), name = "Timing", label = c("October-December", "January-May"))+
   scale_linetype_manual(values = c("dashed", "solid"), name = "Spring equinox", label = c("within 14 days", "not within 14 days"))+
   labs(x = "Longitude", y = "Latitude") +

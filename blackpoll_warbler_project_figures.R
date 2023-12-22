@@ -19,6 +19,7 @@ library(cowplot)
 library(igraph)
 library(ggnetwork)
 library(intergraph)
+library(networktools)
 
 # Will need to run the network analysis and construction scripts ----
 #source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_analysis/Network_Analysis.R")
@@ -108,33 +109,42 @@ undirected.fall.graph <- as.undirected(fall.graph, mode = "collapse",
 cluster_label_prop(undirected.fall.graph)
 
 fall.label.prop <- concensusCluster(graph = undirected.fall.graph, thresh = 0.5, algiter = 1000)
-fall.infomap <- concensusClusterInfomap(graph = fall.graph, thresh = 0.5, algiter = 1000)
+fall.infomap <- cluster_infomap(fall.graph)
+fall.walktrap <- cluster_walktrap(fall.graph)
 
 modularity(fall.graph, fall.label.prop$`community structure`$membership)
-modularity(fall.graph, fall.infomap$`community structure`$membership)
+modularity(fall.graph, fall.infomap$membership)
+modularity(fall.graph, fall.walktrap$membership)
 
 V(fall.graph)$label.prop.comm <- fall.label.prop$`community structure`$membership
-V(fall.graph)$info.map.comm <- fall.infomap$`community structure`$membership
+V(fall.graph)$info.map.comm <- fall.infomap$membership
+V(fall.graph)$walktrap.comm  <- fall.walktrap$membership
 
 # spring network structure
 undirected.spring.graph <- as.undirected(spring.graph, mode = "collapse",
                                          edge.attr.comb = list(weight = "sum", edge.type = "ignore"))
 
 spring.label.prop <- concensusCluster(graph = undirected.spring.graph, thresh = 0.5, algiter = 1000)
-spring.infomap <- concensusClusterInfomap(graph = spring.graph, thresh = 0.5, algiter = 1000)
+spring.infomap <- cluster_infomap(spring.graph)
+spring.walktrap <- cluster_walktrap(spring.graph)
 
 modularity(spring.graph, spring.label.prop$`community structure`$membership)
-modularity(spring.graph, spring.infomap$`community structure`$membership)
+modularity(spring.graph, spring.infomap$membership)
+modularity(spring.graph, spring.walktrap$membership)
 
 V(spring.graph)$label.prop.comm <- spring.label.prop$`community structure`$membership
-V(spring.graph)$infomap.comm <- spring.infomap$`community structure`$membership
+V(spring.graph)$infomap.comm <- spring.infomap$membership
+V(spring.graph)$walktrap.comm <- spring.walktrap$membership
 
 # Fall and spring betweenness centrality 
+
+# Fall migratory network without spring edges 
 fall.e <- which(E(fall.graph)$edge.type == "spring")
 fall.graph.disc <- fall.graph - edge(fall.e)
 
 V(fall.graph)$betweenness <- betweenness(fall.graph.disc, directed = T, weights = 1/E(fall.graph.disc)$weight) 
 
+# spring migratory network without fall edges  
 spring.e <- which(E(spring.graph)$edge.type == "fall")
 spring.graph.disc <- spring.graph - edge(spring.e)
 
@@ -239,7 +249,7 @@ plot_grid(fall.gplot.comp, spring.gplot.comp)
 
 # Figure 2: Fall and spring migratory network communities ----
 
-# Fall network communities obtained using label propagation 
+# Fall network communities
 fall.com.plot <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
   coord_sf(xlim = c(-170, -40),ylim = c(-5, 70)) +
@@ -256,6 +266,7 @@ fall.com.plot <- ggplot(st_as_sf(America))+
         axis.ticks =element_blank())+
   guides(fill = guide_legend(override.aes = list(size = 5)), )
 
+# Spring network communities
 spring.com.plot <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
   coord_sf(xlim = c(-170, -40),ylim = c(-5, 70)) +
@@ -275,7 +286,7 @@ spring.com.plot <- ggplot(st_as_sf(America))+
 # create panel
 plot_grid(fall.com.plot, spring.com.plot)
 
-# Figure 3: Fall and spring betweenness metrics --- 
+# Figure 3: Fall and springcentrality metrics --- 
 
 # Betweenness centrality 
 fall.gplot.betw <- ggplot(st_as_sf(America))+
@@ -312,7 +323,7 @@ spring.gplot.betw <- ggplot(st_as_sf(America))+
         axis.text =element_blank(),
         axis.ticks =element_blank())
 
-# Bridge centrality 
+# Bridge strength
 fall.gplot.bridge.betw <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
   coord_sf(xlim = c(-170, -40),ylim = c(-5, 70)) +
@@ -321,7 +332,7 @@ fall.gplot.bridge.betw <- ggplot(st_as_sf(America))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
   scale_color_manual(values=c(adjustcolor("black", alpha = 0.5), adjustcolor("blue", alpha = 0)), guide = "none")+
   geom_nodes(data = fall.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = bridge.betweenness), shape=21, size  = 4)+
-  scale_fill_viridis_c(direction = -1, option = "magma", name = "Bridge Betweenness", 
+  scale_fill_viridis_c(direction = -1, option = "magma", name = "Bridge strength", 
                        guide = guide_colorbar(frame.colour = "black"))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
@@ -338,7 +349,7 @@ spring.gplot.bridge.betw <- ggplot(st_as_sf(America))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
   geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = bridge.betweenness), shape=21, size  = 4)+
   scale_color_manual(values=c(adjustcolor("blue", alpha = 0), adjustcolor("black", alpha = 0.5)), guide = "none")+
-  scale_fill_viridis_c(direction = -1, option = "magma", name = "Bridge Betweenness", 
+  scale_fill_viridis_c(direction = -1, option = "magma", name = "Bridge Strength", 
                        guide = guide_colorbar(frame.colour = "black"))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),

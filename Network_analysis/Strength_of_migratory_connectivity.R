@@ -36,23 +36,55 @@ fall.br.sf <- st_as_sf(fall.br, coords = c("Lon.50.", "Lat.50."), crs = crs(wrld
 fall.br.sf <- st_transform(fall.br.sf, CRS(proj)) 
 
 # fall network nonbreeding points
+fall.stat <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.stationary.locations.csv")
+fall.graph <- read_graph("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.graph.edge.list.txt", directed = TRUE)
+E(fall.graph)$weight <- fall.con.ab$weight
+
+undirected.fall.graph <- as.undirected(fall.graph, mode = "collapse",
+                                       edge.attr.comb = list(weight = "sum", edge.type = "ignore"))
+
+fall.label.prop <- concensusCluster(graph = undirected.fall.graph, thresh = 0.5, algiter = 1000)
+V(fall.graph)$label.prop.comm <- fall.label.prop$`community structure`$membership
+
+# merge fall community detection data with position data 
+comm.data <- data.frame(cluster = V(fall.graph), community =  V(fall.graph)$label.prop.comm)
+fall.stat <- merge(fall.stat, comm.data, by = "cluster")
+
 fall.nbr <- fall.stat %>% group_by(geo_id) %>% 
   filter(period == "Non-breeding period", sitenum == max(sitenum), !is.na(StartTime), !is.na(EndTime)) %>%
   arrange(geo_id) 
 
-fall.nbr.sf <- st_as_sf(fall.stat, coords = c("Lon.50.", "Lat.50."), crs = crs(wrld_simpl))
-fall.nbr.sf <- st_transform(fall.nbr.sf, CRS(proj)) 
-st_write(fall.nbr.sf, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/bpw_nbr_sitesV3.shp", delete_layer = T)
+fall.nbr.sf <- st_as_sf(fall.nbr, coords = c("Lon.50.", "Lat.50."), crs = st_crs(wrld_simpl))
+fall.nbr.sf <- st_transform(fall.nbr.sf, st_crs(proj)) 
+#st_write(fall.nbr.sf, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/bpw_fall_nbr_sitesV1.shp", append = F)
 
-# Origin sites 
+# Origin sites  (polygons)
 fall.br.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Relative_abundance_propagation/bpw_abundance_regions_adjusted.shp") %>%
   st_transform(CRS(proj)) %>%
   st_cast("MULTIPOLYGON")
 
-# Target sites 
-fall.nbr.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/NonbreedingregionsV3.shp") %>%
-  st_transform(CRS(proj))%>%
-  st_cast("MULTIPOLYGON")
+# Target sites(polygons)
+
+# Uncomment to import polygons prepared in QGIS
+# fall.nbr.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/NonbreedingregionsV3.shp") %>%
+#   st_transform(CRS(proj))%>%
+#   st_cast("MULTIPOLYGON")
+
+# creating target sites in R based on community clustering analysis 
+geometry <- st_sfc(lapply(1:2, function(x) st_geometrycollection()), crs = st_crs(proj))#st_sf(crs = st_crs(proj))
+fall.nbr.regions <- st_sf(id = 1:2, geometry = geometry)
+
+for (i in unique(fall.nbr.sf$community)){
+  pt.sb <- fall.nbr.sf[fall.nbr.sf$community== i,]
+  
+  poly <- st_convex_hull(st_union(pt.sb))
+  poly <- st_buffer(poly, dist = 80000)
+  poly <- st_transform(poly, st_crs(proj))
+  poly <- st_difference(poly, fall.nbr.regions)[1]
+  #st_combine(c(fall.nbr.regions, poly))
+  fall.nbr.regions$geometry[i] <- poly
+  fall.nbr.regions$community[i] <- i
+}
 
 # geoBIas (in meters)
 # We will use the uncertainty for the threshold location estimates because the ouput of the 
@@ -88,9 +120,9 @@ plot(as_Spatial(fall.nbr.sf), col = "blue", add  = T)
 # Nonbreeding regions ggplot
 ggplot(st_as_sf(wrld_simpl))+
   geom_sf(colour = "black", fill = "lightgray")+
-  geom_sf(data = st_transform(fall.nbr.regions), aes(fill = region), col = "black", alpha = 0.5)+
+  geom_sf(data = fall.nbr.regions, aes(fill = as.factor(community)), col = "black", alpha = 0.5)+
   scale_fill_discrete(name = "Nonbreeding regions") +
-  geom_sf(data = st_transform(fall.nbr.sf), aes(col = "Individual nonbreeding locations (1 bird each)"), shape = 4, cex = 3)+
+  geom_sf(data = fall.nbr.sf, aes(col = "Individual nonbreeding locations (1 bird each)"), shape = 4, cex = 3)+
   scale_colour_manual(values = c("Individual nonbreeding locations (1 bird each)" = "blue"), name = "") +
   coord_sf(xlim = c(-90, -30),ylim = c(-15, 20))+
   theme_bw()+
