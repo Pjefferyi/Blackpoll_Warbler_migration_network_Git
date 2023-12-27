@@ -167,6 +167,7 @@ America <- wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland")
 fall.ggnet <- ggnetwork(fall.graph, layout = as.matrix(meta.fall.ab[, c("Lon.50.", "Lat.50.")]), scale = F)
 fall.gplot <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
+  geom_sf(data = equinox_region, fill = "#D9D5B2", lwd = 0.1, alpha = 1)+
   coord_sf(xlim = c(-170, -40),ylim = c(-5, 70)) +
   geom_edges(data = fall.ggnet, mapping = aes(x = x, y = y, xend = xend, yend = yend, col = edge.type, lwd = weight),
              arrow = arrow(length = unit(9, "pt"), type = "closed", angle = 10))+
@@ -180,12 +181,14 @@ fall.gplot <- ggplot(st_as_sf(America))+
         legend.position = c(0.2, 0.4), text = element_text(size = 12), legend.key = element_blank(),
         axis.title =element_blank(),
         axis.text =element_blank(),
-        axis.ticks =element_blank())+
+        axis.ticks =element_blank(),
+        plot.margin=grid::unit(c(0.5,0.5,0.5,0.5), "mm"))+
   guides(fill = guide_legend(override.aes = list(size = 5)), )
 
 ## fall stationary location clusters 
 fall.clustplot<- ggplot(st_as_sf(wrld_simpl))+
-  geom_sf(colour = NA, fill = "lightgray") +
+  geom_sf(colour = "black", fill = "#F7F7F7") +
+  geom_sf(data = equinox_region, fill = "#D9D5B2", lwd = 0.1, alpha = 1)+
   coord_sf(xlim = c(-170, -40),ylim = c(-5, 70)) +
   #geom_errorbar(data = fall.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
   #geom_errorbar(data = fall.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
@@ -203,7 +206,8 @@ fall.clustplot<- ggplot(st_as_sf(wrld_simpl))+
         axis.title.y=element_blank(),
         panel.grid.major=element_blank(),
         panel.grid.minor=element_blank(),
-        panel.border = element_rect(colour = "black", fill=NA, size=0.5))
+        panel.border = element_rect(colour = "black", fill=NA, size=0.5),
+        plot.margin=grid::unit(c(0.5,0.5,0.5,0.5), "mm"))
 
 ## Spring node types ----
 spring.ggnet <- ggnetwork(spring.graph, layout = as.matrix(meta.spring.ab[, c("Lon.50.", "Lat.50.")]), scale = F)
@@ -215,19 +219,19 @@ spring.gplot <- ggplot(st_as_sf(America))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
   scale_color_manual(values=c(adjustcolor("blue", alpha = 0), adjustcolor("black", alpha = 0.5)), guide = "none")+
   geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = node.type), shape=21)+
-  scale_size(range = c(1, 6), guide = "none")+
-  scale_fill_manual(values=c("Breeding"  = "#440154FF", "Stopover" = "#FDE725FF", "Nonbreeding" = "#21908CFF"), name = "Node type")+
+  scale_size(range = c(1, 6), name = "Node weight")+
+  scale_fill_manual(values=c("Breeding"  = "#440154FF", "Stopover" = "#FDE725FF", "Nonbreeding" = "#21908CFF"), guide = "none")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
-        legend.position = "None", text = element_text(size = 12), legend.key = element_blank(),
+        legend.position = c(0.2, 0.4), text = element_text(size = 12), legend.key = element_blank(),
         axis.title =element_blank(),
         axis.text =element_blank(),
-        axis.ticks =element_blank())+
-  guides(fill = guide_legend(override.aes = list(size = 5)), )
+        axis.ticks =element_blank(),
+        plot.margin=grid::unit(c(0.5,0.5,0.5,0.5), "mm"))
 
 ## spring stationary location clusters 
 spring.clustplot<- ggplot(st_as_sf(wrld_simpl))+
-  geom_sf(colour = NA, fill = "lightgray") +
+  geom_sf(colour = "black", fill = "#F7F7F7") +
   coord_sf(xlim = c(-170, -40),ylim = c(-5, 70)) +
   #geom_errorbar(data = spring.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
   #geom_errorbar(data = spring.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
@@ -245,11 +249,13 @@ spring.clustplot<- ggplot(st_as_sf(wrld_simpl))+
         axis.title.y=element_blank(),
         panel.grid.major=element_blank(),
         panel.grid.minor=element_blank(),
-        panel.border = element_rect(colour = "black", fill=NA, size=0.5))
+        panel.border = element_rect(colour = "black", fill=NA, size=0.5),
+        plot.margin=grid::unit(c(0.5,0.5,0.5,0.5), "mm"))
 
 ## Panel ----
-plot_grid(fall.gplot.comp, fall.clustplot,
-          spring.gplot.comp, spring.clustplot)
+plot_grid(fall.gplot,  spring.gplot,
+          fall.clustplot, spring.clustplot) + 
+  theme(plot.margin = unit(c(0, 0, 0, 0), "cm"))
 
 # Figure 2: Node population composition ---- 
 

@@ -172,7 +172,7 @@ geo_twl <- export2GeoLight(twl)
 # 
 # (zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
 
-startDate <- "2013-11-15"
+startDate <- "2013-11-09"
 endDate   <- "2014-04-26"
 
 start = min(which(as.Date(twl$Twilight) == startDate))
@@ -259,7 +259,8 @@ abline(v = spring.equi, col = "orange")
 dev.off()
 
 # Initial Path #################################################################
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol=0.25)
+tol_ini <- 0.18
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol = tol_ini)
 
 #Adjusted tol until second stopover was located over North Carolina rather than further South. 
 x0 <- path$x
@@ -273,7 +274,7 @@ data(wrld_simpl)
 plot(x0, type = "n", xlab = "", ylab = "")
 plot(wrld_simpl, col = "grey95", add = T)
 
-points(path$x, pch=19, col="cornflowerblue", type = "o")
+points(path$x[500:726,], pch=19, col="cornflowerblue", type = "o")
 points(lon.calib, lat.calib, pch = 16, cex = 2.5, col = "firebrick")
 box()
 
@@ -281,6 +282,75 @@ dev.off()
 
 #Save initial path 
 save(x0, file = paste0(dir,"/", geo.id, "_initial_path.csv"))
+
+# FIX CLOCK DRIFT ##############################################################
+
+# obtain longitude measurements during the breeding period after the migration
+# The bird should not be moving during this period
+br.end2 <- twl$Twilight[nrow(twl)]
+br.start2 <- twl$Twilight[nrow(twl)] - days(14)
+
+# Get data frame with twilight times and longitude for each period
+twl <- twl %>% mutate(lon = path$x[,1])
+twl.br2 <- twl %>% dplyr::filter(Twilight > br.start2 , Twilight < br.end2)
+
+#plot of time ranges used
+par(mfrow = c(3,1))
+plot(twl$Twilight, x0_ad[,1], ylab = "longitude")
+abline(v = br.start2)
+abline(v = br.end2)
+
+plot(twl$Twilight, x0_ad[,2], ylab = "latitude")
+abline(v = br.start2)
+abline(v = br.end2)
+
+# get the actual breeding latitude and the medianlocation of the bird after the migration
+lon.b1 <- lon.calib
+lon.b2 <- median(twl.br2$lon)
+diff.lon <- lon.b2 - lon.b1
+
+# plot the median stationary location before and after the migration
+par(mfrow=c(1,1))
+data(wrld_simpl)
+plot(x0, type = "n", xlab = "", ylab = "")
+plot(wrld_simpl, col = "grey95", add = T)
+points(lon.b1, lat.calib, pch = 16, cex = 2.5, col = "firebrick")
+points(lon.b2, lat.calib, pch = 16, cex = 2.5, col = "green")
+
+# linearly rescale time to prevent clock drift
+diff.sec <- diff.lon * 240#convert difference in longitude to difference in longitude per day
+diff.sec.change <- diff.sec/nrow(twl)
+
+timestep <- seq(1, nrow(twl))
+# twl_adjusted <- twl %>% mutate(Twilight = Twilight + diff.sec.rate * timestep,
+#                              Twilight0 = Twilight0 + diff.sec.rate * timestep)
+
+twl_adjusted <- twl
+twl_adjusted$Twilight <- twl$Twilight + (diff.sec.change * timestep)
+twl_adjusted$Twilight0 <- twl$Twilight + (diff.sec.change * timestep)
+
+# Initial Path with Clock Drift Adjustment  ####################################
+path <- thresholdPath(twl_adjusted$Twilight, twl_adjusted$Rise, zenith = zeniths_med, tol=0.18)
+
+x0 <- path$x
+z0 <- trackMidpts(x0)
+
+# open jpeg
+jpeg(paste0(dir, "/", geo.id, "_Threshold_path_clock_drift_adjustment.png"), width = 1024, height = 990)
+
+par(mfrow=c(1,1))
+data(wrld_simpl)
+plot(x0, type = "n", xlab = "", ylab = "")
+plot(wrld_simpl, col = "grey95", add = T)
+
+points(path$x, pch=19, col="cornflowerblue", type = "o")
+points(lon.calib, lat.calib, pch = 16, cex = 2.5, col = "firebrick")
+box()
+
+dev.off()
+
+#Save initial path adjusted for clock drift  
+save(x0, file = paste0(dir,"/", geo.id, "_initial_path__clock_drift_adjustment.csv"))
 
 #SGAT Group model analysis ####################################################
 
@@ -364,7 +434,7 @@ xlim <- range(x0[,1])+c(-5,5)
 ylim <- range(x0[,2])+c(-5,5)
 
 index <- ifelse(stationary, 1, 2)
-mask <- earthseaMask(xlim, ylim, n = 1, index=index)
+mask <- earthseaMask(xlim, ylim, n = 10, index=index)
 
 # We will give locations on land a higher prior 
 ## Define the log prior for x and z
@@ -416,7 +486,7 @@ for (k in 1:3) {
   x.proposal <- mvnorm(chainCov(fit$x), s = 0.3)
   z.proposal <- mvnorm(chainCov(fit$z), s = 0.3)
   fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = chainLast(fit$x),
-                           z0 = chainLast(fit$z), iters = 300, thin = 20)
+                           z0 = chainLast(fit$z), iters = 300, thin = 20, chains = 3)
 }
 
 ## Check if chains mix
@@ -640,4 +710,9 @@ geo.ref[(geo.ref$geo.id == geo.id),]$Hill_Ekstrom_median_angle <- zenith_sd
 geo.ref[(geo.ref$geo.id == geo.id),]$Fall_carrib_edits <- FALSE
 geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- arr.nbr
 geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- dep.nbr
+geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.start <- as.character(tm.calib1[1])
+geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.end <- as.character(tm.calib1[2])
+geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.start2 <- as.character(tm.calib2[1])
+geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.end2 <- as.character(tm.calib2[2])
+geo.ref[(geo.ref$geo.id == geo.id),]$tol <-tol_ini
 write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE) 
