@@ -40,6 +40,11 @@ geo.all <- findLocData(geo.ids = c("V8757_010",
                                    "V8757_134",
                                    "V8757_029",
                                    "V8757_078",
+                                   "V7638_001",
+                                   "V7638_005",
+                                   "V7638_009",
+                                   "V7638_010",
+                                   "V7638_011",
                                    "blpw09",
                                    "blpw12",
                                    "3254_001",
@@ -161,17 +166,17 @@ fall.stat <- fall.stat %>% group_by(geo_id) %>% filter(StartTime <= NB.first.sit
   filter(distHaversine(cbind(Lon.50.,Lat.50.), cbind(deploy.longitude, deploy.latitude)) > 250000)
 
 # # Uncomment this code to generate clusters using the pam function
-# cluster.data <- clusterLocs(locs = fall.stat, maxdiam = 600)
+# cluster.data <- clusterLocs(locs = fall.stat, maxdiam = 700)
 # fall.stat$cluster <- cluster.data$clusters
-
+# 
 # # Export fall stopovers for manual clustering in QGIS
-# fall.stat.sites <- st_as_sf(fall.stat[,c(1:12, ncol(fall.stat))], coords = c("Lon.50.", "Lat.50."))
+# fall.stat.sites <- st_as_sf(data.frame(fall.stat[,c(1:12, which(colnames(fall.stat) == "cluster"))]), coords = c("Lon.50.", "Lat.50."))
 # st_crs(fall.stat.sites) <- st_crs(wrld_simpl)
 # st_write(fall.stat.sites, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/layers/fall_stat_sites6.shp", append=FALSE)
 
 # # Import clusters created manually
-fall.manual.cluster <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/Tables/Fall_manual_clusters_conservativeV6.csv")
-fall.manual.cluster <- fall.manual.cluster %>% rename(cluster = Cluster, cluster.region = ClusterReg) %>%
+fall.manual.cluster <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/Tables/Fall_manual_clusters_conservativeV6.csv") %>%
+  rename(cluster = Cluster, cluster.region = ClusterReg) %>%
   mutate(cluster.region= as.factor(cluster.region)) %>%
   mutate(cluster = as.numeric(cluster.region))
 
@@ -206,6 +211,8 @@ ggplot(st_as_sf(wrld_simpl))+
   coord_sf(xlim = c(-170, -30),ylim = c(-15, 70)) +
   geom_errorbar(data = fall.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
   geom_errorbar(data = fall.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
+  #geom_path(data = fall.stat[fall.stat$geo_id == "V8296_015",], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5) +
+  #geom_point(data = fall.stat[fall.stat$geo_id == "V8296_015",], mapping = aes(x = Lon.50., y = Lat.50.), alpha = 0.5) +
   geom_path(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5, linewidth = 0.1) +
   geom_point(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, colour = as.factor(cluster)), cex = 2) +
   labs(colour = "Cluster") +
@@ -278,7 +285,7 @@ meta.fall <- data.frame("vertex" = seq(1, max(fall.edge.df$cluster)),
                    "node.type.num" = fall.node.type$site_type_num)
 
 # For fall nodes where latitudinal accuracy is low, set location close to the coast
-meta.fall[c(10),]$Lat.50. <- c(41.5)
+meta.fall[c(19, 21, 17, 14),]$Lat.50. <- c(33.18, 37.3, 41.76, 44.91)
  
 fall.location <- as.matrix(meta.fall[, c("Lon.50.", "Lat.50.")])
 
@@ -315,8 +322,7 @@ plot(fall.graph.weighed, vertex.size = 200, vertex.size2 = 200,
      edge.width = fall.con$weight/1.5, edge.arrow.size = 0, edge.arrow.width = 0,  
      layout = fall.location, rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), edge.curved = rep(c(-0.05, 0.05), nrow(fall.con)),
-     vertex.color = type.palette[meta.fall$node.type.num],
-     vertex.label = NA, add = T)
+     vertex.color = type.palette[meta.fall$node.type.num], add = T)
 legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
        col = type.palette[unique(meta.fall$node.type.num)],
        pch = 16)
@@ -344,13 +350,13 @@ spring.stat <- spring.stat %>% group_by(geo_id) %>% filter(StartTime >= NB.last.
   filter(distHaversine(cbind(Lon.50.,Lat.50.), cbind(deploy.longitude, deploy.latitude)) > 250000 | geo_id == "WRMA04173")
 
 # Uncomment this code to generate clusters using the pam function
-cluster.data <- clusterLocs(locs = spring.stat, maxdiam = 500)
+cluster.data <- clusterLocs(locs = spring.stat, maxdiam = 650)
 spring.stat$cluster <- cluster.data$clusters
 
 # # export spring stat sites for manual clustering
-# spring.stat.sites <- st_as_sf(spring.stat[,1:12], coords = c("Lon.50.", "Lat.50."))
+# spring.stat.sites <- st_as_sf(spring.stat[,c(1:12, ncol(spring.stat))], coords = c("Lon.50.", "Lat.50."))
 # st_crs(spring.stat.sites) <- st_crs(wrld_simpl)
-# st_write(spring.stat.sites, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/Layers/spring_stat_sitesV2.shp", append = F)
+# st_write(spring.stat.sites, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/Layers/spring_stat_sitesV3.shp", append = F)
 
 # # Import clusters created manually
 # spring.manual.cluster <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/Tables/Spring_manual_clusters_V2.csv")
@@ -374,8 +380,7 @@ spring.breed$cluster <- rep(seq(max(spring.stat$cluster) + 1, max(spring.stat$cl
 
 spring.stat <- bind_rows(spring.stat, spring.breed) %>% arrange(geo_id, StartTime)
 
-# plot stopover and nonbreeding nodes 
-
+# plot stationary stopover and nonbreeding sites 
 ggplot(st_as_sf(wrld_simpl))+
   geom_sf(colour = NA, fill = "lightgray") +
   coord_sf(xlim = c(-170, -30),ylim = c(-15, 70)) +
@@ -401,7 +406,20 @@ spring.breed.return <- spring.breed %>% group_by(geo_id) %>%
   mutate(sitenum = 1)
 spring.breed.return[,c("StartTime", "EndTime", "duration")] <- NA
 spring.breed.return[,c("period")] <- "Pre-breeding migration"
+
+# For geolocators deployed in the nonbreeding grounds, we need to increase site numbers because the breeding site  
+spring.stat <- spring.stat %>% group_by(geo_id) %>% mutate(sitenum = ifelse(deploy.range == "Nonbreeding", sitenum + 1, sitenum))
 spring.stat <- bind_rows(spring.stat, spring.breed.return) %>% arrange(geo_id, sitenum)
+
+ggplot(st_as_sf(wrld_simpl))+
+  geom_sf(colour = NA, fill = "lightgray") +
+  coord_sf(xlim = c(-170, -30),ylim = c(-15, 70)) +
+  geom_errorbar(data = spring.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
+  geom_errorbar(data = spring.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
+  geom_point(data = spring.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, colour = as.factor(cluster)), cex = 1.5) +
+  labs(colour = "Cluster") +
+  theme_bw() +
+  theme(text = element_text(size = 16), legend.position = "None")
 
 # Generate the network from our location data and clusters #####################
 
@@ -470,7 +488,7 @@ type.palette <- rainbow(3)
 
 # plot the spring network over North and South America
 plot(wrld_simpl, xlim = c(-170, -30),ylim = c(-15, 70))
-plot(spring.graph, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
+plot(spring.graph, vertex.size = 200, vertex.size2 = 200,
      edge.width = 1, edge.arrow.size = 0, edge.arrow.width = 0,  
      layout = spring.location, rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), vertex.color = type.palette[meta.spring$node.type.num], add = T)
@@ -485,6 +503,8 @@ legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
 # list of connections and the number of times they occur
 spring.con <- spring.edge.df %>% group_by(cluster, next.cluster) %>% 
   summarize(weight = n()) 
+
+spring.con[spring.con$cluster == 25 | spring.con$next.cluster == 25,]
 
 # Create a new spring network
 spring.graph.weighed <- graph_from_data_frame(spring.con, directed = T, vertices = meta.spring)
@@ -556,6 +576,14 @@ ggplot(st_as_sf(wrld_simpl))+
   geom_path(data = NB.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5,
             arrow = arrow(end = "last", type = "open", length = unit(0.10, "inches"))) +
    scale_colour_gradientn(colours=rainbow(5))
+
+
+ggplot(st_as_sf(wrld_simpl))+
+  geom_sf(colour = NA, fill = "lightgray") +
+  coord_sf(xlim = c(-90, -30),ylim = c(-15, 20)) +
+  geom_point(data = NB.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, colour = Range_region)) +
+  geom_path(data = NB.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5,
+            arrow = arrow(end = "last", type = "open", length = unit(0.10, "inches"))) 
 
 # Generate the network from our location data and clusters #####################
 
@@ -743,7 +771,7 @@ spring.edge.df.ab <- merge(spring.edge.df, dplyr::select(spring.breed.ab, geo_id
 spring.con.ab <- spring.edge.df.ab %>% group_by(geo_id) %>%
   mutate(edge.type = if_else(cluster == last(next.cluster), "fall", "spring")) %>%
   group_by(cluster, next.cluster) %>% 
-  reframe(weight = sum(ab.unit), edge.type = first(edge.type)) 
+  reframe(weight = sum(ab.unit), edge.type = first(edge.type))
 
 # spring graph weighed using eBird relative abundance 
 
@@ -970,16 +998,19 @@ meta.spring.ab <- merge(meta.spring.ab, spring.use.per.node , by.x = "vertex", b
 ################################################################################
 
 # Save elements necessary to build Fall network
+write_csv(fall.stat, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.stationary.locations.csv")
 write_graph(fall.graph.weighed.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.graph.edge.list.txt",
             format = c("edgelist"))
 write.csv(dplyr::select(meta.fall.ab, !num.reg.ab.vector), "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.node.metadata.csv")
 write.csv(fall.con.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.edge.weights.csv")
 write.csv(fall.stat, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.stationary.data.csv")
+write.csv(fall.edge.df.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.intra.cluster.movements.csv")
 
 # Save elements necessary to build spring network
+write_csv(spring.stat, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.stationary.locations.csv")
 write_graph(spring.graph.weighed.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.graph.edge.list.txt",
             format = c("edgelist"))
 write.csv(dplyr::select(meta.spring.ab, !num.reg.ab.vector), "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.node.metadata.csv")
 write.csv(spring.con.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.edge.weights.csv")
 write.csv(spring.stat, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.stationary.data.csv")
-
+write.csv(spring.edge.df.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.intra.cluster.movements.csv")

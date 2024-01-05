@@ -13,7 +13,7 @@ library(maptools)
 library(ebirdst)
 library(fmdates)
 
-#source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis_helper_functions.R")
+source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis_helper_functions.R")
 
 # Import data ##################################################################
 
@@ -115,6 +115,14 @@ NB.stat <- geo.all %>% dplyr::filter(sitenum > 0, site_type %in% c("Nonbreeding"
                    Recorded_North_South_mig %in% c("Both", "South and partial North")) %>%
   ungroup()
 
+# Remove points for movements where the distance is less than 250 km
+NB.stat <- NB.stat %>% group_by(geo_id) %>% mutate(Lon.50.lag = lag(Lon.50.),
+                                                   Lat.50.lag = lag(Lat.50.),
+                                                   geo_id.lag = lag(geo_id))%>%
+   rowwise() %>%
+  mutate(dist = distHaversine(c(Lon.50.,Lat.50.), c(Lon.50.lag, Lat.50.lag)),.after = geo_id) %>%
+  filter(dist > 250000 | is.na(dist))
+
 # Add a new column specifying the number of nonbreeding movements performed by each individuals and whether or not each individual performed nonbreeding movements
 NB.stat <- NB.stat %>% group_by(geo_id) %>% mutate(no.nbrs = n()-1,
                                                    nbr.mover = ifelse(no.nbrs  > 0, "mover", "nonmover")) %>% ungroup()
@@ -160,21 +168,34 @@ NB.stat$timing.nbr.move[1] <- "winter.nbr.movements"
 
 #View(NB.stat[,c("nbr.move.group","equinox.nbr.move","timing.nbr.move", "StartTime")])
 
-ggplot(st_as_sf(wrld_simpl))+
+nbr.move.plot <- ggplot(st_as_sf(wrld_simpl))+
   geom_sf(colour = "black", fill = "white", lwd = 0.2) +
-  coord_sf(xlim = c(-90, -45),ylim = c(-10, 15)) +
-  geom_point(data = NB.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = as.factor(nbr.mover)), cex = 3, shape = 21, stroke = NA) +
-  scale_fill_manual(values = c("nonmover" = "#009E73", "mover" = adjustcolor("gray", alpha = 0)), name = "Locations")+
-  #geom_text(data = NB.stat, mapping = aes(x = Lon.50., y = Lat.50., label = geo_id), cex = 2)+
+  coord_sf(xlim = c(-95, -45),ylim = c(-10, 15)) +
+  geom_point(data = NB.stat[NB.stat$nbr.mover == "nonmover",], mapping = aes(x = Lon.50., y = Lat.50.,fill = "darkgray"), colour = "black", cex = 3, shape = 21, stroke = 0.5) +
+  scale_fill_manual(values = c("darkgray"),label = c("Stationary individuals"), name = "") +
+  #geom_text(data = NB.stat, mapping = aes(x = Lon.50., y = Lat.50., label = geo_id), cex = 3)+
   geom_path(data = NB.stat, mapping = aes(x = Lon.50., y = Lat.50., group = as.factor(nbr.move.group), 
             linetype = equinox.nbr.move, col = timing.nbr.move),
-            arrow = arrow(end = "last", type = "closed", length = unit(0.1, "inches")), lwd = 0.8) +
-  scale_color_manual(values = c("#E66100", "#5D3A9B"), name = "Timing", label = c("October-December", "January-May"))+
-  scale_linetype_manual(values = c("dashed", "solid"), name = "Spring equinox", label = c("within 14 days", "not within 14 days"))+
+            arrow = arrow(end = "last", type = "closed", length = unit(0.1, "inches")), lwd = 0.8, show.legend =  F) +
+  geom_path(data = NB.stat, mapping = aes(x = Lon.50., y = Lat.50., group = as.factor(nbr.move.group), 
+                                          linetype = equinox.nbr.move, col = timing.nbr.move), lwd = 0.8) +
+  scale_color_manual(values = c("#E66100", "#5D3A9B"), name = "Movement timing", label = c("October-December", "January-May"))+
+  scale_linetype_manual(values = c("dashed", "solid"), name = "Equinox proximity", label = c("within 14 days", "not within 14 days"))+
   labs(x = "Longitude", y = "Latitude") +
   theme_bw()+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        legend.position = c(0.12, 0.4), legend.background = element_rect(fill = "transparent"))
+        legend.position = c(0.14, 0.4), legend.background = element_blank(),
+        legend.box.background = element_rect(fill = "white", colour = "black", linewidth = 0.2),
+        legend.spacing = unit(-10, "pt"),
+        legend.key.width = unit(50,"pt"),
+        text = element_text(size = 12))+
+  guides(colour = guide_legend(order=1),
+         linetype = guide_legend(order=2),
+         fill = guide_legend(order=3))
+
+ggsave(plot = nbr.move.plot, filename = "nbr.movements.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
+       units = "cm", width = 24*1.2, height = 10*1.2, dpi = "print", bg = "white")
+
   
 
 

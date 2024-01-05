@@ -52,7 +52,7 @@ deploy.start <- anytime(ref_data$deploy.on.date[which(ref_data$geo.id == geo.id)
 deploy.end <- anytime(ref_data$deploy.off.date[which(ref_data$geo.id == geo.id)], asUTC = T, tz = "GMT")
 
 #Equinox times
-fall.equi <- anytime("2018-09-22", asUTC = T, tz = "GMT")
+fall.equi <- anytime("2018-09-21", asUTC = T, tz = "GMT")
 spring.equi <- anytime("2018-03-20", asUTC = T, tz = "GMT")
 
 #DATA EXTRACTION ##############################################################
@@ -99,8 +99,8 @@ dev.off()
 # 
 # # Adjust sunset times by 120 second sampling interval
 # twl <- twilightAdjust(twilights = twl, interval = 120)
-
-# Save the twilight times
+# 
+# # Save the twilight times
 # write.csv(twl, paste0(dir,"/",geo.id , "_twl_times.csv"))
 
 ###############################################################################
@@ -133,7 +133,7 @@ lightImage( tagdata = lig,
 tsimageDeploymentLines(twl$Twilight, lon.calib, lat.calib, offset, lwd = 2, col = "orange")
 
 # calibration is only possible before the migration due to the high latitude of this breeding site  
-tm.calib1 <- as.POSIXct(c("2018-07-25", "2018-08-22"), tz = "UTC")
+tm.calib1 <- as.POSIXct(c("2018-07-25", "2018-08-24"), tz = "UTC")
 
 abline(v = tm.calib1, lwd = 2, lty = 2, col = "orange")
 
@@ -163,9 +163,15 @@ mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distTh
 site           <- mS$site[mS$site>0] # get rid of movement periods
 stationarySite <- which(table(site) == max(table(site))) # find the site where bird is the longest
 
-#find the dates that the bird arrives and leaves this stationary site
-start <- min(which(mS$site == stationarySite))
-end   <- max(which(mS$site == stationarySite))
+# #find the dates that the bird arrives and leaves this stationary site
+# start <- min(which(mS$site == stationarySite))
+# end   <- max(which(mS$site == stationarySite))
+
+startDate <- "2019-03-01" 
+endDate   <- "2019-04-24"
+
+start = min(which(as.Date(twl$Twilight) == startDate))
+end = max(which(as.Date(twl$Twilight) == endDate))
 
 (zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
 
@@ -185,7 +191,7 @@ z0 <- trackMidpts(x0_r)
 save(x0_r, file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
 
 # Check the following times of arrival and departure using a plot 
-arr.nbr <- "2018-10-12" 
+arr.nbr <- "2018-10-26"
 dep.nbr <- "2019-04-29" 
 
 # open jpeg
@@ -207,16 +213,16 @@ dev.off()
 
 # Using approximate timings of arrival and departure from the breeding grounds
 zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
-  mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith0,
-                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad + 3,
-                            Date > anytime(dep.nbr) ~ zenith0_ad + 3))
+  mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith0 + 2,
+                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad+4,
+                            Date > anytime(dep.nbr) ~ zenith0_ad + 4))
 
 zeniths0 <- zenith_twl_zero$zenith
 
 zenith_twl_med <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith,
-                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith_sd-1,
-                            Date > anytime(dep.nbr) ~ zenith_sd-1))
+                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith_sd,
+                            Date > anytime(dep.nbr) ~ zenith_sd))
 
 zeniths_med <- zenith_twl_med$zenith
 
@@ -273,35 +279,36 @@ save(x0, file = paste0(dir,"/", geo.id, "_initial_path.csv"))
 # FIX CLOCK DRIFT ##############################################################
 
 # obtain longitude measurements during the nonbreeding period 
-locs.nbr <- data.frame(lon = path$x[,1], lat = path$x[,2],  time = path$time) %>% dplyr::filter(time > anytime(arr.nbr) + days(20) & time < anytime(dep.nbr) -days(10))
+locs.nbr <- data.frame(lon = path$x[,1], lat = path$x[,2],  time = path$time) %>% dplyr::filter(time > anytime(arr.nbr) + days(20) & time < anytime(dep.nbr) - days(15))
 
-# Timesteps
+# timesteps
 locs.nbr$timestep <- seq(1, nrow(locs.nbr))
 
 #plot of time range used 
 par(mfrow = c(2,1))
 plot(twl$Twilight, x0[,1], ylab = "longitude")
 abline(v = anytime(anytime(arr.nbr) + days(20)))
-abline(v = anytime(dep.nbr) -days(10))
+abline(v = anytime(dep.nbr) -days(15))
 abline(v = fall.equi, col = "orange")
 abline(v = spring.equi, col = "orange")
 
-# Linear model to find the rate of drift 
+# linear model to find the rate of drift over the nonbreeding period, while the bird was stationary  
 plot(locs.nbr$timestep, locs.nbr$lon)
 abline(lm(locs.nbr$lon ~ locs.nbr$timestep))
 CD.model <- lm(locs.nbr$lon ~ locs.nbr$timestep)
+
 CD.model$coefficients[2] # is the rate of drift in lon/s
 CD.model$coefficients[2] * 240 # convert to time in seconds s/s. 1 degree of longitude is equal to 4 minutes, or 240 seconds. 
 
-# Create the adjusted time file 
+#adjust twilight times
 twl$timestep <- seq(1, nrow(twl))
 twl$Twilight <- anytime(twl$Twilight)
 twl$Twilight0 <- anytime(twl$Twilight0)
 twl_adjusted <- twl %>% mutate(Twilight = Twilight + seconds(CD.model$coefficients[2] * 240 * timestep),
-                      Twilight0 = Twilight0 + seconds(CD.model$coefficients[2] * 240 * timestep))
+                               Twilight0 = Twilight0 + seconds(CD.model$coefficients[2] * 240 * timestep))
 
 # Initial Path with Clock Drift Adjustment  ####################################
-path <- thresholdPath(twl_adjusted$Twilight, twl_adjusted$Rise, zenith = zeniths_med, tol=0.12)
+path <- thresholdPath(twl_adjusted$Twilight, twl_adjusted$Rise, zenith = zeniths_med, tol=0.13)
 
 x0 <- path$x
 z0 <- trackMidpts(x0)
@@ -331,7 +338,7 @@ geo_twl_adjusted <- export2GeoLight(twl_adjusted)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-cL <- changeLight(twl=geo_twl_adjusted, quantile= 0.82, summary = F, days = 2, plot = T)
+cL <- changeLight(twl=geo_twl_adjusted, quantile= 0.84, summary = F, days = 2, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
 mS <- mergeSites(twl = geo_twl_adjusted, site = cL$site, degElevation = 90-zenith, distThreshold = 250)
@@ -628,8 +635,8 @@ par(cex.axis= 1)
 
 dev.off()
 
-# A short stopover over the carribean appears possible here based on latitude estimmates obtained after the equinox 
-# However, there is not clear pattern that supports it in the longitude or light level data 
+# A short stopover over the carribean appears possible here based on latitude estimates obtained after the equinox 
+# However, the Light transition data is unclear
 
 # Record details for the geolocator analysis ###################################
 geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
@@ -637,6 +644,7 @@ geo.ref[(geo.ref$geo.id == geo.id),]$In_habitat_median_zenith_angle <- zenith
 geo.ref[(geo.ref$geo.id == geo.id),]$Hill_Ekstrom_median_angle <- zenith_sd 
 geo.ref[(geo.ref$geo.id == geo.id),]$Fall_carrib_edits <- FALSE
 geo.ref[(geo.ref$geo.id == geo.id),]$Clock_drift_edits <- TRUE
+geo.ref[(geo.ref$geo.id == geo.id),]$path.elongated <- FALSE
 geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- arr.nbr
 geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- dep.nbr
 geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.start <- as.character(tm.calib1[1])

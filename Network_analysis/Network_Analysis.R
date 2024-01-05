@@ -336,7 +336,7 @@ E(fall.graph)$weight <- fall.con.ab$weight
 undirected.fall.graph <- as.undirected(fall.graph, mode = "collapse",
                                          edge.attr.comb = "sum")
 # Run concensusCluster function 
-cluster_output <- concensusCluster(graph = undirected.fall.graph, thresh = 0.5, algiter = 1000)
+cluster_output <- concensusCluster(graph = undirected.fall.graph, thresh = 0.8, algiter = 1000)
 comms <- cluster_output$`community structure`
 
 # plot concensus graph
@@ -869,7 +869,7 @@ E(spring.graph)$weight <- spring.con.ab$weight
 undirected.spring.graph <- as.undirected(spring.graph, mode = "collapse",
                                        edge.attr.comb = "sum")
 # Run concensusCluster function 
-cluster_output <- concensusCluster(graph = undirected.spring.graph, thresh = 0.9, algiter = 1000)
+cluster_output <- concensusCluster(graph = undirected.spring.graph, thresh = 0.5, algiter = 1000)
 comms <- cluster_output$`community structure`
 
 # plot concensus graph

@@ -38,6 +38,11 @@ geo.all <- findLocData(geo.ids = c("V8757_010",
                                    "V8757_134",
                                    "V8757_029",
                                    "V8757_078",
+                                   "V7638_001",
+                                   "V7638_005",
+                                   "V7638_009",
+                                   "V7638_010",
+                                   "V7638_011",
                                    "blpw09",
                                    "blpw12",
                                    "3254_001",
@@ -77,7 +82,7 @@ r <- raster(nrows = 2 * diff(ylim), ncols = 2 * diff(xlim), xmn = xlim[1],
 for (i in unique(geo.all$geo_id)){
   
   # open jpeg
-  jpeg(paste0("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Conferences/AOS_2023/AOS_poster/Appendix_figures/",i,"_locations.jpg"),units = "cm", width = 15, height = 15,  quality = 100, res = 600)
+  #jpeg(paste0("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Conferences/AOS_2023/AOS_poster/Appendix_figures/",i,"_locations.jpg"),units = "cm", width = 15, height = 15,  quality = 100, res = 600)
   
   geo.data <- geo.all %>% filter(geo_id == i) 
   path.palette <- colorRampPalette(c("yellow", "red"))(max(geo.data$sitenum) * 1)
@@ -118,7 +123,7 @@ for (i in unique(geo.all$geo_id)){
   #Add plot tile
   title(main = paste0(i," - ", geo.data$study.site[1]))
   
-  dev.off()
+  #dev.off()
   
 }
 

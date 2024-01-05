@@ -186,7 +186,7 @@ x0_r<- path$x
 z0 <- trackMidpts(x0_r)
 
 # Check the following times of arrival and departure using a plot 
-arr.nbr <- "2018-10-21" 
+arr.nbr <- "2018-10-20" 
 dep.nbr <- "2019-04-22" 
 
 # open jpeg
@@ -251,7 +251,7 @@ dev.off()
 save(x0_r, file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
 
 # Initial Path #################################################################
-tol_ini <- 0.20
+tol_ini <- 0.16
 path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol = tol_ini)
 
 x0 <- path$x
@@ -282,10 +282,10 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-cL <- changeLight(twl=geo_twl, quantile= 0.65, summary = F, days = 2, plot = T)
+cL <- changeLight(twl=geo_twl, quantile= 0.63, summary = F, days = 2, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths_med[1:length(zeniths_med)-1], distThreshold = 250)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = 250)
 
 #back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]),
@@ -545,16 +545,16 @@ save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 load(file = paste0(dir,"/", geo.id, "adjusted_initial_path_raw.csv"))
 
 #Fall transoceanic flight
-start <- "2018-09-10"
-end <- "2018-10-20"
+start <- "2018-10-01"
+end <- "2018-11-20"
 
 #first flight
-f1.start <- "2018-09-22"
-f1.end <- "2018-09-24"
+f1.start <- "2018-10-13"
+f1.end <- "2018-10-15"
 
 #Secondflight
-f2.start <- "2018-09-27"
-f2.end <- "2018-09-28"
+f2.start <- "2018-10-28"
+f2.end <- "2018-10-30"
 
 # Plot lat, lon and light transitions  
 jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition.png"), width = 1024 , height = 990, quality = 100, res = 200)
@@ -572,7 +572,6 @@ plot(twl$Twilight[twl$Twilight> start & twl$Twilight < end], x0_ad[,1][twl$Twili
 rect(anytime(f1.start), min(x0_ad[,1])-2, anytime(f1.end), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
 rect(anytime(f2.start), min(x0_ad[,1])-2, anytime(f2.end), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
 
-
 plot(twl$Twilight[twl$Twilight > start & twl$Twilight < end], x0_ad[,2][twl$Twilight > start & twl$Twilight < end],
      ylab = "Latitude", xlab = "Time")
 rect(anytime(f1.start), min(x0_ad[,2])-2, anytime(f1.end), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
@@ -583,9 +582,9 @@ par(cex.axis= 1)
 
 dev.off()
 
-# This birds does not seem to have made a stopover in the carribean. It also does not seem to have made a long transoceanic flight.
-# It semmes like it made a long flight while still in North America, potential from the coast down to Florida or Cuba. 
-# This bird than made a short flight to South America, possibly on September 28, as there us a period of clean light transitions  
+# The light data supports the occurence of a flight on Ocotober28th and 29th
+# Longitude and latitude data also seems to support a stopover in Cuba and or the Bahamas 
+# However it is unclear when the bird arrived at this stopover. It could be on October 15th
 
 # Record details for the geolocator analysis ###################################
 geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 

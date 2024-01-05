@@ -78,10 +78,6 @@ geo.nbr2.loc <- geo.all %>% dplyr::filter(period == "Non-breeding period", siten
   dplyr::filter(sitenum == max(sitenum)) %>%
   dplyr::select(geo_id, nbr2.lat = Lat.50., nbr2.lon = Lon.50., nbr.duration = duration)
 
-# Calculate the median nonbreeding location 
-geo.nbr.med = 
-
-
 # merge the datasets
 loc_list <- list(geo.br.loc, geo.nbr1.loc , geo.nbr2.loc)
 geo.loc.data <- loc_list %>% reduce(full_join, by='geo_id') %>% 

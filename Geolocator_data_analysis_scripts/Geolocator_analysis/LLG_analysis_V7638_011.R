@@ -223,7 +223,7 @@ zenith_twl_med <- data.frame(Date = twl$Twilight) %>%
 zeniths_med <- zenith_twl_med$zenith
 
 # plot longitudes and latitudes with the new zenith angles 
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol= 0)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol= 0.08)
 
 x0_ad <- path$x
 z0 <- trackMidpts(x0_ad)
@@ -543,7 +543,7 @@ save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 load(file = paste0(dir,"/", geo.id, "adjusted_initial_path_raw.csv"))
 
 #Fall transoceanic flight
-start <- "2018-10-01"
+start <- "2018-09-10"
 end <- "2018-11-01"
 
 #first flight
@@ -565,7 +565,7 @@ plot(lig$Date[lig$Date > anytime(start) & lig$Date < anytime(end)], lig$Light[li
 rect(anytime(f1.start), min(lig$Light)-2, anytime(f1.end), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
 rect(anytime(f2.start), min(lig$Light)-2, anytime(f2.end), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
 
-plot(twl$Twilight[twl$Twilight> start & twl$Twilight < end], x0[,2][twl$Twilight > start & twl$Twilight < end],
+plot(twl$Twilight[twl$Twilight> start & twl$Twilight < end], x0[,1][twl$Twilight > start & twl$Twilight < end],
      ylab = "Longitude", xlab = "Time")
 rect(anytime(f1.start), min(x0_ad[,1])-2, anytime(f1.end), max(x0[,1])+2, col = alpha("yellow", 0.2), lty=0)
 rect(anytime(f2.start), min(x0_ad[,1])-2, anytime(f2.end), max(x0[,1])+2, col = alpha("yellow", 0.2), lty=0)
@@ -579,8 +579,8 @@ par(cex.axis= 1)
 
 dev.off()
 
-# A stopover in the Caribbean seems to have occurred  between 2018-10-13 and 2018-10-14
-# periods of continuous exposure to light are hard to distinguish for this geolocator 
+# periods of continuous exposure to light are hard to distinguish for this geolocators, although the bird was likely in flight on October 12th and 14th 
+# Looking at the whole range of light data, there does not seem to be any evidence of a stopover in the Caribbean either, though a short one may have occured 
 
 # Record details for the geolocator analysis ###################################
 geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
