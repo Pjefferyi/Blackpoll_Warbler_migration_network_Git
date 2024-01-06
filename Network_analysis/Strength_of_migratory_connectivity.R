@@ -54,7 +54,7 @@ fall.nbr <- fall.stat %>% group_by(geo_id) %>%
   filter(period == "Non-breeding period", sitenum == max(sitenum), !is.na(StartTime), !is.na(EndTime)) %>%
   arrange(geo_id) 
 
-fall.nbr.sf <- st_as_sf(fall.nbr, coords = c("Lon.50.", "Lat.50."), crs = st_crs(wrld_simpl))
+fall.nbr.sf <- st_as_sf(fall.nbr, coords = c("Lon.50.", "Lat.50."), crs = st_crs(wrld_simpl), remove = F)
 fall.nbr.sf <- st_transform(fall.nbr.sf, st_crs(proj)) 
 #st_write(fall.nbr.sf, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/bpw_fall_nbr_sitesV1.shp", append = F)
 
@@ -71,6 +71,35 @@ br.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of 
 #   st_cast("MULTIPOLYGON")
 
 # creating target sites in R based on the nonbreeding nodes
+
+# First check whether there will be any isolated nonbreeding site and add them to the nearest group
+grp.sizes <- fall.nbr.sf %>% group_by(cluster) %>% 
+  summarize(count = n(), med.lon = median(Lon.50.), med.lat = median(Lat.50.)) %>%
+  mutate(cluster.change = NA)
+
+fall.nbr.sf.temp <- fall.nbr.sf
+
+for (i in seq(1, length(grp.sizes))){
+  
+  dist.dtfi <- grp.sizes
+  
+  dist.dtfi$lon.sites <- grp.sizes$med.lon[i]
+  dist.dtfi$lat.sites <- grp.sizes$med.lat[i]
+  
+  dist.dtfi <- dist.dtfi %>% rowwise() %>% mutate(dist = distHaversine(c(lon.sites,lat.sites), c(med.lon, med.lat))) %>%
+    filter(dist != 0)
+  
+  if (grp.sizes$count[i] < 4){
+    
+    min.index <- which(dist.dtfi$dist == min(dist.dtfi$dist))
+    
+    fall.nbr.sf.temp[fall.nbr.sf$cluster == grp.sizes$cluster[i],]$cluster <- dist.dtfi$cluster[min.index]
+  }
+  
+}
+
+fall.nbr.sf$cluster <- fall.nbr.sf.temp$cluster
+  
 geometry <- st_sfc(lapply(seq(1, length(unique(fall.nbr.sf$cluster))), function(x) st_geometrycollection()), crs = st_crs(proj))#st_sf(crs = st_crs(proj))
 fall.nbr.regions <- st_sf(id = seq(1, length(unique(fall.nbr.sf$cluster))), geometry = geometry)
 
@@ -123,7 +152,7 @@ plot(as_Spatial(fall.nbr.sf), col = "blue", add  = T)
 # Nonbreeding regions ggplot
 ggplot(st_as_sf(wrld_simpl))+
   geom_sf(colour = "black", fill = "lightgray")+
-  geom_sf(data = fall.nbr.regions, aes(fill = as.factor(community)), col = "black", alpha = 0.5)+
+  geom_sf(data = fall.nbr.regions, aes(fill = as.factor(cluster)), col = "black", alpha = 0.5)+
   scale_fill_discrete(name = "Nonbreeding regions") +
   geom_sf(data = fall.nbr.sf, aes(col = "Individual nonbreeding locations (1 bird each)"), shape = 4, cex = 3)+
   scale_colour_manual(values = c("Individual nonbreeding locations (1 bird each)" = "blue"), name = "") +
@@ -247,7 +276,7 @@ spring.stat <- merge(spring.stat, comm.data, by = "cluster")
 spring.nbr <- spring.stat %>% group_by(geo_id) %>% 
   filter(period == "Non-breeding period") %>% filter(sitenum == min(sitenum))
 
-spring.nbr.sf <- st_as_sf(spring.nbr, coords = c("Lon.50.", "Lat.50."), crs = st_crs(wrld_simpl))
+spring.nbr.sf <- st_as_sf(spring.nbr, coords = c("Lon.50.", "Lat.50."), crs = st_crs(wrld_simpl), remove = F)
 spring.nbr.sf <- st_transform(spring.nbr.sf, st_crs(proj)) 
 #st_write(spring.nbr.sf, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/bpw_spring_nbr_sitesV1.shp", append = F)
 
@@ -263,20 +292,51 @@ spring.br.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/Univers
 #   st_transform(CRS(proj))%>%
 #   st_cast("MULTIPOLYGON")
 
-# creating target sites in R based on community clustering analysis 
-geometry <- st_sfc(lapply(seq(1:max(spring.nbr.sf$community)), function(x) st_geometrycollection()), crs = st_crs(proj))#st_sf(crs = st_crs(proj))
-spring.nbr.regions <- st_sf(id = seq(1:max(spring.nbr.sf$community)), geometry = geometry)
+# creating target sites in R based on the nonbreeding nodes
 
-for (i in unique(spring.nbr.sf$community)){
-  pt.sb <- spring.nbr.sf[spring.nbr.sf$community== i,]
+# First check whether there will be any isolated nonbreeding site and add them to the nearest group
+grp.sizes <- spring.nbr.sf %>% group_by(cluster) %>% 
+  summarize(count = n(), med.lon = median(Lon.50.), med.lat = median(Lat.50.))
+
+spring.nbr.sf.temp <- spring.nbr.sf
+
+for (i in seq(1, length(grp.sizes))){
+  
+  dist.dtfi <- grp.sizes
+  
+  dist.dtfi$lon.sites <- grp.sizes$med.lon[i]
+  dist.dtfi$lat.sites <- grp.sizes$med.lat[i]
+  
+  dist.dtfi <- dist.dtfi %>% rowwise() %>% mutate(dist = distHaversine(c(lon.sites,lat.sites), c(med.lon, med.lat))) %>%
+    filter(dist != 0)
+  
+  if (grp.sizes$count[i] < 4){
+    
+    min.index <- which(dist.dtfi$dist == min(dist.dtfi$dist))
+    
+    spring.nbr.sf.temp[spring.nbr.sf$cluster == grp.sizes$cluster[i],]$cluster <- dist.dtfi$cluster[min.index]
+  }
+  
+}
+
+spring.nbr.sf$cluster <- spring.nbr.sf.temp$cluster
+
+geometry <- st_sfc(lapply(seq(1, length(unique(spring.nbr.sf$cluster))), function(x) st_geometrycollection()), crs = st_crs(proj))#st_sf(crs = st_crs(proj))
+spring.nbr.regions <- st_sf(id = seq(1, length(unique(spring.nbr.sf$cluster))), geometry = geometry)
+
+iter = 1
+
+for (i in unique(spring.nbr.sf$cluster)){
+  pt.sb <- spring.nbr.sf[spring.nbr.sf$cluster== i,]
   
   poly <- st_convex_hull(st_union(pt.sb))
-  poly <- st_buffer(poly, dist = 80000)
+  poly <- st_buffer(poly, dist = 60000)
   poly <- st_transform(poly, st_crs(proj))
   poly <- st_difference(poly, spring.nbr.regions)[1]
   #st_combine(c(spring.nbr.regions, poly))
-  spring.nbr.regions$geometry[i] <- poly
-  spring.nbr.regions$community[i] <- i
+  spring.nbr.regions$geometry[iter] <- poly
+  spring.nbr.regions$cluster[iter] <- i
+  iter = iter +1
 }
 
 ## Verify that the second nonbreeding sites and points makes sense
@@ -290,7 +350,7 @@ plot(as_Spatial(spring.nbr.sf), col = "blue", add  = T)
 # Nonbreeding regions ggplot
 ggplot(st_as_sf(wrld_simpl))+
   geom_sf(colour = "black", fill = "lightgray")+
-  geom_sf(data = spring.nbr.regions, aes(fill = as.factor(community)), col = "black", alpha = 0.5)+
+  geom_sf(data = spring.nbr.regions, aes(fill = as.factor(cluster)), col = "black", alpha = 0.5)+
   scale_fill_discrete(name = "Nonbreeding regions") +
   geom_sf(data = spring.nbr.sf, aes(col = "Individual nonbreeding locations (1 bird each)"), shape = 4, cex = 3)+
   scale_colour_manual(values = c("Individual nonbreeding locations (1 bird each)" = "blue"), name = "") +
@@ -366,6 +426,7 @@ MC_metric_nbr2 <- estStrength(targetDist = spring.nbr.dists , # targetSites dist
 
 #Save output
 save(MC_metric_nbr2, file = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_analysis/MC_metric_nbr2.R")
+#load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_analysis/MC_metric_nbr2.R")
 
 # Estimate the Mantel correlation ##############################################
 

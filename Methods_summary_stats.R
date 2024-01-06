@@ -185,12 +185,12 @@ plot(fall.nodes.occupied ~ deploy.longitude, data = analysis_ref)
 summary(mod.fall.node)
 check_model(mod.fall.node)
 
-mod.spring.node <- glm(spring.nodes.occupied ~ (deploy.longitude), data = analysis_ref, family = gaussian(link = "log"))
+mod.spring.node <- glm(spring.nodes.occupied ~ (deploy.longitude), data = analysis_ref, family = gaussian(link = "identity"))
 plot(spring.nodes.occupied ~ deploy.longitude, data = analysis_ref)
 summary(mod.spring.node)
 check_model(mod.spring.node)
 
-## test assessing the usage of more than one nonbreeding site
+## test assessing the usage of more than one nonbreeding site (whether individuals made stopovers in the nonbreeding range)
 analysis_ref <- analysis_ref %>% mutate(fall.nbr.stopover = ifelse(fall.nbr.nodes.occupied >1, 1, 0),
                                         spring.nbr.stopover = ifelse(spring.nbr.nodes.occupied >1, 1, 0))
 
@@ -271,7 +271,7 @@ lat.plot1 <- ggplot(data = analysis_ref, aes(x = deploy.latitude, y = nbr1.lat))
        y = "First nonbreeding site latitude")
 
 # run a regression model
-mod3 <- lm(nbr1.lat ~ log(deploy.latitude), data = analysis_ref)
+mod3 <- lm(nbr1.lat ~ deploy.latitude, data = analysis_ref)
 plot(nbr1.lat ~ deploy.latitude, data = analysis_ref)
 summary(mod3)
 check_model(mod3)

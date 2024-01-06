@@ -209,12 +209,12 @@ ggplot(st_as_sf(wrld_simpl))+
 ggplot(st_as_sf(wrld_simpl))+
   geom_sf(colour = NA, fill = "lightgray") +
   coord_sf(xlim = c(-170, -30),ylim = c(-15, 70)) +
-  geom_errorbar(data = fall.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
-  geom_errorbar(data = fall.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
-  #geom_path(data = fall.stat[fall.stat$geo_id == "V8296_015",], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5) +
-  #geom_point(data = fall.stat[fall.stat$geo_id == "V8296_015",], mapping = aes(x = Lon.50., y = Lat.50.), alpha = 0.5) +
-  geom_path(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5, linewidth = 0.1) +
-  geom_point(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, colour = as.factor(cluster)), cex = 2) +
+  #geom_errorbar(data = fall.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
+  #geom_errorbar(data = fall.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
+  geom_path(data = fall.stat[fall.stat$geo_id == "V7638_011",], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5) +
+  geom_point(data = fall.stat[fall.stat$geo_id == "V7638_011",], mapping = aes(x = Lon.50., y = Lat.50.), alpha = 0.5) +
+  #geom_path(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5, linewidth = 0.1) +
+  #geom_point(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, colour = as.factor(cluster)), cex = 2) +
   labs(colour = "Cluster") +
   theme_bw() +
   theme(text = element_text(size = 16), legend.position = "None")
@@ -285,7 +285,7 @@ meta.fall <- data.frame("vertex" = seq(1, max(fall.edge.df$cluster)),
                    "node.type.num" = fall.node.type$site_type_num)
 
 # For fall nodes where latitudinal accuracy is low, set location close to the coast
-meta.fall[c(19, 21, 17, 14),]$Lat.50. <- c(33.18, 37.3, 41.76, 44.91)
+meta.fall[c(19, 16, 14),]$Lat.50. <- c(33.18, 41.26, 44.91)
  
 fall.location <- as.matrix(meta.fall[, c("Lon.50.", "Lat.50.")])
 
@@ -297,7 +297,7 @@ type.palette <- rainbow(3)
 
 # plot the fall network over North and South America
 plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70))
-plot(fall.graph, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
+plot(fall.graph, vertex.size = 200, vertex.size2 = 200,
      edge.width = 1, edge.arrow.size = 0, edge.arrow.width = 0,  
      layout = fall.location, rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), vertex.color = type.palette[meta.fall$node.type.num], add = T)
@@ -354,7 +354,7 @@ cluster.data <- clusterLocs(locs = spring.stat, maxdiam = 650)
 spring.stat$cluster <- cluster.data$clusters
 
 # # export spring stat sites for manual clustering
-# spring.stat.sites <- st_as_sf(spring.stat[,c(1:12, ncol(spring.stat))], coords = c("Lon.50.", "Lat.50."))
+# spring.stat.sites <- st_as_sf(spring.stat[,c(1:12, which(colnames(spring.stat) == "cluster"))], coords = c("Lon.50.", "Lat.50."))
 # st_crs(spring.stat.sites) <- st_crs(wrld_simpl)
 # st_write(spring.stat.sites, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/Layers/spring_stat_sitesV3.shp", append = F)
 
@@ -407,7 +407,7 @@ spring.breed.return <- spring.breed %>% group_by(geo_id) %>%
 spring.breed.return[,c("StartTime", "EndTime", "duration")] <- NA
 spring.breed.return[,c("period")] <- "Pre-breeding migration"
 
-# For geolocators deployed in the nonbreeding grounds, we need to increase site numbers because the breeding site  
+# For geolocators deployed in the nonbreeding grounds, we need to increase site numbers because the breeding site
 spring.stat <- spring.stat %>% group_by(geo_id) %>% mutate(sitenum = ifelse(deploy.range == "Nonbreeding", sitenum + 1, sitenum))
 spring.stat <- bind_rows(spring.stat, spring.breed.return) %>% arrange(geo_id, sitenum)
 

@@ -25,6 +25,7 @@ library(networktools)
 
 # Will need to run the network analysis and construction scripts ----
 #source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_analysis/Network_Analysis.R")
+source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis_helper_functions.R")
 
 # Load required data for the fall
 fall.graph <- read_graph("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.graph.edge.list.txt", directed = TRUE)
@@ -110,7 +111,7 @@ V(spring.graph)$single.reg <- spring.comp$single.reg
 undirected.fall.graph <- as.undirected(fall.graph, mode = "collapse",
                                        edge.attr.comb = list(weight = "sum", edge.type = "ignore"))
 
-fall.label.prop <- concensusCluster(graph = undirected.fall.graph, thresh = 0.5, algiter = 5000)
+fall.label.prop <- concensusCluster(graph = undirected.fall.graph, thresh = 0.5, algiter = 1000)
 fall.infomap <- cluster_infomap(fall.graph)
 fall.walktrap <- cluster_walktrap(fall.graph)
 
@@ -160,7 +161,7 @@ spring.graph.brd <- spring.graph.disc
 #E(spring.graph.brd)$weight <- 1/E(spring.graph.disc)$weight
 
 V(fall.graph)$bridge.betweenness <- bridge(fall.graph.brd,  nodes =as.character(V(fall.graph.brd)), communities = V(fall.graph)$walktrap.comm , directed = T)$`Bridge Strength`
-V(spring.graph)$bridge.betweenness <- bridge(spring.graph.brd, nodes =as.character(V(spring.graph.brd)), communities = V(spring.graph)$infomap.comm, directed = T)$`Bridge Strength`
+V(spring.graph)$bridge.betweenness <- bridge(spring.graph.brd, nodes =as.character(V(spring.graph.brd)), communities = V(spring.graph)$wakltrap.comm, directed = T)$`Bridge Strength`
 
 # Figure 1: Fall and spring migratory network node types and stationary location clusters ----
 America <- wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),]
@@ -190,6 +191,8 @@ fall.gplot <- ggplot(st_as_sf(America))+
         axis.ticks.length = unit(0, "pt"),
         plot.margin= unit(c(0,0,0,0), "pt"))+
   guides(fill = guide_legend(override.aes = list(size = 5)), )
+
+
 
 ## fall stationary location clusters 
 fall.clustplot<- ggplot(st_as_sf(America))+
@@ -343,10 +346,10 @@ spring.com.plot <- ggplot(st_as_sf(America))+
              arrow = arrow(length = unit(9, "pt"), type = "closed", angle = 10))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
   scale_color_manual(values=c(adjustcolor("blue", alpha = 0), adjustcolor("black", alpha = 0.5)), guide = "none")+
-  geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = , fill = as.factor(infomap.comm)), shape=21, size = 4)+
+  geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = , fill = as.factor(walktrap.comm)), shape=21, size = 4)+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
-        legend.position = "none", text = element_text(size = 12), legend.key = element_blank(),
+        text = element_text(size = 12), legend.key = element_blank(),
         axis.title =element_blank(),
         axis.text =element_blank(),
         axis.ticks =element_blank(),

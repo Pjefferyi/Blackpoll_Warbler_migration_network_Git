@@ -212,8 +212,14 @@ stationarySite <- which(table(site) == max(table(site))) # find the site where b
 start <- min(which(mS$site == stationarySite))
 end   <- max(which(mS$site == stationarySite))
 
+# startDate <- "2019-11-20"
+# endDate   <- "2020-02-20"
+# 
+# start = min(which(as.Date(twl$Twilight) == startDate))
+# end = max(which(as.Date(twl$Twilight) == endDate))
+
 #calculate the zenith angle that minimizes variation in latitude during this period 
-(zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)) -  0.5) 
+(zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end))) 
 
 # The angles obtained with in-habitat and Hill-Ekstrom Calibration differ by less than 0.5
 # we can use the same zenith angle throughout the annual cycle
@@ -308,7 +314,7 @@ data(wrld_simpl)
 plot(x0, type = "n", xlab = "", ylab = "")
 plot(wrld_simpl, col = "grey95", add = T)
 
-points(path$x, pch=19, col="cornflowerblue", type = "o")
+points(path$x[500:706,], pch=19, col="cornflowerblue", type = "o")
 points(lon.calib, lat.calib, pch = 16, cex = 2.5, col = "firebrick")
 box()
 
