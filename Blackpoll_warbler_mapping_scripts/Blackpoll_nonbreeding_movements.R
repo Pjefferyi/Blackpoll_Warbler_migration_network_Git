@@ -168,8 +168,13 @@ NB.stat$timing.nbr.move[1] <- "winter.nbr.movements"
 
 #View(NB.stat[,c("nbr.move.group","equinox.nbr.move","timing.nbr.move", "StartTime")])
 
+# Save nonbreeding movement data ###############################################
+
+
+# Plot of nonbreeding movements ################################################
+
 nbr.move.plot <- ggplot(st_as_sf(wrld_simpl))+
-  geom_sf(colour = "black", fill = "white", lwd = 0.2) +
+  geom_sf(colour = "black", fill = "#F7F7F7", lwd = 0.3) +
   coord_sf(xlim = c(-95, -45),ylim = c(-10, 15)) +
   geom_point(data = NB.stat[NB.stat$nbr.mover == "nonmover",], mapping = aes(x = Lon.50., y = Lat.50.,fill = "darkgray"), colour = "black", cex = 3, shape = 21, stroke = 0.5) +
   scale_fill_manual(values = c("darkgray"),label = c("Stationary individuals"), name = "") +
@@ -181,14 +186,16 @@ nbr.move.plot <- ggplot(st_as_sf(wrld_simpl))+
                                           linetype = equinox.nbr.move, col = timing.nbr.move), lwd = 0.8) +
   scale_color_manual(values = c("#E66100", "#5D3A9B"), name = "Movement timing", label = c("October-December", "January-May"))+
   scale_linetype_manual(values = c("dashed", "solid"), name = "Equinox proximity", label = c("within 14 days", "not within 14 days"))+
-  labs(x = "Longitude", y = "Latitude") +
   theme_bw()+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.border = element_rect(colour = "black", fill = NA),
         legend.position = c(0.14, 0.4), legend.background = element_blank(),
         legend.box.background = element_rect(fill = "white", colour = "black", linewidth = 0.2),
-        legend.spacing = unit(-10, "pt"),
+        legend.spacing = unit(-5, "pt"),
         legend.key.width = unit(50,"pt"),
-        text = element_text(size = 12))+
+        text = element_text(size = 12),
+        axis.title = element_blank(),
+        axis.text  = element_text(colour = "black"))+
   guides(colour = guide_legend(order=1),
          linetype = guide_legend(order=2),
          fill = guide_legend(order=3))

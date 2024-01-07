@@ -102,25 +102,23 @@ range(analysis_ref$tol_days)
 mean(analysis_ref$tol_days)
 sd(analysis_ref$tol_days)
 
-###############################################################################
 # Results #####################################################################
-###############################################################################
 
 # Load fall and spring stationary sites 
 fall.stat <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.stationary.data.csv")
 spring.stat <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.stationary.data.csv")
 
-# Number of stationary locations ----
+## Number of stationary locations ----
 
-## Number of fall stopovers used before arrival at first nonbreeding site
+# Number of fall stopovers used before arrival at first nonbreeding site
 fall.num <- fall.stat %>% group_by(geo_id) %>% summarise(num_stopovers = sum(site_type == "Stopover"))
 
-## Number spring site used after departure from last nonbreeding site 
+# Number spring site used after departure from last nonbreeding site 
 spring.num <- spring.stat %>% group_by(geo_id) %>% summarise(num_stopovers = sum(site_type == "Stopover"))
 
-# Number migration distance ----
+## Number migration distance ----
 
-## Fall migration distance 
+# Fall migration distance 
 fall.dist <- fall.stat %>% group_by(geo_id) %>% mutate(Lon.50.next = lead(Lon.50.),
                                                       Lat.50.next = lead(Lat.50.)) %>%
   rowwise() %>%
@@ -130,7 +128,7 @@ fall.dist <- fall.stat %>% group_by(geo_id) %>% mutate(Lon.50.next = lead(Lon.50
   filter(!is.na(dists)) %>%
   summarize(distance = sum(dists)/1000)
 
-## Spring migration distance
+# Spring migration distance
 spring.dist <- spring.stat %>% group_by(geo_id) %>% mutate(Lon.50.next = lead(Lon.50.),
                                                        Lat.50.next = lead(Lat.50.)) %>%
   rowwise() %>%
@@ -140,46 +138,46 @@ spring.dist <- spring.stat %>% group_by(geo_id) %>% mutate(Lon.50.next = lead(Lo
   filter(!is.na(dists)) %>%
   summarize(distance = sum(dists)/1000)
 
-# Number of nodes used ----
+## Number of nodes used ----
 
-## Load fall and spring intra node movement datasets
+# Load fall and spring intra node movement datasets
 fall.edge.df.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.intra.cluster.movements.csv")
 spring.edge.df.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.intra.cluster.movements.csv")
 
-## add node type info 
+# add node type info 
 meta.fall.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.node.metadata.csv")
 meta.spring.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.node.metadata.csv")
 
 fall.edge.df.ab <- merge(fall.edge.df.ab, meta.fall.ab[,c("vertex","node.type")], by.x = "cluster", by.y = "vertex")
 spring.edge.df.ab <- merge(spring.edge.df.ab, meta.spring.ab[,c("vertex","node.type")], by.x = "cluster", by.y = "vertex")
 
-## number of nodes used in the fall network
+# number of nodes used in the fall network
 fall.node.used.df <- fall.edge.df.ab %>% group_by(geo_id) %>% summarize(fall.nodes.occupied = length(unique(cluster, next.cluster)),
                                                                         fall.stopover.nodes.occupied = length(unique(cluster[node.type == "Stopover"], next.cluster[node.type == "Stopover"])),
                                                                         fall.nbr.nodes.occupied = length(unique(cluster[node.type == "Nonbreeding"], next.cluster[node.type == "Nonbreeding"])))
 
-## number of nodes used in the spring network 
+# number of nodes used in the spring network 
 spring.node.used.df <- spring.edge.df.ab %>% group_by(geo_id) %>% summarize(spring.nodes.occupied = length(unique(cluster, next.cluster)),
                                                                         spring.stopover.nodes.occupied = length(unique(cluster[node.type == "Stopover"], next.cluster[node.type == "Stopover"])),
                                                                         spring.nbr.nodes.occupied = length(unique(cluster[node.type == "Nonbreeding"], next.cluster[node.type == "Nonbreeding"])))
 
-## merge the information collected with the reference dataset 
+# merge the information collected with the reference dataset 
 analysis_ref <- merge(analysis_ref, fall.node.used.df, by.x = "geo.id", by.y = "geo_id", all = T)
 analysis_ref <- merge(analysis_ref, spring.node.used.df, by.x = "geo.id", by.y = "geo_id", all = T)
 
-# Statistics of node usage ----
+## Statistics of node usage ----
 
-## Average number of nodes used in fall network
+# Average number of nodes used in fall network
 range(analysis_ref$fall.nodes.occupied, na.rm =  T)
 mean(analysis_ref$fall.nodes.occupied, na.rm =  T)
 se <- sd(analysis_ref$fall.nodes.occupied, na.rm =  T)/sqrt(length(analysis_ref$fall.nodes.occupied[!is.na(analysis_ref$fall.nodes.occupied)]))
 
-## Average number of nodes used in the spring network 
+# Average number of nodes used in the spring network 
 range(analysis_ref$spring.nodes.occupied, na.rm =  T)
 mean(analysis_ref$spring.nodes.occupied, na.rm =  T)
 se <- sd(analysis_ref$spring.nodes.occupied, na.rm =  T)/sqrt(length(analysis_ref$spring.nodes.occupied[!is.na(analysis_ref$spring.nodes.occupied)]))
 
-## correlation between number of nodes used and longitude of breeding site 
+# correlation between number of nodes used and longitude of breeding site 
 mod.fall.node <- glm(fall.nodes.occupied ~ deploy.longitude, data = analysis_ref, family = gaussian(link = "identity"))
 plot(fall.nodes.occupied ~ deploy.longitude, data = analysis_ref)
 summary(mod.fall.node)
@@ -190,7 +188,7 @@ plot(spring.nodes.occupied ~ deploy.longitude, data = analysis_ref)
 summary(mod.spring.node)
 check_model(mod.spring.node)
 
-## test assessing the usage of more than one nonbreeding site (whether individuals made stopovers in the nonbreeding range)
+# test assessing the usage of more than one nonbreeding site (whether individuals made stopovers in the nonbreeding range)
 analysis_ref <- analysis_ref %>% mutate(fall.nbr.stopover = ifelse(fall.nbr.nodes.occupied >1, 1, 0),
                                         spring.nbr.stopover = ifelse(spring.nbr.nodes.occupied >1, 1, 0))
 
@@ -207,26 +205,26 @@ check_model(nbr.stopover.mod.spring)
 simulationOutput <- simulateResiduals(fittedModel = nbr.stopover.mod.spring, plot = F)
 plot(simulationOutput)
 
-# Linear regression between the breeding and nonbreeding longitudes and latitudes -----
+## Linear regression between the breeding and nonbreeding longitudes and latitudes -----
 
-## for WRMA04173 (tracked from nonbreeding ground) we will use the arrival location in NA
+# for WRMA04173 (tracked from nonbreeding ground) we will use the arrival location in NA
 wrma.x <- geo.all[(geo.all$geo_id == "WRMA04173"),] %>% filter(sitenum == max(sitenum)) %>% dplyr::select(Lon.50.)
 wrma.y <- geo.all[(geo.all$geo_id == "WRMA04173"),] %>% filter(sitenum == max(sitenum)) %>% dplyr::select(Lat.50.)
 
 analysis_ref[(analysis_ref$geo.id == "WRMA04173"),]$deploy.latitude <- wrma.y$Lat.50. 
 analysis_ref[(analysis_ref$geo.id == "WRMA04173"),]$deploy.longitude <- wrma.x$Lon.50.
 
-## Obtain first nonbreeding location for each geolocator
+# Obtain first nonbreeding location for each geolocator
 geo.nbr1.loc <- geo.all %>% dplyr::filter(period == "Non-breeding period", sitenum > 0, duration > 14, geo_id %in% unique(fall.stat$geo_id)) %>% group_by(geo_id) %>%
   dplyr::filter(sitenum == min(sitenum)) %>%
   dplyr::select(geo_id, nbr1.lat = Lat.50., nbr1.lon = Lon.50.)
 
-## Obtain last nonbreeding location for each geolocator
+# Obtain last nonbreeding location for each geolocator
 geo.nbr2.loc <- geo.all %>% dplyr::filter(period == "Non-breeding period", sitenum > 0, duration > 14, geo_id %in% unique(spring.stat$geo_id)) %>% group_by(geo_id) %>%
   dplyr::filter(sitenum == max(sitenum)) %>%
   dplyr::select(geo_id, nbr2.lat = Lat.50., nbr2.lon = Lon.50.)
 
-## merge with the dataset of reference data 
+# merge with the dataset of reference data 
 loc_list <- list(geo.nbr1.loc , geo.nbr2.loc)
 analysis_ref <- loc_list %>% reduce(full_join, by='geo_id') %>% 
   merge(analysis_ref, by.x = "geo_id", by.y = "geo.id", all = T)
@@ -241,7 +239,7 @@ long.plot1 <- ggplot(data = analysis_ref, aes(x = deploy.longitude, y = nbr1.lon
        y = "First nonbreeding site longitude") # +
 #geom_text(label = geo.loc.data$geo_id, nudge_x = 5, nudge_y = 1)
 
-## run a regression model
+# run a regression model
 mod1 <- lm(nbr1.lon ~ deploy.longitude, data = analysis_ref)
 summary(mod1)
 check_model(mod1)
@@ -294,3 +292,42 @@ check_model(mod4)
 x <- analysis_ref$nbr2.lon[!is.na(analysis_ref$nbr2.lon)]
 y <- analysis_ref$deploy.longitude[!is.na(analysis_ref$nbr2.lon)]
 cor(x,y, method = "pearson")
+
+## network metric scores by nodes ----
+
+#load network data
+fall.gdata <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/fall.graph.data.csv")
+spring.gdata <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/spring.graph.data.csv")
+
+# merge with fall graph data with fall.stat region names 
+fall.stat.regions <- fall.stat %>% mutate(cluster.region = ifelse(is.na(cluster.region), as.character(cluster), cluster.region)) %>%
+  group_by(cluster) %>% summarise(cluster.region = unique(cluster.region))
+fall.gdata <-  merge(fall.gdata, fall.stat.regions, by = "cluster")
+
+# Plot betweenness scores
+ggplot(data = fall.gdata, aes(y = betweenness, x = cluster.region, fill = node.type))+
+  geom_col()+
+  coord_flip()
+  
+# Plot bridge betweenness scores
+ggplot(data = fall.gdata, aes(y = bridge.strength, x = cluster.region, fill = node.type))+
+  geom_col()+
+  coord_flip()
+
+# There are no spring region names, but I may add some at a later date
+# spring.stat.regions <- spring.stat %>% mutate(cluster.region = ifelse(is.na(cluster.region), as.character(cluster), cluster.region)) %>%
+#   group_by(cluster) %>% summarise(cluster.region = unique(cluster.region))
+#spring.gdata <-  merge(spring.gdata, spring.stat.regions, by = "cluster")
+
+# Plot betweenness scores
+ggplot(data = spring.gdata, aes(y = betweenness, x = as.factor(cluster), fill = node.type))+
+  geom_col()+
+  coord_flip()
+
+# Plot bridge betweenness scores
+ggplot(data = spring.gdata, aes(y = bridge.strength, x = as.factor(cluster), fill = node.type))+
+  geom_col()+
+  coord_flip()
+
+## nonbreeding movement stats  ----
+

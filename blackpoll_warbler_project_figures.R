@@ -153,15 +153,22 @@ spring.graph.disc <- spring.graph - edge(spring.e)
 
 V(spring.graph)$betweenness <- betweenness(spring.graph.disc, directed = T, weights = 1/E(spring.graph.disc)$weight) 
 
-# Fall and spring bridge betweenness
+# Fall and spring bridge strength 
 fall.graph.brd <- fall.graph.disc 
 spring.graph.brd <- spring.graph.disc 
 
 #E(fall.graph.brd)$weight  <- 1/E(fall.graph.disc)$weight
 #E(spring.graph.brd)$weight <- 1/E(spring.graph.disc)$weight
 
-V(fall.graph)$bridge.betweenness <- bridge(fall.graph.brd,  nodes =as.character(V(fall.graph.brd)), communities = V(fall.graph)$walktrap.comm , directed = T)$`Bridge Strength`
-V(spring.graph)$bridge.betweenness <- bridge(spring.graph.brd, nodes =as.character(V(spring.graph.brd)), communities = V(spring.graph)$wakltrap.comm, directed = T)$`Bridge Strength`
+V(fall.graph)$bridge.strength <- bridge(fall.graph.brd,  nodes =as.character(V(fall.graph.brd)), communities = V(fall.graph)$walktrap.comm , directed = T)$`Bridge Indegree`
+V(spring.graph)$bridge.strength <- bridge(spring.graph.brd, nodes =as.character(V(spring.graph.brd)), communities = V(spring.graph)$wakltrap.comm, directed = T)$`Bridge Indegree`
+
+#Save graphs their attribute data ----
+fall.gdata <- as_data_frame(fall.graph, what = "vertices") %>% mutate(cluster = seq(1:vcount(fall.graph)))
+spring.gdata <- as_data_frame(spring.graph, what = "vertices") %>% mutate(cluster = seq(1:vcount(spring.graph)))
+
+write.csv(fall.gdata, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/fall.graph.data.csv")
+write.csv(spring.gdata, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/spring.graph.data.csv")
 
 # Figure 1: Fall and spring migratory network node types and stationary location clusters ----
 America <- wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),]
@@ -173,7 +180,7 @@ fall.gplot <- ggplot(st_as_sf(America))+
   geom_sf(data = equinox_region, fill = "#D9D5B2", lwd = 0.1, alpha = 1)+
   coord_sf(xlim = c(-170, -40),ylim = c(-5, 70)) +
   geom_edges(data = fall.ggnet, mapping = aes(x = x, y = y, xend = xend, yend = yend, col = edge.type, lwd = weight),
-             arrow = arrow(length = unit(9, "pt"), type = "closed", angle = 10))+
+             arrow = arrow(length = unit(6, "pt"), type = "closed", angle = 10))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
   scale_color_manual(values=c(adjustcolor("black", alpha = 0.3), adjustcolor("blue", alpha = 0)), guide = "none")+
   geom_nodes(data = fall.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = node.type), shape=21)+
@@ -223,7 +230,7 @@ spring.gplot <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
   coord_sf(xlim = c(-170, -40),ylim = c(-5, 70)) +
   geom_edges(data = spring.ggnet, mapping = aes(x = x, y = y, xend = xend, yend = yend, col = edge.type, lwd = weight),
-             arrow = arrow(length = unit(9, "pt"), type = "closed", angle = 10))+
+             arrow = arrow(length = unit(6, "pt"), type = "closed", angle = 10))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
   scale_color_manual(values=c(adjustcolor("blue", alpha = 0), adjustcolor("black", alpha = 0.3)), guide = "none")+
   geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = node.type), shape=21)+
@@ -317,7 +324,7 @@ spring.gplot.comp <- ggplot(st_as_sf(America))+
 ## Panel ----
 plot_grid(fall.gplot.comp, spring.gplot.comp)
 
-# Figure 2: Fall and spring migratory network communities ----
+# Figure 3: Fall and spring migratory network communities ----
 
 ## Fall network communities ----
 fall.com.plot <- ggplot(st_as_sf(America))+
@@ -330,13 +337,15 @@ fall.com.plot <- ggplot(st_as_sf(America))+
   geom_nodes(data = fall.ggnet, mapping = aes(x = x, y = y, cex = , fill = as.factor(walktrap.comm)), shape=21, size = 4)+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
-        legend.position = "none", text = element_text(size = 12), legend.key = element_blank(),
+        legend.box.background = element_rect(fill = "white", colour = "black", linewidth = 0.2),
+        legend.position = c(0.15, 0.4), text = element_text(size = 10), legend.key = element_rect(fill = "white"),
+        legend.background = element_rect(fill = NA),
         axis.title =element_blank(),
         axis.text =element_blank(),
         axis.ticks =element_blank(),
         axis.ticks.length = unit(0, "pt"),
-        plot.margin = unit(c(0,0,0,0), "pt"))+
-  guides(fill = guide_legend(override.aes = list(size = 5)), )
+        plot.margin = unit(c(0,0,0,0), "pt"))+ 
+  guides(fill=guide_legend(title="Fall communities"))
 
 ## Spring network communities -----
 spring.com.plot <- ggplot(st_as_sf(America))+
@@ -349,101 +358,113 @@ spring.com.plot <- ggplot(st_as_sf(America))+
   geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = , fill = as.factor(walktrap.comm)), shape=21, size = 4)+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
-        text = element_text(size = 12), legend.key = element_blank(),
+        legend.box.background = element_rect(fill = "white", colour = "black", linewidth = 0.2),
+        legend.position = c(0.15, 0.4), text = element_text(size = 10), legend.key = element_rect(fill = "white"),
+        legend.background = element_rect(fill = NA),
         axis.title =element_blank(),
         axis.text =element_blank(),
         axis.ticks =element_blank(),
         axis.ticks.length = unit(0, "pt"),
-        plot.margin = unit(c(0,0,0,0), "pt"))+
-  guides(fill = guide_legend(override.aes = list(size = 5)), )
+        plot.margin = unit(c(0,0,0,0), "pt"))+ 
+  guides(fill=guide_legend(title="Spring communities"))
 
 ## Panel ----
-communities.fig <- (fall.com.plot | spring.com.plot) +
-  plot_annotation(tag_levels = 'a') & 
-  theme(plot.tag.position = c(0.05, 0.95),
-        plot.tag = element_text(face = 'bold', size = 10)) 
+communities.fig <- (fall.com.plot | spring.com.plot)
 
 ggsave(plot = communities.fig, filename = "communities.figure.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
        units = "cm", width = 24*1.2, height = 10*1.2, dpi = "print", bg = "white")
 
 
-# Figure 3: Fall and spring centrality metrics ---- 
+# Figure 4: Fall and spring centrality metrics ---- 
 
 ## Betweenness centrality in fall network ----
 fall.gplot.betw <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
-  coord_sf(xlim = c(-170, -40),ylim = c(-5, 70)) +
+  coord_sf(xlim = c(-170, -50),ylim = c(-3, 68)) +
   geom_edges(data = fall.ggnet, mapping = aes(x = x, y = y, xend = xend, yend = yend, col = edge.type, lwd = weight),
              arrow = arrow(length = unit(9, "pt"), type = "closed", angle = 10))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
   scale_color_manual(values=c(adjustcolor("black", alpha = 0.5), adjustcolor("blue", alpha = 0)), guide = "none")+
-  geom_nodes(data = fall.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = betweenness), shape=21, size  = 4)+
+  geom_nodes(data = fall.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = betweenness), shape=21, size  = 3)+
   scale_fill_viridis_c(direction = -1, option = "magma", name = "Betweenness", 
-                       guide = guide_colorbar(frame.colour = "black"))+
+                       guide = guide_colorbar(frame.colour = "black"), limits = c(min(0),  max(fall.ggnet$betweenness, spring.ggnet$betweenness)))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
-        legend.position = c(0.2, 0.4), text = element_text(size = 12), legend.key = element_blank(),
+        legend.position = c(-0.18, 0.4), text = element_text(size = 10), legend.key = element_blank(),
         axis.title =element_blank(),
         axis.text =element_blank(),
-        axis.ticks =element_blank())
+        axis.ticks =element_blank(),
+        axis.ticks.length = unit(0, "pt"),
+        plot.margin = unit(c(0,0,0,0), "pt"))
 
 ## Betweenness centrality in spring network ----
 spring.gplot.betw <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
-  coord_sf(xlim = c(-170, -40),ylim = c(-5, 70)) +
+  coord_sf(xlim = c(-170, -50),ylim = c(-3, 68)) +
   geom_edges(data = spring.ggnet, mapping = aes(x = x, y = y, xend = xend, yend = yend, lwd = weight, colour = edge.type),
              arrow = arrow(length = unit(9, "pt"), type = "closed", angle = 10))+
   scale_color_manual(values=c(adjustcolor("blue", alpha = 0), adjustcolor("black", alpha = 0.5)), guide = "none")+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
-  geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = betweenness), shape=21, size  = 4)+
+  geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = betweenness), shape=21, size  = 3)+
   scale_fill_viridis_c(direction = -1, option = "magma", name = "Betweenness", 
-                       guide = guide_colorbar(frame.colour = "black"))+
+                       guide = guide_colorbar(frame.colour = "black"), limits = c(min(0),  max(fall.ggnet$betweenness, spring.ggnet$betweenness)))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
-        legend.position = c(0.2, 0.4), text = element_text(size = 12), legend.key = element_blank(),
+        legend.position = "None", text = element_text(size = 10), legend.key = element_blank(),
         axis.title =element_blank(),
         axis.text =element_blank(),
-        axis.ticks =element_blank())
+        axis.ticks =element_blank(),
+        axis.ticks.length = unit(0, "pt"),
+        plot.margin = unit(c(0,0,0,0), "pt"))
 
 ## Bridge strength in fall network ----
-fall.gplot.bridge.betw <- ggplot(st_as_sf(America))+
+fall.gplot.bridge.str <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
-  coord_sf(xlim = c(-170, -40),ylim = c(-5, 70)) +
+  coord_sf(xlim = c(-170, -50),ylim = c(-3, 68)) +
   geom_edges(data = fall.ggnet, mapping = aes(x = x, y = y, xend = xend, yend = yend, col = edge.type, lwd = weight),
              arrow = arrow(length = unit(9, "pt"), type = "closed", angle = 10))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
   scale_color_manual(values=c(adjustcolor("black", alpha = 0.5), adjustcolor("blue", alpha = 0)), guide = "none")+
-  geom_nodes(data = fall.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = bridge.betweenness), shape=21, size  = 4)+
+  geom_nodes(data = fall.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = bridge.strength ), shape=21, size  = 3)+
   scale_fill_viridis_c(direction = -1, option = "magma", name = "Bridge strength", 
-                       guide = guide_colorbar(frame.colour = "black"))+
+                       guide = guide_colorbar(frame.colour = "black"), limits = c(min(0), max(fall.ggnet$bridge.strength, spring.ggnet$bridge.strength)))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
-        legend.position = c(0.2, 0.4), text = element_text(size = 12), legend.key = element_blank(),
+        legend.position = c(-0.18, 0.4), text = element_text(size = 10), legend.key = element_blank(),
         axis.title =element_blank(),
         axis.text =element_blank(),
-        axis.ticks =element_blank())
+        axis.ticks =element_blank(),
+        axis.ticks.length = unit(0, "pt"),
+        plot.margin = unit(c(0,0,0,0), "pt"))
 
 ## Bridge strength in spring network ----
-spring.gplot.bridge.betw <- ggplot(st_as_sf(America))+
+spring.gplot.bridge.str<- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
-  coord_sf(xlim = c(-170, -40),ylim = c(-5, 70)) +
+  coord_sf(xlim = c(-170, -50),ylim = c(-3, 68)) +
   geom_edges(data = spring.ggnet, mapping = aes(x = x, y = y, xend = xend, yend = yend, col = edge.type, lwd = weight),
              arrow = arrow(length = unit(9, "pt"), type = "closed", angle = 10))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
-  geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = bridge.betweenness), shape=21, size  = 4)+
+  geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = bridge.strength), shape=21, size  = 3)+
   scale_color_manual(values=c(adjustcolor("blue", alpha = 0), adjustcolor("black", alpha = 0.5)), guide = "none")+
   scale_fill_viridis_c(direction = -1, option = "magma", name = "Bridge Strength", 
-                       guide = guide_colorbar(frame.colour = "black"))+
+                       guide = guide_colorbar(frame.colour = "black"), limits = c(min(0), max(fall.ggnet$bridge.strength, spring.ggnet$bridge.strength)))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
-        legend.position = c(0.2, 0.4), text = element_text(size = 12), legend.key = element_blank(),
+        legend.position = "None", text = element_text(size = 10), legend.key = element_blank(),
         axis.title =element_blank(),
         axis.text =element_blank(),
-        axis.ticks =element_blank())
+        axis.ticks =element_blank(),
+        axis.ticks.length = unit(0, "pt"),
+        plot.margin = unit(c(0,0,0,0), "pt"))
 
 ## create panel ----
-plot_grid(fall.gplot.betw , spring.gplot.betw,
-          fall.gplot.bridge.betw , spring.gplot.bridge.betw)
+metrics.fig <- (fall.gplot.betw | spring.gplot.betw)/ (fall.gplot.bridge.str| spring.gplot.bridge.str)+
+  plot_annotation(tag_levels = 'a') & 
+  theme(plot.tag.position = c(0.02, 0.95),
+        plot.tag = element_text(face = 'bold', size = 10)) 
+
+ggsave(plot = metrics.fig, filename = "nodes.metrics.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
+       units = "cm", width = 24*1.2, height = 10*1.2, dpi = "print", bg = "white")
 
 # Figure 4 Node population composition by network community ----
 
