@@ -56,7 +56,6 @@ fall.nbr <- fall.stat %>% group_by(geo_id) %>%
 
 fall.nbr.sf <- st_as_sf(fall.nbr, coords = c("Lon.50.", "Lat.50."), crs = st_crs(wrld_simpl), remove = F)
 fall.nbr.sf <- st_transform(fall.nbr.sf, st_crs(proj)) 
-#st_write(fall.nbr.sf, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/bpw_fall_nbr_sitesV1.shp", append = F)
 
 # Origin sites  (polygons)
 br.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Relative_abundance_propagation/bpw_abundance_regions_adjusted.shp") %>%
@@ -111,12 +110,18 @@ for (i in unique(fall.nbr.sf$cluster)){
   poly <- st_convex_hull(st_union(pt.sb))
   poly <- st_buffer(poly, dist = 80000)
   poly <- st_transform(poly, st_crs(proj))
-  poly <- st_difference(poly, fall.nbr.regions)[1]
   #st_combine(c(fall.nbr.regions, poly))
   fall.nbr.regions$geometry[iter] <- poly
   fall.nbr.regions$cluster[iter] <- i
   iter = iter +1
 }
+
+# we remove overlaps between the polygons
+fall.nbr.regions <- st_difference(fall.nbr.regions)
+
+# Save the first nonbreeding sites shapefile and the associated nonbreeding regions 
+write_sf(fall.nbr.regions, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/fall.nbr.regions.shp")
+write.csv(data.frame(fall.nbr.sf), "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/fall.nbr.sf.csv")
 
 # geoBIas (in meters)
 # We will use the uncertainty for the threshold location estimates because the ouput of the 
@@ -256,7 +261,7 @@ save(rM_metric_nbr1, file = "C:/Users/Jelan/OneDrive/Desktop/University/Universi
 
 # Data preparation for MC between Breeding site and second nonbreeding site ######
 
-# fall network breeding points
+# spring network breeding points
 spring.br <- spring.breed %>% arrange(geo_id)
 spring.br.sf <- st_as_sf(spring.br, coords = c("Lon.50.", "Lat.50."), crs = crs(wrld_simpl))
 spring.br.sf <- st_transform(spring.br.sf, CRS(proj)) 
@@ -278,7 +283,6 @@ spring.nbr <- spring.stat %>% group_by(geo_id) %>%
 
 spring.nbr.sf <- st_as_sf(spring.nbr, coords = c("Lon.50.", "Lat.50."), crs = st_crs(wrld_simpl), remove = F)
 spring.nbr.sf <- st_transform(spring.nbr.sf, st_crs(proj)) 
-#st_write(spring.nbr.sf, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/bpw_spring_nbr_sitesV1.shp", append = F)
 
 # Origin sites  (polygons)
 spring.br.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Relative_abundance_propagation/bpw_abundance_regions_adjusted.shp") %>%
@@ -332,12 +336,18 @@ for (i in unique(spring.nbr.sf$cluster)){
   poly <- st_convex_hull(st_union(pt.sb))
   poly <- st_buffer(poly, dist = 60000)
   poly <- st_transform(poly, st_crs(proj))
-  poly <- st_difference(poly, spring.nbr.regions)[1]
   #st_combine(c(spring.nbr.regions, poly))
   spring.nbr.regions$geometry[iter] <- poly
   spring.nbr.regions$cluster[iter] <- i
   iter = iter +1
 }
+
+# we remove overlaps between the polygons
+spring.nbr.regions <- st_difference(spring.nbr.regions)
+
+# Save the second nonbreeding sites shapefile and the associated nonbreeding regions 
+write_sf(spring.nbr.regions, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/spring.nbr.regions.shp")
+write.csv(data.frame(spring.nbr.sf), "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/spring.nbr.sf.csv")
 
 ## Verify that the second nonbreeding sites and points makes sense
 

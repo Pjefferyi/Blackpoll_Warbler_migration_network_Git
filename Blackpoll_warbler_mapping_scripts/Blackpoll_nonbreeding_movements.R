@@ -170,6 +170,7 @@ NB.stat$timing.nbr.move[1] <- "winter.nbr.movements"
 
 # Save nonbreeding movement data ###############################################
 
+write.csv(NB.stat, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/nonbreeding.movements.csv")
 
 # Plot of nonbreeding movements ################################################
 
@@ -178,7 +179,7 @@ nbr.move.plot <- ggplot(st_as_sf(wrld_simpl))+
   coord_sf(xlim = c(-95, -45),ylim = c(-10, 15)) +
   geom_point(data = NB.stat[NB.stat$nbr.mover == "nonmover",], mapping = aes(x = Lon.50., y = Lat.50.,fill = "darkgray"), colour = "black", cex = 3, shape = 21, stroke = 0.5) +
   scale_fill_manual(values = c("darkgray"),label = c("Stationary individuals"), name = "") +
-  #geom_text(data = NB.stat, mapping = aes(x = Lon.50., y = Lat.50., label = geo_id), cex = 3)+
+  geom_text(data = NB.stat, mapping = aes(x = Lon.50., y = Lat.50., label = geo_id), cex = 3)+
   geom_path(data = NB.stat, mapping = aes(x = Lon.50., y = Lat.50., group = as.factor(nbr.move.group), 
             linetype = equinox.nbr.move, col = timing.nbr.move),
             arrow = arrow(end = "last", type = "closed", length = unit(0.1, "inches")), lwd = 0.8, show.legend =  F) +

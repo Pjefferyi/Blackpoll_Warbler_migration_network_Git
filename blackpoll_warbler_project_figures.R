@@ -23,6 +23,9 @@ library(ggnetwork)
 library(intergraph)
 library(networktools)
 
+# ebird
+library(ebirdst)
+
 # Will need to run the network analysis and construction scripts ----
 #source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_analysis/Network_Analysis.R")
 source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis_helper_functions.R")
@@ -466,167 +469,269 @@ metrics.fig <- (fall.gplot.betw | spring.gplot.betw)/ (fall.gplot.bridge.str| sp
 ggsave(plot = metrics.fig, filename = "nodes.metrics.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
        units = "cm", width = 24*1.2, height = 10*1.2, dpi = "print", bg = "white")
 
-# Figure 4 Node population composition by network community ----
-
-## Fall data and plot ----  
-
-## Create a dataframe with the proportion of individuals from each section fall community
-fall.comms.breed <- data.frame(cluster = V(fall.graph), community = V(fall.graph)$label.prop.comm) %>%
-  filter(cluster %in% fall.breed$cluster) %>% merge(fall.breed.ab, by  = "cluster") %>%
-  mutate(community = paste0("community", community))
-
-fall.stat.ab <- merge(fall.stat, fall.comms.breed[,c("geo_id", "ab.unit", "community")], by = "geo_id")
-
-fall.ab.by.comm <- fall.stat.ab %>% group_by(cluster, community) %>%
-  summarize(comm.ab.units = sum(ab.unit)) %>% ungroup() %>%
-  complete(cluster, community, fill = list(comm.ab.units = 0))
-
-
-# Convert data from wide to long
-fall.ab.by.comm <- fall.ab.by.comm %>% pivot_wider(names_from = community, values_from = comm.ab.units)
-
-# Merge abundance data with the node metadata
-meta.fall.ab <- merge(meta.fall, fall.ab.by.comm, by.x = "vertex", by.y = "cluster") 
-
-# Also add a column with the overall abundance at each site 
-fall.stat.ab.per.site <- fall.stat.ab %>% group_by(cluster) %>% 
-  summarize(r.abundance.at.cluster = sum (ab.unit))
-
-#create a column that can be converted to a numeric vector
-meta.fall.ab <- transform(meta.fall.ab, num.reg.ab.vector = asplit(cbind(meta.fall.ab[,unique(fall.comms.breed$community)]), 1))
-
-# Plot of proportional node use during the fall migration 
-
-# Create vector of vertex shapes 
-meta.fall.ab <- meta.fall.ab %>% rowwise() %>%
-  mutate(shape_single = length(which(c(community1, community2)==0))) %>%
-  ungroup() %>%
-  mutate(shape_single = ifelse(shape_single == 1 & node.type != "Breeding", "circle", "none")) %>%
-  mutate(shape_single_breeding = ifelse(node.type == "Breeding", "square", "none"))%>%
-  mutate(shape_multiple = ifelse(shape_single == "none" & shape_single_breeding == "none", "pie", "none")) %>%
-  mutate(shape_colour_single = case_when(shape_single != "none" & community1 != 0 ~ "#D55E00",
-                                         shape_single != "none" & community2 != 0 ~ "#009E73",
-                                         .default = NA)) %>%
-  mutate(shape_colour_single_breeding = case_when(shape_single_breeding != "none" & community1 != 0 ~ "#D55E00",
-                                                  shape_single_breeding != "none" & community2 != 0 ~ "#009E73",
-                                                  .default = NA))
-
-# Create a palette for site use by community 
-reg.ab.palette <- list(c("#D55E00", "#009E73"))
-
-# Prepare edge colours for spring and fall edges (spring edges should not appear in this plot)
-edge.cols.fall <- fall.con.ab %>% mutate(col = case_when(
-  edge.type == "fall" ~ adjustcolor("darkgray", alpha.f = 0.9),
-  edge.type == "spring" ~ NA))
-
-plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),],
-     xlim = c(-170, -35), ylim = c(-10, 65), col = "#F7F7F7", lwd = 0.5)
-
-plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),],
-     xlim = c(-170, -35), ylim = c(-10, 65), col = NA, lwd = 0.5, add = T)
-
-plot(fall.graph.weighed.ab, vertex.size = 500, vertex.size2 = 200,
-     vertex.shape = meta.fall.ab$shape_single_breeding, vertex.color = meta.fall.ab$shape_colour_single_breeding,
-     edge.arrow.width = 0,edge.width = fall.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,
-     layout = fall.location, rescale = F, asp = 0, xlim = c(-170, -30),
-     ylim = c(-15, 70), vertex.label = NA, edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)), 
-     edge.color = edge.cols.fall$col, add = T)
-
-plot(fall.graph.weighed.ab, vertex.size = 500, vertex.size2 = 200,
-     vertex.shape = meta.fall.ab$shape_single, vertex.color = meta.fall.ab$shape_colour_single,
-     edge.arrow.width = 0,edge.width = 0, edge.arrow.size = 0, edge.arrow.width = 0,
-     layout = fall.location, rescale = F, asp = 0, xlim = c(-170, -30),
-     ylim = c(-15, 70), vertex.label = NA, edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)), add = T)
-
-plot(fall.graph.weighed.ab, vertex.size = 500, vertex.size2 = 200,
-     vertex.shape = meta.fall.ab$shape_multiple, vertex.pie = meta.fall.ab$num.reg.ab.vector,
-     vertex.pie.color = reg.ab.palette,edge.width = 0,edge.arrow.size = 0, edge.arrow.width = 0,
-     layout = fall.location, rescale = F, asp = 0, xlim = c(-170, -30),
-     ylim = c(-15, 70), vertex.label = NA, vertex.label.dist = 30, add = T)
-
-## Spring data and plot ----  
-
-## Create a dataframe with the proportion of individuals from each section spring community
-spring.comms.breed <- data.frame(cluster = V(spring.graph), community = V(spring.graph)$infomap.comm) %>%
-  filter(cluster %in% spring.breed$cluster) %>% merge(spring.breed.ab, by  = "cluster") %>%
-  mutate(community = paste0("community", community))
-
-spring.comms.breed$community
-
-spring.stat.ab <- merge(spring.stat, spring.comms.breed[,c("geo_id", "ab.unit", "community")], by = "geo_id")
-
-spring.ab.by.comm <- spring.stat.ab %>% group_by(cluster, community) %>%
-  summarize(comm.ab.units = sum(ab.unit)) %>% ungroup() %>%
-  complete(cluster, community, fill = list(comm.ab.units = 0))
-
-
-# Convert data from wide to long
-spring.ab.by.comm <- spring.ab.by.comm %>% pivot_wider(names_from = community, values_from = comm.ab.units)
-
-# Merge abundance data with the node metadata
-meta.spring.ab <- merge(meta.spring, spring.ab.by.comm, by.x = "vertex", by.y = "cluster") 
-
-# Also add a column with the overall abundance at each site 
-spring.stat.ab.per.site <- spring.stat.ab %>% group_by(cluster) %>% 
-  summarize(r.abundance.at.cluster = sum (ab.unit))
-
-#create a column that can be converted to a numeric vector
-meta.spring.ab <- transform(meta.spring.ab, num.reg.ab.vector = asplit(cbind(meta.spring.ab[,unique(spring.comms.breed$community)]), 1))
-
-# Plot of proportional node use during the spring migration 
-
-# Create vector of vertex shapes 
-meta.spring.ab <- meta.spring.ab %>% rowwise() %>%
-  mutate(shape_single = length(which(c(community1, community2, community3)==0))) %>%
-  ungroup() %>%
-  mutate(shape_single = ifelse(shape_single == 2 & node.type != "Breeding", "circle", "none")) %>%
-  mutate(shape_single_breeding = ifelse(node.type == "Breeding", "square", "none"))%>%
-  mutate(shape_multiple = ifelse(shape_single == "none" & shape_single_breeding == "none", "pie", "none")) %>%
-  mutate(shape_colour_single = case_when(shape_single != "none" & community1 != 0 ~ "#D55E00",
-                                         shape_single != "none" & community2 != 0 ~ "#009E73",
-                                         shape_single != "none" & community3 != 0 ~ "#0072B2",
-                                         .default = NA)) %>%
-  mutate(shape_colour_single_breeding = case_when(shape_single_breeding != "none" & community1 != 0 ~ "#D55E00",
-                                                  shape_single_breeding != "none" & community2 != 0 ~ "#009E73",
-                                                  shape_single_breeding != "none" & community3 != 0 ~ "#0072B2",
-                                                  .default = NA))
-
-# Create a palette for site use by community 
-reg.ab.palette <- list(c("#D55E00","#0072B2","#009E73"))
-
-# Prepare edge colours for spring and spring edges (spring edges should not appear in this plot)
-edge.cols.spring <- spring.con.ab %>% mutate(col = case_when(
-  edge.type == "spring" ~ adjustcolor("darkgray", alpha.f = 0.9),
-  edge.type == "spring" ~ NA))
-
-plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),],
-     xlim = c(-170, -35), ylim = c(-10, 65), col = "#F7F7F7", lwd = 0.5)
-
-plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),],
-     xlim = c(-170, -35), ylim = c(-10, 65), col = NA, lwd = 0.5, add = T)
-
-plot(spring.graph.weighed.ab, vertex.size = 500, vertex.size2 = 200,
-     vertex.shape = meta.spring.ab$shape_single_breeding, vertex.color = meta.spring.ab$shape_colour_single_breeding,
-     edge.arrow.width = 0,edge.width = spring.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,
-     layout = spring.location, rescale = F, asp = 0, xlim = c(-170, -30),
-     ylim = c(-15, 70), vertex.label = NA, edge.curved = rep(c(-0.05, 0.05), nrow(spring.con.ab)), 
-     edge.color = edge.cols.spring$col, add = T)
-
-plot(spring.graph.weighed.ab, vertex.size = 500, vertex.size2 = 200,
-     vertex.shape = meta.spring.ab$shape_single, vertex.color = meta.spring.ab$shape_colour_single,
-     edge.arrow.width = 0,edge.width = 0, edge.arrow.size = 0, edge.arrow.width = 0,
-     layout = spring.location, rescale = F, asp = 0, xlim = c(-170, -30),
-     ylim = c(-15, 70), vertex.label = NA, edge.curved = rep(c(-0.05, 0.05), nrow(spring.con.ab)), add = T)
-
-plot(spring.graph.weighed.ab, vertex.size = 500, vertex.size2 = 200,
-     vertex.shape = meta.spring.ab$shape_multiple, vertex.pie = meta.spring.ab$num.reg.ab.vector,
-     vertex.pie.color = reg.ab.palette,edge.width = 0,edge.arrow.size = 0, edge.arrow.width = 0,
-     layout = spring.location, rescale = F, asp = 0, xlim = c(-170, -30),
-     ylim = c(-15, 70), vertex.label = NA, vertex.label.dist = 30, add = T)
-
-
+# # Figure 5 Node population composition by network community ----
+# 
+# ## Fall data and plot ----  
+# 
+# ## Create a dataframe with the proportion of individuals from each section fall community
+# fall.comms.breed <- data.frame(cluster = V(fall.graph), community = V(fall.graph)$label.prop.comm) %>%
+#   filter(cluster %in% fall.breed$cluster) %>% merge(fall.breed.ab, by  = "cluster") %>%
+#   mutate(community = paste0("community", community))
+# 
+# fall.stat.ab <- merge(fall.stat, fall.comms.breed[,c("geo_id", "ab.unit", "community")], by = "geo_id")
+# 
+# fall.ab.by.comm <- fall.stat.ab %>% group_by(cluster, community) %>%
+#   summarize(comm.ab.units = sum(ab.unit)) %>% ungroup() %>%
+#   complete(cluster, community, fill = list(comm.ab.units = 0))
+# 
+# 
+# # Convert data from wide to long
+# fall.ab.by.comm <- fall.ab.by.comm %>% pivot_wider(names_from = community, values_from = comm.ab.units)
+# 
+# # Merge abundance data with the node metadata
+# meta.fall.ab <- merge(meta.fall, fall.ab.by.comm, by.x = "vertex", by.y = "cluster") 
+# 
+# # Also add a column with the overall abundance at each site 
+# fall.stat.ab.per.site <- fall.stat.ab %>% group_by(cluster) %>% 
+#   summarize(r.abundance.at.cluster = sum (ab.unit))
+# 
+# #create a column that can be converted to a numeric vector
+# meta.fall.ab <- transform(meta.fall.ab, num.reg.ab.vector = asplit(cbind(meta.fall.ab[,unique(fall.comms.breed$community)]), 1))
+# 
+# # Plot of proportional node use during the fall migration 
+# 
+# # Create vector of vertex shapes 
+# meta.fall.ab <- meta.fall.ab %>% rowwise() %>%
+#   mutate(shape_single = length(which(c(community1, community2)==0))) %>%
+#   ungroup() %>%
+#   mutate(shape_single = ifelse(shape_single == 1 & node.type != "Breeding", "circle", "none")) %>%
+#   mutate(shape_single_breeding = ifelse(node.type == "Breeding", "square", "none"))%>%
+#   mutate(shape_multiple = ifelse(shape_single == "none" & shape_single_breeding == "none", "pie", "none")) %>%
+#   mutate(shape_colour_single = case_when(shape_single != "none" & community1 != 0 ~ "#D55E00",
+#                                          shape_single != "none" & community2 != 0 ~ "#009E73",
+#                                          .default = NA)) %>%
+#   mutate(shape_colour_single_breeding = case_when(shape_single_breeding != "none" & community1 != 0 ~ "#D55E00",
+#                                                   shape_single_breeding != "none" & community2 != 0 ~ "#009E73",
+#                                                   .default = NA))
+# 
+# # Create a palette for site use by community 
+# reg.ab.palette <- list(c("#D55E00", "#009E73"))
+# 
+# # Prepare edge colours for spring and fall edges (spring edges should not appear in this plot)
+# edge.cols.fall <- fall.con.ab %>% mutate(col = case_when(
+#   edge.type == "fall" ~ adjustcolor("darkgray", alpha.f = 0.9),
+#   edge.type == "spring" ~ NA))
+# 
+# plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),],
+#      xlim = c(-170, -35), ylim = c(-10, 65), col = "#F7F7F7", lwd = 0.5)
+# 
+# plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),],
+#      xlim = c(-170, -35), ylim = c(-10, 65), col = NA, lwd = 0.5, add = T)
+# 
+# plot(fall.graph.weighed.ab, vertex.size = 500, vertex.size2 = 200,
+#      vertex.shape = meta.fall.ab$shape_single_breeding, vertex.color = meta.fall.ab$shape_colour_single_breeding,
+#      edge.arrow.width = 0,edge.width = fall.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,
+#      layout = fall.location, rescale = F, asp = 0, xlim = c(-170, -30),
+#      ylim = c(-15, 70), vertex.label = NA, edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)), 
+#      edge.color = edge.cols.fall$col, add = T)
+# 
+# plot(fall.graph.weighed.ab, vertex.size = 500, vertex.size2 = 200,
+#      vertex.shape = meta.fall.ab$shape_single, vertex.color = meta.fall.ab$shape_colour_single,
+#      edge.arrow.width = 0,edge.width = 0, edge.arrow.size = 0, edge.arrow.width = 0,
+#      layout = fall.location, rescale = F, asp = 0, xlim = c(-170, -30),
+#      ylim = c(-15, 70), vertex.label = NA, edge.curved = rep(c(-0.05, 0.05), nrow(fall.con.ab)), add = T)
+# 
+# plot(fall.graph.weighed.ab, vertex.size = 500, vertex.size2 = 200,
+#      vertex.shape = meta.fall.ab$shape_multiple, vertex.pie = meta.fall.ab$num.reg.ab.vector,
+#      vertex.pie.color = reg.ab.palette,edge.width = 0,edge.arrow.size = 0, edge.arrow.width = 0,
+#      layout = fall.location, rescale = F, asp = 0, xlim = c(-170, -30),
+#      ylim = c(-15, 70), vertex.label = NA, vertex.label.dist = 30, add = T)
+# 
+# ## Spring data and plot ----  
+# 
+# ## Create a dataframe with the proportion of individuals from each section spring community
+# spring.comms.breed <- data.frame(cluster = V(spring.graph), community = V(spring.graph)$infomap.comm) %>%
+#   filter(cluster %in% spring.breed$cluster) %>% merge(spring.breed.ab, by  = "cluster") %>%
+#   mutate(community = paste0("community", community))
+# 
+# spring.comms.breed$community
+# 
+# spring.stat.ab <- merge(spring.stat, spring.comms.breed[,c("geo_id", "ab.unit", "community")], by = "geo_id")
+# 
+# spring.ab.by.comm <- spring.stat.ab %>% group_by(cluster, community) %>%
+#   summarize(comm.ab.units = sum(ab.unit)) %>% ungroup() %>%
+#   complete(cluster, community, fill = list(comm.ab.units = 0))
+# 
+# 
+# # Convert data from wide to long
+# spring.ab.by.comm <- spring.ab.by.comm %>% pivot_wider(names_from = community, values_from = comm.ab.units)
+# 
+# # Merge abundance data with the node metadata
+# meta.spring.ab <- merge(meta.spring, spring.ab.by.comm, by.x = "vertex", by.y = "cluster") 
+# 
+# # Also add a column with the overall abundance at each site 
+# spring.stat.ab.per.site <- spring.stat.ab %>% group_by(cluster) %>% 
+#   summarize(r.abundance.at.cluster = sum (ab.unit))
+# 
+# #create a column that can be converted to a numeric vector
+# meta.spring.ab <- transform(meta.spring.ab, num.reg.ab.vector = asplit(cbind(meta.spring.ab[,unique(spring.comms.breed$community)]), 1))
+# 
+# # Plot of proportional node use during the spring migration 
+# 
+# # Create vector of vertex shapes 
+# meta.spring.ab <- meta.spring.ab %>% rowwise() %>%
+#   mutate(shape_single = length(which(c(community1, community2, community3)==0))) %>%
+#   ungroup() %>%
+#   mutate(shape_single = ifelse(shape_single == 2 & node.type != "Breeding", "circle", "none")) %>%
+#   mutate(shape_single_breeding = ifelse(node.type == "Breeding", "square", "none"))%>%
+#   mutate(shape_multiple = ifelse(shape_single == "none" & shape_single_breeding == "none", "pie", "none")) %>%
+#   mutate(shape_colour_single = case_when(shape_single != "none" & community1 != 0 ~ "#D55E00",
+#                                          shape_single != "none" & community2 != 0 ~ "#009E73",
+#                                          shape_single != "none" & community3 != 0 ~ "#0072B2",
+#                                          .default = NA)) %>%
+#   mutate(shape_colour_single_breeding = case_when(shape_single_breeding != "none" & community1 != 0 ~ "#D55E00",
+#                                                   shape_single_breeding != "none" & community2 != 0 ~ "#009E73",
+#                                                   shape_single_breeding != "none" & community3 != 0 ~ "#0072B2",
+#                                                   .default = NA))
+# 
+# # Create a palette for site use by community 
+# reg.ab.palette <- list(c("#D55E00","#0072B2","#009E73"))
+# 
+# # Prepare edge colours for spring and spring edges (spring edges should not appear in this plot)
+# edge.cols.spring <- spring.con.ab %>% mutate(col = case_when(
+#   edge.type == "spring" ~ adjustcolor("darkgray", alpha.f = 0.9),
+#   edge.type == "spring" ~ NA))
+# 
+# plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),],
+#      xlim = c(-170, -35), ylim = c(-10, 65), col = "#F7F7F7", lwd = 0.5)
+# 
+# plot(wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),],
+#      xlim = c(-170, -35), ylim = c(-10, 65), col = NA, lwd = 0.5, add = T)
+# 
+# plot(spring.graph.weighed.ab, vertex.size = 500, vertex.size2 = 200,
+#      vertex.shape = meta.spring.ab$shape_single_breeding, vertex.color = meta.spring.ab$shape_colour_single_breeding,
+#      edge.arrow.width = 0,edge.width = spring.con.ab$weight*30, edge.arrow.size = 0, edge.arrow.width = 0,
+#      layout = spring.location, rescale = F, asp = 0, xlim = c(-170, -30),
+#      ylim = c(-15, 70), vertex.label = NA, edge.curved = rep(c(-0.05, 0.05), nrow(spring.con.ab)), 
+#      edge.color = edge.cols.spring$col, add = T)
+# 
+# plot(spring.graph.weighed.ab, vertex.size = 500, vertex.size2 = 200,
+#      vertex.shape = meta.spring.ab$shape_single, vertex.color = meta.spring.ab$shape_colour_single,
+#      edge.arrow.width = 0,edge.width = 0, edge.arrow.size = 0, edge.arrow.width = 0,
+#      layout = spring.location, rescale = F, asp = 0, xlim = c(-170, -30),
+#      ylim = c(-15, 70), vertex.label = NA, edge.curved = rep(c(-0.05, 0.05), nrow(spring.con.ab)), add = T)
+# 
+# plot(spring.graph.weighed.ab, vertex.size = 500, vertex.size2 = 200,
+#      vertex.shape = meta.spring.ab$shape_multiple, vertex.pie = meta.spring.ab$num.reg.ab.vector,
+#      vertex.pie.color = reg.ab.palette,edge.width = 0,edge.arrow.size = 0, edge.arrow.width = 0,
+#      layout = spring.location, rescale = F, asp = 0, xlim = c(-170, -30),
+#      ylim = c(-15, 70), vertex.label = NA, vertex.label.dist = 30, add = T)
 
 
+#  Figure 6: nonbreeding regions for the MC metric (supplementary) ----
+
+# Load the data for the first nonbreeding regions and generate the first nonbreeding sites 
+proj <- '+proj=aeqd +lat_0=0 +lon_0=-74'
+
+fall.nbr <- fall.stat %>% group_by(geo_id) %>% 
+  filter(period == "Non-breeding period", sitenum == max(sitenum), !is.na(StartTime), !is.na(EndTime)) %>%
+  arrange(geo_id) 
+
+fall.nbr.sf <- st_as_sf(fall.nbr, coords = c("Lon.50.", "Lat.50."), crs = st_crs(wrld_simpl), remove = F)
+fall.nbr.sf <- st_transform(fall.nbr.sf, st_crs(proj)) 
+
+fall.nbr.regions <- st_read("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/fall.nbr.regions.shp") 
+
+## Fall nonbreeding regions plot ----
+First.nbr.regions <- ggplot(st_as_sf(wrld_simpl))+
+  geom_sf(colour = "black", fill = "#F7F7F7")+
+  geom_sf(data = fall.nbr.regions, aes(fill = as.factor(cluster)), col = "black", alpha = 0.5)+
+  scale_fill_discrete(name = "Nonbreeding regions") +
+  geom_sf(data = fall.nbr.sf, aes(col = "Individual nonbreeding locations (1 bird each)"), shape = 4, cex = 3)+
+  scale_colour_manual(values = c("Individual nonbreeding locations (1 bird each)" = "black"), name = "") +
+  coord_sf(xlim = c(-90, -35), ylim = c(-15, 20))+
+  theme_bw()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        legend.position = "None",
+        axis.title =element_blank(),
+        axis.text =element_blank(),
+        axis.ticks =element_blank(),
+        axis.ticks.length = unit(0, "pt"),
+        plot.margin = unit(c(0,0,0,0), "pt"))
+
+# Load the data for the second nonbreeding regions and generate the second nonbreeding sites 
+spring.nbr <- spring.stat %>% group_by(geo_id) %>% 
+  filter(period == "Non-breeding period") %>% filter(sitenum == min(sitenum))
+
+spring.nbr.sf <- st_as_sf(spring.nbr, coords = c("Lon.50.", "Lat.50."), crs = st_crs(wrld_simpl), remove = F)
+spring.nbr.sf <- st_transform(spring.nbr.sf, st_crs(proj)) 
+
+spring.nbr.sf <- st_as_sf(spring.nbr, coords = c("Lon.50.", "Lat.50."), crs = st_crs(wrld_simpl), remove = F)
+spring.nbr.sf <- st_transform(spring.nbr.sf, st_crs(proj)) 
+
+spring.nbr.regions <- st_read("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/spring.nbr.regions.shp") 
+
+## spring nonbreeding regions plot ----
+second.nbr.regions <- ggplot(st_as_sf(wrld_simpl))+
+  geom_sf(colour = "black", fill = "#F7F7F7")+
+  geom_sf(data = spring.nbr.regions, aes(fill = as.factor(cluster)), col = "black", alpha = 0.5)+
+  scale_fill_discrete(name = "Nonbreeding regions") +
+  geom_sf(data = spring.nbr.sf, aes(col = "Individual nonbreeding locations (1 bird each)"), shape = 4, cex = 3)+
+  scale_colour_manual(values = c("Individual nonbreeding locations (1 bird each)" = "black"), name = "") +
+  coord_sf(xlim = c(-90, -35), ylim = c(-15, 20))+
+  theme_bw()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        legend.position = "None",
+        axis.title =element_blank(),
+        axis.text =element_blank(),
+        axis.ticks =element_blank(),
+        axis.ticks.length = unit(0, "pt"),
+        plot.margin = unit(c(0,0,0,0), "pt"))
 
 
+## create panel ----
+MC.nbr.regions.fig <- (First.nbr.regions  | second.nbr.regions ) &
+  plot_annotation(tag_levels = 'a') & 
+  theme(plot.tag.position = c(0.02, 0.95),
+        plot.tag = element_text(face = 'bold', size = 12)) 
 
+ggsave(plot = MC.nbr.regions.fig, filename = "MC.nbr.regions.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
+       units = "cm", width = 24*1.2, height = 10*1.2, dpi = "print", bg = "white")
+
+# Figure 7: Abundance propagation regions ---- 
+
+#Load blackpoll warbler reference dataset to get breeding site
+bpw.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") %>%
+  st_as_sf(coords = c("deploy.longitude", "deploy.latitude"), crs = crs(wrld_simpl))
+
+# Load abundance propagation region polygons 
+br.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Relative_abundance_propagation/bpw_abundance_regions_adjusted.shp") %>%
+  st_transform(crs(wrld_simpl)) %>%
+  st_cast("MULTIPOLYGON")
+
+# load blackpoll warbler range polygons
+bpw.range <- load_ranges("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_imports/2021/bkpwar",
+                           resolution = "mr",
+                           smoothed = T) %>%
+  filter(season %in% c("breeding", "nonbreeding")) %>% st_transform(crs(wrld_simpl))
+
+# polygon for america 
+sf_use_s2(FALSE)
+bpw.range <- st_intersection(st_as_sf(America) , bpw.range)
+
+# Plot 
+ggplot(st_as_sf(America))+
+  geom_sf(colour = "black", fill = "#F7F7F7") +
+  geom_sf(data = bpw.range, aes(fill = season),col = NA, alpha = 0.7) +
+  scale_fill_discrete(labels = c("Breeding", "Nonbreeding"), name = "Range") +
+  geom_sf(data = br.regions, aes(col = "black"), fill = NA, linewidth = 0.5) +
+  scale_colour_manual(values = c("black"), labels = c( "Breedign region polygons"), name = "") +
+  geom_sf(data =  bpw.ref, fill = "black", col = "white", shape = 21, stroke = 0.5, cex = 3)+
+  coord_sf(xlim = c(-170, -40),ylim = c(-5, 70))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
+        axis.title =element_blank(),
+        axis.text =element_blank(),
+        axis.ticks =element_blank(),
+        axis.ticks.length = unit(0, "pt"),
+        plot.margin = unit(c(0,0,0,0), "pt"))

@@ -276,7 +276,7 @@ data(wrld_simpl)
 plot(x0, type = "n", xlab = "", ylab = "")
 plot(wrld_simpl, col = "grey95", add = T)
 
-points(path$x, pch=19, col="cornflowerblue", type = "o")
+points(path$x[1:500,], pch=19, col="cornflowerblue", type = "o")
 points(lon.calib, lat.calib, pch = 16, cex = 2.5, col = "firebrick")
 box()
 
@@ -285,88 +285,87 @@ dev.off()
 #Save initial path 
 save(x0, file = paste0(dir,"/", geo.id, "_initial_path.csv"))
 
-# FIX CLOCK DRIFT ##############################################################
-
-# obtain longitude measurements during the breeding period after the migration
-# The bird should not be moving during this period
-br.end2 <- twl$Twilight[nrow(twl)]
-br.start2 <- twl$Twilight[nrow(twl)] - days(14)
-
-# Get data frame with twilight times and longitude for each period
-twl <- twl %>% mutate(lon = path$x[,1])
-twl.br2 <- twl %>% dplyr::filter(Twilight > br.start2 , Twilight < br.end2)
-
-#plot of time ranges used
-par(mfrow = c(3,1))
-plot(twl$Twilight, x0_ad[,1], ylab = "longitude")
-abline(v = br.start2)
-abline(v = br.end2)
-
-plot(twl$Twilight, x0_ad[,2], ylab = "latitude")
-abline(v = br.start2)
-abline(v = br.end2)
-
-# get the actual breeding latitude and the medianlocation of the bird after the migration
-lon.b1 <- lon.calib
-lon.b2 <- median(twl.br2$lon)
-diff.lon <- lon.b2 - lon.b1
-
-# plot the median stationary location before and after the migration
-par(mfrow=c(1,1))
-data(wrld_simpl)
-plot(x0, type = "n", xlab = "", ylab = "")
-plot(wrld_simpl, col = "grey95", add = T)
-points(lon.b1, lat.calib, pch = 16, cex = 2.5, col = "firebrick")
-points(lon.b2, lat.calib, pch = 16, cex = 2.5, col = "green")
-
-# linearly rescale time to prevent clock drift
-diff.sec <- diff.lon * 240#convert difference in longitude to difference in longitude per day
-diff.sec.change <- diff.sec/nrow(twl)
-
-timestep <- seq(1, nrow(twl))
-# twl_adjusted <- twl %>% mutate(Twilight = Twilight + diff.sec.rate * timestep,
-#                              Twilight0 = Twilight0 + diff.sec.rate * timestep)
-
-twl_adjusted <- twl
-twl_adjusted$Twilight <- twl$Twilight + (diff.sec.change * timestep)
-twl_adjusted$Twilight0 <- twl$Twilight + (diff.sec.change * timestep)
-
-# Initial Path with Clock Drift Adjustment  ####################################
-path <- thresholdPath(twl_adjusted$Twilight, twl_adjusted$Rise, zenith = zeniths_med, tol= tol_ini)
-
-x0 <- path$x
-z0 <- trackMidpts(x0)
-
-# open jpeg
-jpeg(paste0(dir, "/", geo.id, "_Threshold_path_clock_drift_adjustment.png"), width = 1024, height = 990)
-
-par(mfrow=c(1,1))
-data(wrld_simpl)
-plot(x0, type = "n", xlab = "", ylab = "")
-plot(wrld_simpl, col = "grey95", add = T)
-
-points(path$x, pch=19, col="cornflowerblue", type = "o")
-points(lon.calib, lat.calib, pch = 16, cex = 2.5, col = "firebrick")
-box()
-
-dev.off()
-
-#Save initial path adjusted for clock drift  
-save(x0, file = paste0(dir,"/", geo.id, "_initial_path__clock_drift_adjustment.csv"))
+# # FIX CLOCK DRIFT ##############################################################
+# 
+# # obtain longitude measurements during the breeding period after the migration
+# # The bird should not be moving during this period
+# br.end2 <- twl$Twilight[nrow(twl)]
+# br.start2 <- twl$Twilight[nrow(twl)] - days(14)
+# 
+# # Get data frame with twilight times and longitude for each period
+# twl <- twl %>% mutate(lon = path$x[,1])
+# twl.br2 <- twl %>% dplyr::filter(Twilight > br.start2 , Twilight < br.end2)
+# 
+# #plot of time ranges used
+# par(mfrow = c(3,1))
+# plot(twl$Twilight, x0_ad[,1], ylab = "longitude")
+# abline(v = br.start2)
+# abline(v = br.end2)
+# 
+# plot(twl$Twilight, x0_ad[,2], ylab = "latitude")
+# abline(v = br.start2)
+# abline(v = br.end2)
+# 
+# # get the actual breeding latitude and the medianlocation of the bird after the migration
+# lon.b1 <- lon.calib
+# lon.b2 <- median(twl.br2$lon)
+# diff.lon <- lon.b2 - lon.b1
+# 
+# # plot the median stationary location before and after the migration
+# par(mfrow=c(1,1))
+# data(wrld_simpl)
+# plot(x0, type = "n", xlab = "", ylab = "")
+# plot(wrld_simpl, col = "grey95", add = T)
+# points(lon.b1, lat.calib, pch = 16, cex = 2.5, col = "firebrick")
+# points(lon.b2, lat.calib, pch = 16, cex = 2.5, col = "green")
+# 
+# # linearly rescale time to prevent clock drift
+# diff.sec <- diff.lon * 240#convert difference in longitude to difference in longitude per day
+# diff.sec.change <- diff.sec/nrow(twl)
+# 
+# timestep <- seq(1, nrow(twl))
+# # twl_adjusted <- twl %>% mutate(Twilight = Twilight + diff.sec.rate * timestep,
+# #                              Twilight0 = Twilight0 + diff.sec.rate * timestep)
+# 
+# twl_adjusted <- twl
+# twl_adjusted$Twilight <- twl$Twilight + (diff.sec.change * timestep)
+# twl_adjusted$Twilight0 <- twl$Twilight + (diff.sec.change * timestep)
+# 
+# # Initial Path with Clock Drift Adjustment  ####################################
+# path <- thresholdPath(twl_adjusted$Twilight, twl_adjusted$Rise, zenith = zeniths_med, tol= tol_ini)
+# 
+# x0 <- path$x
+# z0 <- trackMidpts(x0)
+# 
+# # open jpeg
+# jpeg(paste0(dir, "/", geo.id, "_Threshold_path_clock_drift_adjustment.png"), width = 1024, height = 990)
+# 
+# par(mfrow=c(1,1))
+# data(wrld_simpl)
+# plot(x0, type = "n", xlab = "", ylab = "")
+# plot(wrld_simpl, col = "grey95", add = T)
+# 
+# points(path$x, pch=19, col="cornflowerblue", type = "o")
+# points(lon.calib, lat.calib, pch = 16, cex = 2.5, col = "firebrick")
+# box()
+# 
+# dev.off()
+# 
+# #Save initial path adjusted for clock drift  
+# save(x0, file = paste0(dir,"/", geo.id, "_initial_path__clock_drift_adjustment.csv"))
 
 #SGAT Group model analysis ####################################################
 
 # group twilight times were birds were stationary 
-geo_twl <- export2GeoLight(twl_adjusted)
+geo_twl <- export2GeoLight(twl)
 
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-cL <- changeLight(twl=geo_twl, quantile=0.88, summary = F, days = 2, plot = T)
+cL <- changeLight(twl=geo_twl, quantile=0.8, summary = F, days = 2, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
-#mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths0[1:length(zeniths0) -1], distThreshold = 500)
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 500)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = 250)
 
 ##back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 
@@ -382,7 +381,7 @@ grouped[c(1:3, (length(grouped)-2):length(grouped))] <- TRUE
 g <- makeGroups(grouped)
 
 # Add data to twl file
-twl_adjusted$group <- c(g, g[length(g)])
+twl$group <- c(g, g[length(g)])
 
 # Add behavior vector
 behaviour <- c()
@@ -396,8 +395,8 @@ sitenum[stationary==F] <- 0
 # Initiate the model ###########################################################
 
 #set initial path
-x0 <- cbind(tapply(path$x[,1],twl_adjusted$group,median), 
-            tapply(path$x[,2],twl_adjusted$group,median))
+x0 <- cbind(tapply(path$x[,1],twl$group,median), 
+            tapply(path$x[,2],twl$group,median))
 
 
 #set fixed locations 
@@ -449,9 +448,9 @@ logp <- function(p) {
 }
 
 # Define the Estelle model ####################################################
-model <- groupedThresholdModel(twl_adjusted$Twilight,
-                               twl_adjusted$Rise,
-                               group = twl_adjusted$group, #This is the group vector for each time the bird was at a point
+model <- groupedThresholdModel(twl$Twilight,
+                               twl$Rise,
+                               group = twl$group, #This is the group vector for each time the bird was at a point
                                twilight.model = "ModifiedGamma",
                                alpha = alpha,
                                beta =  beta,
@@ -475,15 +474,15 @@ fit <- estelleMetropolis(model, x.proposal, z.proposal, iters = 1000, thin = 20)
 x0 <- chainLast(fit$x)
 z0 <- chainLast(fit$z)
 
-model <- groupedThresholdModel(twl_adjusted$Twilight, 
-                               twl_adjusted$Rise, 
-                               group = twl_adjusted$group,
+model <- groupedThresholdModel(twl$Twilight, 
+                               twl$Rise, 
+                               group = twl$group,
                                twilight.model = "ModifiedGamma",
                                alpha = alpha, 
                                beta =  beta,
                                x0 = x0, z0 = z0,
                                logp.x = logp,
-                               missing=twl_adjusted$Missing,
+                               missing=twl$Missing,
                                zenith = zeniths0,
                                fixedx = fixedx)
 
@@ -510,7 +509,7 @@ fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = chainLast(fit$x),
 #Summarize results #############################################################
 
 # sm <- locationSummary(fit$x, time=fit$model$time)
-sm <- SGAT2Movebank(fit$x, time = twl_adjusted$Twilight, group = twl_adjusted$group)
+sm <- SGAT2Movebank(fit$x, time = twl$Twilight, group = twl$group)
 
 #create a plot of the stationary locations #####################################
 
@@ -622,14 +621,13 @@ save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 #load(file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))
 #load(file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 
-
 # Record details for the geolocator analysis ###################################
 geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
 geo.ref[(geo.ref$geo.id == geo.id),]$In_habitat_median_zenith_angle <- zenith
 geo.ref[(geo.ref$geo.id == geo.id),]$Hill_Ekstrom_median_angle <- zenith_sd 
 geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- arr.nbr
 geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- dep.nbr
-geo.ref[(geo.ref$geo.id == geo.id),]$Clock_drift_edits <- TRUE
+geo.ref[(geo.ref$geo.id == geo.id),]$Clock_drift_edits <- FALSE
 geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.start <- as.character(tm.calib1[1])
 geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.end <- as.character(tm.calib1[2])
 geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.start2 <- as.character(tm.calib2[1])

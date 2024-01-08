@@ -331,3 +331,37 @@ ggplot(data = spring.gdata, aes(y = bridge.strength, x = as.factor(cluster), fil
 
 ## nonbreeding movement stats  ----
 
+# read nonbreeding movement data generated with this script C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Blackpoll_warbler_mapping_scripts/Blackpoll_nonbreeding_movements.R
+NB.move <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/nonbreeding.movements.csv")
+
+# get dataframe with categorical information on movement vs no-movement, longituide of the first nonbreeding site, and number of movements per individual
+NB.mover.cat <- NB.move %>% group_by(geo_id) %>%
+  mutate(initial.nbr.lon = first(Lon.50.))%>%
+  summarise(status = unique(nbr.mover), n.movements = n(), initial.nbr.lon = first(initial.nbr.lon), breeding.lon = first(deploy.longitude)) %>%
+  mutate(n.movements = ifelse(status == "nonmover", 0, n.movements/2))
+  
+# How many birds performed nonbreeding movements?
+NB.mover.cat %>% group_by(status) %>% summarize(n = n())
+
+# test whether the probability of nonbreeding movements was influenced by the longitude of the first nonbreeding site occupied 
+nbr.lon.mod <- glm(as.factor(status) ~ initial.nbr.lon, data = NB.mover.cat, family = binomial(link = "logit"))
+boxplot(initial.nbr.lon ~ as.factor(status), data = NB.mover.cat)
+summary(nbr.lon.mod)
+check_model(nbr.lon.mod)
+
+# get dataframe for movements that classifies timing and direction 
+NB.move.mod <- NB.move %>% filter(nbr.mover == "mover") %>% group_by(geo_id) %>%
+  mutate(move.start = EndTime,
+         move.end = lead(StartTime),
+         start.lon = Lon.50.,
+         start.lat = Lat.50.,
+         end.lon = lead(Lon.50.),
+         end.lat = lead(Lat.50.),
+         dist = lead(dist)) %>% dplyr::select(geo_id, move.start, move.end, start.lon, start.lat, end.lon, end.lat, dist, timing.nbr.move)%>%
+  filter(move.start < move.end, !is.na(move.end)) %>%
+  mutate(move.direction = ifelse(start.lat < end.lat, "North", "South"))
+
+NB.move.mod %>% group_by(timing.nbr.move) %>%summarise (n = n())
+NB.move.mod %>% group_by(move.direction) %>%summarise (n = n())
+
+
