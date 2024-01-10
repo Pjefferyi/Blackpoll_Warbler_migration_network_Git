@@ -720,18 +720,28 @@ sf_use_s2(FALSE)
 bpw.range <- st_intersection(st_as_sf(America) , bpw.range)
 
 # Plot 
-ggplot(st_as_sf(America))+
+ab.prop.regions.fig <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
   geom_sf(data = bpw.range, aes(fill = season),col = NA, alpha = 0.7) +
-  scale_fill_discrete(labels = c("Breeding", "Nonbreeding"), name = "Range") +
+  scale_fill_discrete(labels = c("Breeding range", "Nonbreeding range"), name = "", guide = guide_legend(order = 3)) +
   geom_sf(data = br.regions, aes(col = "black"), fill = NA, linewidth = 0.5) +
-  scale_colour_manual(values = c("black"), labels = c( "Breedign region polygons"), name = "") +
-  geom_sf(data =  bpw.ref, fill = "black", col = "white", shape = 21, stroke = 0.5, cex = 3)+
+  scale_colour_manual(values = c("black"), labels = c( "Breeding region polygons"), name = "", guide = guide_legend(order = 2)) +
+  new_scale_fill() +
+  geom_sf(data =  bpw.ref, aes(fill = "black"), col = "white", shape = 21, stroke = 0.5, cex = 3)+
+  scale_fill_manual(values = c("black"), labels = c("Geolocator deployment sites"), name = "", guide = guide_legend(order = 1))+
   coord_sf(xlim = c(-170, -40),ylim = c(-5, 70))+
+  geom_point(data = spring.stat[spring.stat$geo_id == "WRMA04173" & spring.stat$sitenum == 5,],
+             aes(x = Lon.50., y = Lat.50.), shape = 4, cex = 3)+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         axis.title =element_blank(),
         axis.text =element_blank(),
         axis.ticks =element_blank(),
         axis.ticks.length = unit(0, "pt"),
-        plot.margin = unit(c(0,0,0,0), "pt"))
+        legend.spacing = unit(-5, "pt"),
+        legend.position = c(0.2, 0.4),
+        plot.margin = unit(c(0,0,0,0), "pt"),
+        legend.key = element_rect(colour = "transparent", fill = "white"))
+
+ggsave(plot = ab.prop.regions.fig, filename = "MC.nbr.regions.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
+       units = "cm", width = 24*1.2, height = 10*1.2, dpi = "print", bg = "white")

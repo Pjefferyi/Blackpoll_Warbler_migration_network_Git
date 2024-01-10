@@ -331,8 +331,7 @@ geo_twl <- export2GeoLight(twl)
 # days indicates the duration of the stopovers 
 cL <- changeLight(twl=geo_twl, quantile=0.9, summary = F, days = 2, plot = T)
 
-# merge site helps to put sites together that are separated by single outliers (worked with zenith, not zenith0)
-#mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zeniths0[1: length(zeniths0) -1 ], distThreshold = 1000)
+# merge site helps to put sites together that are separated by single outliers 
 mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 250)
 
 #back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
@@ -431,32 +430,24 @@ model <- groupedThresholdModel(twl$Twilight,
 x.proposal <- mvnorm(S = diag(c(0.005, 0.005)), n = nrow(x0))
 z.proposal <- mvnorm(S = diag(c(0.005, 0.005)), n = nrow(z0))
 
-# Fit the model
-fit <- estelleMetropolis(model, x.proposal, z.proposal, iters = 1000, thin = 20)
-
 #Tuning ########################################################################
 
-# use output from last run
-x0 <- chainLast(fit$x)
-z0 <- chainLast(fit$z)
+# Fit a first chain for tuning
+fit <- estelleMetropolis(model, x.proposal, z.proposal, iters = 1000, thin = 20)
 
-model <- groupedThresholdModel(twl$Twilight, 
-                               twl$Rise, 
-                               group = twl$group,
-                               twilight.model = "ModifiedGamma",
-                               alpha = alpha, 
-                               beta =  beta,
-                               x0 = x0, z0 = z0,
-                               logp.x = logp,
-                               missing=twl$Missing,
-                               zenith = zeniths0,
-                               fixedx = fixedx)
-
-for (k in 1:3) {
+# Fit additional chains for tuning
+for (k in 1:2) {
   x.proposal <- mvnorm(chainCov(fit$x), s = 0.3)
   z.proposal <- mvnorm(chainCov(fit$z), s = 0.3)
-  fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = chainLast(fit$x),
-                           z0 = chainLast(fit$z), iters = 300, thin = 20)
+  
+  # get Median of chains
+  chain.sm.x <- SGAT2Movebank(fit$x)
+  x.med <- list(as.matrix(chain.sm.x[,c("Lon.50%","Lat.50%")]))
+  chain.sm.z <- SGAT2Movebank(fit$z)
+  z.med <- list(as.matrix(chain.sm.z[,c("Lon.50%","Lat.50%")]))
+  
+  fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = x.med,
+                           z0 = z.med, iters = 1000, thin = 20)
 }
 
 ## Check if chains mix
@@ -466,11 +457,19 @@ matplot(t(fit$x[[1]][!fixedx, 2, ]), type = "l", lty = 1, col = "firebrick", yla
 par(opar)
 
 #Final model run ###############################################################
+
+# get Median of chains
+chain.sm.x <- SGAT2Movebank(fit$x)
+x.med <- list(as.matrix(chain.sm.x[,c("Lon.50%","Lat.50%")]))
+chain.sm.z <- SGAT2Movebank(fit$z)
+z.med <- list(as.matrix(chain.sm.z[,c("Lon.50%","Lat.50%")]))
+
+# get proposals 
 x.proposal <- mvnorm(chainCov(fit$x), s = 0.3)
 z.proposal <- mvnorm(chainCov(fit$z), s = 0.3)
 
-fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = chainLast(fit$x),
-                         z0 = chainLast(fit$z), iters = 2000, thin = 20, chain = 1)
+fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = x.med,
+                         z0 = z.med , iters = 3000, thin = 20, chain = 1)
 
 #Summarize results #############################################################
 
