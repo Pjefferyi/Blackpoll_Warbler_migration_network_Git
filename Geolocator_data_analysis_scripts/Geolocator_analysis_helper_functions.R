@@ -636,8 +636,8 @@ runGeoScripts <- function(scripts = c()){
 
 paths <- list.files("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis",
                     pattern = "LLG_analysis", recursive = T, full.names = T)
-
-#runGeoScripts(scripts = paths[27:length(paths)])
+ 
+# runGeoScripts(scripts = paths)
 
 # insertLoc ####################################################################
 
@@ -680,7 +680,7 @@ insertLoc <- function(data, lat.at.loc, start.date, end.date, period, thresh.loc
                              EndTime))
   
   #Add the new row (location) and order data by date
-  data.mod <- rbind(data.mod, new.loc) %>% arrange(StartTime)
+  data.mod <- rbind(data.mod, new.loc) %>% ungroup() %>% arrange(StartTime)
   
   # edit the site numbers 
   data.mod[(data.mod$sitenum != 0), ]$sitenum <- seq(1, nrow(data.mod[(data.mod$sitenum != 0), ]), 1)

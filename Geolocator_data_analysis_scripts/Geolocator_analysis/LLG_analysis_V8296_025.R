@@ -31,7 +31,7 @@ setupGeolocation()
 rm(list=ls())
 
 # Load helper functions 
-source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis/Geolocator_analysis_helper_functions.R")
+source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis_helper_functions.R")
 
 geo.id <- "V8296_025"
 
@@ -95,7 +95,7 @@ twl_in$Twilight <- as.POSIXct(twl_in$Twilight, tz = "UTC")
 
 # Period over which to calculate the time shift. It should be while the bird is
 # still in the breeding grounds
-period <- as.POSIXct(c("2019-06-25", "2019-08-14"), tz = "UTC")
+period <- as.POSIXct(c("2019-06-25", "2019-08-25"), tz = "UTC")
 
 # #plot the period over the light image
 lightImage( tagdata = lig,
@@ -163,6 +163,12 @@ dev.off()
 # SGAT ANALYSIS ###############################################################
 ###############################################################################
 
+# load some parameters for the analysis 
+geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
+days <- geo.ref[(geo.ref$geo.id == geo.id),]$changeLight.days
+dist <- geo.ref[(geo.ref$geo.id == geo.id),]$mergesites.distance
+stat.nbr.lim <- geo.ref[(geo.ref$geo.id == geo.id),]$stat.nbr.limit 
+
 # Import file with twilight times  
 twl <- read.csv(paste0(dir,"/", geo.id, "_twl_times.csv"))
 twl$Twilight <- as.POSIXct(twl$Twilight, tz = "UTC")
@@ -177,7 +183,7 @@ lightImage( tagdata = lig,
 tsimageDeploymentLines(twl$Twilight, lon.calib, lat.calib, offset, lwd = 2, col = "orange")
 
 #calibration period before the migration 
-tm.calib1 <- as.POSIXct(c("2019-06-25", "2019-08-25"), tz = "UTC")
+tm.calib1 <- as.POSIXct(c("2019-06-20", "2019-08-10"), tz = "UTC")
 
 abline(v = tm.calib1, lwd = 2, lty = 2, col = "orange")
 
@@ -231,7 +237,7 @@ z0 <- trackMidpts(x0_r)
 save(x0_r, file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
 
 # Check the following times of arrival and departure using a plot 
-arr.nbr <- "2019-10-22" 
+arr.nbr <- "2019-10-07" #actually 10-17 based on light records. but we the SGAT analysis can not detect this 
 
 # open jpeg
 jpeg(paste0(dir, "/", geo.id, "_LatLon_scatterplot.png"), width = 1024, height = 990)
@@ -284,7 +290,7 @@ abline(v = fall.equi, col = "orange")
 dev.off()
 
 # Initial Path #################################################################
-tol_ini <- 0.08
+tol_ini <- 0.065
 path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol = tol_ini)
 
 x0 <- path$x
@@ -315,10 +321,10 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-cL <- changeLight(twl=geo_twl, quantile=0.55, summary = F, days = 2, plot = T)
+cL <- changeLight(twl=geo_twl, quantile=0.55, summary = F, days = days, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 250)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = dist)
 
 #back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 
@@ -557,9 +563,13 @@ points(stat.loc$Lon.50., stat.loc$Lat.50., pch = 16, cex = 1.5, col = "firebrick
 # add column with geolocator ID and group 
 sm$geo_id <- geo.id
 
+# find time of establishment and departure from the nonbreeding grounds 
+arr.nbr.sgat <- sm %>% filter(Lat.50. < 12 & sitenum > 0 & duration > stat.nbr.lim) %>% summarize(Date = first(StartTime))%>% 
+  .$Date
+
 #add a column that categorizes the locations 
-sm <- sm %>% mutate(period= case_when(StartTime < anytime("2019-10-24 10:24:07", asUTC = T, tz = "GMT")  ~ "Post-breeding migration",
-                                      StartTime >= anytime("2019-10-24 10:24:07", asUTC = T, tz = "GMT") ~ "Non-breeding period"))
+sm <- sm %>% rowwise() %>% mutate(period= case_when(StartTime < anytime("arr.nbr.sgat", asUTC = T, tz = "GMT")  ~ "Post-breeding migration",
+                                      StartTime >= anytime("arr.nbr.sgat", asUTC = T, tz = "GMT") ~ "Non-breeding period"))
 
 #Save the output of the model 
 save(sm, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))
@@ -604,11 +614,13 @@ par(cex.axis= 1)
 dev.off()
 
 # A stopover over the Caribbean was detected between 2019-10-06 and 2019-10-16
+
+
 # Add the new stopover to the location summary obtained at the end of the geolocator analysis
 sm.fall.edit <- insertLoc(data = sm,
                           lat.at.loc = 18.747636,
                           start.date = "2019-10-06" ,
-                          end.date = "2019-10-16" , 
+                          end.date = "2019-10-16" ,
                           period = "Post-breeding migration",
                           thresh.locs = x0_ad,
                           twl = twl,
@@ -616,7 +628,7 @@ sm.fall.edit <- insertLoc(data = sm,
                           sep1 = days(3),
                           sep2 = days (1))
 
-#plot the final stationary locations 
+#plot the final stationary locations
 sm.fall.stat <- sm.fall.edit[(sm.fall.edit$sitenum > 0), ]
 
 par(mfrow=c(1,1))
@@ -639,5 +651,7 @@ geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- arr.nbr
 geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.start <- as.character(tm.calib1[1])
 geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.end <- as.character(tm.calib1[2])
 geo.ref[(geo.ref$geo.id == geo.id),]$tol <-tol_ini
+geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- as.character(arr.nbr.sgat)
+geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- NA
 write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE) 
 

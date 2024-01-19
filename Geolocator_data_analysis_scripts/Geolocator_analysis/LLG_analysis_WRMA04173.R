@@ -111,6 +111,12 @@ dev.off()
 # SGAT ANALYSIS ###############################################################
 ###############################################################################
 
+# load some parameters for the analysis 
+geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
+days <- geo.ref[(geo.ref$geo.id == geo.id),]$changeLight.days
+dist <- geo.ref[(geo.ref$geo.id == geo.id),]$mergesites.distance
+stat.nbr.lim <- geo.ref[(geo.ref$geo.id == geo.id),]$stat.nbr.limit 
+
 # Import file with twilight times  
 twl <- read.csv(paste0(dir,"/", geo.id, "_twl_times.csv"))
 twl$Twilight <- as.POSIXct(twl$Twilight, tz = "UTC")
@@ -132,7 +138,7 @@ lightImage( tagdata = lig,
 tsimageDeploymentLines(twl$Twilight, lon.calib, lat.calib, offset, lwd = 2, col = "orange")
 
 #calibration period before the migration 
-tm.calib <- as.POSIXct(c("2020-03-15", "2020-04-15"), tz = "UTC")
+tm.calib <- as.POSIXct(c("2020-03-15", "2020-04-25"), tz = "UTC")
 
 abline(v = tm.calib, lwd = 2, lty = 2, col = "orange")
 
@@ -305,7 +311,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                beta =  beta,
                                x0 = x0, # median point for each group (defined by twl$group)
                                z0 = z0, # middle points between the x0 points
-                               zenith = zenith0,
+                               zenith = zenith0+1,
                                logp.x = logp,# land sea mask
                                fixedx = fixedx)
 
@@ -397,6 +403,8 @@ text(sm[,"Lon.50."], sm[,"Lat.50."], ifelse(sitenum>0, as.integer(((sm$EndTime -
 #Show dates
 #text(sm[,"Lon.50."], sm[,"Lat.50."], ifelse(sitenum>0, as.character(sm$StartTime), ""), col="red", pos = 1) 
 
+points(dtx0[sitenum > 0,], pch = 16, cex = 1, col = "green")
+
 #Close jpeg
 dev.off()
 
@@ -452,9 +460,13 @@ points(stat.loc$Lon.50., stat.loc$Lat.50., pch = 16, cex = 1.5, col = "firebrick
 # add column with geolocator ID
 sm$geo_id <- geo.id
 
+# find time of establishment and departure from the nonbreeding grounds 
+dep.nbr.sgat <- sm %>% filter(Lat.50. < 12 & sitenum > 0 & duration > stat.nbr.lim) %>% summarize(Date = last(EndTime))%>% 
+  .$Date
+
 #add a column that categorizes the locations (based on the groupthreshold model output)
-sm <- sm %>% mutate(period= case_when(StartTime <= anytime("2020-04-30 10:29:15", asUTC = T, tz = "GMT")  ~ "Non-breeding period",
-                                      StartTime > anytime("2020-04-30 10:29:15", asUTC = T, tz = "GMT") ~ "Pre-breeding migration"))
+sm <- sm %>% rowwise() %>% mutate(period= case_when(StartTime <= anytime(dep.nbr.sgat, asUTC = T, tz = "GMT")  ~ "Non-breeding period",
+                                      StartTime > anytime(dep.nbr.sgat, asUTC = T, tz = "GMT") ~ "Pre-breeding migration"))
 
 # We remove the last stationary location detected, as it likely was identified only because the geolocator stopped working at that location.
 sm <- sm[(sm$StartTime <= "2020-06-19 07:06:00"),]
@@ -479,4 +491,6 @@ geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- dep.nbr
 geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.start <- as.character(tm.calib[1])
 geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.end <- as.character(tm.calib[2])
 geo.ref[(geo.ref$geo.id == geo.id),]$tol <-tol_ini
+geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- NA
+geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- as.character(dep.nbr.sgat)
 write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE) 
