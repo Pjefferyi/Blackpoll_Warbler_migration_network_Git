@@ -701,66 +701,128 @@ insertLoc <- function(data, lat.at.loc, start.date, end.date, period, thresh.loc
 # This function is based on the methods described by Lagasse et al. 2022: https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0270957#sec015
 # It returns a number of clusters: k 
 
-clusterLocs <- function(locs, maxdiam = 300){
+clusterLocs <- function(locs, maxdiam = 300, lon.only = F){
   
   # locs: Input locations should be in a dafatframe with reference information 
   # maxdiam: the maximum diameter of clusters (measured as the mean distance between the two furthest location in each cluster) in km
   
-  # function to Calculate the geodesic distance between points and creates a distance matrix
-  geo.dist = function(df) {
-    require(geosphere)
-    d <- function(i,z){         # z[1:2] contain long, lat
-      dist <- rep(0,nrow(z))
-      dist[i:nrow(z)] <- distHaversine(z[i:nrow(z),1:2],z[i,1:2])
-      return(dist/1000)
-    }
-    dm <- do.call(cbind,lapply(1:nrow(df),d,df))
-    return(as.dist(dm))
-  }
+  if (lon.only == F){
   
-  # calculate distance matrix for all stationary locations 
-  dist.matrix <- geo.dist(locs[,c("Lon.50.","Lat.50.")])
-  
-  # set intial values for the number of clusters and their maximum diameter
-  runs = 1
-  k = 1
-  diam = Inf 
-  
-  # increase the number of clusters until the mean diameter of the cluster is less than the maximum value
-  while (diam > maxdiam){
-    
-    # cluster stationary location and add locations to dataframe 
-    clust <- pam(dist.matrix, k, diss  = T, cluster.only =  T)
-    locs$cluster <- clust
-    
-    # for each cluster, calculate the diameter
-    diam.list <- c()
-    
-    for (i in unique(clust)){
-      # Get the stationary locations in each subset 
-      clust.subset <- locs %>% dplyr::filter(cluster == i)
-      
-      if (nrow(clust.subset) == 1){
-        subset.dist.matrix <- 0
-      } else {
-        
-        # Generate distance matrix
-        subset.dist.matrix <- geo.dist(clust.subset [,c("Lon.50.","Lat.50.")])
-        
-        # Calculate the cluster diameter (here defined as the distance between the two furtherst locations in the cluster)
-        diam.list <- append(diam.list, max(subset.dist.matrix))
+    # function to Calculate the geodesic distance between points and creates a distance matrix
+    geo.dist = function(df) {
+      require(geosphere)
+      d <- function(i,z){         # z[1:2] contain long, lat
+        dist <- rep(0,nrow(z))
+        dist[i:nrow(z)] <- distHaversine(z[i:nrow(z),1:2],z[i,1:2])
+        return(dist/1000)
       }
+      dm <- do.call(cbind,lapply(1:nrow(df),d,df))
+      return(as.dist(dm))
     }
     
-    diam <- mean(diam.list)
-    print(paste("mean diameter =", as.character(diam), "km"))
-    print(paste("Run #", as.character(runs)))
-    print(paste("k =", as.character(k)))
-    runs <-  runs + 1 
-    k = k + 1 
+    # calculate distance matrix for all stationary locations
+    dist.matrix <- geo.dist(locs[,c("Lon.50.","Lat.50.")])
+    
+    # set intial values for the number of clusters and their maximum diameter
+    runs = 1
+    k = 1
+    diam = Inf 
+    
+    # increase the number of clusters until the mean diameter of the cluster is less than the maximum value
+    while (diam > maxdiam){
+      
+      # cluster stationary location and add locations to dataframe 
+      clust <- pam(dist.matrix, k, diss  = T, cluster.only =  T)
+      locs$cluster <- clust
+      
+      # for each cluster, calculate the diameter
+      diam.list <- c()
+      
+      for (i in unique(clust)){
+        # Get the stationary locations in each subset 
+        clust.subset <- locs %>% dplyr::filter(cluster == i)
+        
+        if (nrow(clust.subset) == 1){
+          subset.dist.matrix <- 0
+        } else {
+          
+          # Generate distance matrix
+          subset.dist.matrix <- geo.dist(clust.subset [,c("Lon.50.","Lat.50.")])
+          
+          # Calculate the cluster diameter (here defined as the distance between the two furtherst locations in the cluster)
+          diam.list <- append(diam.list, max(subset.dist.matrix))
+        }
+      }
+      
+      diam <- mean(diam.list)
+      print(paste("mean diameter =", as.character(diam), "km"))
+      print(paste("Run #", as.character(runs)))
+      print(paste("k =", as.character(k)))
+      runs <-  runs + 1 
+      k = k + 1 
+    }
+    
+    return(list(clusters = clust, k = k-1))
+    
+  }else{
+    
+    # function to Calculate the geodesic distance between points and creates a distance matrix
+    geo.dist = function(df) {
+      require(geosphere)
+      d <- function(i,z){         # z[1:2] contain long, lat
+        dist <- rep(0,nrow(z))
+        dist[i:nrow(z)] <- distHaversine(z[i:nrow(z),1:2],z[i,1:2])
+        return(dist/1000)
+      }
+      dm <- do.call(cbind,lapply(1:nrow(df),d,df))
+      return(as.dist(dm))
+    }
+    
+    # calculate distance matrix for all stationary locations
+    locs$zerocol <- 0 
+    dist.matrix <- geo.dist(locs[,c("Lon.50.","zerocol")])
+    
+    # set intial values for the number of clusters and their maximum diameter
+    runs = 1
+    k = 1
+    diam = Inf 
+    
+    # increase the number of clusters until the mean diameter of the cluster is less than the maximum value
+    while (diam > maxdiam){
+      
+      # cluster stationary location and add locations to dataframe 
+      clust <- pam(dist.matrix, k, diss  = T, cluster.only =  T)
+      locs$cluster <- clust
+      
+      # for each cluster, calculate the diameter
+      diam.list <- c()
+      
+      for (i in unique(clust)){
+        # Get the stationary locations in each subset 
+        clust.subset <- locs %>% dplyr::filter(cluster == i)
+        
+        if (nrow(clust.subset) == 1){
+          subset.dist.matrix <- 0
+        } else {
+          
+          # Generate distance matrix
+          subset.dist.matrix <- geo.dist(clust.subset [,c("Lon.50.","zerocol")])
+          
+          # Calculate the cluster diameter (here defined as the distance between the two furtherst locations in the cluster)
+          diam.list <- append(diam.list, max(subset.dist.matrix))
+        }
+      }
+      
+      diam <- mean(diam.list)
+      print(paste("mean diameter =", as.character(diam), "km"))
+      print(paste("Run #", as.character(runs)))
+      print(paste("k =", as.character(k)))
+      runs <-  runs + 1 
+      k = k + 1 
+    }
+    
+    return(list(clusters = clust, k = k-1))
   }
-  
-  return(list(clusters = clust, k = k-1))
 }
 
 # test cases for clusterlocs ###################################################
