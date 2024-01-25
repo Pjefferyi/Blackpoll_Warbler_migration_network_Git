@@ -180,15 +180,21 @@ America <- wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland")
 
 # load the equinox polygon
 equipol <- st_read("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/Layers/equipol.shp")
-equi.region <- st_intersection(st_as_sf(America), equipol)
 
+# load blackpoll warbler range polygon
+bpw.range <- st_read("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Birdlife_international_species_distribution/SppDataRequest.shp") %>%
+  filter(seasonal %in% c(2,3,4)) %>% st_union() %>% st_transform(crs(wrld_simpl))
 
+# Find its intersection with the Blackpoll warbler's breeding range 
+sf_use_s2(FALSE)
+equi.region <- st_intersection(st_as_sf(America), bpw.range) %>% st_intersection(equipol)
+bpw.range.full <- st_intersection(st_as_sf(America), st_union(bpw.range))
 
 ## fall node types ---- 
 fall.ggnet <- ggnetwork(fall.graph, layout = as.matrix(meta.fall.ab[, c("Lon.50.", "Lat.50.")]), scale = F)
 fall.gplot <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
-  geom_sf(data = equinox_region, fill = "#D9D5B2", lwd = 0.1, alpha = 1)+
+  geom_sf(data = equi.region, fill = "#D9D5B2", lwd = 0.2, alpha = 1) +
   coord_sf(xlim = c(-170, -40),ylim = c(-5, 70)) +
   geom_edges(data = fall.ggnet, mapping = aes(x = x, y = y, xend = xend, yend = yend, col = edge.type, lwd = weight),
              arrow = arrow(length = unit(6, "pt"), type = "closed", angle = 10))+
@@ -210,12 +216,9 @@ fall.gplot <- ggplot(st_as_sf(America))+
         plot.margin= unit(c(0,0,0,0), "pt"))+
   guides(fill = guide_legend(override.aes = list(size = 5)), )
 
-
-
 ## fall stationary location clusters 
 fall.clustplot<- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
-  geom_sf(data = equinox_region, fill = "#D9D5B2", lwd = 0.1, alpha = 1)+
   coord_sf(xlim = c(-170, -40),ylim = c(-5, 70)) +
   #geom_errorbar(data = fall.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
   #geom_errorbar(data = fall.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
@@ -399,6 +402,7 @@ fall.gplot.betw <- ggplot(st_as_sf(America))+
   geom_nodes(data = fall.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = betweenness), shape=21, size  = 3)+
   scale_fill_viridis_c(direction = -1, option = "magma", name = "Betweenness", 
                        guide = guide_colorbar(frame.colour = "black"), limits = c(min(0),  max(fall.ggnet$betweenness, spring.ggnet$betweenness)))+
+  ggtitle("Fall network") + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         legend.position = c(-0.18, 0.4), text = element_text(size = 10), legend.key = element_blank(),
@@ -419,6 +423,7 @@ spring.gplot.betw <- ggplot(st_as_sf(America))+
   geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = betweenness), shape=21, size  = 3)+
   scale_fill_viridis_c(direction = -1, option = "magma", name = "Betweenness", 
                        guide = guide_colorbar(frame.colour = "black"), limits = c(min(0),  max(fall.ggnet$betweenness, spring.ggnet$betweenness)))+
+  ggtitle("Spring network") + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         legend.position = "None", text = element_text(size = 10), legend.key = element_blank(),
@@ -469,10 +474,7 @@ spring.gplot.bridge.str<- ggplot(st_as_sf(America))+
         plot.margin = unit(c(0,0,0,0), "pt"))
 
 ## create panel ----
-metrics.fig <- (fall.gplot.betw | spring.gplot.betw)/ (fall.gplot.bridge.str| spring.gplot.bridge.str)+
-  plot_annotation(tag_levels = 'a') & 
-  theme(plot.tag.position = c(0.02, 0.95),
-        plot.tag = element_text(face = 'bold', size = 10)) 
+metrics.fig <- (fall.gplot.betw | spring.gplot.betw)/ (fall.gplot.bridge.str| spring.gplot.bridge.str)
 
 ggsave(plot = metrics.fig, filename = "nodes.metrics.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
        units = "cm", width = 24*1.2, height = 10*1.2, dpi = "print", bg = "white")
