@@ -402,7 +402,7 @@ box()
 
 # Movement model ###############################################################
 
-# Here the model only reflects speed during active flight 
+# Here the model only reflects speed during active flight
 beta  <- c(2.2, 0.08)
 matplot(0:100, dgamma(0:100, beta[1], beta[2]),
         type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")

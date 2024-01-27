@@ -180,7 +180,7 @@ fall.stat.norm <- st_drop_geometry(fall.stat.norm )
 
 # cluster points in each group separately, then merge the cluster info 
 cluster.data1 <- clusterLocs(locs = fall.stat.equi, maxdiam = 1200, lon.only = T)
-cluster.data2 <- clusterLocs(locs = fall.stat.norm, maxdiam = 700)
+cluster.data2 <- clusterLocs(locs = fall.stat.norm, maxdiam = 800)
 
 cluster.data2$clusters <- cluster.data2$clusters + max(cluster.data1$clusters)
 
@@ -243,12 +243,12 @@ ggplot(st_as_sf(wrld_simpl))+
   theme_bw() +
   theme(text = element_text(size = 16), legend.position = "None")
 
-# Optional: add edge from nonbreeding site back to the breeding site of origin
-fall.breed.return <- fall.breed %>% group_by(geo_id) %>%
-  mutate(sitenum = max(fall.stat[(fall.stat$geo_id == geo_id),]$sitenum))
-fall.breed.return[,c("StartTime", "EndTime", "duration")] <- NA
-fall.breed.return[,c("period")] <- "Post-breeding migration"
-fall.stat <- bind_rows(fall.stat, fall.breed.return) %>% arrange(geo_id, sitenum)
+# # Optional: add edge from nonbreeding site back to the breeding site of origin
+# fall.breed.return <- fall.breed %>% group_by(geo_id) %>%
+#   mutate(sitenum = max(fall.stat[(fall.stat$geo_id == geo_id),]$sitenum))
+# fall.breed.return[,c("StartTime", "EndTime", "duration")] <- NA
+# fall.breed.return[,c("period")] <- "Post-breeding migration"
+# fall.stat <- bind_rows(fall.stat, fall.breed.return) %>% arrange(geo_id, sitenum)
 
 # Generate the network from our location data and clusters #####################
 
@@ -309,7 +309,7 @@ meta.fall <- data.frame("vertex" = seq(1, max(fall.edge.df$cluster)),
                    "node.type.num" = fall.node.type$site_type_num)
 
 # For fall nodes where latitudinal accuracy is low, set location close to the coast
-meta.fall[c(3, 5, 6),]$Lat.50. <- c(33.18, 41.26, 44.91)
+#meta.fall[c(3, 5, 6),]$Lat.50. <- c(33.18, 41.26, 44.91)
  
 fall.location <- as.matrix(meta.fall[, c("Lon.50.", "Lat.50.")])
 
@@ -374,7 +374,7 @@ spring.stat <- spring.stat %>% group_by(geo_id) %>% filter(StartTime >= NB.last.
   filter(distHaversine(cbind(Lon.50.,Lat.50.), cbind(deploy.longitude, deploy.latitude)) > 250000 | geo_id == "WRMA04173")
 
 # Uncomment this code to generate clusters using the pam function
-cluster.data <- clusterLocs(locs = spring.stat, maxdiam = 650)
+cluster.data <- clusterLocs(locs = spring.stat, maxdiam = 800)
 spring.stat$cluster <- cluster.data$clusters
 
 # # export spring stat sites for manual clustering
@@ -425,11 +425,11 @@ ggplot(st_as_sf(wrld_simpl))+
   theme_bw() +
   theme(text = element_text(size = 16), legend.position = "None")
 
-# Optional: add edge from nonbreeding site back to the breeding site of origin
-spring.breed.return <- spring.breed %>% group_by(geo_id) %>%
-  mutate(sitenum = 1)
-spring.breed.return[,c("StartTime", "EndTime", "duration")] <- NA
-spring.breed.return[,c("period")] <- "Pre-breeding migration"
+# # Optional: add edge from nonbreeding site back to the breeding site of origin
+# spring.breed.return <- spring.breed %>% group_by(geo_id) %>%
+#   mutate(sitenum = 1)
+# spring.breed.return[,c("StartTime", "EndTime", "duration")] <- NA
+# spring.breed.return[,c("period")] <- "Pre-breeding migration"
 
 # For geolocators deployed in the nonbreeding grounds, we need to increase site numbers because the breeding site
 spring.stat <- spring.stat %>% group_by(geo_id) %>% mutate(sitenum = ifelse(deploy.range == "Nonbreeding", sitenum + 1, sitenum))
@@ -753,7 +753,10 @@ fall.edge.df.ab <- merge(fall.edge.df, dplyr::select(fall.breed.ab, geo_id, ab.u
 fall.con.ab <- fall.edge.df.ab %>% group_by(geo_id) %>%
   mutate(edge.type = if_else(next.cluster == first(cluster), "spring", "fall")) %>%
   group_by(cluster, next.cluster) %>% 
-  reframe(weight = sum(ab.unit), edge.type = first(edge.type)) 
+  reframe(weight = sum(ab.unit), weight.n = n(),  edge.type = first(edge.type)) 
+
+# weight: weight based on abundance units 
+# weight.n: weight based on number of tracked individuals moving between nodes 
 
 # Fall graph weighed using eBird relative abundance 
 
@@ -795,7 +798,10 @@ spring.edge.df.ab <- merge(spring.edge.df, dplyr::select(spring.breed.ab, geo_id
 spring.con.ab <- spring.edge.df.ab %>% group_by(geo_id) %>%
   mutate(edge.type = if_else(cluster == last(next.cluster), "fall", "spring")) %>%
   group_by(cluster, next.cluster) %>% 
-  reframe(weight = sum(ab.unit), edge.type = first(edge.type))
+  reframe(weight = sum(ab.unit), weight.n = n(), edge.type = first(edge.type))
+
+# weight: weight based on abundance units 
+# weight.n: weight based on number of tracked individuals moving between nodes 
 
 # spring graph weighed using eBird relative abundance 
 
@@ -821,14 +827,18 @@ legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
 fall.stat.ab <- merge(fall.stat, fall.breed.ab[,c("geo_id", "ab.unit")], by = "geo_id")
 
 fall.ab.by.origin <- fall.stat.ab %>% group_by(cluster, Range_region) %>%
-  summarize(region.ab.units = sum(ab.unit)) %>% ungroup() %>%
-  complete(cluster, Range_region, fill = list(region.ab.units = 0))
+  summarize(region.ab.units = sum(ab.unit), region.n = n()) %>% ungroup() %>%
+  complete(cluster, Range_region, fill = list(region.ab.units = 0)) %>%
+  complete(cluster, Range_region, fill = list(region.n = 0))
   
 # Convert data from wide to long
-fall.ab.by.origin <- fall.ab.by.origin %>% pivot_wider(names_from = Range_region, values_from = region.ab.units) %>%
-  rename(prop.ab.eastern = Eastern,
-         prop.ab.central = Central,
-         prop.ab.western = Western)
+fall.ab.by.origin <- fall.ab.by.origin %>% pivot_wider(names_from = Range_region, values_from = c(region.ab.units, region.n)) %>%
+  rename(prop.ab.eastern = region.ab.units_Eastern,
+         prop.ab.central = region.ab.units_Central,
+         prop.ab.western = region.ab.units_Western,
+         n.eastern = region.n_Eastern,
+         n.central = region.n_Central,
+         n.western = region.n_Western)
 
 # Merge abundance data with the node metadata
 meta.fall.ab <- merge(meta.fall, fall.ab.by.origin, by.x = "vertex", by.y = "cluster") 
@@ -906,15 +916,19 @@ plot(fall.graph.weighed.ab, vertex.size = 500, vertex.size2 = 200,
 # Create a dataframe with the proportion of individuals from each section of the blackpoll warbler's range in each node
 spring.stat.ab <- merge(spring.stat, spring.breed.ab[,c("geo_id", "ab.unit")], by = "geo_id")
 
-spring.ab.by.origin <- spring.stat.ab %>% group_by(cluster, Range_region) %>%
-  summarize(region.ab.units = sum(ab.unit)) %>% ungroup() %>%
-  complete(cluster, Range_region, fill = list(region.ab.units = 0))
+spring.ab.by.origin <-spring.stat.ab %>% group_by(cluster, Range_region) %>%
+  summarize(region.ab.units = sum(ab.unit), region.n = n()) %>% ungroup() %>%
+  complete(cluster, Range_region, fill = list(region.ab.units = 0)) %>%
+  complete(cluster, Range_region, fill = list(region.n = 0))
 
 # Convert data from wide to long
-spring.ab.by.origin <- spring.ab.by.origin %>% pivot_wider(names_from = Range_region, values_from = region.ab.units) %>%
-  rename(prop.ab.eastern = Eastern,
-         prop.ab.central = Central,
-         prop.ab.western = Western)
+spring.ab.by.origin <- spring.ab.by.origin %>% pivot_wider(names_from = Range_region, values_from = c(region.ab.units, region.n)) %>%
+  rename(prop.ab.eastern = region.ab.units_Eastern,
+         prop.ab.central = region.ab.units_Central,
+         prop.ab.western = region.ab.units_Western,
+         n.eastern = region.n_Eastern,
+         n.central = region.n_Central,
+         n.western = region.n_Western)
 
 # Merge abundance data with the node metadata
 meta.spring.ab <- merge(meta.spring, spring.ab.by.origin, by.x = "vertex", by.y = "cluster") 

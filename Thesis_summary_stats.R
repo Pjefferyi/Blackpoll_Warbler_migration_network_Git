@@ -1,9 +1,11 @@
-# Thesis methods details 
+# Thesis summary stats  
 
 # load necessary libraries 
 library(performance)
 library(DHARMa)
 library(MASS)
+library(tidyr)
+library(purrr)
 
 # Load the helper functions script  
 source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis_helper_functions.R")
@@ -93,7 +95,7 @@ cens_data <- cens_data %>%
   mutate(days_cens = length(solar.angle[solar.angle > 0 - tol_values & solar.angle < 0 + tol_values])/2)
 
 # calculate the number of days censored for each geolocator 
-analysis_ref <- analysis_ref %>% rowwise() %>% mutate(tol_days = list(cens_data[tol_values == tol,]$days_cens),
+analysis_ref <- analysis_ref %>% rowwise() %>% mutate(tol_days = list(cens_data[round(tol_values, digits = 3) == round(tol, digits = 3),]$days_cens),
                                                       tol_days = tol_days[[1]])
 # Range of days 
 range(analysis_ref$tol_days)
@@ -197,6 +199,9 @@ boxplot(analysis_ref$deploy.longitude ~ as.factor(analysis_ref$fall.nbr.stopover
 summary(nbr.stopover.mod.fall)
 check_model(nbr.stopover.mod.fall)
 
+simulationOutput <- simulateResiduals(fittedModel = nbr.stopover.mod.fall, plot = F)
+plot(simulationOutput)
+
 nbr.stopover.mod.spring <- glm(spring.nbr.stopover ~ deploy.longitude, data = analysis_ref, family = binomial(link = "logit"))
 boxplot(analysis_ref$deploy.longitude ~ as.factor(analysis_ref$spring.nbr.stopover))
 summary(nbr.stopover.mod.spring)
@@ -226,7 +231,7 @@ geo.nbr2.loc <- geo.all %>% dplyr::filter(period == "Non-breeding period", siten
 
 # merge with the dataset of reference data 
 loc_list <- list(geo.nbr1.loc , geo.nbr2.loc)
-analysis_ref <- loc_list %>% reduce(full_join, by='geo_id') %>% 
+analysis_ref <- loc_list %>% purrr::reduce(full_join, by='geo_id') %>% 
   merge(analysis_ref, by.x = "geo_id", by.y = "geo.id", all = T)
 
 # Plot the first nonbreeding longitude against the breeding longitude 
@@ -244,6 +249,9 @@ mod1 <- lm(nbr1.lon ~ deploy.longitude, data = analysis_ref)
 summary(mod1)
 check_model(mod1)
 
+simulationOutput <- simulateResiduals(fittedModel =  mod1, plot = F)
+plot(simulationOutput)
+
 # Plot the second nonbreeding longitude against the breeding longitude 
 long.plot2 <- ggplot(data = analysis_ref, aes(x = deploy.longitude, y = nbr2.lon)) + 
   geom_point() + 
@@ -258,6 +266,9 @@ long.plot2 <- ggplot(data = analysis_ref, aes(x = deploy.longitude, y = nbr2.lon
 mod2 <- lm(nbr2.lon ~ deploy.longitude, data = analysis_ref)
 summary(mod2)
 check_model(mod2)
+
+simulationOutput <- simulateResiduals(fittedModel =  mod2, plot = F)
+plot(simulationOutput)
 
 # Plot the first nonbreeding latitude against the breeding latitude
 lat.plot1 <- ggplot(data = analysis_ref, aes(x = deploy.latitude, y = nbr1.lat)) + 
@@ -274,6 +285,9 @@ plot(nbr1.lat ~ deploy.latitude, data = analysis_ref)
 summary(mod3)
 check_model(mod3)
 
+simulationOutput <- simulateResiduals(fittedModel =  mod3, plot = F)
+plot(simulationOutput)
+
 # Plot the first nonbreeding latitude against the breeding latitude
 lat.plot2 <- ggplot(data = analysis_ref, aes(x = deploy.latitude, y = nbr2.lat)) + 
   geom_point() + 
@@ -288,6 +302,9 @@ mod4 <- lm(nbr2.lat ~ deploy.latitude, data = analysis_ref)
 plot(nbr2.lat ~ deploy.latitude, data = analysis_ref)
 summary(mod4)
 check_model(mod4)
+
+simulationOutput <- simulateResiduals(fittedModel =  mod4, plot = F)
+plot(simulationOutput)
 
 x <- analysis_ref$nbr2.lon[!is.na(analysis_ref$nbr2.lon)]
 y <- analysis_ref$deploy.longitude[!is.na(analysis_ref$nbr2.lon)]

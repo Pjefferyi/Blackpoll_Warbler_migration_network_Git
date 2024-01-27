@@ -183,7 +183,7 @@ lightImage( tagdata = lig,
 tsimageDeploymentLines(twl$Twilight, lon.calib, lat.calib, offset, lwd = 2, col = "orange")
 
 #calibration period before the migration 
-tm.calib1 <- as.POSIXct(c("2019-07-01", "2019-08-20"), tz = "UTC")
+tm.calib1 <- as.POSIXct(c("2019-07-01", "2019-09-20"), tz = "UTC")
 tm.calib2 <- as.POSIXct(c("2020-06-05", "2020-06-15"), tz = "UTC")
 
 abline(v = tm.calib1, lwd = 2, lty = 2, col = "orange")
@@ -271,9 +271,9 @@ dev.off()
 zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith0,
                             Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad,
-                            Date > anytime(dep.nbr) ~ zenith0_ad)) + 1.5
+                            Date > anytime(dep.nbr) ~ zenith0_ad)) 
 
-zeniths0 <- zenith_twl_zero$zenith
+zeniths0 <- zenith_twl_zero$zenith + 1.5 
 
 zenith_twl_med <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith,
@@ -305,11 +305,13 @@ abline(v = anytime(arr.nbr))
 abline(v = anytime(dep.nbr))
 abline(v = fall.equi, col = "orange")
 abline(v = spring.equi, col = "orange")
+abline(v = anytime("2019-10-02"))
+abline(v = anytime("2019-10-09"))
 
 dev.off()
 
 # Initial Path #################################################################
-tol_ini <- 0.1
+tol_ini <- 0.11
 path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol = tol_ini)
 
 x0 <- path$x
