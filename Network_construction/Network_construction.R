@@ -157,6 +157,11 @@ fall.stat <- geo.all %>% filter(sitenum > 0, site_type %in% c("Breeding", "Stopo
                                 period %in% c("Post-breeding migration","Non-breeding period"),
                                 Recorded_North_South_mig %in% c("Both", "South and partial North", "South"))
 
+# we will also extract all fall mlocations (including while the bird was moving), for figures
+fall.move <- geo.all %>% filter(site_type %in% c("Breeding", "Stopover","Nonbreeding"),
+                                period %in% c("Post-breeding migration","Non-breeding period"),
+                                Recorded_North_South_mig %in% c("Both", "South and partial North", "South"))
+
 #get the timing of the first nonbreeding area
 fall.timings.nb <- geo.all %>% filter(NB_count == 1) %>% dplyr::select(NB.first.site.arrival = StartTime)
 fall.stat <- merge(fall.stat, fall.timings.nb, by = "geo_id")
@@ -178,9 +183,15 @@ fall.stat.equi <- st_drop_geometry(fall.stat.equi)
 fall.stat.norm <- st_difference(fall.stat.sf, equipol)
 fall.stat.norm <- st_drop_geometry(fall.stat.norm )
 
+# Calculate IQR between 97.5 and 2.5 quantiles 
+fall.stat.norm <-fall.stat.norm %>% mutate(IQR.lon.dist = distHaversine(cbind(Lon.97.5.,Lat.50.), cbind(Lon.2.5., Lat.50.)),
+                                           IQR.lat.dist = distHaversine(cbind(Lon.50.,Lat.97.5.), cbind(Lon.50.,Lat.2.5.)))
+fall.stat.equi  <-fall.stat.equi  %>% mutate(IQR.lon.dist = distHaversine(cbind(Lon.97.5.,Lat.50.), cbind(Lon.2.5., Lat.50.)),
+                                           IQR.lat.dist = distHaversine(cbind(Lon.50.,Lat.97.5.), cbind(Lon.50.,Lat.2.5.)))
+
 # cluster points in each group separately, then merge the cluster info 
-cluster.data1 <- clusterLocs(locs = fall.stat.equi, maxdiam = 1200, lon.only = T)
-cluster.data2 <- clusterLocs(locs = fall.stat.norm, maxdiam = 800)
+cluster.data1 <- clusterLocs(locs = fall.stat.equi, maxdiam = 700, lon.only = T)
+cluster.data2 <- clusterLocs(locs = fall.stat.norm, maxdiam = 700)
 
 cluster.data2$clusters <- cluster.data2$clusters + max(cluster.data1$clusters)
 
@@ -243,12 +254,12 @@ ggplot(st_as_sf(wrld_simpl))+
   theme_bw() +
   theme(text = element_text(size = 16), legend.position = "None")
 
-# # Optional: add edge from nonbreeding site back to the breeding site of origin
-# fall.breed.return <- fall.breed %>% group_by(geo_id) %>%
-#   mutate(sitenum = max(fall.stat[(fall.stat$geo_id == geo_id),]$sitenum))
-# fall.breed.return[,c("StartTime", "EndTime", "duration")] <- NA
-# fall.breed.return[,c("period")] <- "Post-breeding migration"
-# fall.stat <- bind_rows(fall.stat, fall.breed.return) %>% arrange(geo_id, sitenum)
+# Optional: add edge from nonbreeding site back to the breeding site of origin
+fall.breed.return <- fall.breed %>% group_by(geo_id) %>%
+  mutate(sitenum = max(fall.stat[(fall.stat$geo_id == geo_id),]$sitenum))
+fall.breed.return[,c("StartTime", "EndTime", "duration")] <- NA
+fall.breed.return[,c("period")] <- "Post-breeding migration"
+fall.stat <- bind_rows(fall.stat, fall.breed.return) %>% arrange(geo_id, sitenum)
 
 # Generate the network from our location data and clusters #####################
 
@@ -365,6 +376,16 @@ spring.stat <- geo.all %>% filter(sitenum > 0, site_type %in% c("Stopover","Nonb
                                 Recorded_North_South_mig %in% c("Both","North", "South and partial North"),
                                 !(geo_id %in% c("V8296_007", "V8296_008")))
 
+# we will also extract all fall mlocations (including while the bird was moving), for figures
+spring.move <- geo.all %>% filter(site_type %in% c("Stopover","Nonbreeding"),
+                                  period %in% c("Pre-breeding migration","Non-breeding period"),
+                                  Recorded_North_South_mig %in% c("Both","North", "South and partial North"),
+                                  !(geo_id %in% c("V8296_007", "V8296_008")))
+
+# Calculate IQR between 97.5 and 2.5 quantiles 
+spring.stat <- spring.stat  %>% mutate(IQR.lon.dist = distHaversine(cbind(Lon.97.5.,Lat.50.), cbind(Lon.2.5., Lat.50.)),
+                                       IQR.lat.dist = distHaversine(cbind(Lon.50.,Lat.97.5.), cbind(Lon.50.,Lat.2.5.)))
+
 #get the timing of the last nonbreeding area
 spring.timings.nb <- geo.all %>% group_by(geo_id) %>% filter(NB_count == max(NB_count, na.rm = T)) %>% dplyr::select(NB.last.site.arrival = StartTime)
 spring.stat <- merge(spring.stat, spring.timings.nb, by = "geo_id")
@@ -374,7 +395,7 @@ spring.stat <- spring.stat %>% group_by(geo_id) %>% filter(StartTime >= NB.last.
   filter(distHaversine(cbind(Lon.50.,Lat.50.), cbind(deploy.longitude, deploy.latitude)) > 250000 | geo_id == "WRMA04173")
 
 # Uncomment this code to generate clusters using the pam function
-cluster.data <- clusterLocs(locs = spring.stat, maxdiam = 800)
+cluster.data <- clusterLocs(locs = spring.stat, maxdiam = 700)
 spring.stat$cluster <- cluster.data$clusters
 
 # # export spring stat sites for manual clustering
@@ -425,11 +446,11 @@ ggplot(st_as_sf(wrld_simpl))+
   theme_bw() +
   theme(text = element_text(size = 16), legend.position = "None")
 
-# # Optional: add edge from nonbreeding site back to the breeding site of origin
-# spring.breed.return <- spring.breed %>% group_by(geo_id) %>%
-#   mutate(sitenum = 1)
-# spring.breed.return[,c("StartTime", "EndTime", "duration")] <- NA
-# spring.breed.return[,c("period")] <- "Pre-breeding migration"
+# Optional: add edge from nonbreeding site back to the breeding site of origin
+spring.breed.return <- spring.breed %>% group_by(geo_id) %>%
+  mutate(sitenum = 1)
+spring.breed.return[,c("StartTime", "EndTime", "duration")] <- NA
+spring.breed.return[,c("period")] <- "Pre-breeding migration"
 
 # For geolocators deployed in the nonbreeding grounds, we need to increase site numbers because the breeding site
 spring.stat <- spring.stat %>% group_by(geo_id) %>% mutate(sitenum = ifelse(deploy.range == "Nonbreeding", sitenum + 1, sitenum))
@@ -1037,6 +1058,7 @@ meta.spring.ab <- merge(meta.spring.ab, spring.use.per.node , by.x = "vertex", b
 
 # Save elements necessary to build Fall network
 write_csv(fall.stat, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.stationary.locations.csv")
+write_csv(fall.move, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.all.locations.csv")
 write_graph(fall.graph.weighed.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.graph.edge.list.txt",
             format = c("edgelist"))
 write.csv(dplyr::select(meta.fall.ab, !num.reg.ab.vector), "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.node.metadata.csv")
@@ -1046,6 +1068,7 @@ write.csv(fall.edge.df.ab, "C:/Users/Jelan/OneDrive/Desktop/University/Universit
 
 # Save elements necessary to build spring network
 write_csv(spring.stat, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.stationary.locations.csv")
+write_csv(spring.move, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.all.locations.csv")
 write_graph(spring.graph.weighed.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.graph.edge.list.txt",
             format = c("edgelist"))
 write.csv(dplyr::select(meta.spring.ab, !num.reg.ab.vector), "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.node.metadata.csv")

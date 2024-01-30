@@ -162,7 +162,6 @@ fall.node.used.df <- fall.edge.df.ab %>% group_by(geo_id) %>% summarize(fall.nod
 spring.node.used.df <- spring.edge.df.ab %>% group_by(geo_id) %>% summarize(spring.nodes.occupied = length(unique(cluster, next.cluster)),
                                                                         spring.stopover.nodes.occupied = length(unique(cluster[node.type == "Stopover"], next.cluster[node.type == "Stopover"])),
                                                                         spring.nbr.nodes.occupied = length(unique(cluster[node.type == "Nonbreeding"], next.cluster[node.type == "Nonbreeding"])))
-
 # merge the information collected with the reference dataset 
 analysis_ref <- merge(analysis_ref, fall.node.used.df, by.x = "geo.id", by.y = "geo_id", all = T)
 analysis_ref <- merge(analysis_ref, spring.node.used.df, by.x = "geo.id", by.y = "geo_id", all = T)
@@ -173,22 +172,47 @@ analysis_ref <- merge(analysis_ref, spring.node.used.df, by.x = "geo.id", by.y =
 range(analysis_ref$fall.nodes.occupied, na.rm =  T)
 mean(analysis_ref$fall.nodes.occupied, na.rm =  T)
 se <- sd(analysis_ref$fall.nodes.occupied, na.rm =  T)/sqrt(length(analysis_ref$fall.nodes.occupied[!is.na(analysis_ref$fall.nodes.occupied)]))
+se
 
 # Average number of nodes used in the spring network 
 range(analysis_ref$spring.nodes.occupied, na.rm =  T)
 mean(analysis_ref$spring.nodes.occupied, na.rm =  T)
 se <- sd(analysis_ref$spring.nodes.occupied, na.rm =  T)/sqrt(length(analysis_ref$spring.nodes.occupied[!is.na(analysis_ref$spring.nodes.occupied)]))
+se
 
-# correlation between number of nodes used and longitude of breeding site 
-mod.fall.node <- glm(fall.nodes.occupied ~ deploy.longitude, data = analysis_ref, family = gaussian(link = "identity"))
-plot(fall.nodes.occupied ~ deploy.longitude, data = analysis_ref)
-summary(mod.fall.node)
-check_model(mod.fall.node)
+# correlation between number of  nodes used and longitude of breeding site 
+mod.fall.stopover.node <- glm(fall.stopover.nodes.occupied + fall.nbr.nodes.occupied  ~ deploy.longitude, data = analysis_ref)
+plot(fall.stopover.nodes.occupied + fall.nbr.nodes.occupied ~ deploy.longitude, data = analysis_ref)
+summary(mod.fall.stopover.node)
+check_model(mod.fall.stopover.node)
 
-mod.spring.node <- glm(spring.nodes.occupied ~ (deploy.longitude), data = analysis_ref, family = gaussian(link = "identity"))
-plot(spring.nodes.occupied ~ deploy.longitude, data = analysis_ref)
+simulationOutput <- simulateResiduals(fittedModel = mod.fall.stopover.node, plot = F)
+plot(simulationOutput)
+
+mod.spring.stopover.node <- glm(spring.stopover.nodes.occupied + spring.nbr.nodes.occupied ~ (deploy.longitude), data = analysis_ref, family = gaussian(link = "identity"))
+plot(spring.stopover.nodes.occupied  ~ deploy.longitude, data = analysis_ref)
 summary(mod.spring.node)
 check_model(mod.spring.node)
+
+simulationOutput <- simulateResiduals(fittedModel = mod.spring.stopover.node , plot = F)
+plot(simulationOutput)
+
+# # correlation between number of nonbreeding nodes used and longitude of breeding site 
+# mod.fall.nbr.node <- glm(fall.nbr.nodes.occupied ~ deploy.longitude, data = analysis_ref, family = gaussian(link = "identity"))
+# plot(fall.nbr.nodes.occupied ~ deploy.longitude, data = analysis_ref)
+# summary(mod.fall.nbr.node)
+# check_model(mod.fall.nbr.node)
+# 
+# simulationOutput <- simulateResiduals(fittedModel = mod.fall.nbr.node, plot = F)
+# plot(simulationOutput)
+# 
+# mod.spring.nbr.node <- glm(spring.nbr.nodes.occupied ~ deploy.longitude, data = analysis_ref, family = gaussian(link = "identity"))
+# plot(spring.nbr.nodes.occupied ~ deploy.longitude, data = analysis_ref)
+# summary(mod.spring.nbr.node)
+# check_model(mod.spring.nbr.node)
+# 
+# simulationOutput <- simulateResiduals(fittedModel = mod.spring.stopover.node, plot = F)
+# plot(simulationOutput)
 
 # test assessing the usage of more than one nonbreeding site (whether individuals made stopovers in the nonbreeding range)
 analysis_ref <- analysis_ref %>% mutate(fall.nbr.stopover = ifelse(fall.nbr.nodes.occupied >1, 1, 0),
@@ -199,7 +223,7 @@ boxplot(analysis_ref$deploy.longitude ~ as.factor(analysis_ref$fall.nbr.stopover
 summary(nbr.stopover.mod.fall)
 check_model(nbr.stopover.mod.fall)
 
-simulationOutput <- simulateResiduals(fittedModel = nbr.stopover.mod.fall, plot = F)
+simulationOutput <- simulateResiduals(fittedModel = nbr.stopover.mod.fall, asFactor = T)
 plot(simulationOutput)
 
 nbr.stopover.mod.spring <- glm(spring.nbr.stopover ~ deploy.longitude, data = analysis_ref, family = binomial(link = "logit"))
@@ -207,7 +231,7 @@ boxplot(analysis_ref$deploy.longitude ~ as.factor(analysis_ref$spring.nbr.stopov
 summary(nbr.stopover.mod.spring)
 check_model(nbr.stopover.mod.spring)
 
-simulationOutput <- simulateResiduals(fittedModel = nbr.stopover.mod.spring, plot = F)
+simulationOutput <- simulateResiduals(fittedModel = nbr.stopover.mod.spring, asFactor = T)
 plot(simulationOutput)
 
 ## Linear regression between the breeding and nonbreeding longitudes and latitudes -----
@@ -317,17 +341,17 @@ fall.gdata <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of
 spring.gdata <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/spring.graph.data.csv")
 
 # merge with fall graph data with fall.stat region names 
-fall.stat.regions <- fall.stat %>% mutate(cluster.region = ifelse(is.na(cluster.region), as.character(cluster), cluster.region)) %>%
-  group_by(cluster) %>% summarise(cluster.region = unique(cluster.region))
-fall.gdata <-  merge(fall.gdata, fall.stat.regions, by = "cluster")
+fall.stat.clusters <- fall.stat %>%
+  group_by(cluster) %>% summarise(cluster = unique(cluster))
+fall.gdata <-  merge(fall.gdata, fall.stat.clusters, by = "cluster")
 
 # Plot betweenness scores
-ggplot(data = fall.gdata, aes(y = betweenness, x = cluster.region, fill = node.type))+
+ggplot(data = fall.gdata, aes(y = betweenness, x = cluster, fill = node.type))+
   geom_col()+
   coord_flip()
   
 # Plot bridge betweenness scores
-ggplot(data = fall.gdata, aes(y = bridge.strength, x = cluster.region, fill = node.type))+
+ggplot(data = fall.gdata, aes(y = bridge.strength, x = cluster, fill = node.type))+
   geom_col()+
   coord_flip()
 

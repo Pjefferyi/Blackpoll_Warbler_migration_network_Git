@@ -568,8 +568,8 @@ arr.nbr.sgat <- sm %>% filter(Lat.50. < 12 & sitenum > 0 & duration > stat.nbr.l
   .$Date
 
 #add a column that categorizes the locations 
-sm <- sm %>% rowwise() %>% mutate(period= case_when(StartTime < anytime("arr.nbr.sgat", asUTC = T, tz = "GMT")  ~ "Post-breeding migration",
-                                      StartTime >= anytime("arr.nbr.sgat", asUTC = T, tz = "GMT") ~ "Non-breeding period"))
+sm <- sm %>% rowwise() %>% mutate(period= case_when(StartTime < anytime(arr.nbr.sgat, asUTC = T, tz = "GMT")  ~ "Post-breeding migration",
+                                      StartTime >= anytime(arr.nbr.sgat, asUTC = T, tz = "GMT") ~ "Non-breeding period"))
 
 #Save the output of the model 
 save(sm, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))

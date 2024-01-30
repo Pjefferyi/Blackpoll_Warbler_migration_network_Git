@@ -22,6 +22,7 @@ library(igraph)
 library(ggnetwork)
 library(intergraph)
 library(networktools)
+library(clustAnalytics)
 
 # ebird
 library(ebirdst)
@@ -37,12 +38,15 @@ fall.con.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University o
 #equinox_region <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Mapping_components/Data/Fall_Equinox_affected_regionV6.shp")
 bpw_range <-  read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Birdlife_international_species_distribution/SppDataRequest.shp")
 fall.stat <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.stationary.data.csv")
+fall.move <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.all.locations.csv")
 
 # Load required data for the spring 
 spring.graph <- read_graph("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.graph.edge.list.txt", directed = TRUE)
 meta.spring.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.node.metadata.csv")
 spring.con.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.edge.weights.csv")
 spring.stat <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.stationary.data.csv")
+spring.move <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.all.locations.csv")
+
 
 # add weights to fall and spring graph  --- 
 E(fall.graph)$weight <- fall.con.ab$weight
@@ -165,6 +169,10 @@ spring.graph.brd <- spring.graph.disc
 
 V(fall.graph)$bridge.strength <- bridge(fall.graph.brd,  nodes =as.character(V(fall.graph.brd)), communities = V(fall.graph)$walktrap.comm , directed = T)$`Bridge Strength`
 V(spring.graph)$bridge.strength <- bridge(spring.graph.brd, nodes =as.character(V(spring.graph.brd)), communities = V(spring.graph)$wakltrap.comm, directed = T)$`Bridge Strength`
+V(fall.graph)$bridge.betweenness <- bridge(fall.graph.brd,  nodes =as.character(V(fall.graph.brd)), communities = V(fall.graph)$walktrap.comm , directed = T)$`Bridge Betweenness`
+V(spring.graph)$bridge.betweenness <- bridge(spring.graph.brd, nodes =as.character(V(spring.graph.brd)), communities = V(spring.graph)$wakltrap.comm, directed = T)$`Bridge Betweenness`
+V(fall.graph)$bridge.indegree <- bridge(fall.graph.brd,  nodes =as.character(V(fall.graph.brd)), communities = V(fall.graph)$walktrap.comm , directed = T)$`Bridge Indegree`
+V(spring.graph)$bridge.indegree <- bridge(spring.graph.brd, nodes =as.character(V(spring.graph.brd)), communities = V(spring.graph)$wakltrap.comm, directed = T)$`Bridge Indegree`
 
 #Save graphs with their attribute data ----
 fall.gdata <- igraph::as_data_frame(fall.graph, what = "vertices") %>% mutate(cluster = seq(1:vcount(fall.graph)))
@@ -497,13 +505,13 @@ for (i in seq(1, length(colnames(rand.data)))){
     score.test.spring [i,"parameter"] <- test.results$parameter
     score.test.spring [i,"p-value"] <- test.results$p.value
   }else{
-    score.test[i,"score.function"] <- colnames(rand.data)[i]
-    score.test[i,"observed.score"] <- ob.score[,i]
-    score.test[i,"random.function.mean"] <- mean (rand.data[,i])
-    score.test[i, "random.function.se"] <- sd(rand.data[,i], na.rm = T)/sqrt(length(rand.data[,i][!is.na(rand.data[,i])]))
-    score.test[i,"statistic"] <- NA
-    score.test[i,"parameter"] <- NA
-    score.test[i,"p-value"] <- NA
+    score.test.spring[i,"score.function"] <- colnames(rand.data)[i]
+    score.test.spring[i,"observed.score"] <- ob.score[,i]
+    score.test.spring[i,"random.function.mean"] <- mean (rand.data[,i])
+    score.test.spring[i, "random.function.se"] <- sd(rand.data[,i], na.rm = T)/sqrt(length(rand.data[,i][!is.na(rand.data[,i])]))
+    score.test.spring[i,"statistic"] <- NA
+    score.test.spring[i,"parameter"] <- NA
+    score.test.spring[i,"p-value"] <- NA
   }
 }
 
@@ -551,7 +559,7 @@ spring.gplot.betw <- ggplot(st_as_sf(America))+
         axis.ticks.length = unit(0, "pt"),
         plot.margin = unit(c(0,0,0,0), "pt"))
 
-## Bridge strength in fall network ----
+## Bridge metric in fall network ----
 fall.gplot.bridge.str <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
   coord_sf(xlim = c(-170, -50),ylim = c(-3, 68)) +
@@ -559,9 +567,9 @@ fall.gplot.bridge.str <- ggplot(st_as_sf(America))+
              arrow = arrow(length = unit(9, "pt"), type = "closed", angle = 10))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
   scale_color_manual(values=c(adjustcolor("black", alpha = 0.5), adjustcolor("blue", alpha = 0)), guide = "none")+
-  geom_nodes(data = fall.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = bridge.strength ), shape=21, size  = 3)+
+  geom_nodes(data = fall.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = bridge.indegree), shape=21, size  = 3)+
   scale_fill_viridis_c(direction = -1, option = "magma", name = "Bridge strength", 
-                       guide = guide_colorbar(frame.colour = "black"), limits = c(min(0), max(fall.ggnet$bridge.strength, spring.ggnet$bridge.strength)))+
+                       guide = guide_colorbar(frame.colour = "black"), limits = c(min(0), max(fall.ggnet$bridge.indegree, spring.ggnet$bridge.indegree)))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         legend.position = c(-0.18, 0.4), text = element_text(size = 10), legend.key = element_blank(),
@@ -571,17 +579,17 @@ fall.gplot.bridge.str <- ggplot(st_as_sf(America))+
         axis.ticks.length = unit(0, "pt"),
         plot.margin = unit(c(0,0,0,0), "pt"))
 
-## Bridge strength in spring network ----
-spring.gplot.bridge.str<- ggplot(st_as_sf(America))+
+## Bridge metric in spring network ----
+spring.gplot.bridge.str <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
   coord_sf(xlim = c(-170, -50),ylim = c(-3, 68)) +
   geom_edges(data = spring.ggnet, mapping = aes(x = x, y = y, xend = xend, yend = yend, col = edge.type, lwd = weight),
              arrow = arrow(length = unit(9, "pt"), type = "closed", angle = 10))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
-  geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = bridge.strength), shape=21, size  = 3)+
+  geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = bridge.indegree), shape=21, size  = 3)+
   scale_color_manual(values=c(adjustcolor("blue", alpha = 0), adjustcolor("black", alpha = 0.5)), guide = "none")+
   scale_fill_viridis_c(direction = -1, option = "magma", name = "Bridge Strength", 
-                       guide = guide_colorbar(frame.colour = "black"), limits = c(min(0), max(fall.ggnet$bridge.strength, spring.ggnet$bridge.strength)))+
+                       guide = guide_colorbar(frame.colour = "black"), limits = c(min(0), max(fall.ggnet$bridge.indegree, spring.ggnet$bridge.indegree)))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         legend.position = "None", text = element_text(size = 10), legend.key = element_blank(),
@@ -871,5 +879,76 @@ ab.prop.regions.fig <- ggplot(st_as_sf(America))+
         plot.margin = unit(c(0,0,0,0), "pt"),
         legend.key = element_rect(colour = "transparent", fill = "white"))
 
+## Save the plot ----
 ggsave(plot = ab.prop.regions.fig, filename = "MC.nbr.regions.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
        units = "cm", width = 24*1.2, height = 10*1.2, dpi = "print", bg = "white")
+
+# Figure 8 individual migratory tracks for the fall migration  ----
+
+# We create a list of plots
+fall.ind <- list()
+
+fall.stat <- fall.stat %>% arrange(geo_id, StartTime)
+
+# We will use fall.stat
+for (i in unique(fall.stat$geo_id)){
+  
+  ind.stat <- fall.stat[fall.stat$geo_id == i,] %>% filter(!is.na(StartTime))
+  #ind.move <- fall.move[fall.move$geo_id == i,]
+  ind.data.stat <- fall.stat[fall.stat$geo_id == i & fall.stat$sitenum !=0,]
+  
+  fall.ind[[i]] <- ggplot(st_as_sf(America))+
+    geom_sf(colour = "black", fill = "white") +
+    coord_sf(xlim = c(-170, -30),ylim = c(-15, 70)) +
+    geom_errorbar(data = ind.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, width = 1, alpha = 0.8, color = "black") +
+    geom_errorbar(data = ind.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, width = 1, alpha = 0.8, color = "black") +
+    geom_path(data = ind.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5, col = "blue") +
+    geom_point(data =  ind.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = sitenum), col = "black", pch = 21, cex = 1.5)+
+    scale_fill_continuous(low = "yellow", high = "purple")+
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+          panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
+          axis.title =element_blank(),
+          axis.text =element_blank(),
+          axis.ticks =element_blank(),
+          axis.ticks.length = unit(0, "pt"),
+          legend.spacing = unit(-5, "pt"),
+          legend.position = c(0.2, 0.4),
+          plot.margin = unit(c(0,0,0,0), "pt"),
+          legend.key = element_rect(colour = "transparent", fill = "white"))
+  
+}
+
+# Figure 9 individual migratory tracks for the spring migration  ----
+
+# We create a list of plots
+spring.ind <- list()
+
+spring.stat <- spring.stat %>% arrange(geo_id, StartTime)
+
+# We will use spring.stat
+for (i in unique(spring.stat$geo_id)){
+  
+  ind.stat <- spring.stat[spring.stat$geo_id == i,] %>% filter(!is.na(StartTime))
+  ind.move <- spring.move[spring.move$geo_id == i,]
+  ind.data.stat <- spring.stat[spring.stat$geo_id == i & spring.stat$sitenum !=0,]
+  
+  spring.ind[[i]] <- ggplot(st_as_sf(America))+
+    geom_sf(colour = "black", fill = "white") +
+    coord_sf(xlim = c(-170, -30),ylim = c(-15, 70)) +
+    geom_errorbar(data = ind.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, width = 1, alpha = 0.8, color = "black") +
+    geom_errorbar(data = ind.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, width = 1, alpha = 0.8, color = "black") +
+    geom_path(data = ind.move, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5, col = "blue") +
+    geom_point(data =  ind.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = sitenum), col = "black", pch = 21, cex = 1.5)+
+    scale_fill_continuous(low = "yellow", high = "purple")+
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+          panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
+          axis.title =element_blank(),
+          axis.text =element_blank(),
+          axis.ticks =element_blank(),
+          axis.ticks.length = unit(0, "pt"),
+          legend.spacing = unit(-5, "pt"),
+          legend.position = c(0.2, 0.4),
+          plot.margin = unit(c(0,0,0,0), "pt"),
+          legend.key = element_rect(colour = "transparent", fill = "white"))
+  
+}

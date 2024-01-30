@@ -704,7 +704,7 @@ insertLoc <- function(data, lat.at.loc, start.date, end.date, period, thresh.loc
 clusterLocs <- function(locs, maxdiam = 300, lon.only = F){
   
   # locs: Input locations should be in a dafatframe with reference information 
-  # maxdiam: the maximum diameter of clusters (measured as the mean distance between the two furthest location in each cluster) in km
+  # maxdiam: the maximum diameter of clusters (measured as the median distance between the two furthest location in each cluster) in km
   
   if (lon.only == F){
   
@@ -754,8 +754,8 @@ clusterLocs <- function(locs, maxdiam = 300, lon.only = F){
         }
       }
       
-      diam <- mean(diam.list)
-      print(paste("mean diameter =", as.character(diam), "km"))
+      diam <- median(diam.list)
+      print(paste("median diameter =", as.character(diam), "km"))
       print(paste("Run #", as.character(runs)))
       print(paste("k =", as.character(k)))
       runs <-  runs + 1 
@@ -813,8 +813,8 @@ clusterLocs <- function(locs, maxdiam = 300, lon.only = F){
         }
       }
       
-      diam <- mean(diam.list)
-      print(paste("mean diameter =", as.character(diam), "km"))
+      diam <- median(diam.list)
+      print(paste("median diameter =", as.character(diam), "km"))
       print(paste("Run #", as.character(runs)))
       print(paste("k =", as.character(k)))
       runs <-  runs + 1 
