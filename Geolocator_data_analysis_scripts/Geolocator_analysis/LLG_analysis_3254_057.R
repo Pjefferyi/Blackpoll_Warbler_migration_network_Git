@@ -67,7 +67,7 @@ lig <- readLig(paste0(dir,"/Raw_light_data_", geo.id, ".lig"), skip = 1)
 offset <- 20 # adjusts the y-axis to put night (dark shades) in the middle
 
 #Threshold light level 
-threshold <- 1.5 
+threshold <- 1.5
 
 # visualize threshold over light levels  
 thresholdOverLight(lig, threshold, span =c(0, 25000))
@@ -223,8 +223,8 @@ dev.off()
 # Using approximate timings of arrival and departure from the breeding grounds
 zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith0,
-                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad + 2,
-                            Date > anytime(dep.nbr) ~ zenith0_ad + 2))
+                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad + 2.5,
+                            Date > anytime(dep.nbr) ~ zenith0_ad + 2.5))
 
 zeniths0 <- zenith_twl_zero$zenith
 
@@ -277,7 +277,7 @@ data(wrld_simpl)
 plot(x0, type = "n", xlab = "", ylab = "")
 plot(wrld_simpl, col = "grey95", add = T)
 
-points(path$x, pch=19, col="cornflowerblue", type = "o")
+points(path$x[1:300,], pch=19, col="cornflowerblue", type = "o")
 points(lon.calib, lat.calib, pch = 16, cex = 2.5, col = "firebrick")
 box()
 

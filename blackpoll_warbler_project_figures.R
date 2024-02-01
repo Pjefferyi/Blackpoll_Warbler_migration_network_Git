@@ -880,7 +880,7 @@ ab.prop.regions.fig <- ggplot(st_as_sf(America))+
         legend.key = element_rect(colour = "transparent", fill = "white"))
 
 ## Save the plot ----
-ggsave(plot = ab.prop.regions.fig, filename = "MC.nbr.regions.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
+ggsave(plot = ab.prop.regions.fig, filename = "abundance.prop.regions.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
        units = "cm", width = 24*1.2, height = 10*1.2, dpi = "print", bg = "white")
 
 # Figure 8 individual migratory tracks for the fall migration  ----
@@ -900,23 +900,44 @@ for (i in unique(fall.stat$geo_id)){
   fall.ind[[i]] <- ggplot(st_as_sf(America))+
     geom_sf(colour = "black", fill = "white") +
     coord_sf(xlim = c(-170, -30),ylim = c(-15, 70)) +
+    #coord_sf(xlim = c(min(ind.stat$Lon.50.)-15, max(ind.stat$Lon.50.)+15),ylim = c(min(ind.stat$Lat.50.)-15, max(ind.stat$Lat.50.)+15)) +
     geom_errorbar(data = ind.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, width = 1, alpha = 0.8, color = "black") +
     geom_errorbar(data = ind.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, width = 1, alpha = 0.8, color = "black") +
     geom_path(data = ind.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5, col = "blue") +
     geom_point(data =  ind.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = sitenum), col = "black", pch = 21, cex = 1.5)+
     scale_fill_continuous(low = "yellow", high = "purple")+
+    ggtitle(i) +
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
           panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
+          legend.position = "none",
+          plot.title=element_text(size=8, vjust=-1),
           axis.title =element_blank(),
           axis.text =element_blank(),
           axis.ticks =element_blank(),
           axis.ticks.length = unit(0, "pt"),
           legend.spacing = unit(-5, "pt"),
-          legend.position = c(0.2, 0.4),
           plot.margin = unit(c(0,0,0,0), "pt"),
           legend.key = element_rect(colour = "transparent", fill = "white"))
   
 }
+
+# Create a panel of plots 
+# function from : https://stackoverflow.com/questions/66688668/automatically-assemble-plots-for-patchwork-from-a-list-of-ggplots 
+plot_a_list <- function(plots, nrows, ncols) {
+  
+  patchwork::wrap_plots(plots, 
+                        nrow = nrows, ncol = ncols)
+}
+
+fall.ind.panel1 <- plot_a_list(fall.ind[1:24], 6, 4)
+fall.ind.panel2 <- plot_a_list(fall.ind[25:44], 6, 4)
+
+## Save the plots ----
+ggsave(plot = fall.ind.panel1, filename = "individual.fall.movements1.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
+       units = "cm", width = 24*1.2, height = 30*1.2, dpi = "print", bg = "white")
+
+ggsave(plot = fall.ind.panel2, filename = "individual.fall.movements2.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
+       units = "cm", width = 24*1.2, height = 30*1.2, dpi = "print", bg = "white")
 
 # Figure 9 individual migratory tracks for the spring migration  ----
 
@@ -937,18 +958,38 @@ for (i in unique(spring.stat$geo_id)){
     coord_sf(xlim = c(-170, -30),ylim = c(-15, 70)) +
     geom_errorbar(data = ind.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, width = 1, alpha = 0.8, color = "black") +
     geom_errorbar(data = ind.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, width = 1, alpha = 0.8, color = "black") +
-    geom_path(data = ind.move, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5, col = "blue") +
+    geom_path(data = ind.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5, col = "blue") +
     geom_point(data =  ind.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = sitenum), col = "black", pch = 21, cex = 1.5)+
     scale_fill_continuous(low = "yellow", high = "purple")+
+    ggtitle(i) +
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
           panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
+          plot.title=element_text(size=8, vjust=-1),
           axis.title =element_blank(),
           axis.text =element_blank(),
           axis.ticks =element_blank(),
           axis.ticks.length = unit(0, "pt"),
           legend.spacing = unit(-5, "pt"),
-          legend.position = c(0.2, 0.4),
+          legend.position = "none",
           plot.margin = unit(c(0,0,0,0), "pt"),
           legend.key = element_rect(colour = "transparent", fill = "white"))
   
 }
+
+# Create a panel of plots 
+# function from : https://stackoverflow.com/questions/66688668/automatically-assemble-plots-for-patchwork-from-a-list-of-ggplots 
+plot_a_list <- function(plots, nrows, ncols) {
+  
+  patchwork::wrap_plots(plots, 
+                        nrow = nrows, ncol = ncols)
+}
+
+spring.ind.panel1 <- plot_a_list(spring.ind[1:24], 6, 4)
+spring.ind.panel2 <- plot_a_list(spring.ind[25:35], 6, 4)
+
+## Save the plots ----
+ggsave(plot = spring.ind.panel1, filename = "individual.spring.movements1.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
+       units = "cm", width = 24*1.2, height = 30*1.2, dpi = "print", bg = "white")
+
+ggsave(plot = spring.ind.panel2, filename = "individual.spring.movements2.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
+       units = "cm", width = 24*1.2, height = 30*1.2, dpi = "print", bg = "white")
