@@ -193,7 +193,7 @@ z0 <- trackMidpts(x0_r)
 save(x0_r, file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
 
 # Check the following times of arrival and departure using a plot 
-arr.nbr <- "2018-10-29" 
+arr.nbr <- "2018-10-17" 
 dep.nbr <- "2019-04-28" 
 
 # open jpeg
@@ -255,7 +255,7 @@ abline(v = spring.equi, col = "orange")
 dev.off()
 
 # Initial Path #################################################################
-tol_ini <- 0.1
+tol_ini <- 0.12
 path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol = tol_ini)
 
 x0 <- path$x
@@ -310,7 +310,7 @@ twl_adjusted <- twl %>% mutate(Twilight = Twilight + seconds(CD.model$coefficien
                                 Twilight0 = Twilight0 + seconds(CD.model$coefficients[2] * 240 * timestep))
 
 # Initial Path with Clock Drift Adjustment  ####################################
-path <- thresholdPath(twl_adjusted$Twilight, twl_adjusted$Rise, zenith = zeniths_med, tol=0.12)
+path <- thresholdPath(twl_adjusted$Twilight, twl_adjusted$Rise, zenith = zeniths_med, tol= tol_ini)
 
 x0 <- path$x
 z0 <- trackMidpts(x0)
@@ -323,7 +323,7 @@ data(wrld_simpl)
 plot(x0, type = "n", xlab = "", ylab = "")
 plot(wrld_simpl, col = "grey95", add = T)
 
-points(path$x, pch=19, col="cornflowerblue", type = "o")
+points(path$x[1:300,], pch=19, col="cornflowerblue", type = "o")
 points(lon.calib, lat.calib, pch = 16, cex = 2.5, col = "firebrick")
 box()
 
@@ -340,7 +340,7 @@ geo_twl_adjusted <- export2GeoLight(twl_adjusted)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-cL <- changeLight(twl= geo_twl_adjusted, quantile= 0.7, summary = F, days = days, plot = T)
+cL <- changeLight(twl= geo_twl_adjusted, quantile= 0.71, summary = F, days = days, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
 mS <- mergeSites(twl = geo_twl_adjusted, site = cL$site, degElevation = 90-zenith, distThreshold = dist)
@@ -523,6 +523,9 @@ text(sm[,"Lon.50."], sm[,"Lat.50."], ifelse(sitenum>0, as.integer(((sm$EndTime -
 
 #Show dates
 #text(sm[,"Lon.50."], sm[,"Lat.50."], ifelse(sitenum>0, as.character(sm$StartTime), ""), col="red", pos = 1) 
+
+# median stationary locations from the theshold analysis 
+points(dtx0[sitenum > 0,], pch = 16, cex = 1, col = "green")
 
 #Close jpeg
 dev.off()

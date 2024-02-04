@@ -158,7 +158,7 @@ NB.stat <- NB.stat %>%
    mutate(spring.equinox.date = anytime(spring.equinox.date),
           equinox.nbr.move = ifelse(EndTime > anytime(spring.equinox.date) - days(14) & EndTime < anytime(spring.equinox.date) + days(14),
                                     "equinox affected", "equinox free"),
-          timing.nbr.move = ifelse(month(anytime(EndTime)) > 10,
+          timing.nbr.move = ifelse(month(anytime(EndTime)) >= 9,
                                    "fall.nbr.movement", "winter.nbr.movements"))%>%
   mutate(equinox.nbr.move = ifelse(lag(nbr.move.group) == nbr.move.group, dplyr::lag(equinox.nbr.move, default = "a"), equinox.nbr.move),
          timing.nbr.move = ifelse(lag(nbr.move.group) == nbr.move.group, dplyr::lag(timing.nbr.move, default = "b"), timing.nbr.move))

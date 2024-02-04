@@ -82,15 +82,15 @@ lightImage( tagdata = lig,
 tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
                        offset = offset, lwd = 3, col = adjustcolor("orange", alpha.f = 0.5))
 
-# we will do an initial twilight annotation to find identify the time interval
-# by which we need to shift time
-# There should be not need to edit, delete or insert twilights for this
- # twl_in <- preprocessLight(lig,
- #                           threshold = threshold,
- #                           offset = offset,
- #                           lmax = 64,         # max. light value
- #                           gr.Device = "x11", # MacOS version (and windows)
- #                           dark.min = 60)
+# # we will do an initial twilight annotation to find identify the time interval
+# # by which we need to shift time
+# # There should be not need to edit, delete or insert twilights for this
+#  twl_in <- preprocessLight(lig,
+#                            threshold = threshold,
+#                            offset = offset,
+#                            lmax = 64,         # max. light value
+#                            gr.Device = "x11", # MacOS version (and windows)
+#                            dark.min = 60)
 
 #write.csv(twl_in, paste0(dir,"/", geo.id,"_twl_times_initial.csv"))
 twl_in <- read.csv(paste0(dir,"/", geo.id,"_twl_times_initial.csv"))

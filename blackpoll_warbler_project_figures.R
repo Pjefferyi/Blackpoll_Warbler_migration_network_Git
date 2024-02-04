@@ -16,6 +16,10 @@ library(ggnewscale)
 library(cowplot)
 library(ggpubr)
 library(patchwork)
+library(mmtable2)
+library(purrr)
+library(stringr)
+library(gt)
 
 # network specific libraries ----
 library(igraph)
@@ -26,6 +30,9 @@ library(clustAnalytics)
 
 # ebird
 library(ebirdst)
+
+# set ebirddist access key
+# set_ebirdst_access_key("bmedjn18aoku")
 
 # Will need to run the network analysis and construction scripts ----
 #source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_analysis/Network_Analysis.R")
@@ -181,7 +188,7 @@ spring.gdata <- igraph::as_data_frame(spring.graph, what = "vertices") %>% mutat
 write.csv(fall.gdata, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/fall.graph.data.csv")
 write.csv(spring.gdata, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/spring.graph.data.csv")
 
-# Figure 1: Fall and spring migratory network node types and stationary location clusters ----
+# Figures 1 and 2: Fall and spring migratory network node types and stationary location clusters ----
 America <- wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),]
 
 # Create the equinox region for the fall network 
@@ -191,7 +198,7 @@ equipol <- st_read("C:/Users/Jelan/OneDrive/Desktop/University/University of Gue
 
 # load blackpoll warbler range polygon
 bpw.range <- st_read("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Birdlife_international_species_distribution/SppDataRequest.shp") %>%
-  filter(seasonal %in% c(2,3,4)) %>% st_union() %>% st_transform(crs(wrld_simpl))
+  dplyr::filter(seasonal %in% c(2,3,4)) %>% st_union() %>% st_transform(crs(wrld_simpl))
 
 # Find its intersection with the Blackpoll warbler's breeding range 
 sf_use_s2(FALSE)
@@ -294,11 +301,11 @@ spring.clustplot<- ggplot(st_as_sf(America))+
 
 ## Panel ----
 nodes.fig <- (fall.gplot | spring.gplot)/ (fall.clustplot |spring.clustplot) +
-  plot_annotation(tag_levels = 'a') & 
+  plot_annotation(tag_levels = 'a') &
   theme(plot.tag.position = c(0.05, 0.95),
-        plot.tag = element_text(face = 'bold', size = 10)) 
+        plot.tag = element_text(face = 'bold', size = 10))
 
-ggsave(plot = nodes.fig, filename = "nodes.figure.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
+ggsave(plot = nodes.fig, filename = "nodes.figure.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures",
        units = "cm", width = 24*1.2, height = 10*1.2, dpi = "print", bg = "white")
 
 # Figure 2: Node population composition ---- 
@@ -846,10 +853,11 @@ br.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of 
   st_cast("MULTIPOLYGON")
 
 # load blackpoll warbler range polygons
-bpw.range <- load_ranges("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_imports/2021/bkpwar",
-                           resolution = "mr",
+bpw.range <- load_ranges(path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_imports",
+                         species = "bkpwar",
+                           resolution = "27km",
                            smoothed = T) %>%
-  filter(season %in% c("breeding", "nonbreeding")) %>% st_transform(crs(wrld_simpl))
+  dplyr::filter(season %in% c("breeding", "nonbreeding")) %>% st_transform(crs(wrld_simpl))
 
 # polygon for america 
 sf_use_s2(FALSE)

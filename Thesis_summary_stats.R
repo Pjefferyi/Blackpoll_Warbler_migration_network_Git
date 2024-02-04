@@ -168,19 +168,19 @@ analysis_ref <- merge(analysis_ref, spring.node.used.df, by.x = "geo.id", by.y =
 
 ## Statistics of node usage ----
 
-# Average number of nodes used in fall network
+### Average number of nodes used in fall network ----
 range(analysis_ref$fall.nodes.occupied, na.rm =  T)
 mean(analysis_ref$fall.nodes.occupied, na.rm =  T)
 se <- sd(analysis_ref$fall.nodes.occupied, na.rm =  T)/sqrt(length(analysis_ref$fall.nodes.occupied[!is.na(analysis_ref$fall.nodes.occupied)]))
 se
 
-# Average number of nodes used in the spring network 
+### Average number of nodes used in the spring network  ----
 range(analysis_ref$spring.nodes.occupied, na.rm =  T)
 mean(analysis_ref$spring.nodes.occupied, na.rm =  T)
 se <- sd(analysis_ref$spring.nodes.occupied, na.rm =  T)/sqrt(length(analysis_ref$spring.nodes.occupied[!is.na(analysis_ref$spring.nodes.occupied)]))
 se
 
-# correlation between number of  nodes used and longitude of breeding site 
+### correlation between number of  nodes used and longitude of breeding site ----
 mod.fall.stopover.node <- glm(fall.stopover.nodes.occupied + fall.nbr.nodes.occupied  ~ deploy.longitude, data = analysis_ref)
 plot(fall.stopover.nodes.occupied + fall.nbr.nodes.occupied ~ deploy.longitude, data = analysis_ref)
 summary(mod.fall.stopover.node)
@@ -191,8 +191,8 @@ plot(simulationOutput)
 
 mod.spring.stopover.node <- glm(spring.stopover.nodes.occupied + spring.nbr.nodes.occupied ~ (deploy.longitude), data = analysis_ref, family = gaussian(link = "identity"))
 plot(spring.stopover.nodes.occupied  ~ deploy.longitude, data = analysis_ref)
-summary(mod.spring.node)
-check_model(mod.spring.node)
+summary(mod.spring.stopover.node)
+check_model(mod.spring.stopover.node)
 
 simulationOutput <- simulateResiduals(fittedModel = mod.spring.stopover.node , plot = F)
 plot(simulationOutput)
@@ -214,7 +214,7 @@ plot(simulationOutput)
 # simulationOutput <- simulateResiduals(fittedModel = mod.spring.stopover.node, plot = F)
 # plot(simulationOutput)
 
-# test assessing the usage of more than one nonbreeding site (whether individuals made stopovers in the nonbreeding range)
+### test assessing the usage of more than one nonbreeding site (whether individuals made stopovers in the nonbreeding range) ----
 analysis_ref <- analysis_ref %>% mutate(fall.nbr.stopover = ifelse(fall.nbr.nodes.occupied >1, 1, 0),
                                         spring.nbr.stopover = ifelse(spring.nbr.nodes.occupied >1, 1, 0))
 
@@ -258,7 +258,7 @@ loc_list <- list(geo.nbr1.loc , geo.nbr2.loc)
 analysis_ref <- loc_list %>% purrr::reduce(full_join, by='geo_id') %>% 
   merge(analysis_ref, by.x = "geo_id", by.y = "geo.id", all = T)
 
-# Plot the first nonbreeding longitude against the breeding longitude 
+## Plot the first nonbreeding longitude against the breeding longitude ----
 long.plot1 <- ggplot(data = analysis_ref, aes(x = deploy.longitude, y = nbr1.lon)) + 
   geom_point() + 
   geom_smooth(method = "lm", se = F, colour="black", size=0.5, linetype = "dashed") + 
@@ -276,7 +276,7 @@ check_model(mod1)
 simulationOutput <- simulateResiduals(fittedModel =  mod1, plot = F)
 plot(simulationOutput)
 
-# Plot the second nonbreeding longitude against the breeding longitude 
+## Plot the second nonbreeding longitude against the breeding longitude ----
 long.plot2 <- ggplot(data = analysis_ref, aes(x = deploy.longitude, y = nbr2.lon)) + 
   geom_point() + 
   geom_smooth(method = "lm", se = F, colour="black", size=0.5, linetype = "dashed") + 
@@ -294,7 +294,7 @@ check_model(mod2)
 simulationOutput <- simulateResiduals(fittedModel =  mod2, plot = F)
 plot(simulationOutput)
 
-# Plot the first nonbreeding latitude against the breeding latitude
+## Plot the first nonbreeding latitude against the breeding latitude ----
 lat.plot1 <- ggplot(data = analysis_ref, aes(x = deploy.latitude, y = nbr1.lat)) + 
   geom_point() + 
   geom_smooth(method = "lm", se = F, colour="black", size=0.5, linetype = "dashed") + 
@@ -312,7 +312,7 @@ check_model(mod3)
 simulationOutput <- simulateResiduals(fittedModel =  mod3, plot = F)
 plot(simulationOutput)
 
-# Plot the first nonbreeding latitude against the breeding latitude
+## Plot the second nonbreeding latitude against the breeding latitude ----
 lat.plot2 <- ggplot(data = analysis_ref, aes(x = deploy.latitude, y = nbr2.lat)) + 
   geom_point() + 
   geom_smooth(method = "lm", se = F, colour="black", size=0.5, linetype = "dashed") + 
@@ -334,6 +334,24 @@ x <- analysis_ref$nbr2.lon[!is.na(analysis_ref$nbr2.lon)]
 y <- analysis_ref$deploy.longitude[!is.na(analysis_ref$nbr2.lon)]
 cor(x,y, method = "pearson")
 
+## Plot the first nonbreeding latitude against the breeding longitude ----
+lonlat.plot1 <- ggplot(data = analysis_ref, aes(x = deploy.longitude, y = nbr1.lat)) + 
+  geom_point() + 
+  geom_smooth(method = "lm", se = F, colour="black", size=0.5, linetype = "dashed") + 
+  theme_bw() +
+  theme(text = element_text(size = 14)) +
+  labs(x = "Breeding longitude",
+       y = "First nonbreeding site latitude")
+
+# run a regression model
+mod5 <- lm(nbr1.lat ~ deploy.longitude, data = analysis_ref)
+plot(nbr1.lat ~ deploy.longitude, data = analysis_ref)
+summary(mod5)
+check_model(mod5)
+
+simulationOutput <- simulateResiduals(fittedModel =  mod5, plot = F)
+plot(simulationOutput)
+
 ## network metric scores by nodes ----
 
 #load network data
@@ -346,12 +364,12 @@ fall.stat.clusters <- fall.stat %>%
 fall.gdata <-  merge(fall.gdata, fall.stat.clusters, by = "cluster")
 
 # Plot betweenness scores
-ggplot(data = fall.gdata, aes(y = betweenness, x = cluster, fill = node.type))+
+ggplot(data = fall.gdata, aes(y = betweenness, x = factor(cluster), fill = node.type))+
   geom_col()+
   coord_flip()
   
 # Plot bridge betweenness scores
-ggplot(data = fall.gdata, aes(y = bridge.strength, x = cluster, fill = node.type))+
+ggplot(data = fall.gdata, aes(y = bridge.indegree, x = factor(cluster), fill = node.type))+
   geom_col()+
   coord_flip()
 
@@ -366,7 +384,7 @@ ggplot(data = spring.gdata, aes(y = betweenness, x = as.factor(cluster), fill = 
   coord_flip()
 
 # Plot bridge betweenness scores
-ggplot(data = spring.gdata, aes(y = bridge.strength, x = as.factor(cluster), fill = node.type))+
+ggplot(data = spring.gdata, aes(y = bridge.indegree, x = as.factor(cluster), fill = node.type))+
   geom_col()+
   coord_flip()
 
@@ -381,16 +399,16 @@ NB.mover.cat <- NB.move %>% group_by(geo_id) %>%
   summarise(status = unique(nbr.mover), n.movements = n(), initial.nbr.lon = first(initial.nbr.lon), breeding.lon = first(deploy.longitude)) %>%
   mutate(n.movements = ifelse(status == "nonmover", 0, n.movements/2))
   
-# How many birds performed nonbreeding movements?
+## How many birds performed nonbreeding movements? ----
 NB.mover.cat %>% group_by(status) %>% summarize(n = n())
 
-# test whether the probability of nonbreeding movements was influenced by the longitude of the first nonbreeding site occupied 
+## test whether the probability of nonbreeding movements was influenced by the longitude of the first nonbreeding site occupied ---- 
 nbr.lon.mod <- glm(as.factor(status) ~ initial.nbr.lon, data = NB.mover.cat, family = binomial(link = "logit"))
 boxplot(initial.nbr.lon ~ as.factor(status), data = NB.mover.cat)
 summary(nbr.lon.mod)
 check_model(nbr.lon.mod)
 
-# get dataframe for movements that classifies timing and direction 
+## get dataframe for movements that classifies timing and direction -----
 NB.move.mod <- NB.move %>% filter(nbr.mover == "mover") %>% group_by(geo_id) %>%
   mutate(move.start = EndTime,
          move.end = lead(StartTime),
