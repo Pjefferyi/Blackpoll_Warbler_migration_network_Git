@@ -1001,3 +1001,44 @@ ggsave(plot = spring.ind.panel1, filename = "individual.spring.movements1.png" ,
 
 ggsave(plot = spring.ind.panel2, filename = "individual.spring.movements2.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
        units = "cm", width = 24*1.2, height = 30*1.2, dpi = "print", bg = "white")
+
+
+# Figure 10 individual migratory tracks for full year  ----
+
+# We create a list of plots
+loc.ind <- list()
+
+#Load locations processed during the netwrok construction 
+geo.all <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/All.locations.csv") %>% arrange(geo_id, StartTime)
+
+# loop through the locations an create the plots 
+for (i in unique(geo.all$geo_id)){
+  
+  ind.data <- geo.all[geo.all$geo_id == i,] %>% filter(!is.na(StartTime))
+  ind.data.stat <- geo.all[geo.all$geo_id == i & geo.all$sitenum !=0,]
+  
+  loc.ind[[i]] <- ggplot(st_as_sf(America))+
+    geom_sf(colour = "black", fill = "white") +
+    coord_sf(xlim = c(-170, -30),ylim = c(-15, 70)) +
+    #coord_sf(xlim = c(min(ind.stat$Lon.50.)-15, max(ind.stat$Lon.50.)+15),ylim = c(min(ind.stat$Lat.50.)-15, max(ind.stat$Lat.50.)+15)) +
+    geom_errorbar(data = ind.data.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, width = 1, alpha = 0.8, color = "black") +
+    geom_errorbar(data = ind.data.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, width = 1, alpha = 0.8, color = "black") +
+    geom_path(data = ind.data, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, col = period), alpha = 0.9, col = "gray") +
+    geom_point(data =  ind.data.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = period), col = "black", pch = 21, cex = 2)+
+    scale_fill_manual(values=c("Post-breeding migration" = "red", "Non-breeding period"  = "green", "Pre-breeding migration" = "blue"), guide = "none")+
+    #scale_fill_continuous(low = "yellow", high = "purple")+
+    ggtitle(i) +
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+          panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
+          legend.position = "none",
+          plot.title=element_text(size=8, vjust=-1),
+          axis.title =element_blank(),
+          axis.text =element_blank(),
+          axis.ticks =element_blank(),
+          axis.ticks.length = unit(0, "pt"),
+          legend.spacing = unit(-5, "pt"),
+          plot.margin = unit(c(0,0,0,0), "pt"),
+          legend.key = element_rect(colour = "transparent", fill = "white"))
+}
+
+
