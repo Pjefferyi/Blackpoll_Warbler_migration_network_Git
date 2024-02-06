@@ -144,6 +144,9 @@ for (i in seq(1, nrow(geo.all))){
 #Save the new columns in the reference data
 write.csv(ref_data,"C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE)
 
+#save the processed geolocatorlocations 
+write.csv(geo.all, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/All.locations.csv",row.names=FALSE)
+
 ################################################################################
 # Fall migration network #######################################################
 ################################################################################
@@ -237,6 +240,7 @@ ggplot(st_as_sf(wrld_simpl))+
   coord_sf(xlim = c(-170, -30),ylim = c(-15, 70)) +
   geom_path(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5) +
   geom_point(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, colour = site_type)) +
+  #geom_text(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., label = geo_id), cex = 2)+
   theme_bw() +
   theme(text = element_text(size = 16))
 
@@ -320,7 +324,7 @@ meta.fall <- data.frame("vertex" = seq(1, max(fall.edge.df$cluster)),
                    "node.type.num" = fall.node.type$site_type_num)
 
 # For fall nodes where latitudinal accuracy is low, set location close to the coast
-#meta.fall[c(3, 5, 6),]$Lat.50. <- c(33.18, 41.26, 44.91)
+meta.fall[c(6, 3, 5, 8),]$Lat.50. <- c(35.3, 35.3, 41.45, 44.77)
  
 fall.location <- as.matrix(meta.fall[, c("Lon.50.", "Lat.50.")])
 
@@ -723,10 +727,11 @@ abundance.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/Univers
 abundance.regions <- st_join(abundance.regions, breed.sites)
 
 # import breeding season abundance data
-bpw.fall.ab <- load_raster("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_imports/2021/bkpwar",
+bpw.fall.ab <- load_raster(path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_imports",
+                           species = "bkpwar",
                            product = "abundance",
                            period = "seasonal",
-                           resolution = "lr")
+                           resolution = "9km")
 
 bpw.fall.ab <- terra::project(bpw.fall.ab, crs(abundance.regions))
 

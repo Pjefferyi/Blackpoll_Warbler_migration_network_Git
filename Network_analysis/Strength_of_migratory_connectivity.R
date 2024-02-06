@@ -78,7 +78,7 @@ grp.sizes <- fall.nbr.sf %>% group_by(cluster) %>%
 
 fall.nbr.sf.temp <- fall.nbr.sf
 
-for (i in seq(1, length(grp.sizes))){
+for (i in seq(1, nrow(grp.sizes))){
   
   dist.dtfi <- grp.sizes
   
@@ -108,7 +108,7 @@ for (i in unique(fall.nbr.sf$cluster)){
   pt.sb <- fall.nbr.sf[fall.nbr.sf$cluster== i,]
   
   poly <- st_convex_hull(st_union(pt.sb))
-  poly <- st_buffer(poly, dist = 80000)
+  #poly <- st_buffer(poly, dist = 80000)
   poly <- st_transform(poly, st_crs(proj))
   #st_combine(c(fall.nbr.regions, poly))
   fall.nbr.regions$geometry[iter] <- poly
@@ -159,8 +159,9 @@ ggplot(st_as_sf(wrld_simpl))+
   geom_sf(colour = "black", fill = "lightgray")+
   geom_sf(data = fall.nbr.regions, aes(fill = as.factor(cluster)), col = "black", alpha = 0.5)+
   scale_fill_discrete(name = "Nonbreeding regions") +
-  geom_sf(data = fall.nbr.sf, aes(col = "Individual nonbreeding locations (1 bird each)"), shape = 4, cex = 3)+
-  scale_colour_manual(values = c("Individual nonbreeding locations (1 bird each)" = "blue"), name = "") +
+  #geom_sf(data = fall.nbr.sf, aes(col = "Individual nonbreeding locations (1 bird each)"), shape = 4, cex = 3)+
+  geom_sf(data = fall.nbr.sf, aes(col = as.factor(cluster)), shape = 4, cex = 3)+
+  #scale_colour_manual(values = c("Individual nonbreeding locations (1 bird each)" = "blue"), name = "") +
   coord_sf(xlim = c(-90, -30),ylim = c(-15, 20))+
   theme_bw()+
   theme()+
@@ -203,10 +204,11 @@ save(GL_psi_nbr1, file = "C:/Users/Jelan/OneDrive/Desktop/University/University 
 # Retrieve the relative abundance in each breeding site/region for the fall network ################################################################################
 
 # import breeding season abundance data
-bpw.breed.ab <- load_raster("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_imports/2021/bkpwar",
-                           product = "abundance",
-                           period = "seasonal",
-                           resolution = "lr") %>%
+bpw.breed.ab <- load_raster(path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_imports",
+                            species = "bkpwar",
+                            product = "abundance",
+                            period = "seasonal",
+                            resolution = "9km") %>%
  terra::project(crs(proj))
 
 # # Plot of breeding regions over relative abundance surface
@@ -304,7 +306,7 @@ grp.sizes <- spring.nbr.sf %>% group_by(cluster) %>%
 
 spring.nbr.sf.temp <- spring.nbr.sf
 
-for (i in seq(1, length(grp.sizes))){
+for (i in seq(1, nrow(grp.sizes))){
   
   dist.dtfi <- grp.sizes
   
@@ -334,7 +336,7 @@ for (i in unique(spring.nbr.sf$cluster)){
   pt.sb <- spring.nbr.sf[spring.nbr.sf$cluster== i,]
   
   poly <- st_convex_hull(st_union(pt.sb))
-  poly <- st_buffer(poly, dist = 60000)
+  #poly <- st_buffer(poly, dist = 60000)
   poly <- st_transform(poly, st_crs(proj))
   #st_combine(c(spring.nbr.regions, poly))
   spring.nbr.regions$geometry[iter] <- poly

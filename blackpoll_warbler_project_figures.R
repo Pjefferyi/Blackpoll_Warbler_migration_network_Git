@@ -367,7 +367,7 @@ fall.com.plot <- ggplot(st_as_sf(America))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         legend.box.background = element_rect(fill = "white", colour = "black", linewidth = 0.2),
-        legend.position = c(0.15, 0.4), text = element_text(size = 10), legend.key = element_rect(fill = "white"),
+        legend.position = c(0.15, 0.4), text = element_text(size = 12), legend.key = element_rect(fill = "white"),
         legend.background = element_rect(fill = NA),
         axis.title =element_blank(),
         axis.text =element_blank(),
@@ -388,7 +388,7 @@ spring.com.plot <- ggplot(st_as_sf(America))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         legend.box.background = element_rect(fill = "white", colour = "black", linewidth = 0.2),
-        legend.position = c(0.15, 0.4), text = element_text(size = 10), legend.key = element_rect(fill = "white"),
+        legend.position = c(0.15, 0.4), text = element_text(size = 12), legend.key = element_rect(fill = "white"),
         legend.background = element_rect(fill = NA),
         axis.title =element_blank(),
         axis.text =element_blank(),
@@ -575,7 +575,7 @@ fall.gplot.bridge.str <- ggplot(st_as_sf(America))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
   scale_color_manual(values=c(adjustcolor("black", alpha = 0.5), adjustcolor("blue", alpha = 0)), guide = "none")+
   geom_nodes(data = fall.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = bridge.indegree), shape=21, size  = 3)+
-  scale_fill_viridis_c(direction = -1, option = "magma", name = "Bridge strength", 
+  scale_fill_viridis_c(direction = -1, option = "magma", name = "In-degree\nbridge strength", 
                        guide = guide_colorbar(frame.colour = "black"), limits = c(min(0), max(fall.ggnet$bridge.indegree, spring.ggnet$bridge.indegree)))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
@@ -595,7 +595,7 @@ spring.gplot.bridge.str <- ggplot(st_as_sf(America))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
   geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = bridge.indegree), shape=21, size  = 3)+
   scale_color_manual(values=c(adjustcolor("blue", alpha = 0), adjustcolor("black", alpha = 0.5)), guide = "none")+
-  scale_fill_viridis_c(direction = -1, option = "magma", name = "Bridge Strength", 
+  scale_fill_viridis_c(direction = -1, option = "magma", name = "In-degree\nbridge strength", 
                        guide = guide_colorbar(frame.colour = "black"), limits = c(min(0), max(fall.ggnet$bridge.indegree, spring.ggnet$bridge.indegree)))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
@@ -1009,7 +1009,11 @@ ggsave(plot = spring.ind.panel2, filename = "individual.spring.movements2.png" ,
 loc.ind <- list()
 
 #Load locations processed during the netwrok construction 
-geo.all <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/All.locations.csv") %>% arrange(geo_id, StartTime)
+geo.all <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/All.locations.csv") %>% arrange(geo_id, StartTime) %>%
+  group_by(geo_id) %>%
+  mutate(period = ifelse(sitenum == 1 & geo_id != "WRMA04173", "Breeding", period),
+         period = ifelse(sitenum == max(sitenum) & geo_id != "WRMA04173" & Recorded_North_South_mig == "South and partial North", "Failure", period),
+         period = ifelse(sitenum == max(sitenum) & geo_id == "WRMA04173", "Breeding", period))
 
 # loop through the locations an create the plots 
 for (i in unique(geo.all$geo_id)){
@@ -1023,15 +1027,17 @@ for (i in unique(geo.all$geo_id)){
     #coord_sf(xlim = c(min(ind.stat$Lon.50.)-15, max(ind.stat$Lon.50.)+15),ylim = c(min(ind.stat$Lat.50.)-15, max(ind.stat$Lat.50.)+15)) +
     geom_errorbar(data = ind.data.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, width = 1, alpha = 0.8, color = "black") +
     geom_errorbar(data = ind.data.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, width = 1, alpha = 0.8, color = "black") +
-    geom_path(data = ind.data, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, col = period), alpha = 0.9, col = "gray") +
-    geom_point(data =  ind.data.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = period), col = "black", pch = 21, cex = 2)+
-    scale_fill_manual(values=c("Post-breeding migration" = "red", "Non-breeding period"  = "green", "Pre-breeding migration" = "blue"), guide = "none")+
+    geom_path(data = ind.data, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, col = period), alpha = 0.9, col = "firebrick") +
+    geom_point(data =  ind.data.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = period, pch = period, col = period), cex = 2.5)+
+    scale_shape_manual(values=c("Post-breeding migration" = 21 , "Non-breeding period"  = 22, "Pre-breeding migration" = 21, "Breeding"  = 24, "Failure" = 4)) +           
+    scale_colour_manual(values=c("Post-breeding migration" = "black" , "Non-breeding period"  = "white", "Pre-breeding migration" = "black", "Breeding"  = "white", "Failure" = "black")) +     
+    scale_fill_manual(values=c("Post-breeding migration" = "#FDE725FF" , "Non-breeding period"  = "black", "Pre-breeding migration" = "#21908CFF", "Breeding"  = "black"))+
     #scale_fill_continuous(low = "yellow", high = "purple")+
     ggtitle(i) +
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
           panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
-          legend.position = "none",
           plot.title=element_text(size=8, vjust=-1),
+          legend.position = "None",
           axis.title =element_blank(),
           axis.text =element_blank(),
           axis.ticks =element_blank(),
@@ -1039,6 +1045,16 @@ for (i in unique(geo.all$geo_id)){
           legend.spacing = unit(-5, "pt"),
           plot.margin = unit(c(0,0,0,0), "pt"),
           legend.key = element_rect(colour = "transparent", fill = "white"))
+   #if (i == first(unique(geo.all$geo_id))){theme(legend.position = c(0.5, 0.2))} else {theme(legend.position = "None")}
 }
 
+loc.ind.panel1 <- plot_a_list(loc.ind[1:24], 6, 4)
+loc.ind.panel2 <- plot_a_list(loc.ind[25:46], 6, 4)
+
+## Save the plots ----
+ggsave(plot = loc.ind.panel1, filename = "individual.movements1.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
+       units = "cm", width = 24*1.2, height = 30*1.2, dpi = "print", bg = "white")
+
+ggsave(plot = loc.ind.panel2, filename = "individual.movements2.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
+       units = "cm", width = 24*1.2, height = 30*1.2, dpi = "print", bg = "white")
 

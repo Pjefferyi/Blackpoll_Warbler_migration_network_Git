@@ -197,22 +197,22 @@ check_model(mod.spring.stopover.node)
 simulationOutput <- simulateResiduals(fittedModel = mod.spring.stopover.node , plot = F)
 plot(simulationOutput)
 
-# # correlation between number of nonbreeding nodes used and longitude of breeding site 
-# mod.fall.nbr.node <- glm(fall.nbr.nodes.occupied ~ deploy.longitude, data = analysis_ref, family = gaussian(link = "identity"))
-# plot(fall.nbr.nodes.occupied ~ deploy.longitude, data = analysis_ref)
-# summary(mod.fall.nbr.node)
-# check_model(mod.fall.nbr.node)
-# 
-# simulationOutput <- simulateResiduals(fittedModel = mod.fall.nbr.node, plot = F)
-# plot(simulationOutput)
-# 
-# mod.spring.nbr.node <- glm(spring.nbr.nodes.occupied ~ deploy.longitude, data = analysis_ref, family = gaussian(link = "identity"))
-# plot(spring.nbr.nodes.occupied ~ deploy.longitude, data = analysis_ref)
-# summary(mod.spring.nbr.node)
-# check_model(mod.spring.nbr.node)
-# 
-# simulationOutput <- simulateResiduals(fittedModel = mod.spring.stopover.node, plot = F)
-# plot(simulationOutput)
+# correlation between number of nonbreeding nodes used and longitude of breeding site
+mod.fall.nbr.node <- glm(fall.nbr.nodes.occupied ~ deploy.longitude, data = analysis_ref, family = gaussian(link = "identity"))
+plot(fall.nbr.nodes.occupied ~ deploy.longitude, data = analysis_ref)
+summary(mod.fall.nbr.node)
+check_model(mod.fall.nbr.node)
+
+simulationOutput <- simulateResiduals(fittedModel = mod.fall.nbr.node, plot = F)
+plot(simulationOutput)
+
+mod.spring.nbr.node <- glm(spring.nbr.nodes.occupied ~ deploy.longitude, data = analysis_ref, family = gaussian(link = "identity"))
+plot(spring.nbr.nodes.occupied ~ deploy.longitude, data = analysis_ref)
+summary(mod.spring.nbr.node)
+check_model(mod.spring.nbr.node)
+
+simulationOutput <- simulateResiduals(fittedModel = mod.spring.stopover.node, plot = F)
+plot(simulationOutput)
 
 ### test assessing the usage of more than one nonbreeding site (whether individuals made stopovers in the nonbreeding range) ----
 analysis_ref <- analysis_ref %>% mutate(fall.nbr.stopover = ifelse(fall.nbr.nodes.occupied >1, 1, 0),

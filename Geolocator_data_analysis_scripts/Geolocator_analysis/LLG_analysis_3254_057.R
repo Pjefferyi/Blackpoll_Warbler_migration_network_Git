@@ -262,7 +262,7 @@ abline(v = spring.equi, col = "orange")
 dev.off()
 
 # Initial Path #################################################################
-tol_ini <- 0.14
+tol_ini <- 0.12
 path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol = tol_ini)
 
 #Adjusted tol until second stopover was located over North Carolina rather than further South. 
@@ -277,7 +277,7 @@ data(wrld_simpl)
 plot(x0, type = "n", xlab = "", ylab = "")
 plot(wrld_simpl, col = "grey95", add = T)
 
-points(path$x[1:300,], pch=19, col="cornflowerblue", type = "o")
+points(path$x, pch=19, col="cornflowerblue", type = "o")
 points(lon.calib, lat.calib, pch = 16, cex = 2.5, col = "firebrick")
 box()
 
