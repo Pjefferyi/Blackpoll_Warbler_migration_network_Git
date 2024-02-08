@@ -324,7 +324,7 @@ meta.fall <- data.frame("vertex" = seq(1, max(fall.edge.df$cluster)),
                    "node.type.num" = fall.node.type$site_type_num)
 
 # For fall nodes where latitudinal accuracy is low, set location close to the coast
-meta.fall[c(6, 3, 5, 8),]$Lat.50. <- c(35.3, 35.3, 41.45, 44.77)
+meta.fall[c(3, 5, 7),]$Lat.50. <- c(35.3, 41.45, 44.77)
  
 fall.location <- as.matrix(meta.fall[, c("Lon.50.", "Lat.50.")])
 
@@ -853,7 +853,7 @@ legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
 fall.stat.ab <- merge(fall.stat, fall.breed.ab[,c("geo_id", "ab.unit")], by = "geo_id")
 
 fall.ab.by.origin <- fall.stat.ab %>% group_by(cluster, Range_region) %>%
-  summarize(region.ab.units = sum(ab.unit), region.n = n()) %>% ungroup() %>%
+  summarize(region.ab.units = sum(ab.unit), region.n = n_distinct(geo_id)) %>% ungroup() %>%
   complete(cluster, Range_region, fill = list(region.ab.units = 0)) %>%
   complete(cluster, Range_region, fill = list(region.n = 0))
   
@@ -869,11 +869,13 @@ fall.ab.by.origin <- fall.ab.by.origin %>% pivot_wider(names_from = Range_region
 # Merge abundance data with the node metadata
 meta.fall.ab <- merge(meta.fall, fall.ab.by.origin, by.x = "vertex", by.y = "cluster") 
 
-# Also add a column with the overall abundance at each site 
+# Also add a column with the overall abundance at each site, and the number of individual at each site 
 fall.stat.ab.per.site <- fall.stat.ab %>% group_by(cluster) %>% 
-  summarize(r.abundance.at.cluster = sum (ab.unit))
+  summarize(r.abundance.at.cluster = sum(ab.unit))
 
-meta.fall.ab <- merge(meta.fall.ab, fall.stat.ab.per.site, by.x = "vertex", by.y = "cluster")
+meta.fall.ab <- merge(meta.fall.ab, fall.stat.ab.per.site, by.x = "vertex", by.y = "cluster") %>% 
+  rowwise() %>%
+  mutate(n.individuals.at.cluster = sum(n.central, n.eastern, n.western))  
 
 #create a column that can be converted to a numeric vector
 meta.fall.ab <- transform(meta.fall.ab, num.reg.ab.vector = asplit(cbind(prop.ab.central, prop.ab.eastern, prop.ab.western), 1))
@@ -943,7 +945,7 @@ plot(fall.graph.weighed.ab, vertex.size = 500, vertex.size2 = 200,
 spring.stat.ab <- merge(spring.stat, spring.breed.ab[,c("geo_id", "ab.unit")], by = "geo_id")
 
 spring.ab.by.origin <-spring.stat.ab %>% group_by(cluster, Range_region) %>%
-  summarize(region.ab.units = sum(ab.unit), region.n = n()) %>% ungroup() %>%
+  summarize(region.ab.units = sum(ab.unit), region.n =  n_distinct(geo_id)) %>% ungroup() %>%
   complete(cluster, Range_region, fill = list(region.ab.units = 0)) %>%
   complete(cluster, Range_region, fill = list(region.n = 0))
 
@@ -959,11 +961,13 @@ spring.ab.by.origin <- spring.ab.by.origin %>% pivot_wider(names_from = Range_re
 # Merge abundance data with the node metadata
 meta.spring.ab <- merge(meta.spring, spring.ab.by.origin, by.x = "vertex", by.y = "cluster") 
 
-# Also add a column with the overall abundance at each site 
+# Also add a column with the overall abundance at each site and the number of individuals using each site 
 spring.stat.ab.per.site <- spring.stat.ab %>% group_by(cluster) %>% 
   summarize(r.abundance.at.cluster = sum (ab.unit))
 
-meta.spring.ab <- merge(meta.spring.ab, spring.stat.ab.per.site, by.x = "vertex", by.y = "cluster")
+meta.spring.ab <- merge(meta.spring.ab, spring.stat.ab.per.site, by.x = "vertex", by.y = "cluster")%>% 
+  rowwise() %>%
+  mutate(n.individuals.at.cluster = sum(n.central, n.eastern, n.western))  
 
 #create a column that can be converted to a numeric vector
 meta.spring.ab <- transform(meta.spring.ab, num.reg.ab.vector = asplit(cbind(prop.ab.central, prop.ab.eastern, prop.ab.western), 1))

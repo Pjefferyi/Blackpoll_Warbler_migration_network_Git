@@ -6,6 +6,7 @@ library(DHARMa)
 library(MASS)
 library(tidyr)
 library(purrr)
+library(glmmTMB)
 
 # Load the helper functions script  
 source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis_helper_functions.R")
@@ -13,6 +14,10 @@ source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/B
 # Load geolocator reference data 
 ref_path <- "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv"
 ref_data <- read.csv(ref_path)
+
+# Load node data 
+fall.ndata <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/fall.graph.data.csv")
+spring.ndata <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/Spring.graph.data.csv")
 
 # location data (Only for geolocator used in the analysis )
 geo.list <- c("V8757_010",
@@ -107,8 +112,10 @@ sd(analysis_ref$tol_days)
 # Results #####################################################################
 
 # Load fall and spring stationary sites 
-fall.stat <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.stationary.data.csv")
-spring.stat <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.stationary.data.csv")
+fall.stat <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.stationary.data.csv") %>%
+  merge(fall.ndata, by.x = "cluster", by.y ="X") 
+spring.stat <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.stationary.data.csv") %>%
+  merge(fall.ndata, by.x = "cluster", by.y ="X") 
 
 ## Number of stationary locations ----
 
@@ -154,14 +161,19 @@ fall.edge.df.ab <- merge(fall.edge.df.ab, meta.fall.ab[,c("vertex","node.type")]
 spring.edge.df.ab <- merge(spring.edge.df.ab, meta.spring.ab[,c("vertex","node.type")], by.x = "cluster", by.y = "vertex")
 
 # number of nodes used in the fall network
-fall.node.used.df <- fall.edge.df.ab %>% group_by(geo_id) %>% summarize(fall.nodes.occupied = length(unique(cluster, next.cluster)),
+fall.node.used.df <- fall.edge.df.ab %>% group_by(geo_id) %>% reframe(fall.nodes.occupied = length(unique(cluster, next.cluster)),
                                                                         fall.stopover.nodes.occupied = length(unique(cluster[node.type == "Stopover"], next.cluster[node.type == "Stopover"])),
-                                                                        fall.nbr.nodes.occupied = length(unique(cluster[node.type == "Nonbreeding"], next.cluster[node.type == "Nonbreeding"])))
+                                                                        fall.nbr.nodes.occupied = length(unique(cluster[node.type == "Nonbreeding"], next.cluster[node.type == "Nonbreeding"])),
+                                                                        Range_region = first(Range_region)) %>%
+  mutate(Range_region = ifelse(Range_region == "Central", "Western", Range_region))
 
 # number of nodes used in the spring network 
-spring.node.used.df <- spring.edge.df.ab %>% group_by(geo_id) %>% summarize(spring.nodes.occupied = length(unique(cluster, next.cluster)),
+spring.node.used.df <- spring.edge.df.ab %>% group_by(geo_id) %>% reframe(spring.nodes.occupied = length(unique(cluster, next.cluster)),
                                                                         spring.stopover.nodes.occupied = length(unique(cluster[node.type == "Stopover"], next.cluster[node.type == "Stopover"])),
-                                                                        spring.nbr.nodes.occupied = length(unique(cluster[node.type == "Nonbreeding"], next.cluster[node.type == "Nonbreeding"])))
+                                                                        spring.nbr.nodes.occupied = length(unique(cluster[node.type == "Nonbreeding"], next.cluster[node.type == "Nonbreeding"])),
+                                                                        Range_region = first(Range_region)) %>%
+  mutate(Range_region = ifelse(Range_region == "Central", "Western", Range_region))
+
 # merge the information collected with the reference dataset 
 analysis_ref <- merge(analysis_ref, fall.node.used.df, by.x = "geo.id", by.y = "geo_id", all = T)
 analysis_ref <- merge(analysis_ref, spring.node.used.df, by.x = "geo.id", by.y = "geo_id", all = T)
@@ -180,59 +192,60 @@ mean(analysis_ref$spring.nodes.occupied, na.rm =  T)
 se <- sd(analysis_ref$spring.nodes.occupied, na.rm =  T)/sqrt(length(analysis_ref$spring.nodes.occupied[!is.na(analysis_ref$spring.nodes.occupied)]))
 se
 
-### correlation between number of  nodes used and longitude of breeding site ----
-mod.fall.stopover.node <- glm(fall.stopover.nodes.occupied + fall.nbr.nodes.occupied  ~ deploy.longitude, data = analysis_ref)
-plot(fall.stopover.nodes.occupied + fall.nbr.nodes.occupied ~ deploy.longitude, data = analysis_ref)
+# ### correlation between number of  nodes used and longitude of breeding site ----
+# mod.fall.stopover.node <- glm(fall.stopover.nodes.occupied   ~ deploy.longitude, data = analysis_ref, family = gaussian(link = "identity"))
+# plot(fall.stopover.nodes.occupied ~ deploy.longitude, data = analysis_ref)
+# summary(mod.fall.stopover.node)
+# check_model(mod.fall.stopover.node)
+# 
+# simulationOutput <- simulateResiduals(fittedModel = mod.fall.stopover.node, plot = F)
+# plot(simulationOutput)
+# 
+# mod.spring.stopover.node <- glm(spring.stopover.nodes.occupied  ~ (deploy.longitude), data = analysis_ref, family = gaussian(link = "identity"))
+# plot(spring.stopover.nodes.occupied  ~ deploy.longitude, data = analysis_ref)
+# summary(mod.spring.stopover.node)
+# check_model(mod.spring.stopover.node)
+# 
+# simulationOutput <- simulateResiduals(fittedModel = mod.spring.stopover.node , plot = F)
+# plot(simulationOutput)
+
+### correlation between number of  stopovernodes used and region of breeding site (eastern or western) ----
+mod.fall.stopover.node <- glmmTMB(fall.stopover.nodes.occupied   ~ as.factor(Range_region), data = analysis_ref, family = genpois(link = "log"))
+boxplot(fall.stopover.nodes.occupied ~ Range_region, data = analysis_ref)
 summary(mod.fall.stopover.node)
 check_model(mod.fall.stopover.node)
 
 simulationOutput <- simulateResiduals(fittedModel = mod.fall.stopover.node, plot = F)
 plot(simulationOutput)
+testDispersion(simulationOutput)
 
-mod.spring.stopover.node <- glm(spring.stopover.nodes.occupied + spring.nbr.nodes.occupied ~ (deploy.longitude), data = analysis_ref, family = gaussian(link = "identity"))
-plot(spring.stopover.nodes.occupied  ~ deploy.longitude, data = analysis_ref)
+mod.spring.stopover.node <- glmmTMB(spring.stopover.nodes.occupied  ~ as.factor(Range_region), data = analysis_ref, family = genpois(link = "log"))
+boxplot(spring.stopover.nodes.occupied ~ Range_region, data = analysis_ref)
 summary(mod.spring.stopover.node)
 check_model(mod.spring.stopover.node)
 
 simulationOutput <- simulateResiduals(fittedModel = mod.spring.stopover.node , plot = F)
 plot(simulationOutput)
+testDispersion(simulationOutput)
 
-# correlation between number of nonbreeding nodes used and longitude of breeding site
-mod.fall.nbr.node <- glm(fall.nbr.nodes.occupied ~ deploy.longitude, data = analysis_ref, family = gaussian(link = "identity"))
-plot(fall.nbr.nodes.occupied ~ deploy.longitude, data = analysis_ref)
+### correlation between number of  stopovernodes used and region of breeding site (eastern or western) ----
+mod.fall.nbr.node <- glmmTMB(fall.nbr.nodes.occupied ~ as.factor(Range_region), data = analysis_ref, family = genpois(link = "log"))
+boxplot(fall.nbr.nodes.occupied ~ as.factor(Range_region), data = analysis_ref)
 summary(mod.fall.nbr.node)
 check_model(mod.fall.nbr.node)
 
 simulationOutput <- simulateResiduals(fittedModel = mod.fall.nbr.node, plot = F)
 plot(simulationOutput)
+testDispersion(simulationOutput)
 
-mod.spring.nbr.node <- glm(spring.nbr.nodes.occupied ~ deploy.longitude, data = analysis_ref, family = gaussian(link = "identity"))
-plot(spring.nbr.nodes.occupied ~ deploy.longitude, data = analysis_ref)
+mod.spring.nbr.node <- glm(spring.nbr.nodes.occupied ~ as.factor(Range_region), data = analysis_ref, family = poisson(link = "log"))
+boxplot(spring.nbr.nodes.occupied ~ as.factor(Range_region), data = analysis_ref)
 summary(mod.spring.nbr.node)
 check_model(mod.spring.nbr.node)
 
 simulationOutput <- simulateResiduals(fittedModel = mod.spring.stopover.node, plot = F)
 plot(simulationOutput)
-
-### test assessing the usage of more than one nonbreeding site (whether individuals made stopovers in the nonbreeding range) ----
-analysis_ref <- analysis_ref %>% mutate(fall.nbr.stopover = ifelse(fall.nbr.nodes.occupied >1, 1, 0),
-                                        spring.nbr.stopover = ifelse(spring.nbr.nodes.occupied >1, 1, 0))
-
-nbr.stopover.mod.fall <- glm(fall.nbr.stopover ~ deploy.longitude, data = analysis_ref, binomial(link = "logit"))
-boxplot(analysis_ref$deploy.longitude ~ as.factor(analysis_ref$fall.nbr.stopover))
-summary(nbr.stopover.mod.fall)
-check_model(nbr.stopover.mod.fall)
-
-simulationOutput <- simulateResiduals(fittedModel = nbr.stopover.mod.fall, asFactor = T)
-plot(simulationOutput)
-
-nbr.stopover.mod.spring <- glm(spring.nbr.stopover ~ deploy.longitude, data = analysis_ref, family = binomial(link = "logit"))
-boxplot(analysis_ref$deploy.longitude ~ as.factor(analysis_ref$spring.nbr.stopover))
-summary(nbr.stopover.mod.spring)
-check_model(nbr.stopover.mod.spring)
-
-simulationOutput <- simulateResiduals(fittedModel = nbr.stopover.mod.spring, asFactor = T)
-plot(simulationOutput)
+testDispersion(simulationOutput)
 
 ## Linear regression between the breeding and nonbreeding longitudes and latitudes -----
 

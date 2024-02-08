@@ -54,8 +54,7 @@ spring.con.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University
 spring.stat <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.stationary.data.csv")
 spring.move <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.all.locations.csv")
 
-
-# add weights to fall and spring graph  --- 
+# add abundance weights to fall and spring graph node attributes--- 
 E(fall.graph)$weight <- fall.con.ab$weight
 E(spring.graph)$weight <- spring.con.ab$weight
 
@@ -75,6 +74,10 @@ E(spring.graph)$edge.type <- edge.cols.spring$edge.type
 # Node degree weights 
 V(fall.graph)$node.weight <- meta.fall.ab$r.abundance.at.cluster
 V(spring.graph)$node.weight <- meta.spring.ab$r.abundance.at.cluster
+
+# Number of individuals using each node 
+V(fall.graph)$n.individuals <- meta.fall.ab$n.individuals.at.cluster
+V(spring.graph)$n.individuals <- meta.spring.ab$n.individuals.at.cluster
 
 # Node type (breeding, stopover or nonbreeding)
 V(fall.graph)$node.type <- meta.fall.ab$node.type
@@ -612,6 +615,20 @@ metrics.fig <- (fall.gplot.betw | spring.gplot.betw)/ (fall.gplot.bridge.str| sp
 ggsave(plot = metrics.fig, filename = "nodes.metrics.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
        units = "cm", width = 24*1.2, height = 10*1.2, dpi = "print", bg = "white")
 
+# Table 2: Table of node characteristics ----
+
+## Fall node characteristics
+fall.char <- fall.gdata %>% dplyr::select("cluster", "node.type", "node.weight", "n.individuals",
+                                   "betweenness", "bridge.indegree") %>% arrange(factor(node.type, levels = c("Breeding","Stopover","Nonbreeding")))
+
+write_csv(fall.char, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Table_data/Fall_node_table_data.csv")
+
+## Spring node characteristics
+spring.char <- spring.gdata %>% dplyr::select("cluster", "node.type", "node.weight", "n.individuals",
+                  "betweenness", "bridge.indegree") %>% arrange(factor(node.type, levels = c("Breeding","Stopover","Nonbreeding")))
+
+write_csv(spring.char, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Table_data/Spring_node_table_data.csv")
+
 # # Figure 5 Node population composition by network community ----
 # 
 # ## Fall data and plot ----  
@@ -985,13 +1002,6 @@ for (i in unique(spring.stat$geo_id)){
 }
 
 # Create a panel of plots 
-# function from : https://stackoverflow.com/questions/66688668/automatically-assemble-plots-for-patchwork-from-a-list-of-ggplots 
-plot_a_list <- function(plots, nrows, ncols) {
-  
-  patchwork::wrap_plots(plots, 
-                        nrow = nrows, ncol = ncols)
-}
-
 spring.ind.panel1 <- plot_a_list(spring.ind[1:24], 6, 4)
 spring.ind.panel2 <- plot_a_list(spring.ind[25:35], 6, 4)
 
