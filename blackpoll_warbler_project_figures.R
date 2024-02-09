@@ -134,7 +134,7 @@ fall.walktrap <- cluster_walktrap(fall.graph)
 
 modularity(fall.graph, fall.label.prop$`community structure`$membership)
 modularity(fall.graph, fall.infomap$membership)
-modularity(fall.graph, fall.walktrap$membership)
+modularity(fall.graph, fall.walktrap$membership, directed = T)
 
 V(fall.graph)$label.prop.comm <- fall.label.prop$`community structure`$membership
 V(fall.graph)$info.map.comm <- fall.infomap$membership
@@ -150,7 +150,7 @@ spring.walktrap <- cluster_walktrap(spring.graph)
 
 modularity(spring.graph, spring.label.prop$`community structure`$membership)
 modularity(spring.graph, spring.infomap$membership)
-modularity(spring.graph, spring.walktrap$membership)
+modularity(spring.graph, spring.walktrap$membership, directed = T)
 
 V(spring.graph)$label.prop.comm <- spring.label.prop$`community structure`$membership
 V(spring.graph)$infomap.comm <- spring.infomap$membership
@@ -467,6 +467,9 @@ for (i in seq(1, length(colnames(rand.data)))){
   }
 }
 
+# Save the fall score test results
+write.csv(score.test.fall, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Table_data/fall.network.significance.test.csv")
+
 ## Significance of the Spring network communities ---- 
 
 # create multiple rewired versions of the network, apply the clustering method, then calculate scoring functions 
@@ -524,6 +527,9 @@ for (i in seq(1, length(colnames(rand.data)))){
     score.test.spring[i,"p-value"] <- NA
   }
 }
+
+# Save the spring score test results
+write.csv(score.test.spring, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Table_data/spring.network.significance.test.csv")
 
 # Figure 4: Fall and spring centrality metrics ---- 
 

@@ -163,20 +163,17 @@ spring.edge.df.ab <- merge(spring.edge.df.ab, meta.spring.ab[,c("vertex","node.t
 # number of nodes used in the fall network
 fall.node.used.df <- fall.edge.df.ab %>% group_by(geo_id) %>% reframe(fall.nodes.occupied = length(unique(cluster, next.cluster)),
                                                                         fall.stopover.nodes.occupied = length(unique(cluster[node.type == "Stopover"], next.cluster[node.type == "Stopover"])),
-                                                                        fall.nbr.nodes.occupied = length(unique(cluster[node.type == "Nonbreeding"], next.cluster[node.type == "Nonbreeding"])),
-                                                                        Range_region = first(Range_region)) %>%
-  mutate(Range_region = ifelse(Range_region == "Central", "Western", Range_region))
+                                                                        fall.nbr.nodes.occupied = length(unique(cluster[node.type == "Nonbreeding"], next.cluster[node.type == "Nonbreeding"]))) 
 
 # number of nodes used in the spring network 
 spring.node.used.df <- spring.edge.df.ab %>% group_by(geo_id) %>% reframe(spring.nodes.occupied = length(unique(cluster, next.cluster)),
                                                                         spring.stopover.nodes.occupied = length(unique(cluster[node.type == "Stopover"], next.cluster[node.type == "Stopover"])),
-                                                                        spring.nbr.nodes.occupied = length(unique(cluster[node.type == "Nonbreeding"], next.cluster[node.type == "Nonbreeding"])),
-                                                                        Range_region = first(Range_region)) %>%
-  mutate(Range_region = ifelse(Range_region == "Central", "Western", Range_region))
+                                                                        spring.nbr.nodes.occupied = length(unique(cluster[node.type == "Nonbreeding"], next.cluster[node.type == "Nonbreeding"])))
 
 # merge the information collected with the reference dataset 
 analysis_ref <- merge(analysis_ref, fall.node.used.df, by.x = "geo.id", by.y = "geo_id", all = T)
-analysis_ref <- merge(analysis_ref, spring.node.used.df, by.x = "geo.id", by.y = "geo_id", all = T)
+analysis_ref <- merge(analysis_ref, spring.node.used.df, by.x = "geo.id", by.y = "geo_id", all = T) %>%
+  mutate(Range_region = ifelse(Range_region == "Central", "Western", Range_region))
 
 ## Statistics of node usage ----
 
