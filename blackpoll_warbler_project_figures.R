@@ -804,21 +804,23 @@ fall.nbr <- fall.stat %>% group_by(geo_id) %>%
   arrange(geo_id) 
 
 fall.nbr.sf <- st_as_sf(fall.nbr, coords = c("Lon.50.", "Lat.50."), crs = st_crs(wrld_simpl), remove = F)
-fall.nbr.sf <- st_transform(fall.nbr.sf, st_crs(proj)) 
+fall.nbr.sf <- st_transform(fall.nbr.sf, st_crs(wrld_simpl)) 
 
 fall.nbr.regions <- st_read("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/fall.nbr.regions.shp") 
 
 ## Fall nonbreeding regions plot ----
 First.nbr.regions <- ggplot(st_as_sf(wrld_simpl))+
   geom_sf(colour = "black", fill = "#F7F7F7")+
-  geom_sf(data = fall.nbr.regions, aes(fill = as.factor(cluster)), col = "black", alpha = 0.5)+
-  scale_fill_discrete(name = "Nonbreeding regions") +
-  geom_sf(data = fall.nbr.sf, aes(col = "Individual nonbreeding locations (1 bird each)"), shape = 4, cex = 3)+
-  scale_colour_manual(values = c("Individual nonbreeding locations (1 bird each)" = "black"), name = "") +
+  geom_sf(data = fall.nbr.regions, col = "black",fill = "lightgray", alpha = 0.5)+
+  geom_sf(data = fall.nbr.sf, aes(fill = Breeding_region_MC), shape = 21, cex = 3)+
+  scale_fill_manual(values = c("Northwestern Region" = "#D81B60",
+                               "Central Region" = "#1E88E5",
+                               "Eastern Region" = "#FFC107",
+                               "Western region"  = "#004D40"), name = "Breeding origin") +
   coord_sf(xlim = c(-90, -35), ylim = c(-15, 20))+
   theme_bw()+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        legend.position = "None",
+        legend.position = c(0.8, 0.8),
         axis.title =element_blank(),
         axis.text =element_blank(),
         axis.ticks =element_blank(),
@@ -840,10 +842,12 @@ spring.nbr.regions <- st_read("C:/Users/Jelan/OneDrive/Desktop/University/Univer
 ## spring nonbreeding regions plot ----
 second.nbr.regions <- ggplot(st_as_sf(wrld_simpl))+
   geom_sf(colour = "black", fill = "#F7F7F7")+
-  geom_sf(data = spring.nbr.regions, aes(fill = as.factor(cluster)), col = "black", alpha = 0.5)+
-  scale_fill_discrete(name = "Nonbreeding regions") +
-  geom_sf(data = spring.nbr.sf, aes(col = "Individual nonbreeding locations (1 bird each)"), shape = 4, cex = 3)+
-  scale_colour_manual(values = c("Individual nonbreeding locations (1 bird each)" = "black"), name = "") +
+  geom_sf(data = spring.nbr.regions, col = "black", fill = "lightgray", alpha = 0.5)+
+  geom_sf(data = spring.nbr.sf, aes(fill= Breeding_region_MC), shape = 21, cex = 3)+
+  scale_fill_manual(values = c("Northwestern Region" = "#D81B60",
+                               "Central Region" = "#1E88E5",
+                               "Eastern Region" = "#FFC107",
+                               "Western region"  = "#004D40"), name = "Breeding origin") +
   coord_sf(xlim = c(-90, -35), ylim = c(-15, 20))+
   theme_bw()+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
@@ -853,7 +857,6 @@ second.nbr.regions <- ggplot(st_as_sf(wrld_simpl))+
         axis.ticks =element_blank(),
         axis.ticks.length = unit(0, "pt"),
         plot.margin = unit(c(0,0,0,0), "pt"))
-
 
 ## create panel ----
 MC.nbr.regions.fig <- (First.nbr.regions  | second.nbr.regions ) &
@@ -891,8 +894,9 @@ ab.prop.regions.fig <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
   geom_sf(data = bpw.range, aes(fill = season),col = NA, alpha = 0.7) +
   scale_fill_discrete(labels = c("Breeding range", "Nonbreeding range"), name = "", guide = guide_legend(order = 3)) +
-  geom_sf(data = br.regions, aes(col = "black"), fill = NA, linewidth = 0.5) +
-  scale_colour_manual(values = c("black"), labels = c( "Breeding region polygons"), name = "", guide = guide_legend(order = 2)) +
+  geom_sf(data = br.regions, aes(col = "Abundance propagation regions"), fill = NA, linewidth = 0.5) +
+  scale_colour_manual(values = c("Abundance propagation regions" = "black"), name = "")+
+  geom_sf_label(data = br.regions, aes(label = region, stroke = region), nudge_y = c(-12, -12,-13 ,-13), nudge_x = c(0, 10, 0,0), cex =3)+
   new_scale_fill() +
   geom_sf(data =  bpw.ref, aes(fill = "black"), col = "white", shape = 21, stroke = 0.5, cex = 3)+
   scale_fill_manual(values = c("black"), labels = c("Geolocator deployment sites"), name = "", guide = guide_legend(order = 1))+

@@ -531,10 +531,10 @@ points(stat.loc$Lon.50., stat.loc$Lat.50., pch = 16, cex = 1.5, col = "firebrick
 sm$geo_id <- geo.id
 
 # find time of establishment and departure from the nonbreeding grounds 
-arr.nbr.sgat <- sm %>% filter(Lat.50. < 12 & sitenum > 0 & duration > stat.nbr.lim) %>% summarize(Date = first(StartTime))%>% 
-  .$Date
-dep.nbr.sgat <- sm %>% filter(Lat.50. < 12 & sitenum > 0 & duration > stat.nbr.lim) %>% summarize(Date = last(EndTime))%>% 
-  .$Date
+arr.nbr.sgat <- sm %>% filter(Lat.50. < 12 & sitenum > 0 & duration > stat.nbr.lim) %>% 
+  first(.$StartTime) %>% .$StartTime
+dep.nbr.sgat <- sm %>% filter(Lat.50. < 12 & sitenum > 0 & duration > stat.nbr.lim) %>%
+  last(.$EndTime)%>% .$EndTime
 
 #add a column that categorizes the locations (based on the groupthreshold model output)
 sm <- sm %>% rowwise() %>% mutate(period= case_when(StartTime < anytime(arr.nbr.sgat, asUTC = T, tz = "GMT")  ~ "Post-breeding migration",
@@ -604,8 +604,8 @@ geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.end <- as.character(tm.calib1[2])
 geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.start2 <- as.character(tm.calib2[1])
 geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.end2 <- as.character(tm.calib2[2])
 geo.ref[(geo.ref$geo.id == geo.id),]$tol <-tol_ini
-geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- arr.nbr.sgat
-geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- dep.nbr.sgat
+geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- as.character(arr.nbr.sgat)
+geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- as.character(dep.nbr.sgat)
 write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE) 
 
 # Examine twilights ############################################################

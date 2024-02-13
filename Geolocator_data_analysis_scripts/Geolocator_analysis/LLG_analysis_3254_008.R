@@ -539,11 +539,10 @@ sm$geo_id <- geo.id
 sm$geo_id <- geo.id
 
 # find time of establishment and departure from the nonbreeding grounds 
-arr.nbr.sgat <- sm %>% filter(Lat.50. < 12 & sitenum > 0 & duration > stat.nbr.lim) %>% summarize(Date = first(StartTime))%>% 
-  .$Date
-dep.nbr.sgat <- sm %>% filter(Lat.50. < 12 & sitenum > 0 & duration > stat.nbr.lim) %>% summarize(Date = last(EndTime))%>% 
-  .$Date
-
+arr.nbr.sgat <- sm %>% filter(Lat.50. < 12 & sitenum > 0 & duration > stat.nbr.lim) %>% 
+  first(.$StartTime) %>% .$StartTime
+dep.nbr.sgat <- sm %>% filter(Lat.50. < 12 & sitenum > 0 & duration > stat.nbr.lim) %>%
+  last(.$EndTime)%>% .$EndTime
 
 #add a column that categorizes the locations (based on the groupthreshold model output)
 sm <- sm %>% rowwise() %>% mutate(period= case_when(StartTime < anytime(arr.nbr.sgat, asUTC = T, tz = "GMT")  ~ "Post-breeding migration",

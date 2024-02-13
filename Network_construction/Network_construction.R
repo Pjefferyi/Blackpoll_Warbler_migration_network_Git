@@ -726,6 +726,13 @@ st_crs(breed.sites) <- st_crs(wrld_simpl)
 abundance.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Relative_abundance_propagation/bpw_abundance_regions_adjusted.shp")
 abundance.regions <- st_join(abundance.regions, breed.sites)
 
+# Add the abundance region of each individual to the reference and tracking datasets. These will be the same regions used to calculate migratory connectivity 
+ref_data <- ref_data %>% dplyr::select(- Breeding_region_MC)
+ref_data <- merge(ref_data, data.frame(abundance.regions)[,c("region", "geo_id")], by.x = "geo.id", by.y = "geo_id" ) %>%
+  rename(Breeding_region_MC = region)
+
+write.csv(ref_data,"C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE)
+
 # import breeding season abundance data
 bpw.fall.ab <- load_raster(path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_imports",
                            species = "bkpwar",

@@ -52,7 +52,7 @@ fall.stat <- merge(fall.stat, comm.data, by = "cluster")
 
 fall.nbr <- fall.stat %>% group_by(geo_id) %>% 
   filter(period == "Non-breeding period", sitenum == max(sitenum), !is.na(StartTime), !is.na(EndTime)) %>%
-  arrange(geo_id) 
+  arrange(geo_id) %>%
 
 fall.nbr.sf <- st_as_sf(fall.nbr, coords = c("Lon.50.", "Lat.50."), crs = st_crs(wrld_simpl), remove = F)
 fall.nbr.sf <- st_transform(fall.nbr.sf, st_crs(proj)) 

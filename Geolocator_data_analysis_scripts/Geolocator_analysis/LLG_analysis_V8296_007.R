@@ -637,10 +637,16 @@ points(stat.loc$Lon.50., stat.loc$Lat.50., pch = 16, cex = 1.5, col = "firebrick
 # add column with geolocator ID
 sm$geo_id <- geo.id
 
+# find time of establishment and departure from the nonbreeding grounds 
+arr.nbr.sgat <- sm %>% filter(Lat.50. < 12 & sitenum > 0 & duration > stat.nbr.lim) %>% 
+  first(.$StartTime) %>% .$StartTime
+dep.nbr.sgat <- sm %>% filter(Lat.50. < 12 & sitenum > 0 & duration > stat.nbr.lim) %>%
+  last(.$EndTime)%>% .$EndTime
+
 #add a column that categorizes the locations (based on the groupthreshold model output)
-sm <- sm %>% mutate(period= case_when(StartTime < anytime("2019-09-30 10:10:06", asUTC = T, tz = "GMT")  ~ "Post-breeding migration",
-                                      StartTime >= anytime("2019-09-30 10:10:06", asUTC = T, tz = "GMT") & StartTime < anytime("2020-04-30 23:02:21", asUTC = T, tz = "GMT") ~ "Non-breeding period",
-                                      StartTime > anytime("2020-04-30 23:02:21 ", asUTC = T, tz = "GMT") ~ "Pre-breeding migration"))
+sm <- sm %>% rowwise() %>% mutate(period= case_when(StartTime < anytime(arr.nbr.sgat, asUTC = T, tz = "GMT")  ~ "Post-breeding migration",
+                                                    StartTime >= anytime(arr.nbr.sgat, asUTC = T, tz = "GMT") & StartTime < anytime(dep.nbr.sgat, asUTC = T, tz = "GMT") ~ "Non-breeding period",
+                                                    StartTime > anytime(dep.nbr.sgat , asUTC = T, tz = "GMT") ~ "Pre-breeding migration"))
 
 #Save the output of the model 
 save(sm, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))
@@ -725,10 +731,10 @@ geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Gu
 geo.ref[(geo.ref$geo.id == geo.id),]$In_habitat_median_zenith_angle <- zenith
 geo.ref[(geo.ref$geo.id == geo.id),]$Hill_Ekstrom_median_angle <- zenith_sd 
 geo.ref[(geo.ref$geo.id == geo.id),]$Fall_carrib_edits <- TRUE
-geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- arr.nbr
-geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- dep.nbr
 geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.start <- as.character(tm.calib[1])
 geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.end <- as.character(tm.calib[2])
 geo.ref[(geo.ref$geo.id == geo.id),]$tol <-tol_ini
+geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- as.character(arr.nbr.sgat)
+geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- as.character(dep.nbr.sgat)
 write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE) 
 
