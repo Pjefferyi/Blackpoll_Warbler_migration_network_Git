@@ -192,7 +192,7 @@ z0 <- trackMidpts(x0_r)
 save(x0_r, file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
 
 # Check the following times of arrival and departure using a plot 
-arr.nbr <- "2016-10-08" #11
+arr.nbr <- "2016-10-09" #11
 dep.nbr <- "2017-04-18" 
 
 # open jpeg
@@ -287,7 +287,8 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-cL <- changeLight(twl=geo_twl, quantile=0.9, summary = F, days = days, plot = T)
+q <- 0.9
+cL <- changeLight(twl=geo_twl, quantile=q, summary = F, days = days, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
 mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = dist)
@@ -346,6 +347,7 @@ plot(wrld_simpl, col = "grey95", add = T)
 points(dtx0, pch=19, col=  "cornflowerblue", type = "o")
 points(lon.calib, lat.calib, pch = 16, cex = 2.5, col = "firebrick")
 points(dtx0[sitenum > 0,], pch = 16, cex = 1, col = "green")
+points(mS$summary$Lon, mS$summary$Lat, col = "purple")
 box()
 
 # Movement model ###############################################################
@@ -608,5 +610,6 @@ geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.end <- as.character(tm.calib[2])
 geo.ref[(geo.ref$geo.id == geo.id),]$tol <-tol_ini
 geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- as.character(arr.nbr.sgat)
 geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- as.character(dep.nbr.sgat)
+geo.ref[(geo.ref$geo.id == geo.id),]$changelight.quantile <- q
 write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE) 
 

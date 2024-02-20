@@ -283,7 +283,8 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-cL <- changeLight(twl=geo_twl, quantile=0.7, summary = F, days = days, plot = T)
+q <- 0.7
+cL <- changeLight(twl=geo_twl, quantile=q, summary = F, days = days, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
 mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = dist)
@@ -545,18 +546,18 @@ save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 load(file = paste0(dir,"/", geo.id, "adjusted_initial_path_raw.csv"))
 
 #Fall transoceanic flight
-start <- "2016-09-01"
+start <- "2016-09-15"
 end <- "2016-11-01"
 
 #first flight
-f1.start <- "2019-09-30"
-f1.end <- "2019-10-02"
+f1.start <- "2016-10-10"
+f1.end <- "2016-10-11"
 
 #second flight
 #f2.start <- "2019-10-03 00:00"
 #f2.end <- "2019-10-03 12:00"
-f2.start <- "2019-10-15 00:00"
-f2.end <- "2019-10-15 12:00"
+f2.start <- "2016-10-12"
+f2.end <- "2016-10-13"
 
 # Plot lat, lon and light transitions  
 jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition.png"), width = 1024 , height = 990, quality = 100, res = 200)
@@ -595,6 +596,7 @@ geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.end <- as.character(tm.calib[2])
 geo.ref[(geo.ref$geo.id == geo.id),]$tol <-tol_ini
 geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- as.character(arr.nbr.sgat)
 geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- NA
+geo.ref[(geo.ref$geo.id == geo.id),]$changelight.quantile <- q
 write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE) 
 
 

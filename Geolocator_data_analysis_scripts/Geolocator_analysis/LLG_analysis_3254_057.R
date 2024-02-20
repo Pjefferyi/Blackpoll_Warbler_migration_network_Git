@@ -136,7 +136,7 @@ lightImage( tagdata = lig,
             offset = offset,     
             zlim = c(0, 20))
 
-tsimageDeploymentLines(twl$Twilight, lon.calib, lat.calib, offset, lwd = 2, col = "orange")
+tsimageDeploymentLines(twl$Twilight, lon.calib, lat.calib, offset, lwd = 2, col = "orange", zenith = 92)
 
 #calibration period before the migration 
 tm.calib <- as.POSIXct(c("2016-08-01", "2016-08-20"), tz = "UTC")
@@ -149,11 +149,47 @@ d_calib <- subset(twl, Twilight>=tm.calib[1] & Twilight<=tm.calib[2])
 # perform the calibration and verify the fit with the gamma or log distribution
 calib <- thresholdCalibration(d_calib$Twilight, d_calib$Rise, lon.calib, lat.calib, method = "gamma")
 
-#parameters of the error distribution 
-zenith  <- calib[1] 
+#parameters of the error distribution
+zenith  <- calib[1]
 zenith0 <- calib[2]
 
 alpha <- calib[3:4]
+
+# # Calibration V2 ###############################################################
+# 
+# # Calculate solar times and declination from calibration period
+# sun <- solar(d_calib [,1])
+# 
+# # Adjust zenith angle for atmospheric refraction
+# zenith.calib <-
+#   refracted(zenith(sun = sun,
+#                    lon = lon.calib,
+#                    lat = lat.calib))
+# 
+# # Known twilight times for calibration period
+# twl.calib.time <-
+#   twilight(tm = d_calib$Twilight,
+#            lon = lon.calib,
+#            lat = lat.calib,
+#            rise = d_calib$Rise,
+#            zenith = median(zenith.calib ))
+# 
+# # Determine difference in minutes from known and observed sunrise times
+# twl.calib.deviation <-
+#   ifelse(d_calib$Rise,
+#          as.numeric(difftime(d_calib[,1], twl.calib.time, units = "mins")),
+#          as.numeric(difftime(twl.calib.time, d_calib[,1], units = "mins")))
+# 
+# # Describe distribution of the error
+# twl.calib.dist <- fitdistr(abs(twl.calib.deviation), "Gamma")
+# 
+# #parameters of the error distribution
+# zenith  <- median(zenith.calib )
+# zenith0 <- quantile(zenith.calib , probs = 0.95)
+# 
+# alpha <- twl.calib.dist$estimate
+# 
+# hist(abs(twl.calib.deviation), breaks = 30)
 
 # Alternative calibration #######################################################
 
@@ -223,8 +259,8 @@ dev.off()
 # Using approximate timings of arrival and departure from the breeding grounds
 zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith0,
-                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad + 2.5,
-                            Date > anytime(dep.nbr) ~ zenith0_ad + 2.5))
+                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad+2.5,
+                            Date > anytime(dep.nbr) ~ zenith0_ad+2.5))
 
 zeniths0 <- zenith_twl_zero$zenith
 
@@ -293,8 +329,9 @@ geo_twl <- export2GeoLight(twl)
 
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
-# days indicates the duration of the stopovers 
-cL <- changeLight(twl=geo_twl, quantile=0.88, summary = F, days = days, plot = T)
+# days indicates the duration of the stopovers
+q <- 0.88
+cL <- changeLight(twl=geo_twl, quantile= q, summary = F, days = days, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
 mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = dist)
@@ -401,7 +438,7 @@ z.proposal <- mvnorm(S = diag(c(0.005, 0.005)), n = nrow(z0))
 #Tuning ########################################################################
 
 # Fit a first chain for tuning
-fit <- estelleMetropolis(model, x.proposal, z.proposal, iters = 1000, thin = 20)
+fit <- estelleMetropolis(model, x.proposal, z.proposal, iters = 500, thin = 20)
 
 # Fit additional chains for tuning
 for (k in 1:2) {
@@ -415,7 +452,7 @@ for (k in 1:2) {
   z.med <- list(as.matrix(chain.sm.z[,c("Lon.50%","Lat.50%")]))
   
   fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = x.med,
-                           z0 = z.med, iters = 1000, thin = 20)
+                           z0 = z.med, iters = 500, thin = 20)
 }
 
 ## Check if chains mix
@@ -437,7 +474,7 @@ x.proposal <- mvnorm(chainCov(fit$x), s = 0.3)
 z.proposal <- mvnorm(chainCov(fit$z), s = 0.3)
 
 fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = x.med,
-                         z0 = z.med , iters = 3000, thin = 20, chain = 1)
+                         z0 = z.med , iters = 500, thin = 20, chain = 1)
 
 #Summarize results #############################################################
 
@@ -663,6 +700,7 @@ geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.end <- as.character(tm.calib[2])
 geo.ref[(geo.ref$geo.id == geo.id),]$tol <-tol_ini
 geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- as.character(arr.nbr.sgat)
 geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- as.character(dep.nbr.sgat)
+geo.ref[(geo.ref$geo.id == geo.id),]$changelight.quantile <- q
 write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE) 
 
 

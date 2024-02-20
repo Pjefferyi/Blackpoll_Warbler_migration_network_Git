@@ -217,7 +217,8 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-cL <- changeLight(twl=geo_twl, quantile=0.90, summary = F, days = 2, plot = T)
+q <- 0.9
+cL <- changeLight(twl=geo_twl, quantile=q, summary = F, days = 2, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
 mS <- mergeSites(geo_twl, site = cL$site, distThreshold = 250, degElevation = 90-zenith0, alpha = calib[3:4])
@@ -494,4 +495,5 @@ geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.end <- as.character(tm.calib[2])
 geo.ref[(geo.ref$geo.id == geo.id),]$tol <-tol_ini
 geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- NA
 geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- as.character(dep.nbr.sgat)
+geo.ref[(geo.ref$geo.id == geo.id),]$changelight.quantile <- q
 write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE) 

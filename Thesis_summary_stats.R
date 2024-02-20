@@ -66,7 +66,7 @@ geo.list <- c("V8757_010",
               "A",
               "B",
               "C",
-              #"E",
+              "E",
               "D")
 
 geo.all <- findLocData(geo.ids = geo.list, check_col_length = F)
