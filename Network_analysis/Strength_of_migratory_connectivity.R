@@ -52,7 +52,7 @@ fall.stat <- merge(fall.stat, comm.data, by = "cluster")
 
 fall.nbr <- fall.stat %>% group_by(geo_id) %>% 
   filter(period == "Non-breeding period", sitenum == max(sitenum), !is.na(StartTime), !is.na(EndTime)) %>%
-  arrange(geo_id) %>%
+  arrange(geo_id)
 
 fall.nbr.sf <- st_as_sf(fall.nbr, coords = c("Lon.50.", "Lat.50."), crs = st_crs(wrld_simpl), remove = F)
 fall.nbr.sf <- st_transform(fall.nbr.sf, st_crs(proj)) 
@@ -104,11 +104,11 @@ fall.nbr.regions <- st_sf(id = seq(1, length(unique(fall.nbr.sf$cluster))), geom
 
 iter = 1
 
-for (i in unique(fall.nbr.sf$cluster)){
+for (i in sort(unique(fall.nbr.sf$cluster))){
   pt.sb <- fall.nbr.sf[fall.nbr.sf$cluster== i,]
   
   poly <- st_convex_hull(st_union(pt.sb))
-  #poly <- st_buffer(poly, dist = 80000)
+  poly <- st_buffer(poly, dist = 80000)
   poly <- st_transform(poly, st_crs(proj))
   #st_combine(c(fall.nbr.regions, poly))
   fall.nbr.regions$geometry[iter] <- poly
@@ -160,7 +160,7 @@ ggplot(st_as_sf(wrld_simpl))+
   geom_sf(data = fall.nbr.regions, aes(fill = as.factor(cluster)), col = "black", alpha = 0.5)+
   scale_fill_discrete(name = "Nonbreeding regions") +
   #geom_sf(data = fall.nbr.sf, aes(col = "Individual nonbreeding locations (1 bird each)"), shape = 4, cex = 3)+
-  geom_sf(data = fall.nbr.sf, aes(col = as.factor(cluster)), shape = 4, cex = 3)+
+  geom_sf(data = fall.nbr.sf, shape = 4, cex = 3)+
   #scale_colour_manual(values = c("Individual nonbreeding locations (1 bird each)" = "blue"), name = "") +
   coord_sf(xlim = c(-90, -30),ylim = c(-15, 20))+
   theme_bw()+
@@ -336,7 +336,7 @@ for (i in unique(spring.nbr.sf$cluster)){
   pt.sb <- spring.nbr.sf[spring.nbr.sf$cluster== i,]
   
   poly <- st_convex_hull(st_union(pt.sb))
-  #poly <- st_buffer(poly, dist = 60000)
+  poly <- st_buffer(poly, dist = 80000)
   poly <- st_transform(poly, st_crs(proj))
   #st_combine(c(spring.nbr.regions, poly))
   spring.nbr.regions$geometry[iter] <- poly

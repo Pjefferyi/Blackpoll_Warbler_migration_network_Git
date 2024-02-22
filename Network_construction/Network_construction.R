@@ -68,7 +68,7 @@ geo.all <- findLocData(geo.ids = c("V8757_010",
                                    "A",
                                    "B",
                                    "C",
-                                   #"E",
+                                   "E",
                                    "D"), check_col_length = F)
 
 # Define stationary periods as breeding, stopover, or non-breeding #############
@@ -245,14 +245,17 @@ ggplot(st_as_sf(wrld_simpl))+
   theme(text = element_text(size = 16))
 
 # plot the fall clusters 
+reg.bounds <- st_read("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Relative_abundance_propagation/Spatial_data_downloads/ne_50m_admin_1_states_provinces/ne_50m_admin_1_states_provinces.shp")
+
 ggplot(st_as_sf(wrld_simpl))+
   geom_sf(colour = NA, fill = "lightgray") +
+  geom_sf(data = reg.bounds, fill = NA, lwd = 0.2, alpha = 1) +
   coord_sf(xlim = c(-170, -30),ylim = c(-15, 70)) +
   geom_errorbar(data = fall.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
   geom_errorbar(data = fall.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
   #geom_path(data = fall.stat[fall.stat$geo_id == "E",], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5) +
   #geom_point(data = fall.stat[fall.stat$geo_id == "E",], mapping = aes(x = Lon.50., y = Lat.50.), alpha = 0.5) +
-  geom_path(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5, linewidth = 0.1) +
+  #geom_path(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5, linewidth = 0.1) +
   geom_point(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, colour = as.factor(cluster)), cex = 2) +
   labs(colour = "Cluster") +
   theme_bw() +
@@ -324,7 +327,7 @@ meta.fall <- data.frame("vertex" = seq(1, max(fall.edge.df$cluster)),
                    "node.type.num" = fall.node.type$site_type_num)
 
 # For fall nodes where latitudinal accuracy is low, set location close to the coast
-meta.fall[c(3, 5, 7),]$Lat.50. <- c(35.3, 41.45, 44.77)
+meta.fall[c(6, 3, 5, 7),]$Lat.50. <- c(35.3, 35.3, 41.45, 44.77)
  
 fall.location <- as.matrix(meta.fall[, c("Lon.50.", "Lat.50.")])
 
@@ -441,9 +444,10 @@ ggplot(st_as_sf(wrld_simpl))+
 # plot the clusters 
 ggplot(st_as_sf(wrld_simpl))+
   geom_sf(colour = NA, fill = "lightgray") +
+  geom_sf(data = reg.bounds, fill = NA, lwd = 0.2, alpha = 1) +
   coord_sf(xlim = c(-170, -30),ylim = c(-15, 70)) +
-  geom_errorbar(data = spring.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
-  geom_errorbar(data = spring.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
+  #geom_errorbar(data = spring.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
+  #geom_errorbar(data = spring.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
   # geom_path(data = spring.stat[spring.stat$geo_id == "E",], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5) +
   # geom_point(data = spring.stat[spring.stat$geo_id == "E",], mapping = aes(x = Lon.50., y = Lat.50.), alpha = 0.5) +
   geom_point(data = spring.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, colour = as.factor(cluster)), cex = 1.5) +

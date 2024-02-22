@@ -270,7 +270,7 @@ analysis_ref <- loc_list %>% purrr::reduce(full_join, by='geo_id') %>%
 
 ## Plot the first nonbreeding longitude against the breeding longitude ----
 long.plot1 <- ggplot(data = analysis_ref, aes(x = deploy.longitude, y = nbr1.lon)) + 
-  geom_point() + 
+  geom_point(aes(col = Breeding_region_MC)) +
   geom_smooth(method = "lm", se = F, colour="black", size=0.5, linetype = "dashed") + 
   theme_bw() +
   theme(text = element_text(size = 14)) +
@@ -279,7 +279,7 @@ long.plot1 <- ggplot(data = analysis_ref, aes(x = deploy.longitude, y = nbr1.lon
 #geom_text(label = geo.loc.data$geo_id, nudge_x = 5, nudge_y = 1)
 
 # run a regression model
-mod1 <- lm(nbr1.lon ~ deploy.longitude, data = analysis_ref)
+mod1 <- lm(nbr1.lon ~ deploy.longitude + deploy.latitude, data = analysis_ref)
 summary(mod1)
 check_model(mod1)
 
@@ -288,7 +288,7 @@ plot(simulationOutput)
 
 ## Plot the second nonbreeding longitude against the breeding longitude ----
 long.plot2 <- ggplot(data = analysis_ref, aes(x = deploy.longitude, y = nbr2.lon)) + 
-  geom_point() + 
+  geom_point(aes(col = Breeding_region_MC)) +
   geom_smooth(method = "lm", se = F, colour="black", size=0.5, linetype = "dashed") + 
   theme(text = element_text(size=14)) +
   theme_bw() +
@@ -297,7 +297,7 @@ long.plot2 <- ggplot(data = analysis_ref, aes(x = deploy.longitude, y = nbr2.lon
        y = "second nonbreeding site longitude")
 
 # run a regression model
-mod2 <- lm(nbr2.lon ~ deploy.longitude, data = analysis_ref)
+mod2 <- lm(nbr2.lon ~ deploy.longitude + deploy.latitude, data = analysis_ref)
 summary(mod2)
 check_model(mod2)
 
@@ -306,7 +306,7 @@ plot(simulationOutput)
 
 ## Plot the first nonbreeding latitude against the breeding latitude ----
 lat.plot1 <- ggplot(data = analysis_ref, aes(x = deploy.latitude, y = nbr1.lat)) + 
-  geom_point() + 
+  geom_point(aes(col = Breeding_region_MC)) + 
   geom_smooth(method = "lm", se = F, colour="black", size=0.5, linetype = "dashed") + 
   theme_bw() +
   theme(text = element_text(size = 14)) +
@@ -314,7 +314,7 @@ lat.plot1 <- ggplot(data = analysis_ref, aes(x = deploy.latitude, y = nbr1.lat))
        y = "First nonbreeding site latitude")
 
 # run a regression model
-mod3 <- lm(nbr1.lat ~ deploy.latitude, data = analysis_ref)
+mod3 <- lm(nbr1.lat ~ deploy.latitude + deploy.longitude, data = analysis_ref)
 plot(nbr1.lat ~ deploy.latitude, data = analysis_ref)
 summary(mod3)
 check_model(mod3)
@@ -324,7 +324,7 @@ plot(simulationOutput)
 
 ## Plot the second nonbreeding latitude against the breeding latitude ----
 lat.plot2 <- ggplot(data = analysis_ref, aes(x = deploy.latitude, y = nbr2.lat)) + 
-  geom_point() + 
+  geom_point(aes(col = Breeding_region_MC)) + 
   geom_smooth(method = "lm", se = F, colour="black", size=0.5, linetype = "dashed") + 
   theme_bw() +
   theme(text = element_text(size = 14)) +
@@ -332,7 +332,7 @@ lat.plot2 <- ggplot(data = analysis_ref, aes(x = deploy.latitude, y = nbr2.lat))
        y = "Second nonbreeding site latitude")
 
 # run a regression model
-mod4 <- lm(nbr2.lat ~ deploy.latitude, data = analysis_ref)
+mod4 <- lm(nbr2.lat ~ deploy.latitude + deploy.longitude, data = analysis_ref)
 plot(nbr2.lat ~ deploy.latitude, data = analysis_ref)
 summary(mod4)
 check_model(mod4)

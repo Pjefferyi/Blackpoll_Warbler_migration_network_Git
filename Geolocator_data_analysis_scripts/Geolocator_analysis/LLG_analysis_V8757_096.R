@@ -245,7 +245,7 @@ z0 <- trackMidpts(x0_r)
 save(x0_r, file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
 
 # Check the following times of arrival and departure using a plot 
-arr.nbr <- "2012-11-03" 
+arr.nbr <- "2012-11-03" # 03
 dep.nbr <- "2013-05-23" 
 
 # open jpeg
@@ -678,8 +678,8 @@ save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 load(file = paste0(dir,"/", geo.id, "adjusted_initial_path_raw.csv"))
 
 #Fall transoceanic flight
-start <- "2012-09-01"
-end <- "2012-12-01"
+start <- "2012-10-01"
+end <- "2012-11-20"
 
 #first flight
 f1.start <- "2012-11-01"

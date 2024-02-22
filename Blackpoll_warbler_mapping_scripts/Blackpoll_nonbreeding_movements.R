@@ -182,9 +182,9 @@ nbr.move.plot <- ggplot(st_as_sf(wrld_simpl))+
   #geom_text(data = NB.stat, mapping = aes(x = Lon.50., y = Lat.50., label = geo_id), cex = 3)+
   geom_path(data = NB.stat, mapping = aes(x = Lon.50., y = Lat.50., group = as.factor(nbr.move.group), 
             linetype = equinox.nbr.move, col = timing.nbr.move),
-            arrow = arrow(end = "last", type = "closed", length = unit(0.1, "inches")), lwd = 0.8, show.legend =  F) +
+            arrow = arrow(end = "last", type = "closed", length = unit(0.1, "inches")), lwd = 0.6, show.legend =  F) +
   geom_path(data = NB.stat, mapping = aes(x = Lon.50., y = Lat.50., group = as.factor(nbr.move.group), 
-                                          linetype = equinox.nbr.move, col = timing.nbr.move), lwd = 0.8) +
+                                          linetype = equinox.nbr.move, col = timing.nbr.move), lwd = 0.6) +
   scale_color_manual(values = c("#E66100", "#5D3A9B"), name = "Movement timing", label = c("October-December", "January-May"))+
   scale_linetype_manual(values = c("dashed", "solid"), name = "Equinox proximity", label = c("within 14 days", "not within 14 days"))+
   theme_bw()+
@@ -194,9 +194,10 @@ nbr.move.plot <- ggplot(st_as_sf(wrld_simpl))+
         legend.box.background = element_rect(fill = "white", colour = "black", linewidth = 0.2),
         legend.spacing = unit(-5, "pt"),
         legend.key.width = unit(50,"pt"),
-        text = element_text(size = 12),
         axis.title = element_blank(),
-        axis.text  = element_text(colour = "black"))+
+        axis.text  = element_text(colour = "black"),
+        legend.title=element_text(size=11),
+        legend.text=element_text(size=11),)+
   guides(colour = guide_legend(order=1),
          linetype = guide_legend(order=2),
          fill = guide_legend(order=3))

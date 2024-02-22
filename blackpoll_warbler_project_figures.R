@@ -20,6 +20,7 @@ library(mmtable2)
 library(purrr)
 library(stringr)
 library(gt)
+library(shadowtext)
 
 # network specific libraries ----
 library(igraph)
@@ -148,6 +149,8 @@ spring.label.prop <- concensusCluster(graph = undirected.spring.graph, thresh = 
 spring.infomap <- cluster_infomap(spring.graph)
 spring.walktrap <- cluster_walktrap(spring.graph)
 
+plot(spring.walktrap, spring.graph, edge.width = spring.con.ab$weight*30,  edge.arrow.size = 0.5, vertex.size = 1)
+
 modularity(spring.graph, spring.label.prop$`community structure`$membership)
 modularity(spring.graph, spring.infomap$membership)
 modularity(spring.graph, spring.walktrap$membership, directed = T)
@@ -224,8 +227,10 @@ fall.gplot <- ggplot(st_as_sf(America))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         legend.box.background = element_rect(fill = "white", colour = "black", linewidth = 0.2),
-        legend.position = c(0.18, 0.4), text = element_text(size = 10), legend.key = element_rect(fill = "white"),
+        legend.position = c(0.18, 0.4), legend.key = element_rect(fill = "white"),
         legend.background = element_rect(fill = NA),
+        legend.title=element_text(size=8),
+        legend.text=element_text(size=8),
         axis.title =element_blank(),
         axis.text =element_blank(),
         axis.ticks =element_blank(),
@@ -242,7 +247,8 @@ fall.clustplot<- ggplot(st_as_sf(America))+
   #geom_errorbar(data = fall.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
   #geom_path(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5) +
   geom_point(data = fall.stat[(fall.stat$site_type!= "Breeding"),], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = as.factor(cluster)), cex = 1, shape = 21, col = "white", stroke = 0.1) +
-  geom_text(data = meta.fall.ab[meta.fall.ab$node.type != "Breeding",], mapping = aes(x = Lon.50., y = Lat.50., label = vertex), cex = 3, fontface = "bold")+
+  #geom_text(data = meta.fall.ab[meta.fall.ab$node.type != "Breeding",], mapping = aes(x = Lon.50., y = Lat.50., label = vertex), cex = 3, fontface = "bold")+
+  geom_shadowtext(data = meta.fall.ab[meta.fall.ab$node.type != "Breeding",], mapping = aes(x = Lon.50., y = Lat.50., label = vertex), cex = 3, fontface = "bold", col = "black", bg.colour = "white")+
   labs(colour = "Cluster") +
   theme_bw() +
   theme(text = element_text(size = 6), legend.position = "None",
@@ -271,7 +277,9 @@ spring.gplot <- ggplot(st_as_sf(America))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         legend.box.background = element_rect(fill = "white", colour = "black", linewidth = 0.2),
-        legend.position = c(0.15, 0.4), text = element_text(size = 10), legend.key = element_rect(fill = "white"),
+        legend.position = c(0.15, 0.4), legend.key = element_rect(fill = "white"),
+        legend.title=element_text(size=8),
+        legend.text=element_text(size=8),
         legend.background = element_rect(fill = NA),
         axis.title =element_blank(),
         axis.text =element_blank(),
@@ -288,7 +296,8 @@ spring.clustplot<- ggplot(st_as_sf(America))+
   #geom_errorbar(data = spring.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
   #geom_path(data = spring.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5) +
   geom_point(data = spring.stat[(spring.stat$site_type!= "Breeding"),], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = as.factor(cluster)), cex = 1, shape = 21, col = "white", stroke = 0.1) +
-  geom_text(data = meta.spring.ab[meta.spring.ab$node.type != "Breeding",], mapping = aes(x = Lon.50., y = Lat.50., label = vertex), cex = 3, fontface = "bold")+
+  #geom_text(data = meta.spring.ab[meta.spring.ab$node.type != "Breeding",], mapping = aes(x = Lon.50., y = Lat.50., label = vertex), cex = 3, fontface = "bold")+
+  geom_shadowtext(data = meta.spring.ab[meta.spring.ab$node.type != "Breeding",], mapping = aes(x = Lon.50., y = Lat.50., label = vertex), cex = 3, fontface = "bold", col = "black", bg.colour = "white")+
   labs(colour = "Cluster") +
   theme_bw() +
   theme(text = element_text(size = 6), legend.position = "None",
@@ -370,8 +379,10 @@ fall.com.plot <- ggplot(st_as_sf(America))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         legend.box.background = element_rect(fill = "white", colour = "black", linewidth = 0.2),
-        legend.position = c(0.15, 0.4), text = element_text(size = 12), legend.key = element_rect(fill = "white"),
+        legend.position = c(0.15, 0.4), legend.key = element_rect(fill = "white"),
         legend.background = element_rect(fill = NA),
+        legend.title=element_text(size=13),
+        legend.text=element_text(size=13),
         axis.title =element_blank(),
         axis.text =element_blank(),
         axis.ticks =element_blank(),
@@ -391,8 +402,10 @@ spring.com.plot <- ggplot(st_as_sf(America))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         legend.box.background = element_rect(fill = "white", colour = "black", linewidth = 0.2),
-        legend.position = c(0.15, 0.4), text = element_text(size = 12), legend.key = element_rect(fill = "white"),
+        legend.position = c(0.17, 0.4), legend.key = element_rect(fill = "white"),
         legend.background = element_rect(fill = NA),
+        legend.title=element_text(size=13),
+        legend.text=element_text(size=13),
         axis.title =element_blank(),
         axis.text =element_blank(),
         axis.ticks =element_blank(),
@@ -405,7 +418,6 @@ communities.fig <- (fall.com.plot | spring.com.plot)
 
 ggsave(plot = communities.fig, filename = "communities.figure.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
        units = "cm", width = 24*1.2, height = 10*1.2, dpi = "print", bg = "white")
-
 
 # Table 1: Significance of the spring and fall network communities ----
 
@@ -547,7 +559,10 @@ fall.gplot.betw <- ggplot(st_as_sf(America))+
   ggtitle("Fall network") + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
-        legend.position = c(-0.18, 0.4), text = element_text(size = 10), legend.key = element_blank(),
+        legend.position = c(-0.18, 0.5), legend.key = element_blank(),
+        legend.title=element_text(size=10),
+        legend.text=element_text(size=10),
+        plot.title = element_text(size=10),
         axis.title =element_blank(),
         axis.text =element_blank(),
         axis.ticks =element_blank(),
@@ -568,7 +583,10 @@ spring.gplot.betw <- ggplot(st_as_sf(America))+
   ggtitle("Spring network") + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
-        legend.position = "None", text = element_text(size = 10), legend.key = element_blank(),
+        legend.position = "None", legend.key = element_blank(),
+        legend.title=element_text(size=10),
+        legend.text=element_text(size=10),
+        plot.title = element_text(size=10),
         axis.title =element_blank(),
         axis.text =element_blank(),
         axis.ticks =element_blank(),
@@ -588,7 +606,10 @@ fall.gplot.bridge.str <- ggplot(st_as_sf(America))+
                        guide = guide_colorbar(frame.colour = "black"), limits = c(min(0), max(fall.ggnet$bridge.indegree, spring.ggnet$bridge.indegree)))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
-        legend.position = c(-0.18, 0.4), text = element_text(size = 10), legend.key = element_blank(),
+        legend.position = c(-0.18, 0.5), legend.key = element_blank(),
+        legend.title=element_text(size=10),
+        legend.text=element_text(size=10),
+        plot.title = element_text(size=10),
         axis.title =element_blank(),
         axis.text =element_blank(),
         axis.ticks =element_blank(),
@@ -608,7 +629,10 @@ spring.gplot.bridge.str <- ggplot(st_as_sf(America))+
                        guide = guide_colorbar(frame.colour = "black"), limits = c(min(0), max(fall.ggnet$bridge.indegree, spring.ggnet$bridge.indegree)))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
-        legend.position = "None", text = element_text(size = 10), legend.key = element_blank(),
+        legend.position = "None", legend.key = element_blank(),
+        legend.title=element_text(size=10),
+        legend.text=element_text(size=10),
+        plot.title = element_text(size=10),
         axis.title =element_blank(),
         axis.text =element_blank(),
         axis.ticks =element_blank(),
@@ -818,11 +842,13 @@ First.nbr.regions <- ggplot(st_as_sf(wrld_simpl))+
   scale_fill_manual(values = c("Northwestern Region" = "#D81B60",
                                "Central Region" = "#1E88E5",
                                "Eastern Region" = "#FFC107",
-                               "Western region"  = "#004D40"), name = "Breeding origin") +
+                               "Western Region"  = "#004D40"), name = "Breeding origin") +
   coord_sf(xlim = c(-90, -35), ylim = c(-15, 20))+
   theme_bw()+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         legend.position = c(0.8, 0.8),
+        legend.title=element_text(size=12),
+        legend.text=element_text(size=12),
         axis.title =element_blank(),
         axis.text =element_blank(),
         axis.ticks =element_blank(),
@@ -851,11 +877,13 @@ second.nbr.regions <- ggplot(st_as_sf(wrld_simpl))+
   scale_fill_manual(values = c("Northwestern Region" = "#D81B60",
                                "Central Region" = "#1E88E5",
                                "Eastern Region" = "#FFC107",
-                               "Western region"  = "#004D40"), name = "Breeding origin") +
+                               "Western Region"  = "#004D40"), name = "Breeding origin") +
   coord_sf(xlim = c(-90, -35), ylim = c(-15, 20))+
   theme_bw()+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         legend.position = "None",
+        legend.title=element_text(size=12),
+        legend.text=element_text(size=12),
         axis.title =element_blank(),
         axis.text =element_blank(),
         axis.ticks =element_blank(),
@@ -900,9 +928,9 @@ ab.prop.regions.fig <- ggplot(st_as_sf(America))+
   scale_fill_discrete(labels = c("Breeding range", "Nonbreeding range"), name = "", guide = guide_legend(order = 3)) +
   geom_sf(data = br.regions, aes(col = "Abundance propagation regions"), fill = NA, linewidth = 0.5) +
   scale_colour_manual(values = c("Abundance propagation regions" = "black"), name = "")+
-  geom_sf_label(data = br.regions, aes(label = region, stroke = region), nudge_y = c(-12, -12,-13 ,-13), nudge_x = c(0, 10, 0,0), cex =3)+
+  geom_sf_label(data = br.regions, aes(label = region, stroke = region), nudge_y = c(-10, -12,-13 ,-13), nudge_x = c(10, 10, -4,0), cex =4)+
   new_scale_fill() +
-  geom_sf(data =  bpw.ref, aes(fill = "black"), col = "white", shape = 21, stroke = 0.5, cex = 3)+
+  geom_sf(data =  bpw.ref, aes(fill = "black"), col = "white", shape = 21, cex = 3)+
   scale_fill_manual(values = c("black"), labels = c("Geolocator deployment sites"), name = "", guide = guide_legend(order = 1))+
   coord_sf(xlim = c(-170, -40),ylim = c(-5, 70))+
   geom_point(data = spring.stat[spring.stat$geo_id == "WRMA04173" & spring.stat$sitenum == 5,],
@@ -912,10 +940,14 @@ ab.prop.regions.fig <- ggplot(st_as_sf(America))+
         axis.title =element_blank(),
         axis.text =element_blank(),
         axis.ticks =element_blank(),
+        legend.title=element_text(size=11),
+        legend.text=element_text(size=11),
+        legend.background = element_blank(),
+        legend.box.background = element_rect(fill = "white", colour = "black"),
         axis.ticks.length = unit(0, "pt"),
-        legend.spacing = unit(-5, "pt"),
-        legend.position = c(0.2, 0.4),
-        plot.margin = unit(c(0,0,0,0), "pt"),
+        legend.spacing = unit(-18, "pt"),
+        legend.position = c(0.22, 0.3),
+        legend.margin=margin(c(-5,5,9,5)),
         legend.key = element_rect(colour = "transparent", fill = "white"))
 
 ## Save the plot ----
