@@ -242,7 +242,7 @@ z0 <- trackMidpts(x0_r)
 save(x0_r, file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
 
 # Check the following times of arrival and departure using a plot 
-arr.nbr <- "2019-10-08"  
+arr.nbr <- "2019-10-06"  
 dep.nbr <- "2020-04-26" 
 
 # open jpeg
@@ -265,7 +265,7 @@ dev.off()
 # Using approximate timings of arrival and departure from the breeding grounds
 zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith0,
-                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad,
+                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad+1,
                             Date > anytime(dep.nbr) ~ zenith0_ad+1))
 
 zeniths0 <- zenith_twl_zero$zenith
@@ -273,12 +273,12 @@ zeniths0 <- zenith_twl_zero$zenith
 zenith_twl_med <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith,
                             Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith_sd,
-                            Date > anytime(dep.nbr) ~ zenith_sd+1))
+                            Date > anytime(dep.nbr) ~ zenith_sd))
 
 zeniths_med <- zenith_twl_med$zenith
 
 # plot longitudes and latitudes with the new zenith angles 
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol= 0)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol= 0.1)
 
 x0_ad <- path$x
 z0 <- trackMidpts(x0_ad)
@@ -318,7 +318,7 @@ data(wrld_simpl)
 plot(x0, type = "n", xlab = "", ylab = "")
 plot(wrld_simpl, col = "grey95", add = T)
 
-points(path$x[400:674,], pch=19, col="cornflowerblue", type = "o")
+points(path$x, pch=19, col="cornflowerblue", type = "o")
 points(lon.calib, lat.calib, pch = 16, cex = 2.5, col = "firebrick")
 box()
 
@@ -639,7 +639,7 @@ par(cex.axis= 1)
 dev.off()
 
 # based on it's longitude data, this birds appears to have made a stopover in the Caribbean that lasted approximately 20 days
-# The latitude throughout this period is unrelieable 
+# The latitude throughout this period is unreliable 
 
 
 # Record details for the geolocator analysis ###################################

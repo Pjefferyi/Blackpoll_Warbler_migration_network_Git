@@ -7,8 +7,10 @@ library(MASS)
 library(tidyr)
 library(purrr)
 library(glmmTMB)
+library(MuMIn)
+library(lme4)
 
-# Load the helper functions script  
+# Load tMuMIn# Load the helper functions script  
 source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis_helper_functions.R")
 
 # Load geolocator reference data 
@@ -91,7 +93,7 @@ doy <- seq(anytime("2023-06-01"), anytime("2023-12-31"), by = "day")
 solar.angle  <- solar(doy)$sinSolarDec
 
 # Calculate  the number of days censored prior to and after the equinox based on the value of the tol parameter 
-tol_values <- seq(0, 0.25, by = 0.001) 
+tol_values <- seq(0, 0.26, by = 0.001) 
 fall_equi <- anytime("2023-09-22")
 cens_data <- data.frame(tol_values)
 
@@ -100,8 +102,9 @@ cens_data <- cens_data %>%
   mutate(days_cens = length(solar.angle[solar.angle > 0 - tol_values & solar.angle < 0 + tol_values])/2)
 
 # calculate the number of days censored for each geolocator 
-analysis_ref <- analysis_ref %>% rowwise() %>% mutate(tol_days = list(cens_data[round(tol_values, digits = 3) == round(tol, digits = 3),]$days_cens),
-                                                      tol_days = tol_days[[1]])
+analysis_ref <- analysis_ref %>% rowwise() %>% mutate(tol_days = list(cens_data[round(tol_values, digits = 3) == round(tol, digits = 3),]$days_cens))
+analysis_ref$tol_days <- unlist(analysis_ref$tol_days)
+
 # Range of days 
 range(analysis_ref$tol_days)
 
@@ -279,11 +282,12 @@ long.plot1 <- ggplot(data = analysis_ref, aes(x = deploy.longitude, y = nbr1.lon
 #geom_text(label = geo.loc.data$geo_id, nudge_x = 5, nudge_y = 1)
 
 # run a regression model
-mod1 <- lm(nbr1.lon ~ deploy.longitude + deploy.latitude, data = analysis_ref)
+mod1.data <- analysis_ref %>% filter_at(vars(deploy.longitude, deploy.latitude, nbr1.lon),all_vars(!is.na(.)))
+mod1 <- lm(nbr1.lon ~  deploy.longitude, data = mod1.data, na.action = "na.fail")
 summary(mod1)
 check_model(mod1)
 
-simulationOutput <- simulateResiduals(fittedModel =  mod1, plot = F)
+simulationOutput <- simulateResiduals(fittedModel =  mod1, plot = T)
 plot(simulationOutput)
 
 ## Plot the second nonbreeding longitude against the breeding longitude ----
@@ -297,7 +301,7 @@ long.plot2 <- ggplot(data = analysis_ref, aes(x = deploy.longitude, y = nbr2.lon
        y = "second nonbreeding site longitude")
 
 # run a regression model
-mod2 <- lm(nbr2.lon ~ deploy.longitude + deploy.latitude, data = analysis_ref)
+mod2 <- lm(nbr2.lon ~ deploy.longitude, data = analysis_ref)
 summary(mod2)
 check_model(mod2)
 
@@ -314,7 +318,7 @@ lat.plot1 <- ggplot(data = analysis_ref, aes(x = deploy.latitude, y = nbr1.lat))
        y = "First nonbreeding site latitude")
 
 # run a regression model
-mod3 <- lm(nbr1.lat ~ deploy.latitude + deploy.longitude, data = analysis_ref)
+mod3 <- lm(nbr1.lat ~ deploy.latitude, data = analysis_ref)
 plot(nbr1.lat ~ deploy.latitude, data = analysis_ref)
 summary(mod3)
 check_model(mod3)
@@ -332,7 +336,7 @@ lat.plot2 <- ggplot(data = analysis_ref, aes(x = deploy.latitude, y = nbr2.lat))
        y = "Second nonbreeding site latitude")
 
 # run a regression model
-mod4 <- lm(nbr2.lat ~ deploy.latitude + deploy.longitude, data = analysis_ref)
+mod4 <- lm(nbr2.lat ~ deploy.latitude, data = analysis_ref)
 plot(nbr2.lat ~ deploy.latitude, data = analysis_ref)
 summary(mod4)
 check_model(mod4)

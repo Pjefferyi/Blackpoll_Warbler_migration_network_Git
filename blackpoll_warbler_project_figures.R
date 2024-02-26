@@ -55,6 +55,10 @@ spring.con.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University
 spring.stat <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.stationary.data.csv")
 spring.move <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.all.locations.csv")
 
+# add cluster numbers tp fall and spring graph node attributes--- 
+V(fall.graph)$cluster.num <- meta.fall.ab$X
+V(spring.graph)$cluster.num <- meta.spring.ab$X
+
 # add abundance weights to fall and spring graph node attributes--- 
 E(fall.graph)$weight <- fall.con.ab$weight
 E(spring.graph)$weight <- spring.con.ab$weight
@@ -88,10 +92,12 @@ V(spring.graph)$node.type <- meta.spring.ab$node.type
 V(fall.graph)$West <- meta.fall.ab$prop.ab.western
 V(fall.graph)$Central <- meta.fall.ab$prop.ab.central
 V(fall.graph)$East <- meta.fall.ab$prop.ab.eastern
+V(fall.graph)$Northwest <- meta.fall.ab$prop.ab.northwest
 
 V(spring.graph)$West <- meta.spring.ab$prop.ab.western
 V(spring.graph)$Central <- meta.spring.ab$prop.ab.central
 V(spring.graph)$East <- meta.spring.ab$prop.ab.eastern
+V(spring.graph)$Northwest  <- meta.spring.ab$prop.ab.northwest
 
 # Node positions 
 V(fall.graph)$long <- meta.fall.ab$Lon.50.
@@ -104,19 +110,23 @@ V(spring.graph)$lat <- meta.spring.ab$Lat.50.
 fall.comp <- meta.fall.ab %>% rowwise() %>%
   mutate(comp = length(which(c(prop.ab.central, 
                                prop.ab.eastern, 
-                               prop.ab.western)==0)),
-         single.reg = case_when(comp == 2 & prop.ab.western != 0 ~ "West",
-                                comp == 2 & prop.ab.central != 0 ~ "Central",
-                                comp == 2 & prop.ab.eastern != 0 ~ "East",
+                               prop.ab.western,
+                               prop.ab.northwestern)==0)),
+         single.reg = case_when(comp == 3 & prop.ab.western != 0 ~ "West",
+                                comp == 3 & prop.ab.central != 0 ~ "Central",
+                                comp == 3 & prop.ab.eastern != 0 ~ "East",
+                                comp == 3 & prop.ab.northwestern != 0 ~ "Northwest",
                                 .default = NA)) 
 
 spring.comp <- meta.spring.ab %>% rowwise() %>%
   mutate(comp = length(which(c(prop.ab.central, 
                                prop.ab.eastern, 
-                               prop.ab.western)==0)),
-         single.reg = case_when(comp == 2 & prop.ab.western != 0 ~ "West",
-                                comp == 2 & prop.ab.central != 0 ~ "Central",
-                                comp == 2 & prop.ab.eastern != 0 ~ "East",
+                               prop.ab.western,
+                               prop.ab.northwestern)==0)),
+         single.reg = case_when(comp == 3 & prop.ab.western != 0 ~ "West",
+                                comp == 3 & prop.ab.central != 0 ~ "Central",
+                                comp == 3 & prop.ab.eastern != 0 ~ "East",
+                                comp == 3 & prop.ab.northwestern  != 0 ~ "Northwest",
                                 .default = NA)) 
 
 V(fall.graph)$node.comp <- fall.comp$comp
@@ -131,7 +141,7 @@ undirected.fall.graph <- as.undirected(fall.graph, mode = "collapse",
 
 fall.label.prop <- concensusCluster(graph = undirected.fall.graph, thresh = 0.5, algiter = 1000)
 fall.infomap <- cluster_infomap(fall.graph)
-fall.walktrap <- cluster_walktrap(fall.graph)
+fall.walktrap <- cluster_walktrap(fall.graph, steps = 5)
 
 modularity(fall.graph, fall.label.prop$`community structure`$membership)
 modularity(fall.graph, fall.infomap$membership)
@@ -147,9 +157,7 @@ undirected.spring.graph <- as.undirected(spring.graph, mode = "collapse",
 
 spring.label.prop <- concensusCluster(graph = undirected.spring.graph, thresh = 0.5, algiter = 1000)
 spring.infomap <- cluster_infomap(spring.graph)
-spring.walktrap <- cluster_walktrap(spring.graph)
-
-plot(spring.walktrap, spring.graph, edge.width = spring.con.ab$weight*30,  edge.arrow.size = 0.5, vertex.size = 1)
+spring.walktrap <- cluster_walktrap(spring.graph, steps = 5)
 
 modularity(spring.graph, spring.label.prop$`community structure`$membership)
 modularity(spring.graph, spring.infomap$membership)
@@ -173,7 +181,7 @@ spring.graph.disc <- spring.graph - edge(spring.e)
 
 V(spring.graph)$betweenness <- betweenness(spring.graph.disc, directed = T, weights = 1/E(spring.graph.disc)$weight) 
 
-# Fall and spring bridge strength 
+# fall and spring bridge centrality
 fall.graph.brd <- fall.graph.disc 
 spring.graph.brd <- spring.graph.disc 
 
@@ -186,6 +194,41 @@ V(fall.graph)$bridge.betweenness <- bridge(fall.graph.brd,  nodes =as.character(
 V(spring.graph)$bridge.betweenness <- bridge(spring.graph.brd, nodes =as.character(V(spring.graph.brd)), communities = V(spring.graph)$wakltrap.comm, directed = T)$`Bridge Betweenness`
 V(fall.graph)$bridge.indegree <- bridge(fall.graph.brd,  nodes =as.character(V(fall.graph.brd)), communities = V(fall.graph)$walktrap.comm , directed = T)$`Bridge Indegree`
 V(spring.graph)$bridge.indegree <- bridge(spring.graph.brd, nodes =as.character(V(spring.graph.brd)), communities = V(spring.graph)$wakltrap.comm, directed = T)$`Bridge Indegree`
+
+# fall and spring participation coefficient
+
+# Code from Dai Shizuka: https://dshizuka.github.io/networkanalysis/example_usairports.html
+
+fall.edges <- get.data.frame(fall.graph.disc)
+
+p.fall <- vector(length=vcount(fall.graph.disc ))
+for(i in 1:vcount(fall.graph.disc )){
+  nei <- neighbors(fall.graph.disc , i, mode  = "all") #get all neighbors of node i 
+  nei.w <- fall.edges %>% filter((from == i & to %in% nei) | (to == i & from %in% nei)) %>%
+  #nei.w <- fall.edges %>% filter(to == i & from %in% nei) %>%
+    mutate(nei = ifelse(from != i, from, to)) %>% group_by(nei) %>% summarize(t.weight =sum(weight))
+  nei.w$comm <- fall.walktrap$membership[names=nei.w$nei]
+  weight.vec <- nei.w %>% group_by(comm) %>% summarize(comm.weight = sum(t.weight))
+  p.fall [i] <- 1-sum((weight.vec$comm.weight/sum(weight.vec$comm.weight))^2)
+  #if (nrow(nei.w) == 0){p.fall [i] <- 0} 
+}
+
+spring.edges <- get.data.frame(spring.graph.disc )
+
+p.spring <- vector(length=vcount(spring.graph.disc ))
+for(i in 1:vcount(spring.graph.disc )){
+  nei <- neighbors(spring.graph.disc , i, mode = "all") #get all neighbors of node i 
+  nei.w <- spring.edges %>% filter((from == i & to %in% nei) | (to == i & from %in% nei)) %>%
+  #nei.w <- spring.edges %>% filter(to == i & from %in% nei) %>%
+     mutate(nei = ifelse(from != i, from, to)) %>% group_by(nei) %>% summarize(t.weight =sum(weight))
+  nei.w$comm <- spring.walktrap$membership[names=nei.w$nei]
+  weight.vec <- nei.w %>% group_by(comm) %>% summarize(comm.weight = sum(t.weight))
+  p.spring [i] <- 1-sum((weight.vec$comm.weight/sum(weight.vec$comm.weight))^2)
+  #if (nrow(nei.w) == 0){p.spring [i] <- 0} 
+}
+
+V(fall.graph)$participation.coef <-  p.fall
+V(spring.graph)$participation.coef <-  p.spring
 
 #Save graphs with their attribute data ----
 fall.gdata <- igraph::as_data_frame(fall.graph, what = "vertices") %>% mutate(cluster = seq(1:vcount(fall.graph)))
@@ -222,7 +265,7 @@ fall.gplot <- ggplot(st_as_sf(America))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
   scale_color_manual(values=c(adjustcolor("black", alpha = 0.3), adjustcolor("blue", alpha = 0)), guide = "none")+
   geom_nodes(data = fall.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = node.type), shape=21)+
-  scale_size(range = c(0.8, 3), guide = "none")+
+  scale_size(range = c(0.8, 4), guide = "none")+
   scale_fill_manual(values=c("Breeding"  = "#440154FF", "Stopover" = "#FDE725FF", "Nonbreeding" = "#21908CFF"), name = "Node type")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
@@ -243,8 +286,8 @@ fall.gplot <- ggplot(st_as_sf(America))+
 fall.clustplot<- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
   coord_sf(xlim = c(-170, -40),ylim = c(-5, 70)) +
-  #geom_errorbar(data = fall.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
-  #geom_errorbar(data = fall.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
+  geom_errorbar(data = fall.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.1, alpha = 0.3, color = "black") +
+  geom_errorbar(data = fall.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.1, alpha = 0.3, color = "black") +
   #geom_path(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5) +
   geom_point(data = fall.stat[(fall.stat$site_type!= "Breeding"),], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = as.factor(cluster)), cex = 1, shape = 21, col = "white", stroke = 0.1) +
   #geom_text(data = meta.fall.ab[meta.fall.ab$node.type != "Breeding",], mapping = aes(x = Lon.50., y = Lat.50., label = vertex), cex = 3, fontface = "bold")+
@@ -272,7 +315,7 @@ spring.gplot <- ggplot(st_as_sf(America))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
   scale_color_manual(values=c(adjustcolor("blue", alpha = 0), adjustcolor("black", alpha = 0.3)), guide = "none")+
   geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = node.type), shape=21)+
-  scale_size(range = c(0.8, 3), name = "Node weight")+
+  scale_size(range = c(0.8, 4), breaks = c(0.1, 0.3, 0.5), name = "Node weight")+
   scale_fill_manual(values=c("Breeding"  = "#440154FF", "Stopover" = "#FDE725FF", "Nonbreeding" = "#21908CFF"), guide = "none")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
@@ -292,8 +335,8 @@ spring.gplot <- ggplot(st_as_sf(America))+
 spring.clustplot<- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
   coord_sf(xlim = c(-170, -40),ylim = c(-5, 70)) +
-  #geom_errorbar(data = spring.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
-  #geom_errorbar(data = spring.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
+  geom_errorbar(data = spring.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.1, alpha = 0.3, color = "black") +
+  geom_errorbar(data = spring.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.1, alpha = 0.3, color = "black") +
   #geom_path(data = spring.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5) +
   geom_point(data = spring.stat[(spring.stat$site_type!= "Breeding"),], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = as.factor(cluster)), cex = 1, shape = 21, col = "white", stroke = 0.1) +
   #geom_text(data = meta.spring.ab[meta.spring.ab$node.type != "Breeding",], mapping = aes(x = Lon.50., y = Lat.50., label = vertex), cex = 3, fontface = "bold")+
@@ -331,15 +374,17 @@ fall.gplot.comp <- ggplot(st_as_sf(America))+
              arrow = arrow(length = unit(9, "pt"), type = "closed", angle = 10))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
   scale_color_manual(values=c(adjustcolor("black", alpha = 0.5), adjustcolor("blue", alpha = 0)), guide = "none")+
-  geom_scatterpie(cols = c("West", "Central", "East"), data = fall.data[fall.data$node.comp < 2,], mapping = aes(x = long, y = lat, r = 2)) +
-  geom_point(data = fall.data[fall.data$node.comp == 2,], mapping = aes(x = long, y = lat, fill = single.reg), shape= 21, cex = 5, colour = "black",  show.legend = F)+
-  scale_fill_manual(values = c("West" = "#D55E00", "Central" = "#009E73", "East" = "#0072B2"), name = "Region") +
+  geom_scatterpie(cols = c("West", "Central", "East", "Northwest"), data = fall.data[fall.data$node.comp < 3,], mapping = aes(x = long, y = lat, r = 2)) +
+  geom_point(data = fall.data[fall.data$node.comp == 3,], mapping = aes(x = long, y = lat, fill = single.reg), shape= 21, cex = 5, colour = "black",  show.legend = F)+
+  scale_fill_manual(values = c("West" = "#D55E00", "Central" = "#009E73", "East" = "#0072B2", "Northwest" = "#F0E442"), name = "Breeding Region") +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         legend.position = c(0.2, 0.4), text = element_text(size = 12), legend.key = element_blank(),
         axis.title =element_blank(),
         axis.text =element_blank(),
-        axis.ticks =element_blank())+
+        axis.ticks =element_blank(),
+        axis.ticks.length = unit(0, "pt"),
+        plot.margin = unit(c(0,0,0,0), "pt"))+ 
   guides(fill = guide_legend(override.aes = list(size = 5)), )
 
 ## Spring population compositon ----
@@ -351,19 +396,24 @@ spring.gplot.comp <- ggplot(st_as_sf(America))+
              arrow = arrow(length = unit(9, "pt"), type = "closed", angle = 10))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
   scale_color_manual(values=c(adjustcolor("blue", alpha = 0), adjustcolor("black", alpha = 0.5)), guide = "none")+
-  geom_scatterpie(cols = c("West", "Central", "East"), data = spring.data[spring.data$node.comp < 2,], mapping = aes(x = long, y = lat, r = 2)) +
-  geom_point(data = spring.data[spring.data$node.comp == 2,], mapping = aes(x = long, y = lat, fill = single.reg), shape= 21, cex = 5, colour = "black",  show.legend = F)+
-  scale_fill_manual(values = c("West" = "#D55E00", "Central" = "#009E73", "East" = "#0072B2"), name = "Region") +
+  geom_scatterpie(cols = c("West", "Central", "East", "Northwest"), data = spring.data[spring.data$node.comp < 3,], mapping = aes(x = long, y = lat, r = 2)) +
+  geom_point(data = spring.data[spring.data$node.comp == 3,], mapping = aes(x = long, y = lat, fill = single.reg), shape= 21, cex = 5, colour = "black",  show.legend = F)+
+  scale_fill_manual(values = c("West" = "#D55E00", "Central" = "#009E73", "East" = "#0072B2", "Northwest" = "#F0E442"), name = "Breeding Region") +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         legend.position = "None", text = element_text(size = 12), legend.key = element_blank(),
-        axis.title=element_blank(),
-        axis.text=element_blank(),
-        axis.ticks=element_blank())+
+        axis.title =element_blank(),
+        axis.text =element_blank(),
+        axis.ticks =element_blank(),
+        axis.ticks.length = unit(0, "pt"),
+        plot.margin = unit(c(0,0,0,0), "pt"))+ 
   guides(fill = guide_legend(override.aes = list(size = 5)), )
 
 ## Panel ----
-plot_grid(fall.gplot.comp, spring.gplot.comp)
+node.comp.fig <- plot_grid(fall.gplot.comp, spring.gplot.comp)
+
+ggsave(plot = node.comp.fig, filename = "Node.comp.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
+       units = "cm", width = 24*1.2, height = 10*1.2, dpi = "print", bg = "white")
 
 # Figure 3: Fall and spring migratory network communities ----
 
@@ -625,6 +675,7 @@ spring.gplot.bridge.str <- ggplot(st_as_sf(America))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
   geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = bridge.indegree), shape=21, size  = 3)+
   scale_color_manual(values=c(adjustcolor("blue", alpha = 0), adjustcolor("black", alpha = 0.5)), guide = "none")+
+  #geom_text(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, label = participation.coef))+
   scale_fill_viridis_c(direction = -1, option = "magma", name = "In-degree\nbridge strength", 
                        guide = guide_colorbar(frame.colour = "black"), limits = c(min(0), max(fall.ggnet$bridge.indegree, spring.ggnet$bridge.indegree)))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
