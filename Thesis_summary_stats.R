@@ -180,6 +180,10 @@ analysis_ref <- merge(analysis_ref, spring.node.used.df, by.x = "geo.id", by.y =
 
 ## Statistics of node usage ----
 
+## number of nodes of each type 
+meta.fall.ab  %>% group_by(node.type) %>% summarize(n())
+meta.spring.ab  %>% group_by(node.type) %>% summarize(n())
+
 ### Average number of nodes used in fall network ----
 range(analysis_ref$fall.nodes.occupied, na.rm =  T)
 mean(analysis_ref$fall.nodes.occupied, na.rm =  T)
@@ -283,11 +287,12 @@ long.plot1 <- ggplot(data = analysis_ref, aes(x = deploy.longitude, y = nbr1.lon
 
 # run a regression model
 mod1.data <- analysis_ref %>% filter_at(vars(deploy.longitude, deploy.latitude, nbr1.lon),all_vars(!is.na(.)))
-mod1 <- lm(nbr1.lon ~  deploy.longitude, data = mod1.data, na.action = "na.fail")
+mod1 <- lm(nbr1.lon ~ deploy.longitude + deploy.latitude, data = mod1.data, na.action = "na.fail")
 summary(mod1)
 check_model(mod1)
+#with(mod1.data, table(study.site))
 
-simulationOutput <- simulateResiduals(fittedModel =  mod1, plot = T)
+simulationOutput <- simulateResiduals(fittedModel =  mod1, plot = F, quantreg = T)
 plot(simulationOutput)
 
 ## Plot the second nonbreeding longitude against the breeding longitude ----
@@ -301,7 +306,8 @@ long.plot2 <- ggplot(data = analysis_ref, aes(x = deploy.longitude, y = nbr2.lon
        y = "second nonbreeding site longitude")
 
 # run a regression model
-mod2 <- lm(nbr2.lon ~ deploy.longitude, data = analysis_ref)
+mod2.data <- analysis_ref %>% filter_at(vars(deploy.longitude, deploy.latitude, nbr2.lon),all_vars(!is.na(.)))
+mod2 <- lm(nbr2.lon ~ deploy.longitude, data = mod2.data, na.action = "na.fail")
 summary(mod2)
 check_model(mod2)
 
@@ -318,8 +324,9 @@ lat.plot1 <- ggplot(data = analysis_ref, aes(x = deploy.latitude, y = nbr1.lat))
        y = "First nonbreeding site latitude")
 
 # run a regression model
-mod3 <- lm(nbr1.lat ~ deploy.latitude, data = analysis_ref)
-plot(nbr1.lat ~ deploy.latitude, data = analysis_ref)
+mod3.data <- analysis_ref %>% filter_at(vars(deploy.latitude, nbr1.lat),all_vars(!is.na(.)))
+mod3 <- lm(nbr1.lat ~ deploy.longitude, data = mod3.data )
+plot(nbr1.lat ~ deploy.latitude, data = mod3.data )
 summary(mod3)
 check_model(mod3)
 
@@ -327,7 +334,7 @@ simulationOutput <- simulateResiduals(fittedModel =  mod3, plot = F)
 plot(simulationOutput)
 
 ## Plot the second nonbreeding latitude against the breeding latitude ----
-lat.plot2 <- ggplot(data = analysis_ref, aes(x = deploy.latitude, y = nbr2.lat)) + 
+lat.plot2 <- ggplot(data = analysis_ref, aes(x = deploy.longitude, y = nbr2.lat)) + 
   geom_point(aes(col = Breeding_region_MC)) + 
   geom_smooth(method = "lm", se = F, colour="black", size=0.5, linetype = "dashed") + 
   theme_bw() +
@@ -336,8 +343,10 @@ lat.plot2 <- ggplot(data = analysis_ref, aes(x = deploy.latitude, y = nbr2.lat))
        y = "Second nonbreeding site latitude")
 
 # run a regression model
-mod4 <- lm(nbr2.lat ~ deploy.latitude, data = analysis_ref)
-plot(nbr2.lat ~ deploy.latitude, data = analysis_ref)
+mod4.data <- analysis_ref %>% filter_at(vars(deploy.latitude, nbr2.lat),all_vars(!is.na(.)))
+#mod4 <- glmmTMB(nbr2.lat ~ deploy.latitude + (1|study_site), data = mod4.data, na.action = "na.fail")
+mod4 <- lm(nbr2.lat ~ deploy.longitude, data = mod4.data )
+plot(nbr2.lat ~ deploy.latitude, data = mod4.data )
 summary(mod4)
 check_model(mod4)
 
@@ -358,8 +367,8 @@ lonlat.plot1 <- ggplot(data = analysis_ref, aes(x = deploy.longitude, y = nbr1.l
        y = "First nonbreeding site latitude")
 
 # run a regression model
-mod5 <- lm(nbr1.lat ~ deploy.longitude, data = analysis_ref)
-plot(nbr1.lat ~ deploy.longitude, data = analysis_ref)
+mod5 <- lm(deploy.latitude ~ deploy.longitude, data = analysis_ref)
+plot(deploy.latitude~ deploy.longitude, data = analysis_ref)
 summary(mod5)
 check_model(mod5)
 
