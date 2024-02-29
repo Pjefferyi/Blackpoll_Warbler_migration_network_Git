@@ -28,6 +28,7 @@ library(ggnetwork)
 library(intergraph)
 library(networktools)
 library(clustAnalytics)
+library(pls)
 
 # ebird
 library(ebirdst)
@@ -145,7 +146,7 @@ fall.walktrap <- cluster_walktrap(fall.graph, steps = 5)
 
 modularity(fall.graph, fall.label.prop$`community structure`$membership)
 modularity(fall.graph, fall.infomap$membership)
-modularity(fall.graph, fall.walktrap$membership, directed = T)
+modularity(fall.graph, fall.walktrap$membership)
 
 V(fall.graph)$label.prop.comm <- fall.label.prop$`community structure`$membership
 V(fall.graph)$info.map.comm <- fall.infomap$membership
@@ -234,8 +235,8 @@ V(spring.graph)$participation.coef <-  p.spring
 fall.gdata <- igraph::as_data_frame(fall.graph, what = "vertices") %>% mutate(cluster = seq(1:vcount(fall.graph)))
 spring.gdata <- igraph::as_data_frame(spring.graph, what = "vertices") %>% mutate(cluster = seq(1:vcount(spring.graph)))
 
-write.csv(fall.gdata, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/fall.graph.data.csv")
-write.csv(spring.gdata, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/spring.graph.data.csv")
+#write.csv(fall.gdata, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/fall.graph.data.csv")
+#write.csv(spring.gdata, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/spring.graph.data.csv")
 
 # Figures 1 and 2: Fall and spring migratory network node types and stationary location clusters ----
 America <- wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),]
@@ -426,6 +427,7 @@ fall.com.plot <- ggplot(st_as_sf(America))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
   scale_color_manual(values=c(adjustcolor("black", alpha = 0.5), adjustcolor("blue", alpha = 0)), guide = "none")+
   geom_nodes(data = fall.ggnet, mapping = aes(x = x, y = y, cex = , fill = as.factor(walktrap.comm)), shape=21, size = 4)+
+  scale_fill_manual(values=c("#D55E00", "#0072B2"), labels = c("West", "East")) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         legend.box.background = element_rect(fill = "white", colour = "black", linewidth = 0.2),
@@ -449,6 +451,7 @@ spring.com.plot <- ggplot(st_as_sf(America))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
   scale_color_manual(values=c(adjustcolor("blue", alpha = 0), adjustcolor("black", alpha = 0.5)), guide = "none")+
   geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = , fill = as.factor(walktrap.comm)), shape=21, size = 4)+
+  scale_fill_manual(values=c("#D55E00", "#0072B2"), labels = c("West", "East")) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         legend.box.background = element_rect(fill = "white", colour = "black", linewidth = 0.2),
@@ -469,129 +472,158 @@ communities.fig <- (fall.com.plot | spring.com.plot)
 ggsave(plot = communities.fig, filename = "communities.figure.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
        units = "cm", width = 24*1.2, height = 10*1.2, dpi = "print", bg = "white")
 
-# Table 1: Significance of the spring and fall network communities ----
+# # Table 1: Significance of the spring and fall network communities ----
+# 
+# ## Significance of the Fall network communities ---- 
+# 
+# # create multiple rewired versions of the network, apply the clustering method, then calculate scoring functions 
+# iter = 100
+# 
+# rand.data = NULL
+# 
+# for (i in seq(1,iter)){
+#   
+#   # Create randomized graph
+#   rewire.fall <- rewireCpp(g = fall.graph, weight_sel="max_weight", Q = 1)
+#   
+#   # cluster analysis
+#   rewire.cluster <- cluster_walktrap(rewire.fall)
+#   rewire.comms <-  rewire.cluster$membership
+#   
+#   # calculate scoring function
+#   rewire.score <- scoring_functions(rewire.fall, com = rewire.comms, weighted = T, type = "global")
+#   
+#   # Build data.frame with results 
+#   if (is.null(rand.data)){
+#     rand.data <- as.data.frame(rewire.score)
+#   }else{
+#     rand.data <-rbind(rand.data,  as.data.frame(rewire.score))
+#   }
+#   
+#   print(paste0("progress: ", as.character(i), " to ", as.character(iter)))
+# }
+# 
+# # test whether scoring functions differ between the observed and randomized networks
+# score.test.fall <- as.data.frame(NULL)
+# 
+# # scoring functions for the observed graph
+# ob.score <- as.data.frame(scoring_functions(fall.graph, V(fall.graph)$walktrap.comm, weighted = T, type = "global"))
+# 
+# for (i in seq(1, length(colnames(rand.data)))){
+#   
+#   if (length(unique(rand.data[,i])) > 1){
+#     test.results <- t.test(rand.data[,i], mu = ob.score[,i])
+#     
+#     score.test.fall[i,"score.function"] <- colnames(rand.data)[i]
+#     score.test.fall[i,"observed.score"] <- ob.score[,i]
+#     score.test.fall[i,"random.function.mean"] <- mean(rand.data[,i], na.rm = T)
+#     score.test.fall[i, "random.function.se"] <- sd(rand.data[,i], na.rm = T)/sqrt(length(rand.data[,i][!is.na(rand.data[,i])]))
+#     score.test.fall[i,"statistic"] <- test.results$statistic
+#     score.test.fall[i,"parameter"] <- test.results$parameter
+#     score.test.fall[i,"p-value"] <- test.results$p.value
+#   }else{
+#     score.test.fall[i,"score.function"] <- colnames(rand.data)[i]
+#     score.test.fall[i,"observed.score"] <- ob.score[,i]
+#     score.test.fall[i,"random.function.mean"] <- mean (rand.data[,i])
+#     score.test.fall[i, "random.function.se"] <- sd(rand.data[,i], na.rm = T)/sqrt(length(rand.data[,i][!is.na(rand.data[,i])]))
+#     score.test.fall[i,"statistic"] <- NA
+#     score.test.fall[i,"parameter"] <- NA
+#     score.test.fall[i,"p-value"] <- NA
+#   }
+# }
+# 
+# # Save the fall score test results
+# write.csv(score.test.fall, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Table_data/fall.network.significance.test.csv")
+# 
+# ## Significance of the Spring network communities ---- 
+# 
+# # create multiple rewired versions of the network, apply the clustering method, then calculate scoring functions 
+# iter = 100
+# 
+# rand.data = NULL
+# 
+# for (i in seq(1,iter)){
+#   
+#   # Create randomized graph
+#   rewire.spring <- rewireCpp(g = spring.graph, weight_sel="max_weight", Q = 1)
+#   
+#   # cluster analysis
+#   rewire.cluster <- cluster_walktrap(rewire.spring)
+#   rewire.comms <-  rewire.cluster$membership
+#   
+#   # calculate scoring function
+#   rewire.score <- scoring_functions(rewire.spring, com = rewire.comms, weighted = T, type = "global")
+#   
+#   # Build data.frame with results 
+#   if (is.null(rand.data)){
+#     rand.data <- as.data.frame(rewire.score)
+#   }else{
+#     rand.data <-rbind(rand.data,  as.data.frame(rewire.score))
+#   }
+#   
+#   print(paste0("progress: ", as.character(i), " to ", as.character(iter)))
+# }
+# 
+# # test whether scoring functions differ between the observed and randomized networks
+# score.test.spring <- as.data.frame(NULL)
+# 
+# # scoring functions for the observed graph
+# ob.score <- as.data.frame(scoring_functions(spring.graph, V(spring.graph)$walktrap.comm, weighted = T, type = "global"))
+# 
+# for (i in seq(1, length(colnames(rand.data)))){
+#   
+#   if (length(unique(rand.data[,i])) > 1){
+#     test.results <- t.test(rand.data[,i], mu = ob.score[,i])
+#     
+#     score.test.spring [i,"score.function"] <- colnames(rand.data)[i]
+#     score.test.spring [i,"observed.score"] <- ob.score[,i]
+#     score.test.spring [i,"random.function.mean"] <- mean(rand.data[,i], na.rm = T)
+#     score.test.spring [i, "random.function.se"] <- sd(rand.data[,i], na.rm = T)/sqrt(length(rand.data[,i][!is.na(rand.data[,i])]))
+#     score.test.spring [i,"statistic"] <- test.results$statistic
+#     score.test.spring [i,"parameter"] <- test.results$parameter
+#     score.test.spring [i,"p-value"] <- test.results$p.value
+#   }else{
+#     score.test.spring[i,"score.function"] <- colnames(rand.data)[i]
+#     score.test.spring[i,"observed.score"] <- ob.score[,i]
+#     score.test.spring[i,"random.function.mean"] <- mean (rand.data[,i])
+#     score.test.spring[i, "random.function.se"] <- sd(rand.data[,i], na.rm = T)/sqrt(length(rand.data[,i][!is.na(rand.data[,i])]))
+#     score.test.spring[i,"statistic"] <- NA
+#     score.test.spring[i,"parameter"] <- NA
+#     score.test.spring[i,"p-value"] <- NA
+#   }
+# }
+# 
+# # Save the spring score test results
+# write.csv(score.test.spring, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Table_data/spring.network.significance.test.csv")
 
-## Significance of the Fall network communities ---- 
-
-# create multiple rewired versions of the network, apply the clustering method, then calculate scoring functions 
-iter = 100
-
-rand.data = NULL
-
-for (i in seq(1,iter)){
-  
-  # Create randomized graph
-  rewire.fall <- rewireCpp(g = fall.graph, weight_sel="max_weight", Q = 1)
-  
-  # cluster analysis
-  rewire.cluster <- cluster_walktrap(rewire.fall)
-  rewire.comms <-  rewire.cluster$membership
-  
-  # calculate scoring function
-  rewire.score <- scoring_functions(rewire.fall, com = rewire.comms, weighted = T, type = "global")
-  
-  # Build data.frame with results 
-  if (is.null(rand.data)){
-    rand.data <- as.data.frame(rewire.score)
-  }else{
-    rand.data <-rbind(rand.data,  as.data.frame(rewire.score))
-  }
-  
-  print(paste0("progress: ", as.character(i), " to ", as.character(iter)))
-}
-
-# test whether scoring functions differ between the observed and randomized networks
-score.test.fall <- as.data.frame(NULL)
-
-# scoring functions for the observed graph
-ob.score <- as.data.frame(scoring_functions(fall.graph, V(fall.graph)$walktrap.comm, weighted = T, type = "global"))
-
-for (i in seq(1, length(colnames(rand.data)))){
-  
-  if (length(unique(rand.data[,i])) > 1){
-    test.results <- t.test(rand.data[,i], mu = ob.score[,i])
-    
-    score.test.fall[i,"score.function"] <- colnames(rand.data)[i]
-    score.test.fall[i,"observed.score"] <- ob.score[,i]
-    score.test.fall[i,"random.function.mean"] <- mean(rand.data[,i], na.rm = T)
-    score.test.fall[i, "random.function.se"] <- sd(rand.data[,i], na.rm = T)/sqrt(length(rand.data[,i][!is.na(rand.data[,i])]))
-    score.test.fall[i,"statistic"] <- test.results$statistic
-    score.test.fall[i,"parameter"] <- test.results$parameter
-    score.test.fall[i,"p-value"] <- test.results$p.value
-  }else{
-    score.test.fall[i,"score.function"] <- colnames(rand.data)[i]
-    score.test.fall[i,"observed.score"] <- ob.score[,i]
-    score.test.fall[i,"random.function.mean"] <- mean (rand.data[,i])
-    score.test.fall[i, "random.function.se"] <- sd(rand.data[,i], na.rm = T)/sqrt(length(rand.data[,i][!is.na(rand.data[,i])]))
-    score.test.fall[i,"statistic"] <- NA
-    score.test.fall[i,"parameter"] <- NA
-    score.test.fall[i,"p-value"] <- NA
-  }
-}
-
-# Save the fall score test results
-write.csv(score.test.fall, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Table_data/fall.network.significance.test.csv")
-
-## Significance of the Spring network communities ---- 
-
-# create multiple rewired versions of the network, apply the clustering method, then calculate scoring functions 
-iter = 100
-
-rand.data = NULL
-
-for (i in seq(1,iter)){
-  
-  # Create randomized graph
-  rewire.spring <- rewireCpp(g = spring.graph, weight_sel="max_weight", Q = 1)
-  
-  # cluster analysis
-  rewire.cluster <- cluster_walktrap(rewire.spring)
-  rewire.comms <-  rewire.cluster$membership
-  
-  # calculate scoring function
-  rewire.score <- scoring_functions(rewire.spring, com = rewire.comms, weighted = T, type = "global")
-  
-  # Build data.frame with results 
-  if (is.null(rand.data)){
-    rand.data <- as.data.frame(rewire.score)
-  }else{
-    rand.data <-rbind(rand.data,  as.data.frame(rewire.score))
-  }
-  
-  print(paste0("progress: ", as.character(i), " to ", as.character(iter)))
-}
-
-# test whether scoring functions differ between the observed and randomized networks
-score.test.spring <- as.data.frame(NULL)
-
-# scoring functions for the observed graph
-ob.score <- as.data.frame(scoring_functions(spring.graph, V(spring.graph)$walktrap.comm, weighted = T, type = "global"))
-
-for (i in seq(1, length(colnames(rand.data)))){
-  
-  if (length(unique(rand.data[,i])) > 1){
-    test.results <- t.test(rand.data[,i], mu = ob.score[,i])
-    
-    score.test.spring [i,"score.function"] <- colnames(rand.data)[i]
-    score.test.spring [i,"observed.score"] <- ob.score[,i]
-    score.test.spring [i,"random.function.mean"] <- mean(rand.data[,i], na.rm = T)
-    score.test.spring [i, "random.function.se"] <- sd(rand.data[,i], na.rm = T)/sqrt(length(rand.data[,i][!is.na(rand.data[,i])]))
-    score.test.spring [i,"statistic"] <- test.results$statistic
-    score.test.spring [i,"parameter"] <- test.results$parameter
-    score.test.spring [i,"p-value"] <- test.results$p.value
-  }else{
-    score.test.spring[i,"score.function"] <- colnames(rand.data)[i]
-    score.test.spring[i,"observed.score"] <- ob.score[,i]
-    score.test.spring[i,"random.function.mean"] <- mean (rand.data[,i])
-    score.test.spring[i, "random.function.se"] <- sd(rand.data[,i], na.rm = T)/sqrt(length(rand.data[,i][!is.na(rand.data[,i])]))
-    score.test.spring[i,"statistic"] <- NA
-    score.test.spring[i,"parameter"] <- NA
-    score.test.spring[i,"p-value"] <- NA
-  }
-}
-
-# Save the spring score test results
-write.csv(score.test.spring, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Table_data/spring.network.significance.test.csv")
+# ## Assessment of network stability  
+# 
+# obs.stab <- boot_alg_list(g = undirected.fall.graph, alg_list = list(walktrap
+#               = cluster_walktrap))
+# 
+# 
+# # create multiple rewired versions of the network, apply the bootstrapping method
+# iter = 100
+# 
+# rand.data.stab = NULL
+# 
+# for (i in seq(1,iter)){
+#   
+#   # Create randomized graph
+#   rewire.fall <- rewireCpp(g = fall.graph, weight_sel="max_weight", Q = 1)
+#   
+#   # boostrap stability
+#   rewire.stab.score <- boot_alg_list(g = rewire.fall, alg_list = list(walktrap = cluster_walktrap))
+#   
+#   # Build data.frame with results 
+#   if (is.null(rand.data)){
+#     rand.data <- as.data.frame(rewire.score)
+#   }else{
+#     rand.data <-rbind(rand.data,  as.data.frame(rewire.score))
+#   }
+#   
+#   print(paste0("progress: ", as.character(i), " to ", as.character(iter)))
+# }
 
 # Figure 4: Fall and spring centrality metrics ---- 
 
@@ -602,6 +634,7 @@ fall.gplot.betw <- ggplot(st_as_sf(America))+
   geom_edges(data = fall.ggnet, mapping = aes(x = x, y = y, xend = xend, yend = yend, col = edge.type, lwd = weight),
              arrow = arrow(length = unit(9, "pt"), type = "closed", angle = 10))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
+  #geom_text(data = fall.ggnet, mapping = aes(x = x, y = y, label = weight), nudge_x = 4)+
   scale_color_manual(values=c(adjustcolor("black", alpha = 0.5), adjustcolor("blue", alpha = 0)), guide = "none")+
   geom_nodes(data = fall.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = betweenness), shape=21, size  = 3)+
   scale_fill_viridis_c(direction = -1, option = "magma", name = "Betweenness", 

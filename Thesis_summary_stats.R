@@ -287,7 +287,10 @@ long.plot1 <- ggplot(data = analysis_ref, aes(x = deploy.longitude, y = nbr1.lon
 
 # run a regression model
 mod1.data <- analysis_ref %>% filter_at(vars(deploy.longitude, deploy.latitude, nbr1.lon),all_vars(!is.na(.)))
-mod1 <- lm(nbr1.lon ~ deploy.longitude + deploy.latitude, data = mod1.data, na.action = "na.fail")
+#mod1 <- glmmTMB(nbr1.lon ~ deploy.latitude + (1|study.site), data = mod1.data, na.action = "na.fail")
+# mod1 <- plsr(nbr1.lon ~ deploy.latitude + deploy.longitude, data = mod1.data, scale = T, validation = "CV",
+#              ncomp = 1, method = "oscorespls")
+mod1 <- lm(nbr1.lon ~ deploy.longitude, data = mod1.data, na.action = "na.fail")
 summary(mod1)
 check_model(mod1)
 #with(mod1.data, table(study.site))
@@ -307,9 +310,19 @@ long.plot2 <- ggplot(data = analysis_ref, aes(x = deploy.longitude, y = nbr2.lon
 
 # run a regression model
 mod2.data <- analysis_ref %>% filter_at(vars(deploy.longitude, deploy.latitude, nbr2.lon),all_vars(!is.na(.)))
+#mod2 <- glmmTMB(nbr2.lon ~ deploy.longitude + deploy.latitude + (1|study,site), data = mod2.data, na.action = "na.fail")
 mod2 <- lm(nbr2.lon ~ deploy.longitude, data = mod2.data, na.action = "na.fail")
 summary(mod2)
 check_model(mod2)
+
+# mod1.data.reg1 <- mod1.data %>% filter(Breeding_region_MC == "Eastern Region")
+# cor(mod1.data.reg1$deploy.latitude, mod1.data.reg1$deploy.longitude)
+# mod1.data.reg2 <- mod1.data %>% filter(Breeding_region_MC == "Central Region")
+# plot(mod1.data.reg2$deploy.latitude, mod1.data.reg2$deploy.longitude)
+# mod1.data.reg3 <- mod1.data %>% filter(Breeding_region_MC == "Western Region")
+# plot(mod1.data.reg3$deploy.latitude, mod1.data.reg3$deploy.longitude)
+# mod1.data.reg4 <- mod1.data %>% filter(Breeding_region_MC == "Northwestern Region")
+# cor(mod1.data.reg4$deploy.latitude, mod1.data.reg4$deploy.longitude)
 
 simulationOutput <- simulateResiduals(fittedModel =  mod2, plot = F)
 plot(simulationOutput)
@@ -326,7 +339,7 @@ lat.plot1 <- ggplot(data = analysis_ref, aes(x = deploy.latitude, y = nbr1.lat))
 # run a regression model
 mod3.data <- analysis_ref %>% filter_at(vars(deploy.latitude, nbr1.lat),all_vars(!is.na(.)))
 mod3 <- lm(nbr1.lat ~ deploy.longitude, data = mod3.data )
-plot(nbr1.lat ~ deploy.latitude, data = mod3.data )
+plot(nbr1.lat ~ deploy.longitude, data = mod3.data )
 summary(mod3)
 check_model(mod3)
 
@@ -346,7 +359,7 @@ lat.plot2 <- ggplot(data = analysis_ref, aes(x = deploy.longitude, y = nbr2.lat)
 mod4.data <- analysis_ref %>% filter_at(vars(deploy.latitude, nbr2.lat),all_vars(!is.na(.)))
 #mod4 <- glmmTMB(nbr2.lat ~ deploy.latitude + (1|study_site), data = mod4.data, na.action = "na.fail")
 mod4 <- lm(nbr2.lat ~ deploy.longitude, data = mod4.data )
-plot(nbr2.lat ~ deploy.latitude, data = mod4.data )
+plot(nbr2.lat ~ deploy.longitude, data = mod4.data )
 summary(mod4)
 check_model(mod4)
 
@@ -366,15 +379,6 @@ lonlat.plot1 <- ggplot(data = analysis_ref, aes(x = deploy.longitude, y = nbr1.l
   labs(x = "Breeding longitude",
        y = "First nonbreeding site latitude")
 
-# run a regression model
-mod5 <- lm(deploy.latitude ~ deploy.longitude, data = analysis_ref)
-plot(deploy.latitude~ deploy.longitude, data = analysis_ref)
-summary(mod5)
-check_model(mod5)
-
-simulationOutput <- simulateResiduals(fittedModel =  mod5, plot = F)
-plot(simulationOutput)
-
 ## network metric scores by nodes ----
 
 #load network data
@@ -391,7 +395,7 @@ ggplot(data = fall.gdata, aes(y = betweenness, x = factor(cluster), fill = node.
   geom_col()+
   coord_flip()
   
-# Plot bridge betweenness scores
+# Plot indegree strengthscores
 ggplot(data = fall.gdata, aes(y = bridge.indegree, x = factor(cluster), fill = node.type))+
   geom_col()+
   coord_flip()
@@ -406,7 +410,7 @@ ggplot(data = spring.gdata, aes(y = betweenness, x = as.factor(cluster), fill = 
   geom_col()+
   coord_flip()
 
-# Plot bridge betweenness scores
+# Plot bridge indegree strength scores
 ggplot(data = spring.gdata, aes(y = bridge.indegree, x = as.factor(cluster), fill = node.type))+
   geom_col()+
   coord_flip()
