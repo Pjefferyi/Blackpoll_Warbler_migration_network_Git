@@ -10,7 +10,7 @@ library(glmmTMB)
 library(MuMIn)
 library(lme4)
 
-# Load tMuMIn# Load the helper functions script  
+# Load the helper functions script  
 source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis_helper_functions.R")
 
 # Load geolocator reference data 
@@ -195,6 +195,39 @@ range(analysis_ref$spring.nodes.occupied, na.rm =  T)
 mean(analysis_ref$spring.nodes.occupied, na.rm =  T)
 se <- sd(analysis_ref$spring.nodes.occupied, na.rm =  T)/sqrt(length(analysis_ref$spring.nodes.occupied[!is.na(analysis_ref$spring.nodes.occupied)]))
 se
+
+### Average time spent stationary in each node ----
+fall.node.times <- fall.stat %>% filter(!(is.na(duration))) %>% group_by(geo_id) %>%
+  arrange(sitenum) %>%
+  filter(sitenum != first(sitenum) & sitenum != last(sitenum)) %>% 
+  group_by(geo_id, cluster) %>%
+  summarize(mean.stat.dur = sum(duration)) 
+
+mean(fall.node.times$mean.stat.dur)
+se <- sd(fall.node.times$mean.stat.dur)/sqrt(length(fall.node.times$mean.stat.dur))
+se
+range(fall.node.times$mean.stat.dur)
+
+spring.node.times <- spring.stat %>% filter(!(is.na(duration))) %>% group_by(geo_id) %>%
+  arrange(sitenum) %>%
+  filter(sitenum != first(sitenum) & sitenum != last(sitenum)) %>% ungroup() %>%
+  group_by(geo_id, cluster) %>%
+  summarize(mean.stat.dur = sum(duration)) 
+
+mean(spring.node.times$mean.stat.dur)
+se <- sd(spring.node.times$mean.stat.dur)/sqrt(length(spring.node.times$mean.stat.dur))
+se
+range(spring.node.times$mean.stat.dur)
+
+### Average duration of migration  ----
+geo.all <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/All.locations.csv")
+
+fall.node.migtime <-  geo.all %>% 
+  filter(site_type %in% c("Breeding", "Stopover","Nonbreeding"),
+                                         period %in% c("Post-breeding migration","Non-breeding period"),
+                                         Recorded_North_South_mig %in% c("Both", "South and partial North", "South")) %>%
+  
+
 
 # ### correlation between number of  nodes used and longitude of breeding site ----
 # mod.fall.stopover.node <- glm(fall.stopover.nodes.occupied   ~ deploy.longitude, data = analysis_ref, family = gaussian(link = "identity"))

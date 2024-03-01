@@ -682,11 +682,14 @@ insertLoc <- function(data, lat.at.loc, start.date, end.date, period, thresh.loc
   #Add the new row (location) and order data by date
   data.mod <- rbind(data.mod, new.loc) %>% ungroup() %>% arrange(StartTime)
   
+  # recalculate durations
+  data.mod$duration <- as.numeric(difftime(data.mod$EndTime, data.mod$StartTime), unit = "days") 
+  
+  #remove any locations with a negative duration (this is any short stop that was caugth in the buffer around the carribean stopover)
+  data.mod <- data.mod %>% filter(duration >= 0)
+  
   # edit the site numbers 
   data.mod[(data.mod$sitenum != 0), ]$sitenum <- seq(1, nrow(data.mod[(data.mod$sitenum != 0), ]), 1)
-  
-  # recalculate durations
-  data.mod$duration <- as.numeric(difftime(data.mod$EndTime, data.mod$StartTime), unit = "days")
   
   print(paste0("Estimated stopover longitude: ", as.character(mean(lon.at.loc))))
   return(data.mod)

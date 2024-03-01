@@ -235,8 +235,8 @@ V(spring.graph)$participation.coef <-  p.spring
 fall.gdata <- igraph::as_data_frame(fall.graph, what = "vertices") %>% mutate(cluster = seq(1:vcount(fall.graph)))
 spring.gdata <- igraph::as_data_frame(spring.graph, what = "vertices") %>% mutate(cluster = seq(1:vcount(spring.graph)))
 
-#write.csv(fall.gdata, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/fall.graph.data.csv")
-#write.csv(spring.gdata, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/spring.graph.data.csv")
+write.csv(fall.gdata, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/fall.graph.data.csv")
+write.csv(spring.gdata, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/spring.graph.data.csv")
 
 # Figures 1 and 2: Fall and spring migratory network node types and stationary location clusters ----
 America <- wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),]
@@ -733,7 +733,7 @@ ggsave(plot = metrics.fig, filename = "nodes.metrics.png" ,  path = "C:/Users/Je
 
 ## Fall node characteristics
 fall.char <- fall.gdata %>% dplyr::select("cluster", "node.type", "node.weight", "n.individuals",
-                                   "betweenness", "bridge.indegree") %>% arrange(factor(node.type, levels = c("Breeding","Stopover","Nonbreeding")))
+                                   "betweenness", "bridge.indegree") %>% arrange(factor(node.type, levels = c("Breeding","Stopover","Nonbreeding"))) 
 
 write_csv(fall.char, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Table_data/Fall_node_table_data.csv")
 

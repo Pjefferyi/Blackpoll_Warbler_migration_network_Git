@@ -609,9 +609,9 @@ points(stat.loc$Lon.50., stat.loc$Lat.50., pch = 16, cex = 1.5, col = "firebrick
 sm$geo_id <- geo.id
 
 # find time of establishment and departure from the nonbreeding grounds 
-arr.nbr.sgat <- sm %>% filter(Lat.50. < 12 & sitenum > 0 & duration > stat.nbr.lim) %>% 
+arr.nbr.sgat <- sm %>% filter(Lat.50. < 13 & sitenum > 0 & duration > stat.nbr.lim) %>% 
   first(.$StartTime) %>% .$StartTime
-dep.nbr.sgat <- sm %>% filter(Lat.50. < 12 & sitenum > 0 & duration > stat.nbr.lim) %>%
+dep.nbr.sgat <- sm %>% filter(Lat.50. < 13 & sitenum > 0 & duration > stat.nbr.lim) %>%
   last(.$EndTime)%>% .$EndTime
 
 #add a column that categorizes the locations (based on the groupthreshold model output)

@@ -253,8 +253,8 @@ ggplot(st_as_sf(wrld_simpl))+
   coord_sf(xlim = c(-170, -30),ylim = c(-15, 70)) +
   #geom_errorbar(data = fall.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
   #geom_errorbar(data = fall.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
-  geom_path(data = fall.stat[fall.stat$geo_id == "3254_057",], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5) +
-  geom_point(data = fall.stat[fall.stat$geo_id == "3254_057",], mapping = aes(x = Lon.50., y = Lat.50.), alpha = 0.5) +
+  geom_path(data = fall.stat[fall.stat$geo_id == "V8757_029",], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5) +
+  geom_point(data = fall.stat[fall.stat$geo_id == "V8757_029",], mapping = aes(x = Lon.50., y = Lat.50.), alpha = 0.5) +
   #geom_path(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5, linewidth = 0.1) +
   #geom_point(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, colour = as.factor(cluster)), cex = 2) +
   labs(colour = "Cluster") +
@@ -862,7 +862,7 @@ legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
 ################################################################################
 
 # Create a dataframe with the proportion of individuals from each section of the blackpoll warbler's range in each node
-fall.stat.ab <- merge(fall.stat, fall.breed.ab[,c("geo_id", "ab.unit")], by = "geo_id")
+fall.stat.ab <- fall.stat %>% filter(!(is.na(next.cluster))) %>% merge(fall.breed.ab[,c("geo_id", "ab.unit")], by = "geo_id") 
 
 fall.ab.by.origin <- fall.stat.ab %>% group_by(cluster, Breeding_region_MC) %>%
   summarize(region.ab.units = sum(ab.unit), region.n = n_distinct(geo_id)) %>% ungroup() %>%
@@ -959,7 +959,7 @@ plot(fall.graph.weighed.ab, vertex.size = 500, vertex.size2 = 200,
 ################################################################################
 
 # Create a dataframe with the proportion of individuals from each section of the blackpoll warbler's range in each node
-spring.stat.ab <- merge(spring.stat, spring.breed.ab[,c("geo_id", "ab.unit")], by = "geo_id")
+spring.stat.ab <- spring.stat %>% filter(!(is.na(next.cluster))) %>% merge(spring.breed.ab[,c("geo_id", "ab.unit")], by = "geo_id")
 
 spring.ab.by.origin <- spring.stat.ab %>% group_by(cluster, Breeding_region_MC) %>%
   summarize(region.ab.units = sum(ab.unit), region.n = n_distinct(geo_id)) %>% ungroup() %>%
