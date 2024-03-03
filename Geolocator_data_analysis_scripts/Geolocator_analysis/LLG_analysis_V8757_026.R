@@ -411,8 +411,8 @@ matplot(0:100, dgamma(0:100, beta[1], beta[2]),
 # Create a Land mask for the group model #######################################
 
 #Set limits of the mask
-xlim <- range(x0[,1])+c(-5,5)
-ylim <- range(x0[,2])+c(-5,5)
+xlim <- range(x0[,1])+c(-5,0)
+ylim <- range(x0[,2])+c(-5,0)
 
 index <- ifelse(stationary, 1, 2)
 mask <- earthseaMask(xlim, ylim, n = 1, index=index)

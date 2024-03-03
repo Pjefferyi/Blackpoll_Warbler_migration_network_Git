@@ -21,57 +21,8 @@ ref_data <- read.csv(ref_path)
 fall.ndata <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/fall.graph.data.csv")
 spring.ndata <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/Spring.graph.data.csv")
 
-# location data (Only for geolocator used in the analysis )
-geo.list <- c("V8757_010",
-              "V8296_004",
-              "V8296_005",
-              "V8296_006",
-              "V8757_055",
-              "V8757_018",
-              "V8757_021",
-              "V8296_015",
-              "V8296_017",
-              "V8296_026",
-              "V8296_025",
-              "V8296_007",
-              "V8296_008",
-              "V8757_019",
-              "V8757_096",
-              "V8757_134",
-              "V8757_029",
-              "V8757_078",
-              "V7638_001",
-              "V7638_005",
-              "V7638_009",
-              "V7638_010",
-              "V7638_011",
-              "blpw09",
-              "blpw12",
-              "3254_001",
-              "4068_014",
-              "blpw14",
-              "3254_003",
-              "3254_008",
-              "3254_011",
-              "3254_057",
-              "blpw15",
-              "blpw25",
-              "4105_008",
-              "4105_009",
-              "4105_016",
-              "4105_017",
-              "4210_002",
-              "4210_004",
-              "4210_006",
-              "4210_010",
-              "WRMA04173",
-              "A",
-              "B",
-              "C",
-              "E",
-              "D")
-
-geo.all <- findLocData(geo.ids = geo.list, check_col_length = F)
+#Load movement data
+geo.all <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/All.locations.csv")
 
 # filter reference data to include only geolocators used in the analysis 
 analysis_ref <- ref_data %>% dplyr::filter(geo.id %in% unique(geo.all$geo_id))
@@ -220,14 +171,22 @@ se
 range(spring.node.times$mean.stat.dur)
 
 ### Average duration of migration  ----
-geo.all <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/All.locations.csv")
 
-fall.node.migtime <-  geo.all %>% 
-  filter(site_type %in% c("Breeding", "Stopover","Nonbreeding"),
-                                         period %in% c("Post-breeding migration","Non-breeding period"),
-                                         Recorded_North_South_mig %in% c("Both", "South and partial North", "South")) %>%
-  
-
+# Calculate migration times for all geolocators. 
+# fall.mig.time <-  geo.all %>% 
+#   filter(site_type %in% c("Breeding", "Stopover","Nonbreeding"),
+#                                          period %in% c("Post-breeding migration","Non-breeding period"),
+#                                          Recorded_North_South_mig %in% c("Both", "South and partial North", "South")) %>%
+#   group_by(geo_id) %>%
+#   rowwise()%>%
+#   filter(distHaversine(p1 = c(Lon.50., Lat.50.), p2 = c(deploy.longitude, deploy.latitude)) > 250000) %>%
+#   filter(path.elongated == F) %>%#remove geolocators where the arrival date is unclear due to near 24h daylight in the  breeding grounds
+#   group_by(geo_id) %>%
+#   filter(!is.na(nbr.arrival))%>%
+#   filter(anytime(StartTime) <= anytime(nbr.arrival)) %>% 
+#   summarize(mig.start = first(StartTime), mig.end = last(StartTime), mig.duration = anytime(last(StartTime)) - anytime(first(StartTime)),
+#             dep.lon = first(Lon.50.), dep.lat = first(Lat.50.),
+#             arr.lon = last(Lon.50.), arr.lat = last(Lat.50.))
 
 # ### correlation between number of  nodes used and longitude of breeding site ----
 # mod.fall.stopover.node <- glm(fall.stopover.nodes.occupied   ~ deploy.longitude, data = analysis_ref, family = gaussian(link = "identity"))

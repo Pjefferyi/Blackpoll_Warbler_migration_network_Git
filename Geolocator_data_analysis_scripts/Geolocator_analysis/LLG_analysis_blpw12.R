@@ -522,8 +522,6 @@ sm$sitenum <- sitenum
 sm$duration <- as.numeric(difftime(sm$EndTime, sm$StartTime), unit = "days")
 stat.loc <- sm[sitenum > 0, ]
 
-u0 <- sm[, c("Lon.50.", "Lat.50.")]
-
 #plot only stationary locations
 par(mfrow=c(1,1))
 

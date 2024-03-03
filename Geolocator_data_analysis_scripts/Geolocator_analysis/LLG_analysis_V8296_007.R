@@ -709,7 +709,7 @@ dev.off()
 
 # A stopover over the Caribbean was identified between approximately 2019-10-03 and 2019-10-06 based on the light levels and longitude data
 # A stopover in the carribean was already shown by the geolocator analysis (though it differs slightly in length)
-# consequenrtly no modification is need here. 
+# consequently no modification is need here. 
 
 
 # # Add the new stopover to the location summary obtained at the end of the geolocator analysis
@@ -738,7 +738,7 @@ dev.off()
 geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
 geo.ref[(geo.ref$geo.id == geo.id),]$In_habitat_median_zenith_angle <- zenith
 geo.ref[(geo.ref$geo.id == geo.id),]$Hill_Ekstrom_median_angle <- zenith_sd 
-geo.ref[(geo.ref$geo.id == geo.id),]$Fall_carrib_edits <- TRUE
+geo.ref[(geo.ref$geo.id == geo.id),]$Fall_carrib_edits <- FALSE
 geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.start <- as.character(tm.calib[1])
 geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.end <- as.character(tm.calib[2])
 geo.ref[(geo.ref$geo.id == geo.id),]$tol <-tol_ini

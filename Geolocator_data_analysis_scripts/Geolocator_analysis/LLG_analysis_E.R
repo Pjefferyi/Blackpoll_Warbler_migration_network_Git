@@ -370,7 +370,7 @@ q <- 0.89
 cL <- changeLight(twl=geo_twl, quantile=q, summary = F, days = days, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = dist)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = 500)
 
 ##back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 
@@ -437,8 +437,8 @@ matplot(0:100, dgamma(0:100, beta[1], beta[2]),
 
 # Create a Land mask for the group model #######################################
 #Set limits of the mask
-xlim <- range(x0[,1])+c(-5,5)
-ylim <- range(x0[,2])+c(-5,5)
+xlim <- range(x0[,1])+c(-5,0)
+ylim <- range(x0[,2])+c(-5,0)
 
 index <- ifelse(stationary, 1, 2)
 mask <- earthseaMask(xlim, ylim, n = 10, index=index)
