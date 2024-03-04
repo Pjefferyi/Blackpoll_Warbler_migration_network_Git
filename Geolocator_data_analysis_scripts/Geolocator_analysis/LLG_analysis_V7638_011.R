@@ -287,7 +287,7 @@ geo_twl <- export2GeoLight(twl)
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
 q <- 0.86
-cL <- changeLight(twl=geo_twl, quantile= q, summary = F, days = days, plot = T)
+cL <- changeLight(twl=geo_twl, quantile= q, summary = F, days = 1, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
 mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = dist)

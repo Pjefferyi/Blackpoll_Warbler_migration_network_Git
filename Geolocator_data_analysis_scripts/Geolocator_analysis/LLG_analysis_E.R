@@ -204,7 +204,7 @@ z0 <- trackMidpts(x0_r)
 
 # Check the following times of arrival and departure using a plot 
 arr.nbr <- "2013-11-01" 
-dep.nbr <- "2014-05-01" 
+dep.nbr <- "2014-05-01"
 
 # open jpeg
 jpeg(paste0(dir, "/", geo.id, "_LatLon_scatterplot.png"), width = 1024, height = 990)
@@ -361,7 +361,7 @@ save(x0, file = paste0(dir,"/", geo.id, "_initial_path__clock_drift_adjustment.c
 #SGAT Group model analysis ####################################################
 
 # group twilight times were birds were stationary 
-geo_twl <- export2GeoLight(twl)
+geo_twl <- export2GeoLight(twl_adjusted)
 
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
@@ -386,7 +386,7 @@ grouped[c(1:3, (length(grouped)-2):length(grouped))] <- TRUE
 g <- makeGroups(grouped)
 
 # Add data to twl file
-twl$group <- c(g, g[length(g)])
+twl_adjusted$group <- c(g, g[length(g)])
 
 # Add behavior vector
 behaviour <- c()
@@ -400,8 +400,8 @@ sitenum[stationary==F] <- 0
 # Initiate the model ###########################################################
 
 #set initial path
-x0 <- cbind(tapply(path$x[,1],twl$group,median), 
-            tapply(path$x[,2],twl$group,median))
+x0 <- cbind(tapply(path$x[,1],twl_adjusted$group,median), 
+            tapply(path$x[,2],twl_adjusted$group,median))
 
 
 #set fixed locations 
@@ -437,8 +437,8 @@ matplot(0:100, dgamma(0:100, beta[1], beta[2]),
 
 # Create a Land mask for the group model #######################################
 #Set limits of the mask
-xlim <- range(x0[,1])+c(-5,0)
-ylim <- range(x0[,2])+c(-5,0)
+xlim <- range(x0[,1])+c(-5,1)
+ylim <- range(x0[,2])+c(-5,1)
 
 index <- ifelse(stationary, 1, 2)
 mask <- earthseaMask(xlim, ylim, n = 10, index=index)
@@ -451,9 +451,9 @@ logp <- function(p) {
 }
 
 # Define the Estelle model ####################################################
-model <- groupedThresholdModel(twl$Twilight,
-                               twl$Rise,
-                               group = twl$group, #This is the group vector for each time the bird was at a point
+model <- groupedThresholdModel(twl_adjusted$Twilight,
+                               twl_adjusted$Rise,
+                               group = twl_adjusted$group, #This is the group vector for each time the bird was at a point
                                twilight.model = "ModifiedGamma",
                                alpha = alpha,
                                beta =  beta,
@@ -512,7 +512,7 @@ fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = x.med,
 #Summarize results #############################################################
 
 # sm <- locationSummary(fit$x, time=fit$model$time)
-sm <- SGAT2Movebank(fit$x, time = twl$Twilight, group = twl$group)
+sm <- SGAT2Movebank(fit$x, time = twl_adjusted$Twilight, group = twl$group)
 
 #create a plot of the stationary locations #####################################
 
@@ -564,7 +564,7 @@ par(mfrow=c(2,1))
 plot(sm$StartTime, sm$"Lon.50.", ylab = "Longitude", xlab = "", yaxt = "n", type = "n", ylim = c(min(sm$Lon.50.) - 10, max(sm$Lon.50.) + 10))
 axis(2, las = 2)
 polygon(x=c(sm$StartTime,rev(sm$StartTime)), y=c(sm$`Lon.2.5.`,rev(sm$`Lon.97.5.`)), border="gray", col="gray")
-lines(sm$StartTim,sm$"Lon.50.", lwd = 2)
+lines(sm$StartTime,sm$"Lon.50.", lwd = 2)
 abline(v = fall.equi, lwd = 2, lty = 2, col = "orange")
 abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
 
@@ -698,35 +698,32 @@ points(sm.fall.stat$Lon.50., sm.fall.stat$Lat.50., pch = 16, cex = 1.5, col = "f
 #Save the final location summary
 save(sm.fall.edit , file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary_fall_edit.csv"))
 
-# # plot of lon and lat where this location is highlighted
-# par(mfrow = c(2,1))
-# plot(twl$Twilight, x0_ad[,1], ylab = "longitude")
-# abline(v = anytime(arr.nbr))
-# abline(v = anytime(dep.nbr))
-# abline(v = fall.equi, col = "orange")
-# abline(v = spring.equi, col = "orange")
-# rect(anytime("2013-10-05"), min(x0_ad[,1])-2, anytime("2013-11-08"), max(x0_ad[,1])+2, col = alpha("green", 0.2), lty=0)
-# rect(anytime("2013-10-05"), min(x0_ad[,1])-2, anytime("2013-11-08"), max(x0_ad[,1])+2, col = alpha("green", 0.2), lty=0)
-# plot(twl$Twilight, x0_ad[,2], ylab = "latitude")
-# abline(v = anytime(arr.nbr))
-# abline(v = anytime(dep.nbr))
-# abline(v = fall.equi, col = "orange")
-# abline(v = spring.equi, col = "orange")
-# rect(anytime("2013-10-05"), min(x0_ad[,1])-2, anytime("2013-11-08"), max(x0_ad[,2])+2, col = alpha("green", 0.2), lty=0)
-# rect(anytime("2013-10-05"), min(x0_ad[,1])-2, anytime("2013-11-08"), max(x0_ad[,2])+2, col = alpha("green", 0.2), lty=0)
+# estimate timing of departure and arrival from the breeding and nonbreeding grounds ############################################################
+dep.br <- "2013-08-28"
+arr.br <- "2014-05-18"
+
+par(mfrow=c(2,1))
+plot(twl$Twilight, type  = "l", x0_ad[,1])
+abline(v = anytime(dep.br))
+abline(v = anytime(arr.br ))
+plot(twl$Twilight, type  = "l", x0_ad[,2])
+abline(v = anytime(dep.br))
+abline(v = anytime(arr.br ))
+par(mfrow=c(1,1))
+
 
 # Record details for the geolocator analysis ###################################
 geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
 geo.ref[(geo.ref$geo.id == geo.id),]$In_habitat_median_zenith_angle <- zenith
 geo.ref[(geo.ref$geo.id == geo.id),]$Hill_Ekstrom_median_angle <- zenith_sd
 geo.ref[(geo.ref$geo.id == geo.id),]$Fall_carrib_edits <- FALSE
-geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- arr.nbr
-geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- dep.nbr
 geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.start <- as.character(tm.calib1[1])
 geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.end <- as.character(tm.calib1[2])
 geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.start2 <- as.character(tm.calib2[1])
 geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.end2 <- as.character(tm.calib2[2])
 geo.ref[(geo.ref$geo.id == geo.id),]$tol <-tol_ini
+geo.ref[(geo.ref$geo.id == geo.id),]$br.departure <- as.character(dep.br)
+geo.ref[(geo.ref$geo.id == geo.id),]$br.arrival <- as.character(arr.br)
 geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- as.character(arr.nbr.sgat)
 geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- as.character(dep.nbr.sgat)
 geo.ref[(geo.ref$geo.id == geo.id),]$changelight.quantile <- q

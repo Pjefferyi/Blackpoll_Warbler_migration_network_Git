@@ -1,4 +1,4 @@
-# source: unpublished data 
+# source: unpublished data
 # tag number: V7638-010
 # site: Denali, Alaska
 
@@ -11,10 +11,10 @@ library(remotes)
 library(anytime)
 library(lubridate)
 
-#load spatial packages 
+#load spatial packages
 library(ggmap)
 
-# install and load geolocator packages 
+# install and load geolocator packages
 # install_github("eldarrak/FLightR")
 library(FLightR)
 # install_github("SLisovski/TwGeos")
@@ -30,7 +30,7 @@ setupGeolocation()
 # clear object from workspace
 rm(list=ls())
 
-# Load helper functions 
+# Load helper functions
 source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis/Geolocator_analysis_helper_functions.R")
 
 geo.id <- "V7638_010"
@@ -41,7 +41,7 @@ dir <- paste0("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/T
 # read file with consolidated geolocator data
 ref_data <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv")
 
-#Assign geolocator deployment site 
+#Assign geolocator deployment site
 lat.calib <- ref_data$deploy.latitude[which(ref_data$geo.id == geo.id)]
 lon.calib <- ref_data$deploy.longitude[which(ref_data$geo.id == geo.id)]
 
@@ -57,20 +57,20 @@ spring.equi <- anytime("2018-03-20", asUTC = T, tz = "GMT")
 
 #DATA EXTRACTION ##############################################################
 
-# import lig data 
+# import lig data
 lig <- readLig(paste0(dir,"/Raw_light_data_", geo.id, ".lig"), skip = 1)
 
-#remove rows before and after deployment time 
+#remove rows before and after deployment time
 lig <- lig[(lig$Date > deploy.start),]
 lig <- lig[(lig$Date < deploy.end),]
 
-#parameter to visualize the data 
+#parameter to visualize the data
 offset <- 16# adjusts the y-axis to put night (dark shades) in the middle
 
-#Threshold light level 
-threshold <- 1.5 
+#Threshold light level
+threshold <- 1.5
 
-# visualize threshold over light levels  
+# visualize threshold over light levels
 thresholdOverLight(lig, threshold, span =c(45000, 55000))
 
 #TWILIGHT ANNOTATION ##########################################################
@@ -333,9 +333,6 @@ box()
 
 dev.off()
 
-#Save initial path adjusted for clock drift  
-save(x0, file = paste0(dir,"/", geo.id, "_initial_path__clock_drift_adjustment.csv"))
-
 #SGAT Group model analysis ####################################################
 
 # group twilight times were birds were stationary 
@@ -381,16 +378,15 @@ sitenum[stationary==F] <- 0
 x0 <- cbind(tapply(path$x[,1],twl_adjusted$group,median), 
             tapply(path$x[,2],twl_adjusted$group,median))
 
-
 #set fixed locations 
 fixedx <- rep_len(FALSE, length.out = nrow(x0))
 fixedx[1] <- TRUE
-fixedx[c(1, length(fixedx))] <- TRUE
 
 x0[fixedx,1] <- lon.calib
 x0[fixedx,2] <- lat.calib
 
 z0 <- trackMidpts(x0)
+
 
 # plot stationary locations ####################################################
 par(mfrow=c(1,1))
