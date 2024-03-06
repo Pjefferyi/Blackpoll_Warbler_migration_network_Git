@@ -655,6 +655,15 @@ points(sm.fall.stat$Lon.50., sm.fall.stat$Lat.50., pch = 16, cex = 1.5, col = "f
 #Save the final location summary
 save(sm.fall.edit , file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary_fall_edit.csv"))
 
+# Estimate timing of departure and arrival from the breeding and nonbreeding grounds ############################################################
+dep.br <- NA # can't estimate departure due to low variation in longitude and the equinox 
+arr.br <- NA # can't estimate arrival date because the geolocator stopped befor the return
+
+par(mfrow=c(2,1))
+plot(twl$Twilight, type  = "l", x0_ad[,1])
+plot(twl$Twilight, type  = "l", x0_ad[,2])
+par(mfrow=c(1,1))
+
 # Record details for the geolocator analysis ###################################
 geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
 geo.ref[(geo.ref$geo.id == geo.id),]$In_habitat_median_zenith_angle <- zenith
@@ -668,5 +677,7 @@ geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.end <- as.character(tm.calib[2])
 geo.ref[(geo.ref$geo.id == geo.id),]$tol <-tol_ini
 geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- as.character(arr.nbr.sgat)
 geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- as.character(dep.nbr.sgat)
+geo.ref[(geo.ref$geo.id == geo.id),]$br.departure <- as.character(dep.br)
+geo.ref[(geo.ref$geo.id == geo.id),]$br.arrival <- as.character(arr.br)
 geo.ref[(geo.ref$geo.id == geo.id),]$changelight.quantile <- q
 write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE) 

@@ -649,17 +649,18 @@ dev.off()
 # There seems to have been a one-day stopover in the Caribbean between 2018-10-19 and "2018-10-20
 
 # Estimate timing of departure and arrival from the breeding and nonbreeding grounds ############################################################
-par(mfrow=c(2,1))
-plot(twl$Twilight, type  = "l", x0_ad[,1])
-abline(v = anytime("2018-09-01"))
-abline(v = anytime("2019-05-22"))
-plot(twl$Twilight, type  = "l", x0_ad[,2])
-abline(v = anytime("2018-08-28"))
-abline(v = anytime("2019-05-22"))
-par(mfrow=c(1,1))
 
 dep.br <- "2018-09-01"
 arr.br <- "2019-05-22"
+
+par(mfrow=c(2,1))
+plot(twl$Twilight, type  = "l", x0_ad[,1])
+abline(v = anytime(dep.br))
+abline(v = anytime(arr.br))
+plot(twl$Twilight, type  = "l", x0_ad[,2])
+abline(v = anytime(dep.br ))
+abline(v = anytime(arr.br))
+par(mfrow=c(1,1))
 
 # Record details for the geolocator analysis ###################################
 geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 

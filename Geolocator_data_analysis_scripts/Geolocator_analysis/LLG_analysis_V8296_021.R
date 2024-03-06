@@ -31,7 +31,7 @@ setupGeolocation()
 rm(list=ls())
 
 # Load helper functions 
-source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis/Geolocator_analysis_helper_functions.R")
+source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis_helper_functions.R")
 
 geo.id <- "V8296_021"
 
@@ -594,8 +594,8 @@ f1.start <- "2019-09-29"
 f1.end <- "2019-10-02"
 
 #second flight
-f2.start <- "2019-10-03"
-f2.end <- "2019-10-04"
+f2.start <- "2019-10-07"
+f2.end <- "2019-10-08"
 
 # Plot lat, lon and light transitions  
 jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition.png"), width = 1024 , height = 990, quality = 100, res = 200)
@@ -605,32 +605,66 @@ par(cex.axis=1.4)
 par(mfrow=c(3,1), mar = c(5,5,0.1,5))
 plot(lig$Date[lig$Date > start & lig$Date < end], lig$Light[lig$Date > start & lig$Date < end], type = "o",
      ylab = "Light level", xlab = "Time")
-rect(anytime("2019-09-29"), min(lig$Light)-2, anytime("2019-10-02"), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
-rect(anytime("2019-10-03"), min(lig$Light)-2, anytime("2019-10-04"), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime(f1.start), min(lig$Light)-2, anytime(f1.end ), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime(f2.start ), min(lig$Light)-2, anytime(f2.end), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
 
 plot(twl$Twilight[twl$Twilight> start & twl$Twilight < end], x0_ad[,1][twl$Twilight > start & twl$Twilight < end],
      ylab = "Longitude", xlab = "Time")
-rect(anytime("2019-09-29"), min(x0_ad[,1])-2, anytime("2019-10-02"), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
-rect(anytime("2019-10-03"), min(x0_ad[,1])-2, anytime("2019-10-04"), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime(f1.start), min(x0_ad[,1])-2, anytime(f1.end ), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime(f2.start ), min(x0_ad[,1])-2, anytime(f2.end), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
 
 plot(twl$Twilight[twl$Twilight > start & twl$Twilight < end], x0_ad[,2][twl$Twilight > start & twl$Twilight < end],
      ylab = "Latitude", xlab = "Time")
-rect(anytime("2019-09-29"), min(x0_ad[,2])-2, anytime("2019-10-02"), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
-rect(anytime("2019-10-03"), min(x0_ad[,2])-2, anytime("2019-10-04"), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime(f1.start), min(x0_ad[,2])-2, anytime(f1.end ), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime(f2.start ), min(x0_ad[,2])-2, anytime(f2.end), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
 par(cex.lab= 1)
 par(cex.axis= 1)
 
 dev.off()
 
 # It is difficult to identify a stopover over the carribean for this geolocator
-# light transitions and latitude values remain similar throughout the fall
-# I estimated that the stopover over the carribean was approx. 1 day. 
+# A stopover over the Caribbean appears to have occured between "2019-10-02" and "2019-10-07"
+
+
+# Add the new stopover to the location summary obtained at the end of the geolocator analysis
+sm.fall.edit <- insertLoc(data = sm,
+                          lat.at.loc = 18.747636,
+                          start.date = "2019-10-02" ,
+                          end.date = "2019-10-07" ,
+                          period = "Post-breeding migration",
+                          thresh.locs = x0_ad,
+                          twl = twl,
+                          geo_id = geo.id,
+                          sep1 = days(3),
+                          sep2 = days (1))
+
+#plot the final stationary locations
+sm.fall.stat <- sm.fall.edit[(sm.fall.edit$sitenum > 0), ]
+
+par(mfrow=c(1,1))
+
+data(wrld_simpl)
+plot(wrld_simpl, xlim=xlim, ylim=ylim, col = "grey95")
+points(sm.fall.edit$Lon.50., sm.fall.edit$Lat.50., pch = 16, cex = 0, col = "firebrick", type = "o")
+points(sm.fall.stat$Lon.50., sm.fall.stat$Lat.50., pch = 16, cex = 1.5, col = "firebrick")
+
+#Save the final location summary
+save(sm.fall.edit , file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary_fall_edit.csv"))
+
+# Estimate timing of departure and arrival from the breeding and nonbreeding grounds ############################################################
+dep.br <- NA # Can't estimate departure date accurately due to the equinox and low variation in longitude 
+arr.br <- NA # geolocator stopped recording prior to return 
+
+par(mfrow=c(2,1))
+plot(twl$Twilight, type  = "l", x0_ad[,1])
+plot(twl$Twilight, type  = "l", x0_ad[,2])
+par(mfrow=c(1,1))
 
 # Record details for the geolocator analysis ###################################
 geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
 geo.ref[(geo.ref$geo.id == geo.id),]$In_habitat_median_zenith_angle <- zenith
 geo.ref[(geo.ref$geo.id == geo.id),]$Hill_Ekstrom_median_angle <- zenith_sd 
-geo.ref[(geo.ref$geo.id == geo.id),]$Fall_carrib_edits <- FALSE
+geo.ref[(geo.ref$geo.id == geo.id),]$Fall_carrib_edits <- TRUE
 geo.ref[(geo.ref$geo.id == geo.id),]$Time_shift_hours <- shift$shift
 geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- arr.nbr
 geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- NA
@@ -639,4 +673,6 @@ geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.end <- as.character(tm.calib[2])
 geo.ref[(geo.ref$geo.id == geo.id),]$tol <-tol_ini
 geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- as.character(arr.nbr.sgat)
 geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- NA
+geo.ref[(geo.ref$geo.id == geo.id),]$br.departure <- as.character(dep.br)
+geo.ref[(geo.ref$geo.id == geo.id),]$br.arrival <- as.character(arr.br)
 write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE) 

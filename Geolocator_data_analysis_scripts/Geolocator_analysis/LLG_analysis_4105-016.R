@@ -608,6 +608,18 @@ dev.off()
 # the light transitions suggest a stopover could have happened between October 9 and 21st 
 # but this contrasts with latitude measurements. 
 
+# Estimate timing of departure and arrival from the breeding and nonbreeding grounds ############################################################
+dep.br <- "2016-09-11 11:17"
+arr.br <- "2017-06-02 3:42"
+
+par(mfrow=c(2,1))
+plot(twl$Twilight, type  = "l", x0_ad[,1])
+abline(v = anytime(dep.br))
+abline(v = anytime(arr.br))
+plot(twl$Twilight, type  = "l", x0_ad[,2])
+abline(v = anytime(dep.br))
+abline(v = anytime(arr.br))
+par(mfrow=c(1,1))
 
 # Record details for the geolocator analysis ###################################
 geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
@@ -622,6 +634,8 @@ geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.end2 <- as.character(tm.calib2[2])
 geo.ref[(geo.ref$geo.id == geo.id),]$tol <-tol_ini
 geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- as.character(arr.nbr.sgat)
 geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- as.character(dep.nbr.sgat)
+geo.ref[(geo.ref$geo.id == geo.id),]$br.departure <- as.character(dep.br)
+geo.ref[(geo.ref$geo.id == geo.id),]$br.arrival <- as.character(arr.br)
 geo.ref[(geo.ref$geo.id == geo.id),]$changelight.quantile <- q
 write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE) 
 

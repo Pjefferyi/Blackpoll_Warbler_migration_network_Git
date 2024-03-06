@@ -253,11 +253,11 @@ findThresLocData <- function(geo.ids = NULL){
 
 # Test calls  for findThresLocData #############################################
 
-# # Extract threshold location data for specific geolocators
-# r1 <- findThresLocData(geo.ids = c("V8757_010"))
-# 
-# # Extract threshold location data for all geolocators 
-# r2 <- findThresLocData()
+# Extract threshold location data for specific geolocators
+r1 <- findThresLocData(geo.ids = c("V8757_010"))
+
+# Extract threshold location data for all geolocators
+r2 <- findThresLocData()
 
 # MapLocData ###################################################################
 
