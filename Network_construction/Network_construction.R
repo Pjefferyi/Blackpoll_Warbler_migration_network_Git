@@ -81,6 +81,10 @@ geo.all <- geo.all %>% group_by(geo_id) %>% mutate(site_type = case_when(
   period == "Non-breeding period" & (duration >= 14 | sitenum == 1 | sitenum == max(sitenum)) ~ "Nonbreeding",
   .default = "Stopover"))
 
+# Calculate IQR between 97.5 and 2.5 quantiles 
+geo.all <- geo.all %>% mutate(IQR.lon.dist = distHaversine(cbind(Lon.97.5.,Lat.50.), cbind(Lon.2.5., Lat.50.)),
+                                           IQR.lat.dist = distHaversine(cbind(Lon.50.,Lat.97.5.), cbind(Lon.50.,Lat.2.5.)))
+
 # Find the time of departure from the breeding grounds #############
 geo.all.br.departure <- geo.all %>% filter(period %in% c("Post-breeding migration","Non-breeding period"), 
                                            Recorded_North_South_mig %in% c("Both", "South and partial North", "South")) %>%
@@ -210,12 +214,6 @@ fall.stat.equi <- st_drop_geometry(fall.stat.equi)
 
 fall.stat.norm <- st_difference(fall.stat.sf, equipol)
 fall.stat.norm <- st_drop_geometry(fall.stat.norm )
-
-# Calculate IQR between 97.5 and 2.5 quantiles 
-fall.stat.norm <-fall.stat.norm %>% mutate(IQR.lon.dist = distHaversine(cbind(Lon.97.5.,Lat.50.), cbind(Lon.2.5., Lat.50.)),
-                                           IQR.lat.dist = distHaversine(cbind(Lon.50.,Lat.97.5.), cbind(Lon.50.,Lat.2.5.)))
-fall.stat.equi  <-fall.stat.equi  %>% mutate(IQR.lon.dist = distHaversine(cbind(Lon.97.5.,Lat.50.), cbind(Lon.2.5., Lat.50.)),
-                                           IQR.lat.dist = distHaversine(cbind(Lon.50.,Lat.97.5.), cbind(Lon.50.,Lat.2.5.)))
 
 # cluster points in each group separately, then merge the cluster info 
 cluster.data1 <- clusterLocs(locs = fall.stat.equi, maxdiam = 700, lon.only = T)
@@ -411,10 +409,6 @@ spring.move <- geo.all %>% filter(site_type %in% c("Stopover","Nonbreeding"),
                                   period %in% c("Pre-breeding migration","Non-breeding period"),
                                   Recorded_North_South_mig %in% c("Both","North", "South and partial North"),
                                   !(geo_id %in% c("V8296_007", "V8296_008")))
-
-# Calculate IQR between 97.5 and 2.5 quantiles 
-spring.stat <- spring.stat  %>% mutate(IQR.lon.dist = distHaversine(cbind(Lon.97.5.,Lat.50.), cbind(Lon.2.5., Lat.50.)),
-                                       IQR.lat.dist = distHaversine(cbind(Lon.50.,Lat.97.5.), cbind(Lon.50.,Lat.2.5.)))
 
 #get the timing of the last nonbreeding area
 spring.timings.nb <- geo.all %>% group_by(geo_id) %>% filter(NB_count == max(NB_count, na.rm = T)) %>% dplyr::select(NB.last.site.arrival = StartTime)
@@ -1120,6 +1114,40 @@ meta.spring.ab <- merge(meta.spring.ab, spring.use.per.node , by.x = "vertex", b
 #meta.spring.ab <- transform(meta.spring.ab, use.ab.vector = asplit(cbind(use.breeding.ab,  use.stopover.ab, use.nonbreeding.ab), 1))
 
 ################################################################################
+### At the end of the fall migration, nonbreeding node composition 
+################################################################################
+
+fall.nbr.ab <- fall.stat.ab %>% group_by(geo_id) %>% filter(sitenum == last(sitenum)) %>%
+  group_by(cluster, Breeding_region_MC) %>% summarize(r.ab = sum(ab.unit)) %>%
+  pivot_wider(names_from = Breeding_region_MC, values_from = c(r.ab), values_fill = 0) %>%
+  mutate(tot.abundance = sum(`Eastern Region`, `Northwestern Region`, `Western Region`, `Central Region`),
+         reg.no = ifelse(length(which(c(`Eastern Region`, `Northwestern Region`, `Western Region`, `Central Region`) == 0)) == 3, "single reg", "multi reg"),
+         single_reg = ifelse(reg.no == "single reg", c("Eastern.Region", "Northwestern.Region", "Western.Region", "Central.Region")[which(c(`Eastern Region`, `Northwestern Region`, `Western Region`, `Central Region`) != 0)], NA)) %>%
+  merge(meta.fall[,c("vertex", "Lon.50.", "Lat.50.")], by.x= "cluster", by.y = "vertex")
+
+ggplot(st_as_sf(America))+
+  geom_sf(colour = "black", fill = "#F7F7F7") +
+  coord_sf(xlim = c(-100, -40),ylim = c(-5, 15)) +
+  geom_scatterpie(cols = c("Eastern Region","Northwestern Region", "Western Region", "Central Region"), colour = "black", data = fall.nbr.ab, mapping = aes(x = Lon.50., y = Lat.50., r = tot.abundance*10))
+  
+################################################################################
+### At the end of the spring migration, nonbreeding node composition 
+################################################################################
+
+spring.nbr.ab <- spring.stat.ab %>% group_by(geo_id) %>% filter(site_type == "Nonbreeding") %>%
+  group_by(cluster, Breeding_region_MC) %>% summarize(r.ab = sum(ab.unit)) %>%
+  pivot_wider(names_from = Breeding_region_MC, values_from = c(r.ab), values_fill = 0) %>%
+  mutate(tot.abundance = sum(`Eastern Region`, `Northwestern Region`, `Western Region`, `Central Region`),
+         reg.no = ifelse(length(which(c(`Eastern Region`, `Northwestern Region`, `Western Region`, `Central Region`) == 0)) == 3, "single reg", "multi reg"),
+         single_reg = ifelse(reg.no == "single reg", c("Eastern.Region", "Northwestern.Region", "Western.Region", "Central.Region")[which(c(`Eastern Region`, `Northwestern Region`, `Western Region`, `Central Region`) != 0)], NA)) %>%
+  merge(meta.spring[,c("vertex", "Lon.50.", "Lat.50.")], by.x= "cluster", by.y = "vertex") 
+
+ggplot(st_as_sf(America))+
+  geom_sf(colour = "black", fill = "#F7F7F7") +
+  coord_sf(xlim = c(-100, -40),ylim = c(-5, 15)) +
+  geom_scatterpie(cols = c("Eastern Region","Northwestern Region", "Western Region", "Central Region"), data = spring.nbr.ab, mapping = aes(x = Lon.50., y = Lat.50., r = tot.abundance*10))
+
+################################################################################
 # Export data from the network construction
 ################################################################################
 
@@ -1132,6 +1160,7 @@ write.csv(dplyr::select(meta.fall.ab, !num.reg.ab.vector), "C:/Users/Jelan/OneDr
 write.csv(fall.con.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.edge.weights.csv")
 write.csv(fall.stat, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.stationary.data.csv")
 write.csv(fall.edge.df.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.intra.cluster.movements.csv")
+write.csv(fall.nbr.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.nbr.node.composition.csv")
 
 # Save elements necessary to build spring network
 write_csv(spring.stat, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.stationary.locations.csv")
@@ -1141,10 +1170,10 @@ write_graph(spring.graph.weighed.ab, "C:/Users/Jelan/OneDrive/Desktop/University
 write.csv(dplyr::select(meta.spring.ab, !num.reg.ab.vector), "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.node.metadata.csv")
 write.csv(spring.con.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.edge.weights.csv")
 write.csv(spring.stat, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.stationary.data.csv")
-write.csv(spring.edge.df.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.intra.cluster.movements.csv")
+write.csv(spring.nbr.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.nbr.node.composition.csv")
 
 # ################################################################################
-# # Contstuction of population specific networks
+# # Construction of population specific networks
 # ################################################################################
 # 
 # # Fall network east #################################################################

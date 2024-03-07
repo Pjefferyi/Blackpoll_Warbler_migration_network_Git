@@ -70,7 +70,7 @@ offset <- 20 # adjusts the y-axis to put night (dark shades) in the middle
 threshold <- 1.5
 
 # visualize threshold over light levels  
-thresholdOverLight(lig, threshold, span =c(0, 25000))
+thresholdOverLight(lig, threshold, span =c(nrow(lig)-100000, nrow(lig)))
 
 # FIND TIME SHIFT ##############################################################
 
@@ -104,9 +104,9 @@ dev.off()
 # lightImage(lig, offset = 19)
 # tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
 #               col = ifelse(twl$Rise, "dodgerblue", "firebrick"))
-
-# Save the twilight times
-# write.csv(twl, paste0(dir,"/",geo.id , "_twl_times.csv"))
+# 
+# # Save the twilight times
+# #write.csv(twl, paste0(dir,"/",geo.id , "_twl_times.csv"))
 
 ###############################################################################
 # SGAT ANALYSIS ###############################################################
@@ -212,7 +212,7 @@ end   <- max(which(mS$site == stationarySite))
 (zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
 
 # startDate <- "2016-10-20"
-# endDate   <- "2017-05-08"
+# endDate   <- "2017-03-08"
 # 
 # start = min(which(as.Date(twl$Twilight) == startDate))
 # end = max(which(as.Date(twl$Twilight) == endDate))
@@ -298,7 +298,7 @@ abline(v = spring.equi, col = "orange")
 dev.off()
 
 # Initial Path #################################################################
-tol_ini <- 0.12
+tol_ini <- 0.14
 path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol = tol_ini)
 
 #Adjusted tol until second stopover was located over North Carolina rather than further South. 
@@ -337,9 +337,9 @@ cL <- changeLight(twl=geo_twl, quantile= q, summary = F, days = days, plot = T)
 mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = dist)
 
 ##back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
-twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 
+twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2], tz = "utc"), 
                       Rise     = c(ifelse(geo_twl[,3]==1, TRUE, FALSE), ifelse(geo_twl[,3]==1, FALSE, TRUE)),
-                      Site     = rep(mS$site,2))
+                      Site     = rep(mS$site,2)) 
 twl.rev <- subset(twl.rev, !duplicated(Twilight), sort = Twilight)
 
 grouped <- rep(FALSE, nrow(twl.rev))
@@ -438,7 +438,7 @@ z.proposal <- mvnorm(S = diag(c(0.005, 0.005)), n = nrow(z0))
 #Tuning ########################################################################
 
 # Fit a first chain for tuning
-fit <- estelleMetropolis(model, x.proposal, z.proposal, iters = 500, thin = 20)
+fit <- estelleMetropolis(model, x.proposal, z.proposal, iters = 1000, thin = 20)
 
 # Fit additional chains for tuning
 for (k in 1:2) {
@@ -452,7 +452,7 @@ for (k in 1:2) {
   z.med <- list(as.matrix(chain.sm.z[,c("Lon.50%","Lat.50%")]))
   
   fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = x.med,
-                           z0 = z.med, iters = 500, thin = 20)
+                           z0 = z.med, iters = 1000, thin = 20)
 }
 
 ## Check if chains mix
@@ -474,7 +474,7 @@ x.proposal <- mvnorm(chainCov(fit$x), s = 0.3)
 z.proposal <- mvnorm(chainCov(fit$z), s = 0.3)
 
 fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = x.med,
-                         z0 = z.med , iters = 500, thin = 20, chain = 1)
+                         z0 = z.med , iters = 3000, thin = 20, chain = 1)
 
 #Summarize results #############################################################
 
@@ -641,49 +641,7 @@ par(cex.axis= 1)
 # There is a series of three days with clear light transitions around dusk and dawn suggesting that this bird may have bmade a direct flight from the coast of North America to South America
 # between October 10th and 13th.
 # This is also supported by a continuous change in latitude over this period
-# However, latitude stabilized at around 20 deggrees LAT for a short period, alos suggesting a short stop in the carribean
-
-dev.off()
-
-# Examine twilights ############################################################
-
-#load the adjusted threshold path path x0_ad
-load(file = paste0(dir,"/", geo.id, "adjusted_initial_path_raw.csv"))
-
-#Fall transoceanic flight
-start <- "2016-09-15"
-end <- "2016-10-15"
-
-#first flight
-f1.start <- "2016-10-10"
-f1.end <- "2016-10-13"
-
-# #second flight
-# f2.start <- "2016-10-08"
-# f2.end <- "2016-10-09"
-
-# Plot lat, lon and light transitions  
-jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition.png"), width = 1024 , height = 990, quality = 100, res = 200)
-
-par(cex.lab=1.4)
-par(cex.axis=1.4)
-par(mfrow=c(3,1), mar = c(5,5,0.1,5))
-plot(lig$Date[lig$Date > start & lig$Date < end], lig$Light[lig$Date > start & lig$Date < end], type = "o",
-     ylab = "Light level", xlab = "Time")
-rect(anytime(f1.start), min(lig$Light)-2, anytime(f1.end), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
-#rect(anytime(f2.start), min(lig$Light)-2, anytime(f2.end), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
-
-plot(twl$Twilight[twl$Twilight> start & twl$Twilight < end], x0_ad[,1][twl$Twilight > start & twl$Twilight < end],
-     ylab = "Longitude", xlab = "Time")
-rect(anytime(f1.start), min(x0_ad[,1])-2, anytime(f1.end), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
-#rect(anytime(f2.start), min(x0_ad[,1])-2, anytime(f2.end), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
-
-plot(twl$Twilight[twl$Twilight > start & twl$Twilight < end], x0_ad[,2][twl$Twilight > start & twl$Twilight < end],
-     ylab = "Latitude", xlab = "Time")
-rect(anytime(f1.start), min(x0_ad[,2])-2, anytime(f1.end), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
-#rect(anytime(f2.start), min(x0_ad[,2])-2, anytime(f2.end), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
-par(cex.lab= 1)
-par(cex.axis= 1)
+# However, latitude stabilized at around 20 degrees LAT for a short period, alos suggesting a short stop in the carribean
 
 dev.off()
 
@@ -697,7 +655,6 @@ abline(v = anytime(dep.br))
 plot(twl$Twilight, type  = "l", x0_ad[,2])
 abline(v = anytime(dep.br))
 par(mfrow=c(1,1))
-
 
 # Record details for the geolocator analysis ###################################
 geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 

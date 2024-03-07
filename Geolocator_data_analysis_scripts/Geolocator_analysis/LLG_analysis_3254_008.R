@@ -607,8 +607,26 @@ dev.off()
 # It then flew to South America between October 12 and 14th 
 
 # Estimate timing of departure and arrival from the breeding and nonbreeding grounds ############################################################
-dep.br <- "2016-08-25 6:44"
-arr.br <- NA # could not estimate return times due to short nights 
+# Estimate timing of departure and arrival from the breeding and nonbreeding grounds ############################################################
+
+# #Detect twilight times over the whole period during which the geolocator was functioning
+# twl.full <- preprocessLight(lig,
+#                        threshold = 0.5,
+#                        offset = offset,
+#                        lmax = 64,         # max. light value
+#                        gr.Device = "x11", #`` MacOS version (and windows)
+#                        dark.min = 60)
+# 
+# #write.csv(twl.full, paste0(dir,"/",geo.id , "_twl_times_full.csv"))
+# twl.full <- read.csv(paste0(dir,"/",geo.id , "_twl_times_full.csv"))
+# 
+# path.full <- thresholdPath(twl.full$Twilight, twl.full$Rise, zenith = zenith, tol = tol_ini)
+# 
+# x0.full <- path.full$x
+# z0.full <- trackMidpts(x0)
+
+dep.br <- "2016-08-25"
+arr.br <-NA
 
 par(mfrow=c(2,1))
 plot(twl$Twilight, type  = "l", x0_ad[,1])

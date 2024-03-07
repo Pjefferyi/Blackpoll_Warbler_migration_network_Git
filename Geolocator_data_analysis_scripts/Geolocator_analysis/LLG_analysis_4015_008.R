@@ -635,7 +635,7 @@ save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 #load(file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 
 # Estimate timing of departure and arrival from the breeding and nonbreeding grounds ############################################################
-dep.br <- "2016-09-07 11:09"
+dep.br <- "2016-08-28"
 arr.br <- "2017-06-04 8:55"
 
 par(mfrow=c(2,1))

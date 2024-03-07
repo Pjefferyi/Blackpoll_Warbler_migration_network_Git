@@ -609,8 +609,8 @@ dev.off()
 # but this contrasts with latitude measurements. 
 
 # Estimate timing of departure and arrival from the breeding and nonbreeding grounds ############################################################
-dep.br <- "2016-09-11 11:17"
-arr.br <- "2017-06-02 3:42"
+dep.br <- "2016-09-11"
+arr.br <- "2017-06-10"
 
 par(mfrow=c(2,1))
 plot(twl$Twilight, type  = "l", x0_ad[,1])

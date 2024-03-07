@@ -702,13 +702,16 @@ dev.off()
 #This bird seems to have made a two day flight straight to South America from the coast of North America 
 
 # Estimate timing of departure and arrival from the breeding and nonbreeding grounds ############################################################
-dep.br <- "2016-09-10"
+dep.br <- "2016-09-08"
 arr.br <- "2017-06-03"
 
 par(mfrow=c(2,1))
 plot(twl$Twilight, type  = "l", x0_ad[,1])
 abline(v = anytime(dep.br))
 abline(v = anytime(arr.br))
+abline(v = anytime(dep.br))
+abline(v = anytime(arr.nbr.sgat))
+abline(v = anytime(dep.nbr.sgat))
 plot(twl$Twilight, type  = "l", x0_ad[,2])
 abline(v = anytime(dep.br))
 abline(v = anytime(arr.br))
