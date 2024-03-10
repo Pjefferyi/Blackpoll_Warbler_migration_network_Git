@@ -1125,7 +1125,7 @@ fall.nbr.ab <- fall.stat.ab %>% group_by(geo_id) %>% filter(sitenum == last(site
          single_reg = ifelse(reg.no == "single reg", c("Eastern.Region", "Northwestern.Region", "Western.Region", "Central.Region")[which(c(`Eastern Region`, `Northwestern Region`, `Western Region`, `Central Region`) != 0)], NA)) %>%
   merge(meta.fall[,c("vertex", "Lon.50.", "Lat.50.")], by.x= "cluster", by.y = "vertex")
 
-ggplot(st_as_sf(America))+
+ggplot(st_as_sf(wrld_simpl))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
   coord_sf(xlim = c(-100, -40),ylim = c(-5, 15)) +
   geom_scatterpie(cols = c("Eastern Region","Northwestern Region", "Western Region", "Central Region"), colour = "black", data = fall.nbr.ab, mapping = aes(x = Lon.50., y = Lat.50., r = tot.abundance*10))
@@ -1142,7 +1142,7 @@ spring.nbr.ab <- spring.stat.ab %>% group_by(geo_id) %>% filter(site_type == "No
          single_reg = ifelse(reg.no == "single reg", c("Eastern.Region", "Northwestern.Region", "Western.Region", "Central.Region")[which(c(`Eastern Region`, `Northwestern Region`, `Western Region`, `Central Region`) != 0)], NA)) %>%
   merge(meta.spring[,c("vertex", "Lon.50.", "Lat.50.")], by.x= "cluster", by.y = "vertex") 
 
-ggplot(st_as_sf(America))+
+ggplot(st_as_sf(wrld_simpl))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
   coord_sf(xlim = c(-100, -40),ylim = c(-5, 15)) +
   geom_scatterpie(cols = c("Eastern Region","Northwestern Region", "Western Region", "Central Region"), data = spring.nbr.ab, mapping = aes(x = Lon.50., y = Lat.50., r = tot.abundance*10))
@@ -1161,6 +1161,7 @@ write.csv(fall.con.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of
 write.csv(fall.stat, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.stationary.data.csv")
 write.csv(fall.edge.df.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.intra.cluster.movements.csv")
 write.csv(fall.nbr.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.nbr.node.composition.csv")
+write.csv(fall.breed.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.abundance.per.bird.csv")
 
 # Save elements necessary to build spring network
 write_csv(spring.stat, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.stationary.locations.csv")
@@ -1171,6 +1172,7 @@ write.csv(dplyr::select(meta.spring.ab, !num.reg.ab.vector), "C:/Users/Jelan/One
 write.csv(spring.con.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.edge.weights.csv")
 write.csv(spring.stat, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.stationary.data.csv")
 write.csv(spring.nbr.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.nbr.node.composition.csv")
+write.csv(spring.breed.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.abundance.per.bird.csv")
 
 # ################################################################################
 # # Construction of population specific networks

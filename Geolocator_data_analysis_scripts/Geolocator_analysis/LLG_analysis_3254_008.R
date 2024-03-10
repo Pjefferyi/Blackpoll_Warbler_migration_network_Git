@@ -566,7 +566,7 @@ load(file = paste0(dir,"/", geo.id, "adjusted_initial_path_raw.csv"))
 
 #Fall transoceanic flight
 start <- "2016-09-10"
-end <- "2016-10-20"
+end <- "2016-11-01"
 
 #first flight
 f1.start <- "2016-10-10"
@@ -599,7 +599,7 @@ rect(anytime(f1.start), min(x0_ad[,2])-2, anytime(f1.end), max(x0_ad[,2])+2, col
 rect(anytime(f2.start), min(x0_ad[,2])-2, anytime(f2.end), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
 
 par(cex.lab= 1)
-par(cex.axis= 1)
+  par(cex.axis= 1)
 
 dev.off()
 
@@ -607,32 +607,22 @@ dev.off()
 # It then flew to South America between October 12 and 14th 
 
 # Estimate timing of departure and arrival from the breeding and nonbreeding grounds ############################################################
-# Estimate timing of departure and arrival from the breeding and nonbreeding grounds ############################################################
+#Detect twilight times over the whole period during which the geolocator was functioning
+twl.full <- findTwilights(lig,include = lig$Date, threshold = 1.5, dark.min = 60)
+path.full <- thresholdPath(twl.full$Twilight, twl.full$Rise, zenith = zenith, tol = tol_ini)
 
-# #Detect twilight times over the whole period during which the geolocator was functioning
-# twl.full <- preprocessLight(lig,
-#                        threshold = 0.5,
-#                        offset = offset,
-#                        lmax = 64,         # max. light value
-#                        gr.Device = "x11", #`` MacOS version (and windows)
-#                        dark.min = 60)
-# 
-# #write.csv(twl.full, paste0(dir,"/",geo.id , "_twl_times_full.csv"))
-# twl.full <- read.csv(paste0(dir,"/",geo.id , "_twl_times_full.csv"))
-# 
-# path.full <- thresholdPath(twl.full$Twilight, twl.full$Rise, zenith = zenith, tol = tol_ini)
-# 
-# x0.full <- path.full$x
-# z0.full <- trackMidpts(x0)
+x0.full <- path.full$x
 
 dep.br <- "2016-08-25"
-arr.br <-NA
+arr.br <-"2017-05-29"
 
 par(mfrow=c(2,1))
-plot(twl$Twilight, type  = "l", x0_ad[,1])
+plot(twl.full$Twilight, type  = "l", x0.full[,1])
 abline(v = anytime(dep.br))
-plot(twl$Twilight, type  = "l", x0_ad[,2])
+abline(v = anytime(arr.br))
+plot(twl.full$Twilight, type  = "l", x0.full[,2])
 abline(v = anytime(dep.br))
+abline(v = anytime(arr.br))
 par(mfrow=c(1,1))
 
 # Record details for the geolocator analysis ###################################
@@ -645,10 +635,10 @@ geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- dep.nbr
 geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.start <- as.character(tm.calib[1])
 geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.end <- as.character(tm.calib[2])
 geo.ref[(geo.ref$geo.id == geo.id),]$tol <-tol_ini
-geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- as.character(arr.nbr.sgat)
-geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- as.character(dep.nbr.sgat)
-geo.ref[(geo.ref$geo.id == geo.id),]$br.departure <- as.character(dep.br)
-geo.ref[(geo.ref$geo.id == geo.id),]$br.arrival <- as.character(arr.br)
+geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- as.Date(arr.nbr.sgat)
+geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- as.Date(dep.nbr.sgat)
+geo.ref[(geo.ref$geo.id == geo.id),]$br.departure <- as.Date(dep.br)
+geo.ref[(geo.ref$geo.id == geo.id),]$br.arrival <- as.Date(arr.br)
 geo.ref[(geo.ref$geo.id == geo.id),]$changelight.quantile <- q
 write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE) 
 

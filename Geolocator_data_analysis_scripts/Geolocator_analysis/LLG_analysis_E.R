@@ -239,7 +239,7 @@ zenith_twl_med <- data.frame(Date = twl$Twilight) %>%
 zeniths_med <- zenith_twl_med$zenith
 
 # plot longitudes and latitudes with the new zenith angles 
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol= 0)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol= 0.255)
 
 x0_ad <- path$x
 z0 <- trackMidpts(x0_ad)
@@ -507,12 +507,12 @@ x.proposal <- mvnorm(chainCov(fit$x), s = 0.3)
 z.proposal <- mvnorm(chainCov(fit$z), s = 0.3)
 
 fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = x.med,
-                         z0 = z.med , iters = 1000, thin = 20, chain = 1)
+                         z0 = z.med , iters = 3000, thin = 20, chain = 1)
 
 #Summarize results #############################################################
 
 # sm <- locationSummary(fit$x, time=fit$model$time)
-sm <- SGAT2Movebank(fit$x, time = twl_adjusted$Twilight, group = twl$group)
+sm <- SGAT2Movebank(fit$x, time = twl_adjusted$Twilight, group = twl_adjusted$group)
 
 #create a plot of the stationary locations #####################################
 
@@ -720,9 +720,9 @@ geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.end <- as.character(tm.calib1[2])
 geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.start2 <- as.character(tm.calib2[1])
 geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.end2 <- as.character(tm.calib2[2])
 geo.ref[(geo.ref$geo.id == geo.id),]$tol <-tol_ini
-geo.ref[(geo.ref$geo.id == geo.id),]$br.departure <- as.character(dep.br)
-geo.ref[(geo.ref$geo.id == geo.id),]$br.arrival <- as.character(arr.br)
-geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- as.character(arr.nbr.sgat)
-geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- as.character(dep.nbr.sgat)
+geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- as.Date(arr.nbr.sgat)
+geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- as.Date(dep.nbr.sgat)
+geo.ref[(geo.ref$geo.id == geo.id),]$br.departure <- as.Date(dep.br)
+geo.ref[(geo.ref$geo.id == geo.id),]$br.arrival <- as.Date(arr.br)
 geo.ref[(geo.ref$geo.id == geo.id),]$changelight.quantile <- q
 write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE) 

@@ -554,7 +554,7 @@ f1.end <- "2013-09-27"
 
 #second flight
 f2.start <- "2013-10-06"
-f2.end <- "2013-10-08"
+f2.end <- "2013-10-07"
 
 # Plot lat, lon and light transitions  
 jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition.png"), width = 1024 , height = 990, quality = 100, res = 200)
@@ -614,9 +614,7 @@ arr.br <- NA #geolocator stopped prior to return
 
 par(mfrow=c(2,1))
 plot(twl$Twilight, type  = "l", x0_ad[,1])
-abline(v = anytime(dep.br))
 plot(twl$Twilight, type  = "l", x0_ad[,2])
-abline(v = anytime(dep.br))
 par(mfrow=c(1,1))
 
 # Record details for the geolocator analysis ###################################
@@ -628,10 +626,10 @@ geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- arr.nbr
 geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.start <- as.character(tm.calib[1])
 geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.end <- as.character(tm.calib[2])
 geo.ref[(geo.ref$geo.id == geo.id),]$tol <-tol_ini
-geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- as.character(arr.nbr.sgat)
+geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- as.Date(arr.nbr.sgat)
 geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- NA
-geo.ref[(geo.ref$geo.id == geo.id),]$br.departure <- as.character(dep.br)
-geo.ref[(geo.ref$geo.id == geo.id),]$br.arrival <- as.character(arr.br)
+geo.ref[(geo.ref$geo.id == geo.id),]$br.departure <- as.Date(dep.br)
+geo.ref[(geo.ref$geo.id == geo.id),]$br.arrival <- as.Date(arr.br)
 geo.ref[(geo.ref$geo.id == geo.id),]$changelight.quantile <- q
 write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE) 
 

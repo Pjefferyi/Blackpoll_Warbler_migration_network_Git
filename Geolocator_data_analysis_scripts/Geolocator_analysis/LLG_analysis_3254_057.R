@@ -46,10 +46,10 @@ lat.calib <- ref_data$deploy.latitude[which(ref_data$geo.id == geo.id)]
 lon.calib <- ref_data$deploy.longitude[which(ref_data$geo.id == geo.id)]
 
 # time of deployment (from reference file)
-#deploy.start <- anytime("", asUTC = T, tz = "GMT")
+deploy.start <- anytime(ref_data[ref_data$geo.id == geo.id,]$deploy.on.date, asUTC = T, tz = "GMT")
 
 # time of recovery (estimate from light data)
-#deploy.end <- anytime("", asUTC = T, tz = "GMT")
+deploy.end <- anytime(ref_data[ref_data$geo.id == geo.id,]$deploy.off.date, asUTC = T, tz = "GMT")
 
 #Equinox times
 fall.equi <- anytime("2016-09-22", asUTC = T, tz = "GMT")
@@ -61,7 +61,7 @@ spring.equi <- anytime("2017-03-20", asUTC = T, tz = "GMT")
 lig <- readLig(paste0(dir,"/Raw_light_data_", geo.id, ".lig"), skip = 1)
 
 #remove rows before and after deployment time 
-#lig <- lig[(lig$Date > deploy.start),]
+lig <- lig[(lig$Date > deploy.start & lig$Date < deploy.end),]
 
 #parameter to visualize the data 
 offset <- 20 # adjusts the y-axis to put night (dark shades) in the middle
@@ -104,9 +104,9 @@ dev.off()
 # lightImage(lig, offset = 19)
 # tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
 #               col = ifelse(twl$Rise, "dodgerblue", "firebrick"))
-# 
-# # Save the twilight times
-# #write.csv(twl, paste0(dir,"/",geo.id , "_twl_times.csv"))
+
+# Save the twilight times
+#write.csv(twl, paste0(dir,"/",geo.id , "_twl_times.csv"))
 
 ###############################################################################
 # SGAT ANALYSIS ###############################################################
@@ -646,14 +646,23 @@ par(cex.axis= 1)
 dev.off()
 
 # Estimate timing of departure and arrival from the breeding and nonbreeding grounds ############################################################
+
+# Here we need to extract positions over the full tracking deployment period 
+twl.full <- findTwilights(lig,include = lig$Date, threshold = 20, dark.min = 60)
+path.full <- thresholdPath(twl.full$Twilight, twl.full$Rise, zenith = zenith, tol = 0.01)
+
+x0.full <- path.full$x
+
 dep.br <- "2016-08-23 14:58"
-arr.br <- NA # Could not estimate due to  short days
+arr.br <- "2017-06-01"
 
 par(mfrow=c(2,1))
-plot(twl$Twilight, type  = "l", x0_ad[,1])
+plot(twl.full$Twilight, type  = "l", x0.full[,1])
 abline(v = anytime(dep.br))
-plot(twl$Twilight, type  = "l", x0_ad[,2])
+abline(v = anytime(arr.br))
+plot(twl.full$Twilight, type  = "l", x0.full[,2])
 abline(v = anytime(dep.br))
+abline(v = anytime(arr.br))
 par(mfrow=c(1,1))
 
 # Record details for the geolocator analysis ###################################
@@ -666,10 +675,10 @@ geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- dep.nbr
 geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.start <- as.character(tm.calib[1])
 geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.end <- as.character(tm.calib[2])
 geo.ref[(geo.ref$geo.id == geo.id),]$tol <-tol_ini
-geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- as.character(arr.nbr.sgat)
-geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- as.character(dep.nbr.sgat)
-geo.ref[(geo.ref$geo.id == geo.id),]$br.departure <- as.character(dep.br)
-geo.ref[(geo.ref$geo.id == geo.id),]$br.arrival <- as.character(arr.br)
+geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- as.Date(arr.nbr.sgat)
+geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- as.Date(dep.nbr.sgat)
+geo.ref[(geo.ref$geo.id == geo.id),]$br.departure <- as.Date(dep.br)
+geo.ref[(geo.ref$geo.id == geo.id),]$br.arrival <- as.Date(arr.br)
 geo.ref[(geo.ref$geo.id == geo.id),]$changelight.quantile <- q
 write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE) 
 

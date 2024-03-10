@@ -104,9 +104,9 @@ dev.off()
 # lightImage(lig, offset = 19)
 # tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
 #               col = ifelse(twl$Rise, "dodgerblue", "firebrick"))
-
-# Save the twilight times 
-# write.csv(twl, paste0(dir,"/",geo.id , "_twl_times.csv"))
+# 
+# # Save the twilight times
+#  write.csv(twl, paste0(dir,"/",geo.id , "_twl_times.csv"))
 
 ###############################################################################
 # SGAT ANALYSIS ###############################################################
@@ -216,7 +216,7 @@ dev.off()
 
 # Using approximate timings of arrival and departure from the breeding grounds
 zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
-  mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith0,
+  mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith0+1,
                             Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad+1,
                             Date > anytime(dep.nbr) ~ zenith0_ad+1))
 
@@ -295,11 +295,11 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-q <- 0.86
-cL <- changeLight(twl=geo_twl, quantile= q, summary = F, days = days, plot = T)
+q <- 0.87
+cL <- changeLight(twl=geo_twl, quantile= q, summary = F, days = 2, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = dist)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = 100)
 
 ##back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 
@@ -625,10 +625,10 @@ geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.end <- as.character(tm.calib1[2])
 geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.start2 <- as.character(tm.calib2[1])
 geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.end2 <- as.character(tm.calib2[2])
 geo.ref[(geo.ref$geo.id == geo.id),]$tol <-tol_ini
-geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- as.character(arr.nbr.sgat)
-geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- as.character(dep.nbr.sgat)
-geo.ref[(geo.ref$geo.id == geo.id),]$br.departure <- as.character(dep.br)
-geo.ref[(geo.ref$geo.id == geo.id),]$br.arrival <- as.character(arr.br)
+geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- as.Date(arr.nbr.sgat)
+geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- as.Date(dep.nbr.sgat)
+geo.ref[(geo.ref$geo.id == geo.id),]$br.departure <- as.Date(dep.br)
+geo.ref[(geo.ref$geo.id == geo.id),]$br.arrival <- as.Date(arr.br)
 geo.ref[(geo.ref$geo.id == geo.id),]$changelight.quantile <- q
 write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE) 
 

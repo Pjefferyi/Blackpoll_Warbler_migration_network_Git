@@ -378,7 +378,6 @@ diff.sec.change <- diff.sec/nrow(twl)
 timestep <- seq(1, nrow(twl))
 # twl_adjusted <- twl %>% mutate(Twilight = Twilight + diff.sec.rate * timestep,
 #                              Twilight0 = Twilight0 + diff.sec.rate * timestep)
-
 twl_adjusted <- twl
 twl_adjusted$Twilight <- twl$Twilight + (diff.sec.change * timestep)
 twl_adjusted$Twilight0 <- twl$Twilight + (diff.sec.change * timestep)
@@ -772,10 +771,10 @@ geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.end <- as.character(tm.calib1[2])
 geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.start2 <- as.character(tm.calib2[1])
 geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.end2 <- as.character(tm.calib2[2])
 geo.ref[(geo.ref$geo.id == geo.id),]$tol <-tol_ini
-geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- as.character(arr.nbr.sgat)
-geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- as.character(dep.nbr.sgat)
-geo.ref[(geo.ref$geo.id == geo.id),]$br.departure <- as.character(dep.br)
-geo.ref[(geo.ref$geo.id == geo.id),]$br.arrival <- as.character(arr.br)
+geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- as.Date(arr.nbr.sgat)
+geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- as.Date(dep.nbr.sgat)
+geo.ref[(geo.ref$geo.id == geo.id),]$br.departure <- as.Date(dep.br)
+geo.ref[(geo.ref$geo.id == geo.id),]$br.arrival <- as.Date(arr.br)
 geo.ref[(geo.ref$geo.id == geo.id),]$changelight.quantile <- q
 write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE) 
 

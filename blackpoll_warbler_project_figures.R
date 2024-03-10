@@ -183,6 +183,15 @@ spring.graph.disc <- spring.graph - edge(spring.e)
 
 V(spring.graph)$betweenness <- betweenness(spring.graph.disc, directed = T, weights = 1/E(spring.graph.disc)$weight) 
 
+# fall and spring eigenvector centrality coefficient
+V(fall.graph)$eigen <- eigen_centrality(as.undirected(fall.graph.disc))$vector
+V(spring.graph)$eigen <- eigen_centrality(as.undirected(spring.graph.disc))$vector
+
+# fall and spring use by time 
+fall.ab.units <- merge(fall.stat, meta.fall.ab)
+fall.use.time <- fall.stat %>% group_by(cluster, geo_id) %>% summarize(time.per.node = sum(duration), )
+
+
 # fall and spring bridge centrality
 fall.graph.brd <- fall.graph.disc 
 spring.graph.brd <- spring.graph.disc 
@@ -380,7 +389,8 @@ fall.gplot.comp <- ggplot(st_as_sf(America))+
   scale_radius(range = c(1, 3), unit = "mm", guide = "none")+
   geom_point(data = fall.data[fall.data$node.comp == 3,], mapping = aes(x = long, y = lat, fill = single.reg, size = node.weight), shape= 21, colour = "black",  show.legend = F)+
   scale_size(range = c(2, 6), guide = "none")+
-  scale_fill_manual(values = c("West" = "#D55E00", "Central" = "#009E73", "East" = "#0072B2", "Northwest" = "#F0E442"), name = "Breeding Region") +
+  scale_fill_manual(values = c("West" = "#D55E00", "Central" = "#009E73", "East" = "#0072B2", "Northwest" = "#F0E442"), name = "Breeding origin") +
+  ggtitle("Fall")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         legend.position = c(0.2, 0.4), text = element_text(size = 12), legend.key = element_blank(),
@@ -400,32 +410,33 @@ spring.gplot.comp <- ggplot(st_as_sf(America))+
              arrow = arrow(length = unit(9, "pt"), type = "closed", angle = 10))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
   scale_color_manual(values=c(adjustcolor("blue", alpha = 0), adjustcolor("black", alpha = 0.5)), guide = "none")+
-  geom_pie_glyph(slices= c("West", "Central", "East", "Northwest"), colour = "black", data = spring.data[spring.data$node.comp < 3,], mapping = aes(x = long, y = lat, radius = node.weight)) +
-  scale_radius(range = c(1, 3), unit = "mm", guide = "none")+
-  geom_point(data = spring.data[spring.data$node.comp == 3,], mapping = aes(x = long, y = lat, fill = single.reg, size = node.weight), shape= 21, colour = "black",  show.legend = F)+
-  scale_size(range = c(2, 6), guide = "none")+
-  scale_fill_manual(values = c("West" = "#D55E00", "Central" = "#009E73", "East" = "#0072B2", "Northwest" = "#F0E442"), name = "Breeding Region") +
+  geom_pie_glyph(slices= c("West", "Central", "East", "Northwest"), colour = "black", data = spring.data[spring.data$node.comp < 3,], mapping = aes(x = long, y = lat, radius = node.weight), show.legend = F) +
+  scale_radius(range = c(1, 3), unit = "mm",guide  = "none")+
+  geom_point(data = spring.data[spring.data$node.comp == 3,], mapping = aes(x = long, y = lat, fill = single.reg, size = node.weight), shape= 21, colour = "black")+
+  scale_size(range = c(2, 6), name = "Node weight")+
+  scale_fill_manual(values = c("West" = "#D55E00", "Central" = "#009E73", "East" = "#0072B2", "Northwest" = "#F0E442"), guide = "none") +
+  ggtitle("Spring")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
-        legend.position = "None", text = element_text(size = 12), legend.key = element_blank(),
+        legend.position = c(0.2, 0.4), text = element_text(size = 12), legend.key = element_blank(),
         axis.title =element_blank(),
         axis.text =element_blank(),
         axis.ticks =element_blank(),
         axis.line=element_blank(),
         axis.ticks.length = unit(0, "pt"),
-        plot.margin= unit(c(0,0,0,0), "pt"))+ 
-  guides(fill = guide_legend(override.aes = list(size = 5)), )
+        plot.margin= unit(c(0,0,0,0), "pt"))
 
 # Fall population composition of the nonbreeding nodes
 fall.nbr.node.comp <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.nbr.node.composition.csv") 
 fl.nbr.node.comp <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
-  coord_sf(xlim = c(-85, -50),ylim = c(-5, 15)) +
-  geom_pie_glyph(slices = c("Eastern.Region","Northwestern.Region", "Western.Region", "Central.Region"), colour = "black", data = fall.nbr.node.comp[fall.nbr.node.comp$reg.no == "multi reg",], mapping = aes(x = Lon.50., y = Lat.50., radius = tot.abundance))+
-  scale_radius(range = c(1, 3), unit = "mm", guide = "none")+
+  coord_sf(xlim = c(-80, -50),ylim = c(-2, 15)) +
+  geom_pie_glyph(slices = c("Eastern.Region","Northwestern.Region", "Western.Region", "Central.Region"), colour = "black", data = fall.nbr.node.comp, mapping = aes(x = Lon.50., y = Lat.50., radius = tot.abundance))+
+  scale_radius(range = c(6, 12), unit = "mm", guide = "none")+
   geom_point(data = fall.nbr.node.comp[fall.nbr.node.comp$reg.no == "single reg",], mapping = aes(x = Lon.50., y = Lat.50., size = tot.abundance, fill = single_reg), shape= 21,  show.legend = F)+
-  scale_size(range = c(2, 6), guide = "none")+
+  scale_size(range = c(2, 40), guide = "none")+
   scale_fill_manual(values = c("Western.Region" = "#D55E00", "Central.Region" = "#009E73", "Eastern.Region" = "#0072B2", "Northwestern.Region" = "#F0E442"), name = "Breeding Region") +
+  ggtitle("Fall")+
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
           panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
           legend.position = "None", text = element_text(size = 12), legend.key = element_blank(),
@@ -441,12 +452,13 @@ fl.nbr.node.comp <- ggplot(st_as_sf(America))+
 spring.nbr.node.comp <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/spring.nbr.node.composition.csv") 
 spr.nbr.node.comp.plot <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
-  coord_sf(xlim = c(-85, -50),ylim = c(-5, 15)) +
+  coord_sf(xlim = c(-80, -50),ylim = c(-2, 15)) +
   geom_pie_glyph(slices = c("Eastern.Region","Northwestern.Region", "Western.Region", "Central.Region"), colour = "black", data = spring.nbr.node.comp, mapping = aes(x = Lon.50., y = Lat.50., radius = tot.abundance))+
-  scale_radius(range = c(1, 3), unit = "mm", guide = "none")+
+  scale_radius(range = c(6, 12), unit = "mm", guide = "none")+
   geom_point(data = spring.nbr.node.comp[spring.nbr.node.comp$reg.no == "single reg",], mapping = aes(x = Lon.50., y = Lat.50., size = tot.abundance, fill = single_reg), shape= 21,  show.legend = F)+
-  scale_size(range = c(2, 11), guide = "none")+
+  scale_size(range = c(1.5, 44), guide = "none")+
   scale_fill_manual(values = c("Western.Region" = "#D55E00", "Central.Region" = "#009E73", "Eastern.Region" = "#0072B2", "Northwestern.Region" = "#F0E442"), name = "Breeding Region") +
+  ggtitle("Spring")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         legend.position = "None", text = element_text(size = 12), legend.key = element_blank(),
@@ -458,18 +470,18 @@ spr.nbr.node.comp.plot <- ggplot(st_as_sf(America))+
   guides(fill = guide_legend(override.aes = list(size = 5)), )
 
 ## Panel ----
-node.comp.fig <- (fall.gplot.comp |spring.gplot.comp)/ (fl.nbr.node.comp|spr.nbr.node.comp.plot) +
-  plot_annotation(tag_levels = 'a') &
-  theme(plot.tag.position = c(0.05, 0.95),
-        plot.tag = element_text(face = 'bold', size = 10))
+node.comp.fig <- (fall.gplot.comp |spring.gplot.comp)
+node.nbr.comp.fig <- (fl.nbr.node.comp  |spr.nbr.node.comp.plot)
 
 #ggsave(plot = node.comp.fig, filename = "Node.comp.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
 #       units = "cm", width = 24*1.2, height = 10*1.2, dpi = "print", bg = "white")
 
-png("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures/Node.comp.png", units = "cm", width = 24*1.2, height = 10*1.2, res = 300)
-
+png("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures/Node.comp.png", units = "cm", width = 28.8, height = 18, res = 300)
 node.comp.fig
+dev.off()
 
+png("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures/Node.nbr.comp.png", units = "cm", width = 28.8, height = 14, res = 300)
+node.nbr.comp.fig
 dev.off()
 
 # Figure 3: Fall and spring migratory network communities ----
@@ -530,32 +542,32 @@ ggsave(plot = communities.fig, filename = "communities.figure.png" ,  path = "C:
 
 # # Table 1: Significance of the spring and fall network communities ----
 # 
-# ## Significance of the Fall network communities ---- 
+# ## Significance of the Fall network communities ----
 # 
-# # create multiple rewired versions of the network, apply the clustering method, then calculate scoring functions 
+# # create multiple rewired versions of the network, apply the clustering method, then calculate scoring functions
 # iter = 100
 # 
 # rand.data = NULL
 # 
 # for (i in seq(1,iter)){
-#   
+# 
 #   # Create randomized graph
 #   rewire.fall <- rewireCpp(g = fall.graph, weight_sel="max_weight", Q = 1)
-#   
+# 
 #   # cluster analysis
 #   rewire.cluster <- cluster_walktrap(rewire.fall)
 #   rewire.comms <-  rewire.cluster$membership
-#   
+# 
 #   # calculate scoring function
 #   rewire.score <- scoring_functions(rewire.fall, com = rewire.comms, weighted = T, type = "global")
-#   
-#   # Build data.frame with results 
+# 
+#   # Build data.frame with results
 #   if (is.null(rand.data)){
 #     rand.data <- as.data.frame(rewire.score)
 #   }else{
 #     rand.data <-rbind(rand.data,  as.data.frame(rewire.score))
 #   }
-#   
+# 
 #   print(paste0("progress: ", as.character(i), " to ", as.character(iter)))
 # }
 # 
@@ -566,10 +578,10 @@ ggsave(plot = communities.fig, filename = "communities.figure.png" ,  path = "C:
 # ob.score <- as.data.frame(scoring_functions(fall.graph, V(fall.graph)$walktrap.comm, weighted = T, type = "global"))
 # 
 # for (i in seq(1, length(colnames(rand.data)))){
-#   
+# 
 #   if (length(unique(rand.data[,i])) > 1){
 #     test.results <- t.test(rand.data[,i], mu = ob.score[,i])
-#     
+# 
 #     score.test.fall[i,"score.function"] <- colnames(rand.data)[i]
 #     score.test.fall[i,"observed.score"] <- ob.score[,i]
 #     score.test.fall[i,"random.function.mean"] <- mean(rand.data[,i], na.rm = T)
@@ -591,32 +603,32 @@ ggsave(plot = communities.fig, filename = "communities.figure.png" ,  path = "C:
 # # Save the fall score test results
 # write.csv(score.test.fall, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Table_data/fall.network.significance.test.csv")
 # 
-# ## Significance of the Spring network communities ---- 
+# ## Significance of the Spring network communities ----
 # 
-# # create multiple rewired versions of the network, apply the clustering method, then calculate scoring functions 
+# # create multiple rewired versions of the network, apply the clustering method, then calculate scoring functions
 # iter = 100
 # 
 # rand.data = NULL
 # 
 # for (i in seq(1,iter)){
-#   
+# 
 #   # Create randomized graph
 #   rewire.spring <- rewireCpp(g = spring.graph, weight_sel="max_weight", Q = 1)
-#   
+# 
 #   # cluster analysis
 #   rewire.cluster <- cluster_walktrap(rewire.spring)
 #   rewire.comms <-  rewire.cluster$membership
-#   
+# 
 #   # calculate scoring function
 #   rewire.score <- scoring_functions(rewire.spring, com = rewire.comms, weighted = T, type = "global")
-#   
-#   # Build data.frame with results 
+# 
+#   # Build data.frame with results
 #   if (is.null(rand.data)){
 #     rand.data <- as.data.frame(rewire.score)
 #   }else{
 #     rand.data <-rbind(rand.data,  as.data.frame(rewire.score))
 #   }
-#   
+# 
 #   print(paste0("progress: ", as.character(i), " to ", as.character(iter)))
 # }
 # 
@@ -627,10 +639,10 @@ ggsave(plot = communities.fig, filename = "communities.figure.png" ,  path = "C:
 # ob.score <- as.data.frame(scoring_functions(spring.graph, V(spring.graph)$walktrap.comm, weighted = T, type = "global"))
 # 
 # for (i in seq(1, length(colnames(rand.data)))){
-#   
+# 
 #   if (length(unique(rand.data[,i])) > 1){
 #     test.results <- t.test(rand.data[,i], mu = ob.score[,i])
-#     
+# 
 #     score.test.spring [i,"score.function"] <- colnames(rand.data)[i]
 #     score.test.spring [i,"observed.score"] <- ob.score[,i]
 #     score.test.spring [i,"random.function.mean"] <- mean(rand.data[,i], na.rm = T)
@@ -651,33 +663,36 @@ ggsave(plot = communities.fig, filename = "communities.figure.png" ,  path = "C:
 # 
 # # Save the spring score test results
 # write.csv(score.test.spring, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Table_data/spring.network.significance.test.csv")
-
-# ## Assessment of network stability  
 # 
-# obs.stab <- boot_alg_list(g = undirected.fall.graph, alg_list = list(walktrap
+# 
+# # Table 2: Stability of the spring and fall network communities ----
+# 
+# ## Assessment of community stability in the fall ------
+# 
+# # Stability metrics for observed network 
+# obs.stab <- boot_alg_list(g = undirected.spring.graph, alg_list = list(walktrap
 #               = cluster_walktrap))
 # 
-# 
-# # create multiple rewired versions of the network, apply the bootstrapping method
+# # create multiple rewired versions of the network, apply the bootstrapping procedure to each one 
 # iter = 100
 # 
-# rand.data.stab = NULL
+# rand.data.stab.fall = NULL
 # 
 # for (i in seq(1,iter)){
-#   
+# 
 #   # Create randomized graph
 #   rewire.fall <- rewireCpp(g = fall.graph, weight_sel="max_weight", Q = 1)
-#   
+# 
 #   # boostrap stability
 #   rewire.stab.score <- boot_alg_list(g = rewire.fall, alg_list = list(walktrap = cluster_walktrap))
-#   
-#   # Build data.frame with results 
-#   if (is.null(rand.data)){
-#     rand.data <- as.data.frame(rewire.score)
+# 
+#   # Build data.frame with results
+#   if (is.null(rand.data.stab.fall)){
+#     rand.data.stab.fall <- as.data.frame(rewire.stab.score )
 #   }else{
-#     rand.data <-rbind(rand.data,  as.data.frame(rewire.score))
+#     rand.data.stab.fall <-rbind(rand.data.stab.fall,  as.data.frame(rewire.stab.score ))
 #   }
-#   
+# 
 #   print(paste0("progress: ", as.character(i), " to ", as.character(iter)))
 # }
 
@@ -740,9 +755,9 @@ fall.gplot.bridge.str <- ggplot(st_as_sf(America))+
              arrow = arrow(length = unit(9, "pt"), type = "closed", angle = 10))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
   scale_color_manual(values=c(adjustcolor("black", alpha = 0.5), adjustcolor("blue", alpha = 0)), guide = "none")+
-  geom_nodes(data = fall.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = bridge.indegree), shape=21, size  = 3)+
+  geom_nodes(data = fall.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = eigen), shape=21, size  = 3)+
   scale_fill_viridis_c(direction = -1, option = "magma", name = "In-degree\nbridge strength", 
-                       guide = guide_colorbar(frame.colour = "black"), limits = c(min(0), max(fall.ggnet$bridge.indegree, spring.ggnet$bridge.indegree)))+
+                       guide = guide_colorbar(frame.colour = "black"), limits = c(min(0), max(fall.ggnet$eigen, spring.ggnet$eigen)))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         legend.position = c(-0.18, 0.5), legend.key = element_blank(),
@@ -762,11 +777,11 @@ spring.gplot.bridge.str <- ggplot(st_as_sf(America))+
   geom_edges(data = spring.ggnet, mapping = aes(x = x, y = y, xend = xend, yend = yend, col = edge.type, lwd = weight),
              arrow = arrow(length = unit(9, "pt"), type = "closed", angle = 10))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
-  geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = bridge.indegree), shape=21, size  = 3)+
+  geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = eigen), shape=21, size  = 3)+
   scale_color_manual(values=c(adjustcolor("blue", alpha = 0), adjustcolor("black", alpha = 0.5)), guide = "none")+
   #geom_text(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, label = participation.coef))+
   scale_fill_viridis_c(direction = -1, option = "magma", name = "In-degree\nbridge strength", 
-                       guide = guide_colorbar(frame.colour = "black"), limits = c(min(0), max(fall.ggnet$bridge.indegree, spring.ggnet$bridge.indegree)))+
+                       guide = guide_colorbar(frame.colour = "black"), limits = c(min(0), max(fall.ggnet$eigen, spring.ggnet$eigen)))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         legend.position = "None", legend.key = element_blank(),
@@ -1264,7 +1279,6 @@ ggsave(plot = loc.ind.panel2, filename = "individual.movements2.png" ,  path = "
 
 
 # Figure 11 group migratory tracks for full year  ----
-
 east.fall.data <- geo.all %>% filter(Breeding_region_MC == "Eastern Region") %>%
   group_by(geo_id) %>%
   filter(StartTime <= StartTime[which(NB_count == 1)])
@@ -1290,5 +1304,88 @@ east.fall.mig.routes <- ggplot(st_as_sf(America))+
         legend.spacing = unit(-5, "pt"),
         plot.margin = unit(c(0,0,0,0), "pt"),
         legend.key = element_rect(colour = "transparent", fill = "white"))
+
+# Figure 12 threshold data and phenology dates ----
+geo.all <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/All.locations.csv") %>% arrange(geo_id, StartTime)
+ref_path <- "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv"
+
+# load threshold paths 
+tpaths <- findThresLocData()
+timings <- geo.all %>% group_by(geo_id) %>% summarize(fall.br.departure = as.Date(first(fall.br.departure)),
+                                                        spring.br.arrival = as.Date(first( spring.br.arrival)),
+                                                        nbr.departure = as.Date(as.numeric(first(nbr.departure))),
+                                                        nbr.arrival = as.Date(as.numeric(first(nbr.arrival))))
+
+# We create a list of plots
+dates.ind.lon <- list()
+dates.ind.lat <- list()
+
+# loop through the locations an create the plots
+for (i in unique(tpaths$geo_id)){
   
+  #individual data
+  ind.data <- tpaths[tpaths$geo_id == i,]
   
+  #individual timing
+  i.timing <- data.frame(event = c("br.departure", "br.arrival", "nbr.departure", "nbr.arrival"),
+                            time = as.numeric(as.Date(c(timings[timings$geo_id == i,]$fall.br.departure,
+                                     timings[timings$geo_id == i,]$spring.br.arrival,
+                                     timings[timings$geo_id == i,]$nbr.departure,
+                                     timings[timings$geo_id == i,]$nbr.arrival))))
+  
+  dates.ind.lon[[i]] <- ggplot(data = ind.data, aes(y = lon, x = as.numeric(as.Date(Twilight)), group = 1))+
+    geom_line()+
+    geom_vline(data =  i.timing, aes(xintercept = time, group = event, colour = event))+
+    scale_colour_manual(values=c("br.departure" = "red" , "br.arrival"  = "red", "nbr.departure" = "blue", "nbr.arrival"  = "blue"))+
+    ggtitle(i) +
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+          panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
+          plot.title=element_text(size=8, vjust=-1),
+          legend.position = "None",
+          axis.title =element_blank(),
+          axis.text =element_blank(),
+          axis.ticks =element_blank(),
+          axis.ticks.length = unit(0, "pt"),
+          legend.spacing = unit(-5, "pt"),
+          plot.margin = unit(c(0,0,0,0), "pt"),
+          legend.key = element_rect(colour = "transparent", fill = "white"))
+  
+  dates.ind.lat[[i]] <- ggplot(data = ind.data, aes(y = lat, x = as.numeric(as.Date(Twilight)), group = 1))+
+    geom_line()+
+    geom_vline(data =  i.timing, aes(xintercept = time, group = event, colour = event))+
+    scale_colour_manual(values=c("br.departure" = "red" , "br.arrival"  = "red", "nbr.departure" = "blue", "nbr.arrival"  = "blue"))+
+    ggtitle(i) +
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+          panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
+          plot.title=element_text(size=8, vjust=-1),
+          legend.position = "None",
+          axis.title =element_blank(),
+          axis.text =element_blank(),
+          axis.ticks =element_blank(),
+          axis.ticks.length = unit(0, "pt"),
+          legend.spacing = unit(-5, "pt"),
+          plot.margin = unit(c(0,0,0,0), "pt"),
+          legend.key = element_rect(colour = "transparent", fill = "white"))
+}
+
+# Create a panel of plots
+# function from : https://stackoverflow.com/questions/66688668/automatically-assemble-plots-for-patchwork-from-a-list-of-ggplots
+plot_a_list <- function(plots, nrows, ncols) {
+  
+  patchwork::wrap_plots(plots,
+                        nrow = nrows, ncol = ncols)
+}
+
+loc.ind.panel1 <- plot_a_list(dates.ind.lon[1:24], 6, 4)
+loc.ind.panel2 <- plot_a_list(dates.ind.lon[25:47], 6, 4)
+loc.ind.panel3 <- plot_a_list(dates.ind.lat[1:24], 6, 4)
+loc.ind.panel4 <- plot_a_list(dates.ind.lat[25:47], 6, 4)
+
+## Save the plots ----
+ggsave(plot = loc.ind.panel1, filename = "individual.movements1.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures",
+       units = "cm", width = 24*1.2, height = 30*1.2, dpi = "print", bg = "white")
+
+ggsave(plot = loc.ind.panel2, filename = "individual.movements2.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures",
+       units = "cm", width = 24*1.2, height = 30*1.2, dpi = "print", bg = "white")
+
+

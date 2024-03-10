@@ -630,7 +630,20 @@ dev.off()
 
 # A stopover of ther carribean is visible, but it was already detected in the geolocator analysis. 
 # It seems to have been a long stopover that started before the effect of the equinox on latitude estimates wore off
-# However, from the latitude measurements that follow directly after the equinox, it is ppossible thta the stopover was located along the coast of northern South America
+# However, from the latitude measurements that follow directly after the equinox, it is possible that the stopover was located along the coast of northern South America
+
+# Estimate timing of departure and arrival from the breeding and nonbreeding grounds ############################################################
+dep.br <- "2019-09-10"
+arr.br <- "2020-05-27"
+
+par(mfrow=c(2,1))
+plot(twl$Twilight, type  = "l", x0_ad[,1])
+abline(v = anytime(dep.br))
+abline(v = anytime(arr.br))
+plot(twl$Twilight, type  = "l", x0_ad[,2])
+abline(v = anytime(dep.br))
+abline(v = anytime(arr.br))
+par(mfrow=c(1,1))
 
 # Record details for the geolocator analysis ###################################
 geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
@@ -641,8 +654,10 @@ geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- dep.nbr
 geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.start <- as.character(tm.calib[1])
 geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.end <- as.character(tm.calib[2])
 geo.ref[(geo.ref$geo.id == geo.id),]$tol <- tol_ini
-geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- as.character(arr.nbr.sgat)
-geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- as.character(dep.nbr.sgat)
+geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- as.Date(arr.nbr.sgat)
+geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- as.Date(dep.nbr.sgat)
+geo.ref[(geo.ref$geo.id == geo.id),]$br.departure <- as.Date(dep.br)
+geo.ref[(geo.ref$geo.id == geo.id),]$br.arrival <- as.Date(arr.br)
 geo.ref[(geo.ref$geo.id == geo.id),]$changelight.quantile <- q
 write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE) 
 

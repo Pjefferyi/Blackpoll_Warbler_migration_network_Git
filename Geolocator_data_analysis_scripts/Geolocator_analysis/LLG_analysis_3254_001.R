@@ -46,10 +46,10 @@ lat.calib <- ref_data$deploy.latitude[which(ref_data$geo.id == geo.id)]
 lon.calib <- ref_data$deploy.longitude[which(ref_data$geo.id == geo.id)]
 
 # time of deployment (from reference file)
-#deploy.start <- anytime("", asUTC = T, tz = "GMT")
+deploy.start <- anytime("2016-06-14", asUTC = T, tz = "GMT")
 
 # time of recovery (estimate from light data)
-#deploy.end <- anytime("", asUTC = T, tz = "GMT")
+deploy.end <- anytime("2017-06-10", asUTC = T, tz = "GMT")
 
 #Equinox times
 fall.equi <- anytime("2016-09-22", asUTC = T, tz = "GMT")
@@ -61,7 +61,7 @@ spring.equi <- anytime("2017-03-20", asUTC = T, tz = "GMT")
 lig <- readLig(paste0(dir,"/Raw_light_data_", geo.id, ".lig"), skip = 1)
 
 #remove rows before and after deployment time 
-#lig <- lig[(lig$Date > deploy.start),]
+lig <- lig[(lig$Date > deploy.start & lig$Date < deploy.end),]
 
 #parameter to visualize the data 
 offset <- 20 # adjusts the y-axis to put night (dark shades) in the middle
@@ -71,57 +71,6 @@ threshold <- 1.5
 
 # visualize threshold over light levels  
 thresholdOverLight(lig, threshold, span =c(0, 25000))
-
-# # FIND TIME SHIFT ##############################################################
-# 
-# #This geolocator has a a time shift visible on this plot
-# lightImage( tagdata = lig,
-#             offset = offset,
-#             zlim = c(0, 64))
-# 
-# tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
-#                        offset = offset, lwd = 3, col = adjustcolor("orange", alpha.f = 0.5))
-# 
-# # we will do an initial twilight annotation to find identify the time interval
-# # by which we need to shift time
-# # There should be not need to edit, delete or insert twilights for this
-# # twl_in <- preprocessLight(lig,
-# #                           threshold = threshold,
-# #                           offset = offset,
-# #                           lmax = 64,         # max. light value
-# #                           gr.Device = "x11", # MacOS version (and windows)
-# #                           dark.min = 60)
-# # 
-# # #write.csv(twl_in, paste0(dir,"/", geo.id,"_twl_times_initial.csv"))
-# twl_in <- read.csv(paste0(dir,"/", geo.id,"_twl_times_initial.csv"))
-# twl_in$Twilight <- as.POSIXct(twl_in$Twilight, tz = "UTC")
-# 
-# # Period over which to calculate the time shift. It should be while the bird is
-# # still in the breeding grounds
-# period <- as.POSIXct(c("2016-08-01", "2016-08-30"), tz = "UTC")
-# 
-# # plot the period over the light image
-# lightImage( tagdata = lig,
-#             offset = offset,
-#             zlim = c(0, 64))
-# 
-# tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
-#                        offset = offset, lwd = 3, col = adjustcolor("orange", alpha.f = 0.5))
-# 
-# abline(v = period, lwd = 2, lty = 2, col = "orange")
-# 
-# # calculate the time shift
-# shift <- shiftSpan(twl = twl_in, lig = lig, period = period, est.zenith = 92,
-#                    dep.lon = lon.calib,
-#                    dep.lat = lat.calib)
-# 
-# 
-# # verify the that the time shift measured makes sense 
-# shift
-# 
-# #adjust  the based on the time shift detected 
-# #lig$Date <- lig$Date - (shift$shift)
-# #lig$Date <- lig$Date + 5.5*60*60
 
 #TWILIGHT ANNOTATION ##########################################################
 
@@ -143,6 +92,7 @@ dev.off()
 #                        lmax = 64,         # max. light value
 #                        gr.Device = "x11", # MacOS version (and windows)
 #                        dark.min = 60)
+# 
 # 
 # # Adjust sunset times by 120 second sampling interval
 # twl <- twilightAdjust(twilights = twl, interval = 120)
@@ -593,15 +543,55 @@ save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 #load(file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))
 #load(file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 
+# Examine twilights ############################################################
+
+#load the adjusted threshold path path x0_ad
+load(file = paste0(dir,"/", geo.id, "adjusted_initial_path_raw.csv"))
+
+#Fall transoceanic flight
+start <- "2016-10-01"
+end <- "2016-11-01"
+
+#first flight
+f1.start <- "2016-10-23"
+f1.end <- "2016-10-26"
+
+# Plot lat, lon and light transitions  
+jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition.png"), width = 1024 , height = 990, quality = 100, res = 200)
+
+par(cex.lab=1.4)
+par(cex.axis=1.4)
+par(mfrow=c(3,1), mar = c(5,5,0.1,5))
+plot(lig$Date[lig$Date > start & lig$Date < end], lig$Light[lig$Date > start & lig$Date < end], type = "o",
+     ylab = "Light level", xlab = "Time")
+rect(anytime(f1.start), min(lig$Light)-2, anytime(f1.end), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
+
+plot(twl$Twilight[twl$Twilight> start & twl$Twilight < end], x0_ad[,1][twl$Twilight > start & twl$Twilight < end],
+     ylab = "Longitude", xlab = "Time")
+rect(anytime(f1.start), min(x0_ad[,1])-2, anytime(f1.end), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
+
+plot(twl$Twilight[twl$Twilight > start & twl$Twilight < end], x0_ad[,2][twl$Twilight > start & twl$Twilight < end],
+     ylab = "Latitude", xlab = "Time")
+rect(anytime(f1.start), min(x0_ad[,2])-2, anytime(f1.end), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
+par(cex.lab= 1)
+par(cex.axis= 1)
+
+dev.off()
+
 # Estimate timing of departure and arrival from the breeding and nonbreeding grounds ############################################################
+twl.full <- findTwilights(lig,include = lig$Date, threshold = 1.5, dark.min = 60)
+path.full <- thresholdPath(twl.full$Twilight, twl.full$Rise, zenith = zenith, tol = tol_ini)
+
+x0.full <- path.full$x
+
 dep.br <- "2016-08-22"
 arr.br <- "2017-05-29"
 
 par(mfrow=c(2,1))
-plot(twl$Twilight, type  = "l", x0[,1])
+plot(twl.full$Twilight, type  = "l", x0.full[,1])
 abline(v = anytime(dep.br))
 abline(v = anytime(arr.br))
-plot(twl$Twilight, type  = "l", x0[,2])
+plot(twl.full$Twilight, type  = "l", x0.full[,2])
 abline(v = anytime(dep.br))
 abline(v = anytime(arr.br))
 par(mfrow=c(1,1))
@@ -616,10 +606,10 @@ geo.ref[(geo.ref$geo.id == geo.id),]$path.elongated <- TRUE
 geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.start <- as.character(tm.calib[1])
 geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.end <- as.character(tm.calib[2])
 geo.ref[(geo.ref$geo.id == geo.id),]$tol <-tol_ini
-geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- as.character(arr.nbr.sgat)
-geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- as.character(dep.nbr.sgat)
-geo.ref[(geo.ref$geo.id == geo.id),]$br.departure <- as.character(dep.br)
-geo.ref[(geo.ref$geo.id == geo.id),]$br.arrival <- as.character(arr.br)
+geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- as.Date(arr.nbr.sgat)
+geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- as.Date(dep.nbr.sgat)
+geo.ref[(geo.ref$geo.id == geo.id),]$br.departure <- as.Date(dep.br)
+geo.ref[(geo.ref$geo.id == geo.id),]$br.arrival <- as.Date(arr.br)
 geo.ref[(geo.ref$geo.id == geo.id),]$changelight.quantile <- q
 write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE) 
 # Examine twilights ############################################################
