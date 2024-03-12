@@ -12,6 +12,7 @@ library(terra)
 library(sf)
 library(maptools)
 library(ebirdst)
+library(scatterpie)
 
 source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis_helper_functions.R")
 

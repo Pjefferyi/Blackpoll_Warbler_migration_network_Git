@@ -143,7 +143,7 @@ undirected.fall.graph <- as.undirected(fall.graph, mode = "collapse",
 
 fall.label.prop <- concensusCluster(graph = undirected.fall.graph, thresh = 0.5, algiter = 1000)
 fall.infomap <- cluster_infomap(fall.graph)
-fall.walktrap <- cluster_walktrap(fall.graph, steps = 5)
+fall.walktrap <- cluster_walktrap(fall.graph)
 
 modularity(fall.graph, fall.label.prop$`community structure`$membership)
 modularity(fall.graph, fall.infomap$membership)
@@ -159,7 +159,7 @@ undirected.spring.graph <- as.undirected(spring.graph, mode = "collapse",
 
 spring.label.prop <- concensusCluster(graph = undirected.spring.graph, thresh = 0.5, algiter = 1000)
 spring.infomap <- cluster_infomap(spring.graph)
-spring.walktrap <- cluster_walktrap(spring.graph, steps = 4)
+spring.walktrap <- cluster_walktrap(spring.graph)
 
 modularity(spring.graph, spring.label.prop$`community structure`$membership)
 modularity(spring.graph, spring.infomap$membership)
@@ -184,13 +184,50 @@ spring.graph.disc <- spring.graph - edge(spring.e)
 V(spring.graph)$betweenness <- betweenness(spring.graph.disc, directed = T, weights = 1/E(spring.graph.disc)$weight) 
 
 # fall and spring eigenvector centrality coefficient
-V(fall.graph)$eigen <- eigen_centrality(as.undirected(fall.graph.disc))$vector
-V(spring.graph)$eigen <- eigen_centrality(as.undirected(spring.graph.disc))$vector
+V(fall.graph)$eigen <- eigen_centrality(as.undirected(fall.graph.disc), weights = NULL)$vector
+V(spring.graph)$eigen <- eigen_centrality(as.undirected(spring.graph.disc), weights = NULL)$vector
 
 # fall and spring use by time 
-fall.ab.units <- merge(fall.stat, meta.fall.ab)
-fall.use.time <- fall.stat %>% group_by(cluster, geo_id) %>% summarize(time.per.node = sum(duration), )
 
+# Extract abundance and time spent data for the fall
+fall.breed.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.abundance.per.bird.csv")
+fall.stat.ab <- merge(fall.stat, fall.breed.ab[,c("ab.unit", "geo_id")], by = "geo_id")
+
+# Summed time spent in each node for the fall
+fall.use.time <- fall.stat.ab %>% 
+  mutate(duration = ifelse(site_type != "Stopover", 0, duration)) %>%
+  group_by(cluster) %>% 
+  summarize(time.per.node = mean(duration))
+
+# Summed time spent in each node weighed by relative abundance for the spring 
+fall.use.timeab <- fall.stat.ab %>%
+  mutate(duration = ifelse(site_type != "Stopover", 0, duration)) %>%
+  group_by(cluster) %>%
+  summarize(time.per.node = mean(duration), ab.units = sum(ab.unit)) %>%
+  mutate(time.per.ab = time.per.node * ab.units)
+
+V(fall.graph)$time.spent <- fall.use.time$time.per.node
+V(fall.graph)$time.spent.ab <- fall.use.timeab$time.per.ab
+
+# Extract abundance and time spent data for the spring
+spring.breed.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.abundance.per.bird.csv")
+spring.stat.ab <- merge(spring.stat, spring.breed.ab[,c("ab.unit", "geo_id")], by = "geo_id")
+
+# Summed time spent in each node for the spring
+spring.use.time <- spring.stat.ab %>% 
+  mutate(duration = ifelse(site_type != "Stopover", 0, duration)) %>%
+  group_by(cluster) %>% 
+  summarize(time.per.node = mean(duration))
+
+# Summed time spent in each node weighed by relative abundance for the spring 
+spring.use.timeab <- spring.stat.ab %>%
+  mutate(duration = ifelse(site_type != "Stopover", 0, duration)) %>%
+  group_by(cluster) %>%
+  summarize(time.per.node = mean(duration), ab.units = sum(ab.unit)) %>%
+  mutate(time.per.ab = time.per.node * ab.units)
+
+V(spring.graph)$time.spent <- spring.use.time$time.per.node
+V(spring.graph)$time.spent.ab <- spring.use.timeab$time.per.ab
 
 # fall and spring bridge centrality
 fall.graph.brd <- fall.graph.disc 
@@ -747,17 +784,17 @@ spring.gplot.betw <- ggplot(st_as_sf(America))+
         axis.ticks.length = unit(0, "pt"),
         plot.margin = unit(c(0,0,0,0), "pt"))
 
-## Bridge metric in fall network ----
-fall.gplot.bridge.str <- ggplot(st_as_sf(America))+
+## Second metric in fall network ----
+fall.gplot.metric2 <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
   coord_sf(xlim = c(-170, -50),ylim = c(-3, 68)) +
   geom_edges(data = fall.ggnet, mapping = aes(x = x, y = y, xend = xend, yend = yend, col = edge.type, lwd = weight),
              arrow = arrow(length = unit(9, "pt"), type = "closed", angle = 10))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
   scale_color_manual(values=c(adjustcolor("black", alpha = 0.5), adjustcolor("blue", alpha = 0)), guide = "none")+
-  geom_nodes(data = fall.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = eigen), shape=21, size  = 3)+
+  geom_nodes(data = fall.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = time.spent.ab), shape=21, size  = 3)+
   scale_fill_viridis_c(direction = -1, option = "magma", name = "In-degree\nbridge strength", 
-                       guide = guide_colorbar(frame.colour = "black"), limits = c(min(0), max(fall.ggnet$eigen, spring.ggnet$eigen)))+
+                       guide = guide_colorbar(frame.colour = "black"), limits = c(min(0), max(fall.ggnet$time.spent.ab, spring.ggnet$time.spent.ab)))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         legend.position = c(-0.18, 0.5), legend.key = element_blank(),
@@ -770,18 +807,18 @@ fall.gplot.bridge.str <- ggplot(st_as_sf(America))+
         axis.ticks.length = unit(0, "pt"),
         plot.margin = unit(c(0,0,0,0), "pt"))
 
-## Bridge metric in spring network ----
-spring.gplot.bridge.str <- ggplot(st_as_sf(America))+
+## Second metric in spring network ----
+spring.gplot.metric2 <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
   coord_sf(xlim = c(-170, -50),ylim = c(-3, 68)) +
   geom_edges(data = spring.ggnet, mapping = aes(x = x, y = y, xend = xend, yend = yend, col = edge.type, lwd = weight),
              arrow = arrow(length = unit(9, "pt"), type = "closed", angle = 10))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
-  geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = eigen), shape=21, size  = 3)+
+  geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = time.spent.ab), shape=21, size  = 3)+
   scale_color_manual(values=c(adjustcolor("blue", alpha = 0), adjustcolor("black", alpha = 0.5)), guide = "none")+
   #geom_text(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, label = participation.coef))+
   scale_fill_viridis_c(direction = -1, option = "magma", name = "In-degree\nbridge strength", 
-                       guide = guide_colorbar(frame.colour = "black"), limits = c(min(0), max(fall.ggnet$eigen, spring.ggnet$eigen)))+
+                       guide = guide_colorbar(frame.colour = "black"), limits = c(min(0), max(fall.ggnet$time.spent.ab, spring.ggnet$time.spent.ab)))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         legend.position = "None", legend.key = element_blank(),
@@ -795,7 +832,7 @@ spring.gplot.bridge.str <- ggplot(st_as_sf(America))+
         plot.margin = unit(c(0,0,0,0), "pt"))
 
 ## create panel ----
-metrics.fig <- (fall.gplot.betw | spring.gplot.betw)/ (fall.gplot.bridge.str| spring.gplot.bridge.str)
+metrics.fig <- (fall.gplot.betw | spring.gplot.betw)/ (fall.gplot.metric2| spring.gplot.metric2 )
 
 ggsave(plot = metrics.fig, filename = "nodes.metrics.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
        units = "cm", width = 24*1.2, height = 10*1.2, dpi = "print", bg = "white")
