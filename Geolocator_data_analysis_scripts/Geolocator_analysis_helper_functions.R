@@ -411,9 +411,10 @@ findSlicesData <- function(periods, xlim = c(-170, -40), ylim = c(-40, 75)){
 
 # Test calls  for findSlicesData ###############################################
 
-# periods = c("Non-breeding period", "Pre-breeding migration", "Post-breeding migration")
-# nbr.dens <- findSlicesData(periods)
-# plot(nbr.dens[["A"]])
+periods = c("Non-breeding period", "Pre-breeding migration", "Post-breeding migration")
+nbr.dens <- findSlicesData(periods)
+plot(nbr.dens[["V8757_029"]])
+plot(wrld_simpl, add = T)
 
 # plotBreedSites ##################################################################
 

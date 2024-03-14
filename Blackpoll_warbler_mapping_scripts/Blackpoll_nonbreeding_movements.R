@@ -68,7 +68,7 @@ geo.all <- findLocData(geo.ids = c("V8757_010",
                                    "A",
                                    "B",
                                    "C",
-                                   #"E",
+                                   "E",
                                    "D"), check_col_length = F)
 
 
@@ -93,9 +93,7 @@ ref_data <- ref_data %>% group_by(study.site) %>%
 
 #View(ref_data %>% group_by(study.site, geo.id) %>% summarise(disp = mean(deploy.longitude)))
 
-# Now we can modify our location dataset
-#geo.all <- merge(geo.all, ref_data[,c("geo.id", "mod.deploy.lon", "mod.deploy.lat")], by.x = "geo_id", by.y = "geo.id")
-
+# Now we can modify our location dataset to include only nonbreeding sites 
 geo.all <- geo.all %>% group_by(geo_id) %>% mutate(Lon.50. = case_when(
   (sitenum == 1 | sitenum == max(sitenum)) & Recorded_North_South_mig == "Both" ~ mod.deploy.lon,
   sitenum == 1 & Recorded_North_South_mig %in% c("South and partial North", "South" ) ~ mod.deploy.lon,
@@ -166,7 +164,7 @@ NB.stat <- NB.stat %>%
 NB.stat$equinox.nbr.move[1] <- "equinox free"
 NB.stat$timing.nbr.move[1] <- "winter.nbr.movements"
 
-#View(NB.stat[,c("nbr.move.group","equinox.nbr.move","timing.nbr.move", "StartTime")])
+View(NB.stat[,c("geo_id","nbr.mover", "nbr.move.group","equinox.nbr.move","timing.nbr.move", "StartTime")])
 
 # Save nonbreeding movement data ###############################################
 
@@ -180,10 +178,10 @@ nbr.move.plot <- ggplot(st_as_sf(wrld_simpl))+
   geom_point(data = NB.stat[NB.stat$nbr.mover == "nonmover",], mapping = aes(x = Lon.50., y = Lat.50.,fill = "darkgray"), colour = "black", cex = 3, shape = 21, stroke = 0.5) +
   scale_fill_manual(values = c("darkgray"),label = c("Stationary individuals"), name = "") +
   #geom_text(data = NB.stat, mapping = aes(x = Lon.50., y = Lat.50., label = geo_id), cex = 3)+
-  geom_path(data = NB.stat, mapping = aes(x = Lon.50., y = Lat.50., group = as.factor(nbr.move.group), 
+  geom_path(data = NB.stat, mapping = aes(x = Lon.50., y = Lat.50., group = interaction(as.factor(nbr.move.group), equinox.nbr.move), 
             linetype = equinox.nbr.move, col = timing.nbr.move),
             arrow = arrow(end = "last", type = "closed", length = unit(0.1, "inches")), lwd = 0.6, show.legend =  F) +
-  geom_path(data = NB.stat, mapping = aes(x = Lon.50., y = Lat.50., group = as.factor(nbr.move.group), 
+  geom_path(data = NB.stat, mapping = aes(x = Lon.50., y = Lat.50., group = interaction(as.factor(nbr.move.group), equinox.nbr.move), 
                                           linetype = equinox.nbr.move, col = timing.nbr.move), lwd = 0.6) +
   scale_color_manual(values = c("#E66100", "#5D3A9B"), name = "Movement timing", label = c("October-December", "January-May"))+
   scale_linetype_manual(values = c("dashed", "solid"), name = "Equinox proximity", label = c("within 14 days", "not within 14 days"))+

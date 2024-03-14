@@ -123,8 +123,8 @@ fall.nbr.regions <- st_difference(fall.nbr.regions)
 write_sf(fall.nbr.regions, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/fall.nbr.regions.shp")
 write.csv(data.frame(fall.nbr.sf), "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/fall.nbr.sf.csv")
 
-# geoBIas (in meters)
-# We will use the uncertainty for the threshold location estimates because the ouput of the 
+#geoBIas (in meters)
+# We will use the uncertainty for the threshold location estimates because the ouput of the
 # GroupThresholdModel provides only one location for stationary periods
 Thresh.loc.data <- findThresLocData()
 Thresh.loc.data$Twilight <- anytime(Thresh.loc.data$Twilight)

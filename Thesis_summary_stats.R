@@ -79,7 +79,7 @@ fall.num <- fall.stat %>% group_by(geo_id) %>% summarise(num_stopovers = sum(sit
 # Number spring site used after departure from last nonbreeding site 
 spring.num <- spring.stat %>% group_by(geo_id) %>% summarise(num_stopovers = sum(site_type == "Stopover"))
 
-## Number migration distance ----
+## migration distance ----
 
 # Fall migration distance 
 fall.dist <- fall.stat %>% group_by(geo_id) %>% mutate(Lon.50.next = lead(Lon.50.),
@@ -122,7 +122,7 @@ fall.node.used.df <- fall.edge.df.ab %>% group_by(geo_id) %>% reframe(fall.nodes
 # number of nodes used in the spring network 
 spring.node.used.df <- spring.edge.df.ab %>% group_by(geo_id) %>% reframe(spring.nodes.occupied = length(unique(cluster, next.cluster)),
                                                                         spring.stopover.nodes.occupied = length(unique(cluster[node.type == "Stopover"], next.cluster[node.type == "Stopover"])),
-                                                                        spring.nbr.nodes.occupied = length(unique(cluster[node.type == "Nonbreeding"], next.cluster[node.type == "Nonbreeding"])))
+                                                                        spring.nbr.nodes.occupied = length(unique(cluster[node.type == "Nonbreeding"], next.cluster[node.type == "Nonbreeding"]))) 
 
 # merge the information collected with the reference dataset 
 analysis_ref <- merge(analysis_ref, fall.node.used.df, by.x = "geo.id", by.y = "geo_id", all = T)
@@ -170,42 +170,37 @@ se <- sd(spring.node.times$mean.stat.dur)/sqrt(length(spring.node.times$mean.sta
 se
 range(spring.node.times$mean.stat.dur)
 
-### Average duration of migration  ----
+### Duration of migration  ----
 
-# Calculate migration times for all geolocators. 
-# fall.mig.time <-  geo.all %>% 
-#   filter(site_type %in% c("Breeding", "Stopover","Nonbreeding"),
-#                                          period %in% c("Post-breeding migration","Non-breeding period"),
-#                                          Recorded_North_South_mig %in% c("Both", "South and partial North", "South")) %>%
-#   group_by(geo_id) %>%
-#   rowwise()%>%
-#   filter(distHaversine(p1 = c(Lon.50., Lat.50.), p2 = c(deploy.longitude, deploy.latitude)) > 250000) %>%
-#   filter(path.elongated == F) %>%#remove geolocators where the arrival date is unclear due to near 24h daylight in the  breeding grounds
-#   group_by(geo_id) %>%
-#   filter(!is.na(nbr.arrival))%>%
-#   filter(anytime(StartTime) <= anytime(nbr.arrival)) %>% 
-#   summarize(mig.start = first(StartTime), mig.end = last(StartTime), mig.duration = anytime(last(StartTime)) - anytime(first(StartTime)),
-#             dep.lon = first(Lon.50.), dep.lat = first(Lat.50.),
-#             arr.lon = last(Lon.50.), arr.lat = last(Lat.50.))
+# Calculate the difference between the length of the fall and spring migration for every tracked individual 
+migration_times <- geo.all %>% group_by(geo_id) %>% filter(StartTime == first(StartTime)) %>% summarize(fall.mig.duration = as.Date(as.numeric(nbr.arrival)) - as.Date(as.numeric(br.departure)),
+                      spring.mig.duration = as.Date(as.numeric(br.arrival)) - as.Date(as.numeric(nbr.departure))) %>%
+  mutate(timing.difference = fall.mig.duration - spring.mig.duration) %>%
+  filter(!is.na(timing.difference))
 
-# ### correlation between number of  nodes used and longitude of breeding site ----
-# mod.fall.stopover.node <- glm(fall.stopover.nodes.occupied   ~ deploy.longitude, data = analysis_ref, family = gaussian(link = "identity"))
-# plot(fall.stopover.nodes.occupied ~ deploy.longitude, data = analysis_ref)
-# summary(mod.fall.stopover.node)
-# check_model(mod.fall.stopover.node)
-# 
-# simulationOutput <- simulateResiduals(fittedModel = mod.fall.stopover.node, plot = F)
-# plot(simulationOutput)
-# 
-# mod.spring.stopover.node <- glm(spring.stopover.nodes.occupied  ~ (deploy.longitude), data = analysis_ref, family = gaussian(link = "identity"))
-# plot(spring.stopover.nodes.occupied  ~ deploy.longitude, data = analysis_ref)
-# summary(mod.spring.stopover.node)
-# check_model(mod.spring.stopover.node)
-# 
-# simulationOutput <- simulateResiduals(fittedModel = mod.spring.stopover.node , plot = F)
-# plot(simulationOutput)
+# mean fall migration duration 
+mean(migration_times$fall.mig.duration)
+sd(migration_times$fall.mig.duration)/sqrt(length(migration_times$fall.mig.duration))
 
-### correlation between number of  stopovernodes used and region of breeding site (eastern or western) ----
+# mean spring migration duration 
+mean(migration_times$spring.mig.duration)
+sd(migration_times$spring.mig.duration)/sqrt(length(migration_times$spring.mig.duration))
+
+# difference between spring and fall migration duration 
+mean(migration_times$timing.difference)
+sd(migration_times$timing.difference)/sqrt(length(migration_times$timing.difference))
+
+#number of stopover nodes used by range region 
+mean.stp.use.fall <- analysis_ref %>% group_by(Range_region) %>%
+  summarize(mean.stp.used = mean(fall.stopover.nodes.occupied, na.rm = T), se.stp.used = mean.stp.used /sqrt(length(fall.stopover.nodes.occupied)))
+
+mean.stp.use.spring <- analysis_ref %>% group_by(Range_region)%>%
+  summarize(mean.stp.used = mean(spring.stopover.nodes.occupied, na.rm = T), se.stp.used = mean.stp.used /sqrt(length(spring.stopover.nodes.occupied)))
+
+with(analysis_ref, table(fall.stopover.nodes.occupied, Range_region))
+with(analysis_ref, table(spring.stopover.nodes.occupied, Range_region))
+
+### correlation between number of  stopover nodes used and region of breeding site (eastern or western) ----
 mod.fall.stopover.node <- glmmTMB(fall.stopover.nodes.occupied   ~ as.factor(Range_region), data = analysis_ref, family = genpois(link = "log"))
 boxplot(fall.stopover.nodes.occupied ~ Range_region, data = analysis_ref)
 summary(mod.fall.stopover.node)
@@ -223,6 +218,18 @@ check_model(mod.spring.stopover.node)
 simulationOutput <- simulateResiduals(fittedModel = mod.spring.stopover.node , plot = F)
 plot(simulationOutput)
 testDispersion(simulationOutput)
+
+## Number of nonbreeding node used ----
+
+#number of nonbreeding nodes used by range region 
+mean.nbr.use.fall <- analysis_ref %>% group_by(Range_region) %>%
+  summarize(mean.nbr.used = mean(fall.nbr.nodes.occupied, na.rm = T), se.nbr.used = mean.nbr.used /sqrt(length(fall.nbr.nodes.occupied)))
+
+mean.nbr.use.spring <- analysis_ref %>% group_by(Range_region)%>%
+  summarize(mean.nbr.used = mean(spring.nbr.nodes.occupied, na.rm = T), se.nbr.used = mean.nbr.used /sqrt(length(spring.nbr.nodes.occupied)))
+
+with(analysis_ref, table(fall.nbr.nodes.occupied, Range_region))
+with(analysis_ref, table(spring.nbr.nodes.occupied, Range_region))
 
 ### correlation between number of  stopovernodes used and region of breeding site (eastern or western) ----
 mod.fall.nbr.node <- glmmTMB(fall.nbr.nodes.occupied ~ as.factor(Range_region), data = analysis_ref, family = genpois(link = "log"))

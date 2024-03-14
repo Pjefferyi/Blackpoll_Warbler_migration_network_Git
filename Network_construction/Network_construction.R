@@ -89,17 +89,22 @@ geo.all <- geo.all %>% mutate(IQR.lon.dist = distHaversine(cbind(Lon.97.5.,Lat.5
 # Find the time of departure from the breeding grounds #############
 geo.all.br.departure <- geo.all %>% filter(period %in% c("Post-breeding migration","Non-breeding period"), 
                                            Recorded_North_South_mig %in% c("Both", "South and partial North", "South")) %>%
-  group_by(geo_id) %>% mutate(proximity = distHaversine(cbind(Lon.50., Lat.50.), cbind(deploy.longitude, deploy.latitude))) %>%
-  filter(proximity <= 250000) %>% summarize(fall.br.departure = max(EndTime )) 
+  #group_by(geo_id) %>% mutate(proximity = distHaversine(cbind(Lon.50., Lat.50.), cbind(deploy.longitude, deploy.latitude))) %>%
+  #filter(proximity <= 250000) %>% summarize(fall.br.departure = max(EndTime )) 
+  mutate(lon.proximity = deploy.longitude - Lon.50., lat.proximity = deploy.latitude - Lat.50.) %>%
+  filter(abs(lon.proximity) <= 2 & abs(lat.proximity) <= 4) %>% summarize(fall.br.departure = max(EndTime )) 
 
 # Find the return time in the nonbreeding grounds #############
 geo.all.br.arrival <- geo.all %>%  filter(period %in% c("Pre-breeding migration","Non-breeding period"),
                                              Recorded_North_South_mig %in% c("Both","North"),
                                           path.elongated == F, 
                                              !(geo_id %in% c("V8296_007", "V8296_008"))) %>%
-  group_by(geo_id) %>% mutate(proximity = ifelse(geo_id != "WRMA04173", distHaversine(cbind(Lon.50., Lat.50.), cbind(deploy.longitude, deploy.latitude)),
-                                                 distHaversine(cbind(Lon.50., Lat.50.), cbind(last(Lon.50.), last(Lat.50.))))) %>%
-  filter(proximity <= 250000) %>% summarize(spring.br.arrival = min(StartTime )) 
+  # group_by(geo_id) %>% mutate(proximity = ifelse(geo_id != "WRMA04173", distHaversine(cbind(Lon.50., Lat.50.), cbind(deploy.longitude, deploy.latitude)),
+  #                                                distHaversine(cbind(Lon.50., Lat.50.), cbind(last(Lon.50.), last(Lat.50.))))) %>%
+  # filter(proximity <= 250000) %>% summarize(spring.br.arrival = min(StartTime )) 
+  mutate(lon.proximity = ifelse(geo_id != "WRMA04173", deploy.longitude - Lon.50., last(Lon.50.) - Lon.50.),
+                                lat.proximity =ifelse(geo_id != "WRMA04173", deploy.latitude - Lat.50., last(Lat.50.) - Lat.50.)) %>%
+  filter(abs(lon.proximity) <= 2 & abs(lat.proximity) <= 4) %>% summarize(spring.br.arrival = max(EndTime ))
 
 # Merge breeding grounds arrival & departure times with location data #######
 geo.all <- geo.all %>% merge(geo.all.br.departure, by = "geo_id", all = T) %>%
@@ -349,7 +354,7 @@ meta.fall <- data.frame("vertex" = seq(1, max(fall.edge.df$cluster)),
                    "node.type.num" = fall.node.type$site_type_num)
 
 # For fall nodes where latitudinal accuracy is low, set location close to the coast
-#meta.fall[c(3, 5, 7),]$Lat.50. <- c(35.3, 41.45, 44.77)
+meta.fall[c(3, 5, 7),]$Lat.50. <- c(35.3, 41.45, 44.77)
  
 fall.location <- as.matrix(meta.fall[, c("Lon.50.", "Lat.50.")])
 
@@ -463,13 +468,13 @@ ggplot(st_as_sf(wrld_simpl))+
   geom_sf(colour = NA, fill = "lightgray") +
   geom_sf(data = reg.bounds, fill = NA, lwd = 0.2, alpha = 1) +
   coord_sf(xlim = c(-170, -30),ylim = c(-15, 70)) +
-  geom_errorbar(data = spring.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
-  geom_errorbar(data = spring.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
-  #geom_path(data = spring.stat[spring.stat$geo_id == "E",], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5) +
-  #geom_point(data = spring.stat[spring.stat$geo_id == "E",], mapping = aes(x = Lon.50., y = Lat.50.), alpha = 0.5) +
-  geom_text(data = spring.stat, mapping = aes(x = Lon.50., y = Lat.50., label = geo_id))+
-  geom_path(data = spring.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5, linewidth = 0.1) +
-  geom_point(data = spring.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, colour = as.factor(cluster)), cex = 1.5) +
+  #geom_errorbar(data = spring.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
+  #geom_errorbar(data = spring.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
+  geom_path(data = spring.stat[spring.stat$geo_id == "4105_008",], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5) +
+  geom_point(data = spring.stat[spring.stat$geo_id == "4105_008",], mapping = aes(x = Lon.50., y = Lat.50.), alpha = 0.5) +
+  #geom_text(data = spring.stat, mapping = aes(x = Lon.50., y = Lat.50., label = geo_id), cex = 2, nudge_x =  1)+
+  #geom_path(data = spring.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5, linewidth = 0.1) +
+  #geom_point(data = spring.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, colour = as.factor(cluster)), cex = 1.5) +
   labs(colour = "Cluster") +
   theme_bw() +
   theme(text = element_text(size = 16), legend.position = "None")
@@ -1173,6 +1178,7 @@ write_graph(spring.graph.weighed.ab, "C:/Users/Jelan/OneDrive/Desktop/University
 write.csv(dplyr::select(meta.spring.ab, !num.reg.ab.vector), "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.node.metadata.csv")
 write.csv(spring.con.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.edge.weights.csv")
 write.csv(spring.stat, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.stationary.data.csv")
+write.csv(spring.edge.df.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.intra.cluster.movements.csv")
 write.csv(spring.nbr.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.nbr.node.composition.csv")
 write.csv(spring.breed.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.abundance.per.bird.csv")
 

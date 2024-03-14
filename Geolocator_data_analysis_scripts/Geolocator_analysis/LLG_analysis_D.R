@@ -222,7 +222,7 @@ end   <- max(which(mS$site == stationarySite))
 
 (zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
 
-# startDate <- "2013-10-20"
+# startDate <- "2013-11-01"
 # endDate   <- "2014-04-15"
 # 
 # start = min(which(as.Date(twl$Twilight) == startDate))
@@ -268,14 +268,14 @@ dev.off()
 zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith0,
                             Date > anytime(arr.nbr) ~ zenith0_ad))
-#Date > anytime(dep.nbr) ~ zenith0))
+
 
 zeniths0 <- zenith_twl_zero$zenith
 
 zenith_twl_med <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith,
                             Date > anytime(arr.nbr) ~ zenith_sd))
-#Date > anytime(dep.nbr) ~ zenith))
+
 
 zeniths_med <- zenith_twl_med$zenith
 
@@ -641,6 +641,31 @@ dev.off()
 # A stopover in the Carribean was identified between 2013-10-24 and 2013-10-31
 # A stopover at the same location and of similar length was already detected during the geolocator analysis
 
+# Add the new stopover to the location summary obtained at the end of the geolocator analysis
+sm.fall.edit <- insertLoc(data = sm,
+                          lat.at.loc = 18.90,
+                          start.date = f1.end ,
+                          end.date = f2.start , 
+                          period = "Post-breeding migration",
+                          thresh.locs = x0_ad,
+                          twl = twl,
+                          geo_id = geo.id,
+                          sep1 = days(3),
+                          sep2 = days(1))
+
+#plot the final stationary locations 
+sm.fall.stat <- sm.fall.edit[(sm.fall.edit$sitenum > 0), ]
+
+par(mfrow=c(1,1))
+
+data(wrld_simpl)
+plot(wrld_simpl, xlim=xlim, ylim=ylim, col = "grey95")
+points(sm.fall.edit$Lon.50., sm.fall.edit$Lat.50., pch = 16, cex = 0, col = "firebrick", type = "o")
+points(sm.fall.stat$Lon.50., sm.fall.stat$Lat.50., pch = 16, cex = 1.5, col = "firebrick")
+
+#Save the final location summary
+save(sm.fall.edit , file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary_fall_edit.csv"))
+
 # Estimate timing of departure and arrival from the breeding and nonbreeding grounds ############################################################
 dep.br <- NA # No clear departure due to possible gradual movement
 arr.br <- NA # Geolocator stopped prior to return
@@ -654,7 +679,7 @@ par(mfrow=c(1,1))
 geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
 geo.ref[(geo.ref$geo.id == geo.id),]$In_habitat_median_zenith_angle <- zenith
 geo.ref[(geo.ref$geo.id == geo.id),]$Hill_Ekstrom_median_angle <- zenith_sd
-geo.ref[(geo.ref$geo.id == geo.id),]$Fall_carrib_edits <- FALSE
+geo.ref[(geo.ref$geo.id == geo.id),]$Fall_carrib_edits <- T
 geo.ref[(geo.ref$geo.id == geo.id),]$Time_shift_hours <- shift$shift
 geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- arr.nbr
 geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.start <- as.character(tm.calib[1])

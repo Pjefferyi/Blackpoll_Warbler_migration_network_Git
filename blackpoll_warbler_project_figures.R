@@ -184,8 +184,19 @@ spring.graph.disc <- spring.graph - edge(spring.e)
 V(spring.graph)$betweenness <- betweenness(spring.graph.disc, directed = T, weights = 1/E(spring.graph.disc)$weight) 
 
 # fall and spring eigenvector centrality coefficient
-V(fall.graph)$eigen <- eigen_centrality(as.undirected(fall.graph.disc), weights = NULL)$vector
-V(spring.graph)$eigen <- eigen_centrality(as.undirected(spring.graph.disc), weights = NULL)$vector
+V(fall.graph)$eigen <- eigen_centrality(as.undirected(fall.graph.disc))$vector
+V(spring.graph)$eigen <- eigen_centrality(as.undirected(spring.graph.disc))$vector
+
+# Fall and spring degree centrality 
+
+V(fall.graph)$degree <- degree(fall.graph.disc)
+V(spring.graph)$degree <- degree(spring.graph.disc)
+
+V(fall.graph)$in.degree <- degree(fall.graph.disc, mode = "in")
+V(spring.graph)$in.degree <- degree(spring.graph.disc, mode = "in")
+
+V(fall.graph)$out.degree <- degree(fall.graph.disc, mode = "out")
+V(spring.graph)$out.degree <- degree(spring.graph.disc, mode = "out")
 
 # fall and spring use by time 
 
@@ -363,7 +374,7 @@ spring.gplot <- ggplot(st_as_sf(America))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
   scale_color_manual(values=c(adjustcolor("blue", alpha = 0), adjustcolor("black", alpha = 0.3)), guide = "none")+
   geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = node.type), shape=21)+
-  scale_size(range = c(0.8, 4), breaks = c(0.1, 0.3, 0.5), name = "Node weight")+
+  scale_size(range = c(0.8, 4), breaks = c(0.1, 0.2, 0.3), name = "Node weight")+
   scale_fill_manual(values=c("Breeding"  = "#440154FF", "Stopover" = "#FDE725FF", "Nonbreeding" = "#21908CFF"), guide = "none")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
@@ -450,7 +461,7 @@ spring.gplot.comp <- ggplot(st_as_sf(America))+
   geom_pie_glyph(slices= c("West", "Central", "East", "Northwest"), colour = "black", data = spring.data[spring.data$node.comp < 3,], mapping = aes(x = long, y = lat, radius = node.weight), show.legend = F) +
   scale_radius(range = c(1, 3), unit = "mm",guide  = "none")+
   geom_point(data = spring.data[spring.data$node.comp == 3,], mapping = aes(x = long, y = lat, fill = single.reg, size = node.weight), shape= 21, colour = "black")+
-  scale_size(range = c(2, 6), name = "Node weight")+
+  scale_size(range = c(2, 6), breaks = c(0.1, 0.2, 0.3), name = "Node weight")+
   scale_fill_manual(values = c("West" = "#D55E00", "Central" = "#009E73", "East" = "#0072B2", "Northwest" = "#F0E442"), guide = "none") +
   ggtitle("Spring")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
@@ -792,9 +803,9 @@ fall.gplot.metric2 <- ggplot(st_as_sf(America))+
              arrow = arrow(length = unit(9, "pt"), type = "closed", angle = 10))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
   scale_color_manual(values=c(adjustcolor("black", alpha = 0.5), adjustcolor("blue", alpha = 0)), guide = "none")+
-  geom_nodes(data = fall.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = time.spent.ab), shape=21, size  = 3)+
+  geom_nodes(data = fall.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = time.spent), shape=21, size  = 3)+
   scale_fill_viridis_c(direction = -1, option = "magma", name = "In-degree\nbridge strength", 
-                       guide = guide_colorbar(frame.colour = "black"), limits = c(min(0), max(fall.ggnet$time.spent.ab, spring.ggnet$time.spent.ab)))+
+                       guide = guide_colorbar(frame.colour = "black"), limits = c(min(0), max(fall.ggnet$time.spent, spring.ggnet$time.spent)))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         legend.position = c(-0.18, 0.5), legend.key = element_blank(),
@@ -814,11 +825,11 @@ spring.gplot.metric2 <- ggplot(st_as_sf(America))+
   geom_edges(data = spring.ggnet, mapping = aes(x = x, y = y, xend = xend, yend = yend, col = edge.type, lwd = weight),
              arrow = arrow(length = unit(9, "pt"), type = "closed", angle = 10))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
-  geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = time.spent.ab), shape=21, size  = 3)+
+  geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = eigen), shape=21, size  = 3)+
   scale_color_manual(values=c(adjustcolor("blue", alpha = 0), adjustcolor("black", alpha = 0.5)), guide = "none")+
   #geom_text(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, label = participation.coef))+
   scale_fill_viridis_c(direction = -1, option = "magma", name = "In-degree\nbridge strength", 
-                       guide = guide_colorbar(frame.colour = "black"), limits = c(min(0), max(fall.ggnet$time.spent.ab, spring.ggnet$time.spent.ab)))+
+                       guide = guide_colorbar(frame.colour = "black"), limits = c(min(0), max(fall.gdata$eigen, fall.gdata$eigen)))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         legend.position = "None", legend.key = element_blank(),
@@ -1348,8 +1359,8 @@ ref_path <- "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/The
 
 # load threshold paths 
 tpaths <- findThresLocData()
-timings <- geo.all %>% group_by(geo_id) %>% summarize(fall.br.departure = as.Date(first(fall.br.departure)),
-                                                        spring.br.arrival = as.Date(first( spring.br.arrival)),
+timings <- geo.all %>% group_by(geo_id) %>% summarize(fall.br.departure = as.Date(as.numeric(first(br.departure))), 
+                                                        spring.br.arrival = as.Date(as.numeric(first(br.arrival))),
                                                         nbr.departure = as.Date(as.numeric(first(nbr.departure))),
                                                         nbr.arrival = as.Date(as.numeric(first(nbr.arrival))))
 
@@ -1419,10 +1430,10 @@ loc.ind.panel3 <- plot_a_list(dates.ind.lat[1:24], 6, 4)
 loc.ind.panel4 <- plot_a_list(dates.ind.lat[25:47], 6, 4)
 
 ## Save the plots ----
-ggsave(plot = loc.ind.panel1, filename = "individual.movements1.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures",
+ggsave(plot = loc.ind.panel1, filename = "Movement.timings.longitude1.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures",
        units = "cm", width = 24*1.2, height = 30*1.2, dpi = "print", bg = "white")
 
-ggsave(plot = loc.ind.panel2, filename = "individual.movements2.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures",
+ggsave(plot = loc.ind.panel2, filename = "Movement.timings.longitude2.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures",
        units = "cm", width = 24*1.2, height = 30*1.2, dpi = "print", bg = "white")
 
 

@@ -642,6 +642,10 @@ points(sm.fall.stat$Lon.50., sm.fall.stat$Lat.50., pch = 16, cex = 1.5, col = "f
 #Save the final location summary
 save(sm.fall.edit , file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary_fall_edit.csv"))
 
+# re-assess the time of establishment and departure from the nonbreeding grounds 
+arr.nbr.sgat <- sm.fall.edit %>% filter(Lat.50. < 12 & sitenum > 0 & duration > stat.nbr.lim) %>% 
+  first(.$StartTime) %>% .$StartTime
+
 # Estimate timing of departure and arrival from the breeding and nonbreeding grounds ############################################################
 dep.br <- NA # The departure date cannot be estimated due to low variation in longitude 
 arr.br <- NA #geolocator stopped recording prior to return
