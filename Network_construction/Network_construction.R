@@ -73,7 +73,6 @@ geo.all <- findLocData(geo.ids = c("V8757_010",
                                    "D"), check_col_length = F)
 
 # Define stationary periods as breeding, stopover, or non-breeding #############
-
 geo.all <- geo.all %>% group_by(geo_id) %>% mutate(site_type = case_when(
   (sitenum == 1 | sitenum == max(sitenum)) & Recorded_North_South_mig == "Both" ~ "Breeding",
   sitenum == 1 & Recorded_North_South_mig %in% c("South and partial North", "South" ) ~ "Breeding",
@@ -175,6 +174,29 @@ for (i in seq(1, nrow(geo.all))){
     num <- num + 1 
   }
 }
+
+# fix dates for geolocators that recorded with the wrong date ##################
+geo.all2 <- geo.all %>% arrange(geo_id, StartTime) %>% 
+  group_by(geo_id) %>% mutate(year.difference = year(deploy.on.date) - year(first(StartTime)))
+
+year(geo.all2$StartTime) <- year(geo.all2$StartTime) + geo.all2$year.difference  
+year(geo.all2$EndTime) <- year(geo.all2$EndTime) + geo.all2$year.difference  
+
+geo.all2$IH.calib.start <- anytime(geo.all2$IH.calib.start)
+geo.all2$IH.calib.end <- anytime(geo.all2$IH.calib.end)
+
+year(geo.all2$IH.calib.start) <- year(geo.all2$IH.calib.start) + geo.all2$year.difference  
+year(geo.all2$IH.calib.end) <- year(geo.all2$IH.calib.end) + geo.all2$year.difference
+
+geo.all2$nbr.arrival <-  as.Date(as.numeric(geo.all2$nbr.arrival), optional = T)
+geo.all2$nbr.departure <- as.Date(as.numeric(geo.all2$nbr.departure), optional = T)
+geo.all2$br.arrival <- as.Date(as.numeric(geo.all2$br.arrival), optional = T)
+geo.all2$br.departure <- as.Date(as.numeric(geo.all2$br.departure), optional = T)
+
+year(geo.all2$StartTime) <- year(geo.all2$StartTime) + geo.all2$year.difference  
+year(geo.all2$EndTime) <- year(geo.all2$EndTime) + geo.all2$year.difference  
+
+# Save the data edited here  ###################################################
 
 #Save the new columns in the reference data
 write.csv(ref_data,"C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE)
@@ -468,13 +490,13 @@ ggplot(st_as_sf(wrld_simpl))+
   geom_sf(colour = NA, fill = "lightgray") +
   geom_sf(data = reg.bounds, fill = NA, lwd = 0.2, alpha = 1) +
   coord_sf(xlim = c(-170, -30),ylim = c(-15, 70)) +
-  #geom_errorbar(data = spring.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
-  #geom_errorbar(data = spring.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
-  geom_path(data = spring.stat[spring.stat$geo_id == "4105_008",], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5) +
-  geom_point(data = spring.stat[spring.stat$geo_id == "4105_008",], mapping = aes(x = Lon.50., y = Lat.50.), alpha = 0.5) +
+  geom_errorbar(data = spring.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
+  geom_errorbar(data = spring.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
+  #geom_path(data = spring.stat[spring.stat$geo_id == "4105_008",], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5) +
+  #geom_point(data = spring.stat[spring.stat$geo_id == "4105_008",], mapping = aes(x = Lon.50., y = Lat.50.), alpha = 0.5) +
   #geom_text(data = spring.stat, mapping = aes(x = Lon.50., y = Lat.50., label = geo_id), cex = 2, nudge_x =  1)+
-  #geom_path(data = spring.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5, linewidth = 0.1) +
-  #geom_point(data = spring.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, colour = as.factor(cluster)), cex = 1.5) +
+  geom_path(data = spring.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5, linewidth = 0.1) +
+  geom_point(data = spring.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, colour = as.factor(cluster)), cex = 1.5) +
   labs(colour = "Cluster") +
   theme_bw() +
   theme(text = element_text(size = 16), legend.position = "None")

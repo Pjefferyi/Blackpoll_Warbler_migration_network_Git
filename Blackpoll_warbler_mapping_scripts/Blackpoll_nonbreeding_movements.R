@@ -164,7 +164,7 @@ NB.stat <- NB.stat %>%
 NB.stat$equinox.nbr.move[1] <- "equinox free"
 NB.stat$timing.nbr.move[1] <- "winter.nbr.movements"
 
-View(NB.stat[,c("geo_id","nbr.mover", "nbr.move.group","equinox.nbr.move","timing.nbr.move", "StartTime")])
+#View(NB.stat[,c("geo_id","nbr.mover", "nbr.move.group","equinox.nbr.move","timing.nbr.move", "StartTime")])
 
 # Save nonbreeding movement data ###############################################
 

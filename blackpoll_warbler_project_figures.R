@@ -90,7 +90,7 @@ V(spring.graph)$n.individuals <- meta.spring.ab$n.individuals.at.cluster
 V(fall.graph)$node.type <- meta.fall.ab$node.type
 V(spring.graph)$node.type <- meta.spring.ab$node.type
 
-# Node population composition 
+# Node population composition by number of individuals and relative abundance 
 V(fall.graph)$West <- meta.fall.ab$prop.ab.western
 V(fall.graph)$Central <- meta.fall.ab$prop.ab.central
 V(fall.graph)$East <- meta.fall.ab$prop.ab.eastern
@@ -100,6 +100,17 @@ V(spring.graph)$West <- meta.spring.ab$prop.ab.western
 V(spring.graph)$Central <- meta.spring.ab$prop.ab.central
 V(spring.graph)$East <- meta.spring.ab$prop.ab.eastern
 V(spring.graph)$Northwest  <- meta.spring.ab$prop.ab.northwest
+
+# Node population composition by number of individuals 
+V(fall.graph)$n.West <- meta.fall.ab$n.western
+V(fall.graph)$n.Central <- meta.fall.ab$n.central
+V(fall.graph)$n.East <- meta.fall.ab$n.eastern
+V(fall.graph)$n.Northwest <- meta.fall.ab$n.northwestern
+
+V(spring.graph)$n.West <- meta.spring.ab$n.western
+V(spring.graph)$n.Central <- meta.spring.ab$n.central
+V(spring.graph)$n.East <- meta.spring.ab$n.eastern
+V(spring.graph)$n.Northwest  <- meta.spring.ab$n.northwestern
 
 # Node positions 
 V(fall.graph)$long <- meta.fall.ab$Lon.50.
@@ -318,7 +329,7 @@ fall.ggnet <- ggnetwork(fall.graph, layout = as.matrix(meta.fall.ab[, c("Lon.50.
 fall.gplot <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
   geom_sf(data = equi.region, fill = "#D9D5B2", lwd = 0.2, alpha = 1) +
-  coord_sf(xlim = c(-170, -40),ylim = c(-5, 70)) +
+  coord_sf(xlim = c(-165, -50),ylim = c(-5, 70)) +
   geom_edges(data = fall.ggnet, mapping = aes(x = x, y = y, xend = xend, yend = yend, col = edge.type, lwd = weight),
              arrow = arrow(length = unit(6, "pt"), type = "closed", angle = 10))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
@@ -326,6 +337,7 @@ fall.gplot <- ggplot(st_as_sf(America))+
   geom_nodes(data = fall.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = node.type), shape=21)+
   scale_size(range = c(0.8, 4), guide = "none")+
   scale_fill_manual(values=c("Breeding"  = "#440154FF", "Stopover" = "#FDE725FF", "Nonbreeding" = "#21908CFF"), name = "Node type")+
+  ggtitle("(a) Fall migration network") + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         legend.box.background = element_rect(fill = "white", colour = "black", linewidth = 0.2),
@@ -333,18 +345,19 @@ fall.gplot <- ggplot(st_as_sf(America))+
         legend.background = element_rect(fill = NA),
         legend.title=element_text(size=8),
         legend.text=element_text(size=8),
+        title = element_text(size = 8),
         axis.title =element_blank(),
         axis.text =element_blank(),
         axis.ticks =element_blank(),
         axis.line=element_blank(),
         axis.ticks.length = unit(0, "pt"),
-        plot.margin= unit(c(0,0,0,0), "pt"))+
+        plot.margin= unit(c(0,0,1,0), "pt"))+
   guides(fill = guide_legend(override.aes = list(size = 5)), )
 
 ## fall stationary location clusters 
 fall.clustplot<- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
-  coord_sf(xlim = c(-170, -40),ylim = c(-5, 70)) +
+  coord_sf(xlim = c(-165, -50),ylim = c(-5, 70)) +
   geom_errorbar(data = fall.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.1, alpha = 0.3, color = "black") +
   geom_errorbar(data = fall.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.1, alpha = 0.3, color = "black") +
   #geom_path(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5) +
@@ -353,22 +366,24 @@ fall.clustplot<- ggplot(st_as_sf(America))+
   geom_shadowtext(data = meta.fall.ab[meta.fall.ab$node.type != "Breeding",], mapping = aes(x = Lon.50., y = Lat.50., label = vertex), cex = 3, fontface = "bold", col = "black", bg.colour = "white")+
   labs(colour = "Cluster") +
   theme_bw() +
+  ggtitle("(c) Fall stationary location clusters") + 
   theme(text = element_text(size = 6), legend.position = "None",
         axis.line=element_blank(),
         axis.text =element_blank(),
         axis.ticks=element_blank(),
         axis.title =element_blank(),
+        title = element_text(size = 8),
         axis.ticks.length = unit(0, "pt"),
         panel.grid.major=element_blank(),
         panel.grid.minor=element_blank(),
         #panel.border = element_rect(colour = "black", fill=NA, size=0.5),
-        plot.margin= unit(c(0,0,0,0), "pt"))
+        plot.margin= unit(c(2,0,0,0), "pt"))
 
 ## Spring node types ----
 spring.ggnet <- ggnetwork(spring.graph, layout = as.matrix(meta.spring.ab[, c("Lon.50.", "Lat.50.")]), scale = F)
 spring.gplot <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
-  coord_sf(xlim = c(-170, -40),ylim = c(-5, 70)) +
+  coord_sf(xlim = c(-165, -50),ylim = c(-5, 70)) +
   geom_edges(data = spring.ggnet, mapping = aes(x = x, y = y, xend = xend, yend = yend, col = edge.type, lwd = weight),
              arrow = arrow(length = unit(6, "pt"), type = "closed", angle = 10))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
@@ -376,24 +391,26 @@ spring.gplot <- ggplot(st_as_sf(America))+
   geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = node.type), shape=21)+
   scale_size(range = c(0.8, 4), breaks = c(0.1, 0.2, 0.3), name = "Node weight")+
   scale_fill_manual(values=c("Breeding"  = "#440154FF", "Stopover" = "#FDE725FF", "Nonbreeding" = "#21908CFF"), guide = "none")+
+  ggtitle("(b) Spring migration network") + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         legend.box.background = element_rect(fill = "white", colour = "black", linewidth = 0.2),
         legend.position = c(0.15, 0.4), legend.key = element_rect(fill = "white"),
         legend.title=element_text(size=8),
         legend.text=element_text(size=8),
+        title = element_text(size = 8),
         legend.background = element_rect(fill = NA),
         axis.title =element_blank(),
         axis.text =element_blank(),
         axis.ticks =element_blank(),
         axis.line=element_blank(),
         axis.ticks.length = unit(0, "pt"),
-        plot.margin= unit(c(0,0,0,0), "pt"))
+        plot.margin= unit(c(0,0,1,0), "pt"))
 
 ## spring stationary location clusters 
 spring.clustplot<- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
-  coord_sf(xlim = c(-170, -40),ylim = c(-5, 70)) +
+  coord_sf(xlim = c(-165, -50),ylim = c(-5, 70)) +
   geom_errorbar(data = spring.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.1, alpha = 0.3, color = "black") +
   geom_errorbar(data = spring.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.1, alpha = 0.3, color = "black") +
   #geom_path(data = spring.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5) +
@@ -402,25 +419,27 @@ spring.clustplot<- ggplot(st_as_sf(America))+
   geom_shadowtext(data = meta.spring.ab[meta.spring.ab$node.type != "Breeding",], mapping = aes(x = Lon.50., y = Lat.50., label = vertex), cex = 3, fontface = "bold", col = "black", bg.colour = "white")+
   labs(colour = "Cluster") +
   theme_bw() +
-  theme(text = element_text(size = 6), legend.position = "None",
+  ggtitle("(d) Spring stationary location clusters") + 
+  theme(text = element_text(size = 8), legend.position = "None",
         axis.line=element_blank(),
         axis.text =element_blank(),
         axis.ticks=element_blank(),
         axis.title =element_blank(),
+        title = element_text(size = 8),
         panel.grid.major=element_blank(),
         panel.grid.minor=element_blank(),
         axis.ticks.length = unit(0, "pt"),
         #panel.border = element_rect(colour = "black", fill=NA, size=0.5),
-        plot.margin = unit(c(0,0,0,0), "pt"))
+        plot.margin = unit(c(2,0,0,0), "pt"))
 
 ## Panel ----
-nodes.fig <- (fall.gplot | spring.gplot)/ (fall.clustplot |spring.clustplot) +
-  plot_annotation(tag_levels = 'a') &
-  theme(plot.tag.position = c(0.05, 0.95),
-        plot.tag = element_text(face = 'bold', size = 10))
+nodes.fig <- (fall.gplot | spring.gplot)/ (fall.clustplot |spring.clustplot) #+
+ # plot_annotation(tag_levels = 'a') &
+ # theme(plot.tag.position = c(0.05, 0.95),
+       # plot.tag = element_text(face = 'bold', size = 10))
 
 ggsave(plot = nodes.fig, filename = "nodes.figure.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures",
-       units = "cm", width = 24*1.2, height = 10*1.2, dpi = "print", bg = "white")
+       units = "cm", width = 25*1.2, height = 12*1.2, dpi = "print", bg = "white")
 
 # Figure 2: Node population composition ---- 
 
@@ -428,20 +447,21 @@ ggsave(plot = nodes.fig, filename = "nodes.figure.png" ,  path = "C:/Users/Jelan
 fall.data <- igraph::as_data_frame(fall.graph, "vertices")
 fall.gplot.comp <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
-  coord_sf(xlim = c(-170, -40),ylim = c(-5, 70)) +
+  coord_sf(xlim = c(-165, -50),ylim = c(-5, 70)) +
   geom_edges(data = fall.ggnet, mapping = aes(x = x, y = y, xend = xend, yend = yend, col = edge.type, lwd = weight),
              arrow = arrow(length = unit(9, "pt"), type = "closed", angle = 10))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
   scale_color_manual(values=c(adjustcolor("black", alpha = 0.5), adjustcolor("blue", alpha = 0)), guide = "none")+
   geom_pie_glyph(slices= c("West", "Central", "East", "Northwest"), colour = "black", data = fall.data[fall.data$node.comp < 3,], mapping = aes(x = long, y = lat, radius = node.weight)) +
-  scale_radius(range = c(1, 3), unit = "mm", guide = "none")+
+  scale_radius(range = c(0.6, 3), unit = "mm", guide = "none")+
   geom_point(data = fall.data[fall.data$node.comp == 3,], mapping = aes(x = long, y = lat, fill = single.reg, size = node.weight), shape= 21, colour = "black",  show.legend = F)+
-  scale_size(range = c(2, 6), guide = "none")+
+  scale_size(range = c(1.2, 6), guide = "none")+
   scale_fill_manual(values = c("West" = "#D55E00", "Central" = "#009E73", "East" = "#0072B2", "Northwest" = "#F0E442"), name = "Breeding origin") +
-  ggtitle("Fall")+
+  ggtitle("(a) Fall node use")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
-        legend.position = c(0.2, 0.4), text = element_text(size = 12), legend.key = element_blank(),
+        legend.position = c(0.2, 0.4), text = element_text(size = 10), legend.key = element_blank(),
+        legend.box.background = element_rect(fill = "white", colour = "black", linewidth = 0.4),
         axis.title =element_blank(),
         axis.text =element_blank(),
         axis.ticks =element_blank(),
@@ -453,20 +473,22 @@ fall.gplot.comp <- ggplot(st_as_sf(America))+
 spring.data <- igraph::as_data_frame(spring.graph, "vertices")
 spring.gplot.comp <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
-  coord_sf(xlim = c(-170, -40),ylim = c(-5, 70)) +
+  coord_sf(xlim = c(-165, -50),ylim = c(-5, 70)) +
   geom_edges(data = spring.ggnet, mapping = aes(x = x, y = y, xend = xend, yend = yend, col = edge.type, lwd = weight),
              arrow = arrow(length = unit(9, "pt"), type = "closed", angle = 10))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
   scale_color_manual(values=c(adjustcolor("blue", alpha = 0), adjustcolor("black", alpha = 0.5)), guide = "none")+
-  geom_pie_glyph(slices= c("West", "Central", "East", "Northwest"), colour = "black", data = spring.data[spring.data$node.comp < 3,], mapping = aes(x = long, y = lat, radius = node.weight), show.legend = F) +
-  scale_radius(range = c(1, 3), unit = "mm",guide  = "none")+
+  geom_pie_glyph(slices= c("West", "Central", "East", "Northwest"), colour = "black", data = spring.data, mapping = aes(x = long, y = lat, radius = node.weight)) +
+  scale_radius(range = c(0.6, 3), unit = "mm", guide = "none")+
   geom_point(data = spring.data[spring.data$node.comp == 3,], mapping = aes(x = long, y = lat, fill = single.reg, size = node.weight), shape= 21, colour = "black")+
-  scale_size(range = c(2, 6), breaks = c(0.1, 0.2, 0.3), name = "Node weight")+
+  geom_point(data = spring.data, mapping = aes(x = long, y = lat, fill = single.reg, size = node.weight), colour = NA, shape= 21)+
+  scale_size(range = c(1.2, 7), breaks = c(0.1, 0.2, 0.3), name = "Node weight")+
   scale_fill_manual(values = c("West" = "#D55E00", "Central" = "#009E73", "East" = "#0072B2", "Northwest" = "#F0E442"), guide = "none") +
-  ggtitle("Spring")+
+  ggtitle("(b) Spring node use")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
-        legend.position = c(0.2, 0.4), text = element_text(size = 12), legend.key = element_blank(),
+        legend.position = c(0.2, 0.4), text = element_text(size = 10), legend.key = element_blank(),
+        legend.box.background = element_rect(fill = "white", colour = "black", linewidth = 0.4),
         axis.title =element_blank(),
         axis.text =element_blank(),
         axis.ticks =element_blank(),
@@ -483,7 +505,7 @@ fl.nbr.node.comp <- ggplot(st_as_sf(America))+
   scale_radius(range = c(6, 12), unit = "mm", guide = "none")+
   geom_point(data = fall.nbr.node.comp[fall.nbr.node.comp$reg.no == "single reg",], mapping = aes(x = Lon.50., y = Lat.50., size = tot.abundance, fill = single_reg), shape= 21,  show.legend = F)+
   scale_size(range = c(2, 40), guide = "none")+
-  scale_fill_manual(values = c("Western.Region" = "#D55E00", "Central.Region" = "#009E73", "Eastern.Region" = "#0072B2", "Northwestern.Region" = "#F0E442"), name = "Breeding Region") +
+  scale_fill_manual(values = c("Northwestern.Region" = "#F0E442", "Western.Region" = "#D55E00", "Central.Region" = "#009E73", "Eastern.Region" = "#0072B2"), name = "Breeding Region") +
   ggtitle("Fall")+
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
           panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
@@ -505,7 +527,7 @@ spr.nbr.node.comp.plot <- ggplot(st_as_sf(America))+
   scale_radius(range = c(6, 12), unit = "mm", guide = "none")+
   geom_point(data = spring.nbr.node.comp[spring.nbr.node.comp$reg.no == "single reg",], mapping = aes(x = Lon.50., y = Lat.50., size = tot.abundance, fill = single_reg), shape= 21,  show.legend = F)+
   scale_size(range = c(1.5, 44), guide = "none")+
-  scale_fill_manual(values = c("Western.Region" = "#D55E00", "Central.Region" = "#009E73", "Eastern.Region" = "#0072B2", "Northwestern.Region" = "#F0E442"), name = "Breeding Region") +
+  scale_fill_manual(values = c("Northwestern.Region" = "#F0E442", "Western.Region" = "#D55E00", "Central.Region" = "#009E73", "Eastern.Region" = "#0072B2"), name = "Breeding Region") +
   ggtitle("Spring")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
@@ -524,11 +546,11 @@ node.nbr.comp.fig <- (fl.nbr.node.comp  |spr.nbr.node.comp.plot)
 #ggsave(plot = node.comp.fig, filename = "Node.comp.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
 #       units = "cm", width = 24*1.2, height = 10*1.2, dpi = "print", bg = "white")
 
-png("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures/Node.comp.png", units = "cm", width = 28.8, height = 18, res = 300)
+png("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures/Node.comp.png", units = "cm", width = 25*1.2, height = 8*1.2, res = 500)
 node.comp.fig
 dev.off()
 
-png("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures/Node.nbr.comp.png", units = "cm", width = 28.8, height = 14, res = 300)
+png("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures/Node.nbr.comp.png", units = "cm", width = 25*1.2, height = 12*1.2, res = 400)
 node.nbr.comp.fig
 dev.off()
 
@@ -566,7 +588,7 @@ spring.com.plot <- ggplot(st_as_sf(America))+
              arrow = arrow(length = unit(9, "pt"), type = "closed", angle = 10))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
   scale_color_manual(values=c(adjustcolor("blue", alpha = 0), adjustcolor("black", alpha = 0.5)), guide = "none")+
-  geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = , fill = as.factor(walktrap.comm)), shape=21, size = 4)+
+  geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = , fill = as.factor(infomap.comm)), shape=21, size = 4)+
   #scale_fill_manual(values=c("#D55E00", "#0072B2"), labels = c("West", "East")) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
@@ -744,7 +766,7 @@ ggsave(plot = communities.fig, filename = "communities.figure.png" ,  path = "C:
 #   print(paste0("progress: ", as.character(i), " to ", as.character(iter)))
 # }
 
-# Figure 4: Fall and spring centrality metrics ---- 
+# Figure 4: Metrics of node importance ---- 
 
 ## Betweenness centrality in fall network ----
 fall.gplot.betw <- ggplot(st_as_sf(America))+
@@ -756,7 +778,7 @@ fall.gplot.betw <- ggplot(st_as_sf(America))+
   #geom_text(data = fall.ggnet, mapping = aes(x = x, y = y, label = weight), nudge_x = 4)+
   scale_color_manual(values=c(adjustcolor("black", alpha = 0.5), adjustcolor("blue", alpha = 0)), guide = "none")+
   geom_nodes(data = fall.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = betweenness), shape=21, size  = 3)+
-  scale_fill_viridis_c(direction = -1, option = "magma", name = "Betweenness", 
+  scale_fill_viridis_c(direction = -1, option = "magma", name = "Betweenness \ncentrality", begin  = 0.3,
                        guide = guide_colorbar(frame.colour = "black"), limits = c(min(0),  max(fall.ggnet$betweenness, spring.ggnet$betweenness)))+
   ggtitle("Fall network") + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
@@ -780,7 +802,7 @@ spring.gplot.betw <- ggplot(st_as_sf(America))+
   scale_color_manual(values=c(adjustcolor("blue", alpha = 0), adjustcolor("black", alpha = 0.5)), guide = "none")+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
   geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = betweenness), shape=21, size  = 3)+
-  scale_fill_viridis_c(direction = -1, option = "magma", name = "Betweenness", 
+  scale_fill_viridis_c(direction = -1, option = "magma", name = "Betweenness \ncentrality", begin   = 0.3,
                        guide = guide_colorbar(frame.colour = "black"), limits = c(min(0),  max(fall.ggnet$betweenness, spring.ggnet$betweenness)))+
   ggtitle("Spring network") + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
@@ -803,9 +825,9 @@ fall.gplot.metric2 <- ggplot(st_as_sf(America))+
              arrow = arrow(length = unit(9, "pt"), type = "closed", angle = 10))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
   scale_color_manual(values=c(adjustcolor("black", alpha = 0.5), adjustcolor("blue", alpha = 0)), guide = "none")+
-  geom_nodes(data = fall.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = time.spent), shape=21, size  = 3)+
-  scale_fill_viridis_c(direction = -1, option = "magma", name = "In-degree\nbridge strength", 
-                       guide = guide_colorbar(frame.colour = "black"), limits = c(min(0), max(fall.ggnet$time.spent, spring.ggnet$time.spent)))+
+  geom_nodes(data = fall.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = time.spent.ab), shape=21, size  = 3)+
+  scale_fill_viridis_c(direction = -1, option = "magma", name = "Refined node\nweight", begin  = 0.3,
+                       guide = guide_colorbar(frame.colour = "black"), limits = c(min(0), max(fall.ggnet$time.spent.ab, spring.ggnet$time.spent.ab)))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         legend.position = c(-0.18, 0.5), legend.key = element_blank(),
@@ -825,11 +847,11 @@ spring.gplot.metric2 <- ggplot(st_as_sf(America))+
   geom_edges(data = spring.ggnet, mapping = aes(x = x, y = y, xend = xend, yend = yend, col = edge.type, lwd = weight),
              arrow = arrow(length = unit(9, "pt"), type = "closed", angle = 10))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
-  geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = eigen), shape=21, size  = 3)+
+  geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = time.spent.ab), shape=21, size  = 3)+
   scale_color_manual(values=c(adjustcolor("blue", alpha = 0), adjustcolor("black", alpha = 0.5)), guide = "none")+
   #geom_text(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, label = participation.coef))+
-  scale_fill_viridis_c(direction = -1, option = "magma", name = "In-degree\nbridge strength", 
-                       guide = guide_colorbar(frame.colour = "black"), limits = c(min(0), max(fall.gdata$eigen, fall.gdata$eigen)))+
+  scale_fill_viridis_c(direction = -1, option = "magma", name = "Refined node \nweight", begin  = 0.3,
+                       guide = guide_colorbar(frame.colour = "black"), limits = c(min(0), max(fall.gdata$time.spent.ab, fall.gdata$time.spent.ab)))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         legend.position = "None", legend.key = element_blank(),
@@ -852,13 +874,13 @@ ggsave(plot = metrics.fig, filename = "nodes.metrics.png" ,  path = "C:/Users/Je
 
 ## Fall node characteristics
 fall.char <- fall.gdata %>% dplyr::select("cluster", "node.type", "node.weight", "n.individuals",
-                                   "betweenness", "bridge.indegree") %>% arrange(factor(node.type, levels = c("Breeding","Stopover","Nonbreeding"))) 
+                                   "betweenness", "bridge.indegree", "time.spent", "time.spent.ab") %>% arrange(factor(node.type, levels = c("Breeding","Stopover","Nonbreeding"))) 
 
 write_csv(fall.char, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Table_data/Fall_node_table_data.csv")
 
 ## Spring node characteristics
 spring.char <- spring.gdata %>% dplyr::select("cluster", "node.type", "node.weight", "n.individuals",
-                  "betweenness", "bridge.indegree") %>% arrange(factor(node.type, levels = c("Breeding","Stopover","Nonbreeding")))
+                  "betweenness", "bridge.indegree", "time.spent", "time.spent.ab") %>% arrange(factor(node.type, levels = c("Breeding","Stopover","Nonbreeding")))
 
 write_csv(spring.char, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Table_data/Spring_node_table_data.csv")
 
@@ -1359,10 +1381,10 @@ ref_path <- "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/The
 
 # load threshold paths 
 tpaths <- findThresLocData()
-timings <- geo.all %>% group_by(geo_id) %>% summarize(fall.br.departure = as.Date(as.numeric(first(br.departure))), 
-                                                        spring.br.arrival = as.Date(as.numeric(first(br.arrival))),
-                                                        nbr.departure = as.Date(as.numeric(first(nbr.departure))),
-                                                        nbr.arrival = as.Date(as.numeric(first(nbr.arrival))))
+timings <- geo.all %>% group_by(geo_id) %>% summarize(fall.br.departure = as.Date(first(br.departure)), 
+                                                        spring.br.arrival = as.Date(first(br.arrival)),
+                                                        nbr.departure = as.Date(first(nbr.departure)),
+                                                        nbr.arrival = as.Date(first(nbr.arrival)))
 
 # We create a list of plots
 dates.ind.lon <- list()
