@@ -707,8 +707,8 @@ dev.off()
 # This bird made a direct flight to either South America or the lesser antilles
 
 # Estimate timing of departure and arrival from the breeding and nonbreeding grounds ############################################################
-dep.br <- "2012-10-03 "
-arr.br <- "2013-06-2"
+dep.br <- "2012-08-30"
+arr.br <- "2013-06-17"
 
 par(mfrow=c(2,1))
 plot(twl$Twilight, type  = "l", x0_ad[,1])

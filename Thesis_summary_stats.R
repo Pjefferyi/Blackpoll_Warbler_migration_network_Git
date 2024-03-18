@@ -173,8 +173,8 @@ range(spring.node.times$mean.stat.dur)
 ### Duration of migration  ----
 
 # Calculate the difference between the length of the fall and spring migration for every tracked individual 
-migration_times <- geo.all %>% group_by(geo_id) %>% filter(StartTime == first(StartTime)) %>% summarize(fall.mig.duration = as.Date(as.numeric(nbr.arrival)) - as.Date(as.numeric(br.departure)),
-                      spring.mig.duration = as.Date(as.numeric(br.arrival)) - as.Date(as.numeric(nbr.departure))) %>%
+migration_times <- geo.all %>% group_by(geo_id) %>% filter(StartTime == first(StartTime)) %>% summarize(fall.mig.duration = as.Date(nbr.arrival) - as.Date(br.departure),
+                      spring.mig.duration = as.Date(br.arrival) - as.Date(nbr.departure)) %>%
   mutate(timing.difference = fall.mig.duration - spring.mig.duration) %>%
   filter(!is.na(timing.difference))
 
@@ -346,7 +346,7 @@ simulationOutput <- simulateResiduals(fittedModel =  mod3, plot = F)
 plot(simulationOutput)
 
 ## Plot the second nonbreeding latitude against the breeding latitude ----
-lat.plot2 <- ggplot(data = analysis_ref, aes(x = deploy.longitude, y = nbr2.lat)) + 
+lat.plot2 <- ggplot(data = analysis_ref, aes(x = deploy.latitude, y = nbr2.lat)) + 
   geom_point(aes(col = Breeding_region_MC)) + 
   geom_smooth(method = "lm", se = F, colour="black", size=0.5, linetype = "dashed") + 
   theme_bw() +
@@ -442,11 +442,18 @@ NB.move.mod <- NB.move %>% filter(nbr.mover == "mover") %>% group_by(geo_id) %>%
          start.lat = Lat.50.,
          end.lon = lead(Lon.50.),
          end.lat = lead(Lat.50.),
-         dist = lead(dist)) %>% dplyr::select(geo_id, move.start, move.end, start.lon, start.lat, end.lon, end.lat, dist, timing.nbr.move)%>%
+         dist = lead(dist),
+         equinox.proximity = difftime(move.start, spring.equinox.date, units = "days")) %>% 
+  dplyr::select(geo_id, move.start, move.end, start.lon,
+                start.lat, end.lon, end.lat, dist, timing.nbr.move,
+                equinox.proximity, spring.equinox.date) %>%
   filter(move.start < move.end, !is.na(move.end)) %>%
   mutate(move.direction = ifelse(start.lat < end.lat, "North", "South"))
 
-NB.move.mod %>% group_by(timing.nbr.move) %>%summarise (n = n())
+# movement direction (North south) and timing 
 NB.move.mod %>% group_by(move.direction) %>%summarise (n = n())
+NB.move.mod %>% group_by(timing.nbr.move) %>%summarise (n = n())
+NB.move.mod %>% mutate(equi.prox.cat = ifelse(abs(equinox.proximity) < 14, "close", "far")) %>% 
+  group_by(equi.prox.cat) %>%summarise (n = n())
 
 
