@@ -304,8 +304,8 @@ abline(v = spring.equi, col = "orange")
 dev.off()
 
 # Initial Path #################################################################
-tol_ini <- 0.08
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol = tol_ini)
+tol_ini <- 0.085
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol = tol_ini)
 
 x0 <- path$x
 z0 <- trackMidpts(x0)
@@ -335,11 +335,11 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-q <- 0.86
+q <- 0.8
 cL <- changeLight(twl=geo_twl, quantile= q, summary = F, days = days, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = dist)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = dist)
  
 ##back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 
@@ -408,7 +408,7 @@ matplot(0:100, dgamma(0:100, beta[1], beta[2]),
 # Create a Land mask for the group model #######################################
 #Set limits of the mask
 xlim <- range(x0[,1])+c(-5,5)
-ylim <- range(x0[,2])+c(-5,5)
+ylim <- range(x0[,2])+c(-5,0)
 
 index <- ifelse(stationary, 1, 2)
 mask <- earthseaMask(xlim, ylim, n = 10, index=index)
@@ -417,7 +417,7 @@ mask <- earthseaMask(xlim, ylim, n = 10, index=index)
 ## Define the log prior for x and z
 logp <- function(p) {
   f <- mask(p)
-  ifelse(is.na(f), -1000, log(2))
+  ifelse(is.na(f), -1000, log(100))
 }
 
 # Define the Estelle model ####################################################
@@ -429,7 +429,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                beta =  beta,
                                x0 = x0, # median point for each group (defined by twl$group)
                                z0 = z0, # middle points between the x0 points
-                               zenith = zeniths0,
+                               zenith = zenith0,
                                logp.x = logp,# land sea mask
                                fixedx = fixedx)
 

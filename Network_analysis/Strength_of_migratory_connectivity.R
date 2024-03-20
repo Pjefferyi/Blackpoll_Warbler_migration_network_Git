@@ -37,6 +37,8 @@ fall.br.sf <- st_transform(fall.br.sf, CRS(proj))
 
 # fall network nonbreeding points
 fall.stat <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.stationary.locations.csv")
+fall.con.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.edge.weights.csv")
+
 fall.graph <- read_graph("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.graph.edge.list.txt", directed = TRUE)
 E(fall.graph)$weight <- fall.con.ab$weight
 
@@ -162,7 +164,7 @@ ggplot(st_as_sf(wrld_simpl))+
   #geom_sf(data = fall.nbr.sf, aes(col = "Individual nonbreeding locations (1 bird each)"), shape = 4, cex = 3)+
   geom_sf(data = fall.nbr.sf, shape = 4, cex = 3)+
   #scale_colour_manual(values = c("Individual nonbreeding locations (1 bird each)" = "blue"), name = "") +
-  coord_sf(xlim = c(-90, -30),ylim = c(-15, 20))+
+  coord_sf(xlim = c(-100, -30),ylim = c(-15, 20))+
   theme_bw()+
   theme()+
   ggtitle("Blackpoll warbler nonbreeding regions")
