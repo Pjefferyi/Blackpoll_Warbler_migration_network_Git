@@ -137,7 +137,7 @@ geo.bias.dists <- Thresh.loc.data %>% group_by(geo_id) %>%
   mutate(lat.geo.bias = distHaversine(cbind(deploy.longitude,lat), cbind(deploy.longitude, deploy.latitude))) %>%
   mutate(lon.geo.bias = distHaversine(cbind(lon,deploy.latitude), cbind(deploy.longitude, deploy.latitude)))
 
-# bias in longitude and latitude estimates, in meters 
+# # bias in longitude and latitude estimates, in meters 
 geo.bias <- c(lon.bias = mean(geo.bias.dists$lon.geo.bias),
               lat.bias = mean(geo.bias.dists$lat.geo.bias))
 
@@ -201,7 +201,7 @@ GL_psi_nbr1 <- estTransition(isGL=TRUE,
 
 # Save the output of estTransition
 save(GL_psi_nbr1, file = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_analysis/estTransition_ouput_nbr1.R")
-# load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_analysis/estTransition_ouput.R")
+# load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_analysis/estTransition_ouput_nbr1.R")
 
 # Retrieve the relative abundance in each breeding site/region for the fall network ################################################################################
 

@@ -171,19 +171,19 @@ mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distT
 site           <- mS$site[mS$site>0] # get rid of movement periods
 stationarySite <- which(table(site) == max(table(site))) # find the site where bird is the longest
 
-#find the dates that the bird arrives and leaves this stationary site
-start <- min(which(mS$site == stationarySite))
-end   <- max(which(mS$site == stationarySite))
-
-(zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
- 
-# startDate <- "2016-10-30"
-# endDate   <- "2017-03-01"
-# 
-# start = min(which(as.Date(twl$Twilight) == startDate))
-# end = max(which(as.Date(twl$Twilight) == endDate))
+# #find the dates that the bird arrives and leaves this stationary site
+# start <- min(which(mS$site == stationarySite))
+# end   <- max(which(mS$site == stationarySite))
 # 
 # (zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
+ 
+startDate <- "2016-10-30"
+endDate   <- "2017-04-25"
+
+start = min(which(as.Date(twl$Twilight) == startDate))
+end = max(which(as.Date(twl$Twilight) == endDate))
+
+(zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
 
 # The angles obtained with in-habitat and Hill-Ekstrom Calibration differ by less than 0.5
 
@@ -204,7 +204,7 @@ z0 <- trackMidpts(x0_r)
 save(x0_r, file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
 
 # Check the following times of arrival and departure using a plot 
-arr.nbr <- "2016-10-05" 
+arr.nbr <- "2016-10-09" 
 dep.nbr <- "2017-05-24" 
 
 # open jpeg
@@ -227,8 +227,8 @@ dev.off()
 # Using approximate timings of arrival and departure from the breeding grounds
 zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith0,
-                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad + 1,
-                            Date > anytime(dep.nbr) ~ zenith0_ad + 1))
+                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad,
+                            Date > anytime(dep.nbr) ~ zenith0_ad))
 
 zeniths0 <- zenith_twl_zero$zenith
 
@@ -298,7 +298,7 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-q <- 0.9
+q <- 0.8
 cL <- changeLight(twl=geo_twl, quantile=q, summary = F, days = days, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
@@ -370,8 +370,8 @@ matplot(0:100, dgamma(0:100, beta[1], beta[2]),
 # Create a Land mask for the group model #######################################
 
 #Set limits of the mask
-xlim <- range(x0[,1])+c(-5,5)
-ylim <- range(x0[,2])+c(-5,5)
+xlim <- range(x0[,1])+c(-5,0)
+ylim <- range(x0[,2])+c(-5,0)
 
 index <- ifelse(stationary, 1, 2)
 mask <- earthseaMask(xlim, ylim, n = 10, index=index)

@@ -634,7 +634,7 @@ spring.com.plot <- ggplot(st_as_sf(America))+
              arrow = arrow(length = unit(9, "pt"), type = "closed", angle = 10))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
   scale_color_manual(values=c(adjustcolor("blue", alpha = 0), adjustcolor("black", alpha = 0.5)), guide = "none")+
-  geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = , fill = as.factor(infomap.comm)), shape=21, size = 4)+
+  geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = , fill = as.factor(walktrap.comm)), shape=21, size = 4)+
   scale_fill_viridis(discrete = T, begin= 0.2) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
@@ -919,7 +919,7 @@ ggsave(plot = metrics.fig, filename = "nodes.metrics.png" ,  path = "C:/Users/Je
 
 # Figure 4.2: average time spent at each node 
 
-# Time spent in th efall network 
+# Time spent in the fall network 
 fall.gplot.time.spent <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
   coord_sf(xlim = c(-170, -50),ylim = c(-3, 68)) +

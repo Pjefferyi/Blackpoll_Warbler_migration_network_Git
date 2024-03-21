@@ -378,8 +378,8 @@ findSlicesData <- function(periods, xlim = c(-170, -40), ylim = c(-40, 75)){
   dens.list <- list() 
   
   #Create a grid to project density rasters 
-  r <- raster(nrows = 2 * diff(ylim), ncols = 2 * diff(xlim), xmn = xlim[1],
-              xmx = xlim[2], ymn = ylim[1], ymx = ylim[2], crs = proj4string(wrld_simpl))
+  r <- rast(nrows = 2 * diff(ylim), ncols = 2 * diff(xlim), xmin = xlim[1],
+              xmax = xlim[2], ymin = ylim[1], ymax = ylim[2], crs = proj4string(wrld_simpl))
   
   # extract the density data 
   for (f in seq(1:length(paths))) {
@@ -398,7 +398,7 @@ findSlicesData <- function(periods, xlim = c(-170, -40), ylim = c(-40, 75)){
     sk <- slice(s, sliceIndices(s)[period.index-1]) # must had -1 here so that the index coresponds with the bins 
     
     # save the density raster
-    dens.list[[geonames[f]]] <-sk 
+    dens.list[[geonames[f]]] <- sk 
   }
   
   return(dens.list)
