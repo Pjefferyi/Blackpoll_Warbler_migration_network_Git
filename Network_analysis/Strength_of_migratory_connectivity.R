@@ -137,11 +137,12 @@ geo.bias.dists <- Thresh.loc.data %>% group_by(geo_id) %>%
   mutate(lat.geo.bias = distHaversine(cbind(deploy.longitude,lat), cbind(deploy.longitude, deploy.latitude))) %>%
   mutate(lon.geo.bias = distHaversine(cbind(lon,deploy.latitude), cbind(deploy.longitude, deploy.latitude)))
 
-# # bias in longitude and latitude estimates, in meters 
+# bias in longitude and latitude estimates, in meters
 geo.bias <- c(lon.bias = mean(geo.bias.dists$lon.geo.bias),
               lat.bias = mean(geo.bias.dists$lat.geo.bias))
 
-# Geolocator variance covariance at origin sites 
+# Geolocator variance covariance at origin sites
+#mod <- lm(cbind(geo.bias.dists$lon.geo.bias, geo.bias.dists$lat.geo.bias) ~ 1)
 #geo.vcov <- cov(fall.nbr[, c("Lon.50.","Lat.50.")])
 geo.vcov <- cov(st_coordinates(fall.nbr.sf))
 

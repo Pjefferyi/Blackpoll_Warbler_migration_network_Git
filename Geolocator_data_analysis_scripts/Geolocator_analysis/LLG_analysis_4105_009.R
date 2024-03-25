@@ -698,4 +698,116 @@ geo.ref[(geo.ref$geo.id == geo.id),]$br.arrival <- as.Date(arr.br)
 geo.ref[(geo.ref$geo.id == geo.id),]$changelight.quantile <- q
 write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE) 
 
+#################################################################################
+# Simple thresold estimate
+#################################################################################
+
+# movement model with slower speed ##############################################
+beta  <- c(2.2, 0.08)
+matplot(0:100, dgamma(0:100, beta[1], beta[2]),
+        type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
+
+# Perform threshold model without stationary location ###########################
+twl_adjusted$index <- seq(1, length(twl_adjusted$group))
+x0 <- path$x
+z0 <- trackMidpts(x0)
+
+model <- groupedThresholdModel(twl_adjusted$Twilight,
+                               twl_adjusted$Rise,
+                               group = twl_adjusted$index, 
+                               twilight.model = "ModifiedGamma",
+                               alpha = alpha,
+                               beta =  beta,
+                               x0 = x0, # median point for each group (defined by twl$group)
+                               z0 = z0, # middle points between the x0 points
+                               zenith = zeniths0,
+                               logp.x = logp,# land sea mask
+                               fixedx = fixedx)
+
+# define the error shape
+x.proposal <- mvnorm(S = diag(c(0.005, 0.005)), n = nrow(x0))
+z.proposal <- mvnorm(S = diag(c(0.005, 0.005)), n = nrow(z0))
+
+#Tuning ########################################################################
+
+# fit.s a first chain for tuning
+fit.s <- estelleMetropolis(model, x.proposal, z.proposal, iters = 300, thin = 20)
+
+# fit.s additional chains for tuning
+for (k in 1:2) {
+  x.proposal <- mvnorm(chainCov(fit.s$x), s = 0.3)
+  z.proposal <- mvnorm(chainCov(fit.s$z), s = 0.3)
+  
+  # get Median of chains
+  chain.sm.s.x <- SGAT2Movebank(fit.s$x)
+  x.med <- list(as.matrix(chain.sm.s.x[,c("Lon.50%","Lat.50%")]))
+  chain.sm.s.z <- SGAT2Movebank(fit.s$z)
+  z.med <- list(as.matrix(chain.sm.s.z[,c("Lon.50%","Lat.50%")]))
+  
+  fit.s <- estelleMetropolis(model, x.proposal, z.proposal, x0 = x.med,
+                             z0 = z.med, iters = 300, thin = 20)
+}
+
+## Check if chains mix
+opar <- par(mfrow = c(2, 1), mar = c(3, 5, 2, 1) + 0.1)
+matplot(t(fit.s$x[[1]][!fixedx, 1, ]), type = "l", lty = 1, col = "dodgerblue", ylab = "Lon")
+matplot(t(fit.s$x[[1]][!fixedx, 2, ]), type = "l", lty = 1, col = "firebrick", ylab = "Lat")
+par(opar)
+
+#Final model run ###############################################################
+
+# get Median of chains
+chain.sm.s.x <- SGAT2Movebank(fit.s$x)
+x.med <- list(as.matrix(chain.sm.s.x[,c("Lon.50%","Lat.50%")]))
+chain.sm.s.z <- SGAT2Movebank(fit.s$z)
+z.med <- list(as.matrix(chain.sm.s.z[,c("Lon.50%","Lat.50%")]))
+
+# get proposals 
+x.proposal <- mvnorm(chainCov(fit.s$x), s = 0.3)
+z.proposal <- mvnorm(chainCov(fit.s$z), s = 0.3)
+
+fit.s <- estelleMetropolis(model, x.proposal, z.proposal, x0 = x.med,
+                           z0 = z.med , iters = 1000, thin = 20, chain = 1)
+
+# Summarize and plot the results ########################################################
+sm.s <- locationSummary(fit.s$z, time=fit.s$model$time)
+
+# open jpeg
+jpeg(paste0(dir, "/", geo.id,"_simple_threshold_model_map.png"), width = 1024 , height = 990)
+
+# empty raster of the extent
+r <- raster(nrows = 2 * diff(ylim), ncols = 2 * diff(xlim), xmn = xlim[1]-5,
+            xmx = xlim[2]+5, ymn = ylim[1]-5, ymx = ylim[2]+5, crs = proj4string(wrld_simpl))
+
+s <- slices(type = "intermediate", breaks = "week", mcmc = fit.s, grid = r)
+sk <- slice(s, sliceIndices(s))
+
+plot(sk, useRaster = F,col = rev(viridis::viridis(50)))
+plot(wrld_simpl, xlim=xlim, ylim=ylim,add = T, bg = adjustcolor("black",alpha=0.1))
+
+lines(sm.s[,"Lon.50%"], sm.s[,"Lat.50%"], col = adjustcolor("firebrick", alpha.f = 0.6), type = "o", pch = 16)
+
+dev.off()
+
+# open jpeg
+jpeg(paste0(dir, "/", geo.id,"_threshold_model_lon_lat.png"), width = 1024 , height = 990)
+
+par(mfrow=c(2,1),mar=c(4,4,1,1))
+plot(sm.s$Time1, sm.s$"Lon.50%", ylab = "Longitude", xlab = "", yaxt = "n", type = "n", ylim = xlim)
+axis(2, las = 2)
+polygon(x=c(sm.s$Time1,rev(sm.s$Time1)), y=c(sm.s$`Lon.2.5%`,rev(sm.s$`Lon.97.5%`)), border="gray", col="gray")
+lines(sm.s$Time1,sm.s$"Lon.50%", lwd = 2)
+
+plot(sm.s$Time1,sm.s$"Lat.50%", type="n", ylab = "Latitude", xlab = "", yaxt = "n", ylim = ylim)
+axis(2, las = 2)
+polygon(x=c(sm.s$Time1,rev(sm.s$Time1)), y=c(sm.s$`Lat.2.5%`,rev(sm.s$`Lat.97.5%`)), border="gray", col="gray")
+lines(sm.s$Time1,sm.s$"Lat.50%", lwd = 2)
+
+par(mfrow=c(1,1),mar=c(1,1,1,1))
+
+dev.off()
+
+# Save the threshold model estimate ############################################
+save(sm.s, file = paste0(dir,"/", geo.id,"_SGAT_Threshold_summary.csv"))
+save(fit.s, file = paste0(dir,"/", geo.id,"_SGAT_Threshold_fit.s.R"))
 

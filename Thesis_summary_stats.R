@@ -231,7 +231,7 @@ mean.nbr.use.spring <- analysis_ref %>% group_by(Range_region)%>%
 with(analysis_ref, table(fall.nbr.nodes.occupied, Range_region))
 with(analysis_ref, table(spring.nbr.nodes.occupied, Range_region))
 
-### correlation between number of  stopovernodes used and region of breeding site (eastern or western) ----
+### correlation between number of  nonbreeding nodes used and region of breeding site (eastern or western) ----
 mod.fall.nbr.node <- glmmTMB(fall.nbr.nodes.occupied ~ as.factor(Range_region), data = analysis_ref, family = genpois(link = "log"))
 boxplot(fall.nbr.nodes.occupied ~ as.factor(Range_region), data = analysis_ref)
 summary(mod.fall.nbr.node)

@@ -460,7 +460,7 @@ fall.gplot.comp <- ggplot(st_as_sf(America))+
   ggtitle("(a) Fall node use")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
-        legend.position = c(0.15, 0.5), text = element_text(size = 10), legend.key = element_blank(),
+        legend.position = c(0.15, 0.58), text = element_text(size = 10), legend.key = element_blank(),
         legend.box.background = element_rect(fill = "white", colour = "black", linewidth = 0.4),
         axis.title =element_blank(),
         axis.text =element_blank(),
@@ -487,7 +487,7 @@ spring.gplot.comp <- ggplot(st_as_sf(America))+
   ggtitle("(b) Spring node use")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
-        legend.position = c(0.15, 0.45), text = element_text(size = 10), legend.key = element_blank(),
+        legend.position = c(0.15, 0.55), text = element_text(size = 10), legend.key = element_blank(),
         legend.box.background = element_rect(fill = "white", colour = "black", linewidth = 0.4),
         axis.title =element_blank(),
         axis.text =element_blank(),
@@ -496,42 +496,112 @@ spring.gplot.comp <- ggplot(st_as_sf(America))+
         axis.ticks.length = unit(0, "pt"),
         plot.margin= unit(c(0,0,0,0), "pt"))
 
-# Fall population composition of the nonbreeding nodes
-fall.nbr.node.comp <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.nbr.node.composition.csv") 
-fl.nbr.node.comp <- ggplot(st_as_sf(America))+
-  geom_sf(colour = "black", fill = "#F7F7F7") +
-  coord_sf(xlim = c(-80, -50),ylim = c(-2, 15)) +
-  geom_pie_glyph(slices = c("Eastern.Region","Northwestern.Region", "Western.Region", "Central.Region"), colour = "black", data = fall.nbr.node.comp, mapping = aes(x = Lon.50., y = Lat.50., radius = tot.abundance))+
-  scale_radius(range = c(6, 12), unit = "mm", guide = "none")+
-  geom_point(data = fall.nbr.node.comp[fall.nbr.node.comp$reg.no == "single reg",], mapping = aes(x = Lon.50., y = Lat.50., size = tot.abundance, fill = single_reg), shape= 21,  show.legend = F)+
-  scale_size(range = c(2, 40), guide = "none")+
-  scale_fill_manual(values = c("Northwestern.Region" = "#F0E442", "Western.Region" = "#D55E00", "Central.Region" = "#009E73", "Eastern.Region" = "#0072B2"), name = "Breeding Region") +
-  ggtitle("Fall")+
-    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-          panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
-          legend.position = "None", text = element_text(size = 12), legend.key = element_blank(),
-          axis.title =element_blank(),
-          axis.text =element_blank(),
-          axis.ticks =element_blank(),
-          axis.line=element_blank(),
-          axis.ticks.length = unit(0, "pt"),
-          plot.margin= unit(c(0,0,0,0), "pt"))+ 
-    guides(fill = guide_legend(override.aes = list(size = 5)), )
+# # Fall population composition of the nonbreeding nodes
+# fall.nbr.node.comp <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.nbr.node.composition.csv") 
+# fl.nbr.node.comp <- ggplot(st_as_sf(America))+
+#   geom_sf(colour = "black", fill = "#F7F7F7") +
+#   coord_sf(xlim = c(-80, -50),ylim = c(-2, 15)) +
+#   geom_pie_glyph(slices = c("Eastern.Region","Northwestern.Region", "Western.Region", "Central.Region"), colour = "black", data = fall.nbr.node.comp, mapping = aes(x = Lon.50., y = Lat.50., radius = tot.abundance))+
+#   scale_radius(range = c(6, 12), unit = "mm", guide = "none")+
+#   geom_point(data = fall.nbr.node.comp[fall.nbr.node.comp$reg.no == "single reg",], mapping = aes(x = Lon.50., y = Lat.50., size = tot.abundance, fill = single_reg), shape= 21,  show.legend = F)+
+#   scale_size(range = c(2, 40), guide = "none")+
+#   scale_fill_manual(values = c("Northwestern.Region" = "#F0E442", "Western.Region" = "#D55E00", "Central.Region" = "#009E73", "Eastern.Region" = "#0072B2"), name = "Breeding Region") +
+#   ggtitle("Fall")+
+#     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+#           panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
+#           legend.position = "None", text = element_text(size = 12), legend.key = element_blank(),
+#           axis.title =element_blank(),
+#           axis.text =element_blank(),
+#           axis.ticks =element_blank(),
+#           axis.line=element_blank(),
+#           axis.ticks.length = unit(0, "pt"),
+#           plot.margin= unit(c(0,0,0,0), "pt"))+ 
+#     guides(fill = guide_legend(override.aes = list(size = 5)), )
+# 
+# # Spring population composition of the nonbreeding nodes
+# spring.nbr.node.comp <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/spring.nbr.node.composition.csv") 
+# spr.nbr.node.comp.plot <- ggplot(st_as_sf(America))+
+#   geom_sf(colour = "black", fill = "#F7F7F7") +
+#   coord_sf(xlim = c(-80, -50),ylim = c(-2, 15)) +
+#   geom_pie_glyph(slices = c("Eastern.Region","Northwestern.Region", "Western.Region", "Central.Region"), colour = "black", data = spring.nbr.node.comp, mapping = aes(x = Lon.50., y = Lat.50., radius = tot.abundance))+
+#   scale_radius(range = c(6, 12), unit = "mm", guide = "none")+
+#   geom_point(data = spring.nbr.node.comp[spring.nbr.node.comp$reg.no == "single reg",], mapping = aes(x = Lon.50., y = Lat.50., size = tot.abundance, fill = single_reg), shape= 21,  show.legend = F)+
+#   scale_size(range = c(1.5, 44), guide = "none")+
+#   scale_fill_manual(values = c("Northwestern.Region" = "#F0E442", "Western.Region" = "#D55E00", "Central.Region" = "#009E73", "Eastern.Region" = "#0072B2"), name = "Breeding Region") +
+#   ggtitle("Spring")+
+#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+#         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
+#         legend.position = "None", text = element_text(size = 12), legend.key = element_blank(),
+#         axis.title =element_blank(),
+#         axis.text =element_blank(),
+#         axis.ticks =element_blank(),
+#         axis.ticks.length = unit(0, "pt"),
+#         plot.margin = unit(c(0,0,0,0), "pt"))+ 
+#   guides(fill = guide_legend(override.aes = list(size = 5)), )
+# 
+# # Fall population composition of the nonbreeding nodes (stopover use)
+# fall.stp.node.comp <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.stp.node.composition.csv") 
+# fl.stp.node.comp <- ggplot(st_as_sf(America))+
+#   geom_sf(colour = "black", fill = "#F7F7F7") +
+#   coord_sf(xlim = c(-80, -50),ylim = c(-2, 15)) +
+#   geom_pie_glyph(slices = c("Eastern.Region","Northwestern.Region", "Western.Region", "Central.Region"), colour = "black", data = fall.stp.node.comp, mapping = aes(x = Lon.50., y = Lat.50., radius = tot.abundance))+
+#   scale_radius(range = c(0.6, 3), unit = "mm", guide = "none")+
+#   geom_point(data = fall.stp.node.comp[fall.stp.node.comp$reg.no == "single reg",], mapping = aes(x = Lon.50., y = Lat.50., size = tot.abundance, fill = single_reg), shape= 21,  show.legend = F)+
+#   scale_size(range = c(1.2, 6), guide = "none")+
+#   scale_fill_manual(values = c("Northwestern.Region" = "#F0E442", "Western.Region" = "#D55E00", "Central.Region" = "#009E73", "Eastern.Region" = "#0072B2"), name = "Breeding Region") +
+#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+#         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
+#         legend.position = "None", text = element_text(size = 12), legend.key = element_blank(),
+#         axis.title =element_blank(),
+#         axis.text =element_blank(),
+#         axis.ticks =element_blank(),
+#         axis.line=element_blank(),
+#         axis.ticks.length = unit(0, "pt"),
+#         plot.margin= unit(c(0,0,0,0), "pt"))+ 
+#   guides(fill = guide_legend(override.aes = list(size = 5)), )
+# 
+# # Spring population composition of the nonbreeding nodes (stopover use)
+# spring.stp.node.comp <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.stp.node.composition.csv") 
+# spr.stp.node.comp.plot <- ggplot(st_as_sf(America))+
+#   geom_sf(colour = "black", fill = "#F7F7F7") +
+#   coord_sf(xlim = c(-80, -50),ylim = c(-2, 15)) +
+#   geom_pie_glyph(slices = c("Eastern.Region","Northwestern.Region", "Western.Region", "Central.Region"), colour = "black", data = spring.stp.node.comp, mapping = aes(x = Lon.50., y = Lat.50., radius = tot.abundance))+
+#   scale_radius(range = c(0.6, 3), unit = "mm", guide = "none")+
+#   geom_point(data = spring.stp.node.comp[spring.stp.node.comp$reg.no == "single reg",], mapping = aes(x = Lon.50., y = Lat.50., size = tot.abundance, fill = single_reg), shape= 21,  show.legend = F)+
+#   scale_size(range = c(1.2, 6), guide = "none")+
+#   scale_fill_manual(values = c("Northwestern.Region" = "#F0E442", "Western.Region" = "#D55E00", "Central.Region" = "#009E73", "Eastern.Region" = "#0072B2"), name = "Breeding Region") +
+#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+#         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
+#         legend.position = "None", text = element_text(size = 12), legend.key = element_blank(),
+#         axis.title =element_blank(),
+#         axis.text =element_blank(),
+#         axis.ticks =element_blank(),
+#         axis.ticks.length = unit(0, "pt"),
+#         plot.margin = unit(c(0,0,0,0), "pt"))+ 
+#   guides(fill = guide_legend(override.aes = list(size = 5)), )
 
-# Spring population composition of the nonbreeding nodes
-spring.nbr.node.comp <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/spring.nbr.node.composition.csv") 
-spr.nbr.node.comp.plot <- ggplot(st_as_sf(America))+
+## Zoom-in onto movements in the nonbreeding range 
+load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.sub.graph.R")
+fall.nbr.node.comp <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.nbr.node.composition.csv") 
+meta.fall.sub <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.node.metadata.sub.csv")
+fall.sub.ggnet <- ggnetwork(fall.graph.sub.weighed, layout = as.matrix(meta.fall.sub[, c("Lon.50.", "Lat.50.")]),  scale = F)
+fall.gplot.comp.nbr <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
-  coord_sf(xlim = c(-80, -50),ylim = c(-2, 15)) +
-  geom_pie_glyph(slices = c("Eastern.Region","Northwestern.Region", "Western.Region", "Central.Region"), colour = "black", data = spring.nbr.node.comp, mapping = aes(x = Lon.50., y = Lat.50., radius = tot.abundance))+
-  scale_radius(range = c(6, 12), unit = "mm", guide = "none")+
-  geom_point(data = spring.nbr.node.comp[spring.nbr.node.comp$reg.no == "single reg",], mapping = aes(x = Lon.50., y = Lat.50., size = tot.abundance, fill = single_reg), shape= 21,  show.legend = F)+
-  scale_size(range = c(1.5, 44), guide = "none")+
+  coord_sf(xlim = c(-80, -54),ylim = c(-0, 13)) +
+  geom_edges(data = fall.sub.ggnet, mapping = aes(x = x, y = y, xend = xend, yend = yend, lwd = ab.weight),
+             colour = adjustcolor("black", alpha = 0.5),
+             arrow = arrow(length = unit(5, "mm"), type = "closed", angle = 10))+
+  scale_linewidth(range = c(0.1, 1), guide = "none") +
+  geom_pie_glyph(slices = c("Eastern.Region","Northwestern.Region", "Western.Region", "Central.Region"), colour = "black", data = fall.nbr.node.comp, mapping = aes(x = Lon.50., y = Lat.50., radius = tot.abundance))+
+  scale_radius(range = c(1.2, 3), unit = "mm", guide = "none")+
+  geom_point(data = fall.nbr.node.comp[fall.nbr.node.comp$reg.no == "single reg",], mapping = aes(x = Lon.50., y = Lat.50., size = tot.abundance, fill = single_reg), shape= 21,  show.legend = F)+
+  scale_size(range = c(1.2, 6), guide = "none")+
   scale_fill_manual(values = c("Northwestern.Region" = "#F0E442", "Western.Region" = "#D55E00", "Central.Region" = "#009E73", "Eastern.Region" = "#0072B2"), name = "Breeding Region") +
-  ggtitle("Spring")+
+  ggtitle("(c) Edges in South America and \n final nonbreeding node use")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
-        legend.position = "None", text = element_text(size = 12), legend.key = element_blank(),
+        legend.position = "None", text = element_text(size = 10), legend.key = element_blank(),
+        legend.box.background = element_rect(fill = "white", colour = "black", linewidth = 0.4),
         axis.title =element_blank(),
         axis.text =element_blank(),
         axis.ticks =element_blank(),
@@ -539,53 +609,39 @@ spr.nbr.node.comp.plot <- ggplot(st_as_sf(America))+
         plot.margin = unit(c(0,0,0,0), "pt"))+ 
   guides(fill = guide_legend(override.aes = list(size = 5)), )
 
-# Fall population composition of the nonbreeding nodes (stopover use)
-fall.stp.node.comp <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.stp.node.composition.csv") 
-fl.stp.node.comp <- ggplot(st_as_sf(America))+
+## Zoom-in onto movements in the nonbreeding range 
+load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.sub.graph.R")
+spring.nbr.node.comp <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/spring.nbr.node.composition.csv") 
+spring.ggnet.nbr <- spring.ggnet%>% filter(yend < 13, y < 13)
+spring.gplot.comp.nbr <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
-  coord_sf(xlim = c(-80, -50),ylim = c(-2, 15)) +
-  geom_pie_glyph(slices = c("Eastern.Region","Northwestern.Region", "Western.Region", "Central.Region"), colour = "black", data = fall.stp.node.comp, mapping = aes(x = Lon.50., y = Lat.50., radius = tot.abundance))+
-  scale_radius(range = c(0.6, 3), unit = "mm", guide = "none")+
-  geom_point(data = fall.stp.node.comp[fall.stp.node.comp$reg.no == "single reg",], mapping = aes(x = Lon.50., y = Lat.50., size = tot.abundance, fill = single_reg), shape= 21,  show.legend = F)+
-  scale_size(range = c(1.2, 6), guide = "none")+
+  coord_sf(xlim = c(-80, -54),ylim = c(-0, 13)) +
+  geom_edges(data = spring.ggnet.nbr , mapping = aes(x = x, y = y, xend = xend, yend = yend, col = edge.type, lwd = weight),
+             arrow = arrow(length = unit(5, "mm"), type = "closed", angle = 10))+
+  scale_linewidth(range = c(0.1, 1), guide = "none")+
+  scale_color_manual(values=c(adjustcolor("black", alpha = 0.5), adjustcolor("blue", alpha = 0)), guide = "none")+
+  geom_pie_glyph(slices = c("Eastern.Region","Northwestern.Region", "Western.Region", "Central.Region"), colour = "black", data = spring.nbr.node.comp, mapping = aes(x = Lon.50., y = Lat.50., radius = tot.abundance))+
+  scale_radius(range = c(1.2, 3), unit = "mm", guide = "none")+
+  geom_point(data = spring.nbr.node.comp[spring.nbr.node.comp$reg.no == "single reg",], mapping = aes(x = Lon.50., y = Lat.50., size = tot.abundance, fill = single_reg), shape= 21,  show.legend = F)+
+  scale_size(range = c(1.2, 10), guide = "none")+
   scale_fill_manual(values = c("Northwestern.Region" = "#F0E442", "Western.Region" = "#D55E00", "Central.Region" = "#009E73", "Eastern.Region" = "#0072B2"), name = "Breeding Region") +
+  ggtitle("(d) Edges in South America and \n initial nonbreeding node use")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
-        legend.position = "None", text = element_text(size = 12), legend.key = element_blank(),
+        legend.position = "None", text = element_text(size = 10), legend.key = element_blank(),
+        legend.box.background = element_rect(fill = "white", colour = "black", linewidth = 0.4),
         axis.title =element_blank(),
         axis.text =element_blank(),
         axis.ticks =element_blank(),
         axis.line=element_blank(),
         axis.ticks.length = unit(0, "pt"),
-        plot.margin= unit(c(0,0,0,0), "pt"))+ 
-  guides(fill = guide_legend(override.aes = list(size = 5)), )
-
-# Spring population composition of the nonbreeding nodes (stopover use)
-spring.stp.node.comp <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.stp.node.composition.csv") 
-spr.stp.node.comp.plot <- ggplot(st_as_sf(America))+
-  geom_sf(colour = "black", fill = "#F7F7F7") +
-  coord_sf(xlim = c(-80, -50),ylim = c(-2, 15)) +
-  geom_pie_glyph(slices = c("Eastern.Region","Northwestern.Region", "Western.Region", "Central.Region"), colour = "black", data = spring.stp.node.comp, mapping = aes(x = Lon.50., y = Lat.50., radius = tot.abundance))+
-  scale_radius(range = c(0.6, 3), unit = "mm", guide = "none")+
-  geom_point(data = spring.stp.node.comp[spring.stp.node.comp$reg.no == "single reg",], mapping = aes(x = Lon.50., y = Lat.50., size = tot.abundance, fill = single_reg), shape= 21,  show.legend = F)+
-  scale_size(range = c(1.2, 6), guide = "none")+
-  scale_fill_manual(values = c("Northwestern.Region" = "#F0E442", "Western.Region" = "#D55E00", "Central.Region" = "#009E73", "Eastern.Region" = "#0072B2"), name = "Breeding Region") +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
-        legend.position = "None", text = element_text(size = 12), legend.key = element_blank(),
-        axis.title =element_blank(),
-        axis.text =element_blank(),
-        axis.ticks =element_blank(),
-        axis.ticks.length = unit(0, "pt"),
-        plot.margin = unit(c(0,0,0,0), "pt"))+ 
-  guides(fill = guide_legend(override.aes = list(size = 5)), )
-
+        plot.margin= unit(c(0,0,0,0), "pt"))
 
 ## Panel ----
 node.comp.fig <- (fall.gplot.comp |spring.gplot.comp)
 
-p1 <- fall.gplot.comp+ inset_element(fl.stp.node.comp, 0.01,  0.01, 0.35, 0.35)
-p2 <- spring.gplot.comp+ inset_element(spr.stp.node.comp.plot,  0.01,  0.01, 0.35, 0.35)
+p1 <- fall.gplot.comp + inset_element(fall.gplot.comp.nbr, 0.01,  -0.05, 0.45, 0.45)
+p2 <- spring.gplot.comp + inset_element(spring.gplot.comp.nbr,  0.01,  -0.05, 0.45, 0.45)
 
 node.comp.insert <- (p1 | p2)
 
@@ -863,7 +919,8 @@ spring.gplot.betw <- ggplot(st_as_sf(America))+
         axis.ticks.length = unit(0, "pt"),
         plot.margin = unit(c(0,0,0,0), "pt"))
 
-## Second metric in fall network ----
+
+## Refined node weight ----
 fall.gplot.metric2 <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
   coord_sf(xlim = c(-170, -50),ylim = c(-3, 68)) +
@@ -886,7 +943,7 @@ fall.gplot.metric2 <- ggplot(st_as_sf(America))+
         axis.ticks.length = unit(0, "pt"),
         plot.margin = unit(c(0,0,0,0), "pt"))
 
-## Second metric in spring network ----
+## Refined node weight ----
 spring.gplot.metric2 <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
   coord_sf(xlim = c(-170, -50),ylim = c(-3, 68)) +
@@ -1563,4 +1620,53 @@ ggsave(plot = loc.ind.panel1, filename = "Movement.timings.longitude1.png" ,  pa
 ggsave(plot = loc.ind.panel2, filename = "Movement.timings.longitude2.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures",
        units = "cm", width = 24*1.2, height = 30*1.2, dpi = "print", bg = "white")
 
+#Figure 14 stopovers in the nonbreeding range ----
+
+# Fall stopovers in the nonbreeding range
+fall.nbr.stp <- fall.stat %>% filter(Lat.50. < 13) %>% group_by(geo_id) %>%
+  filter(length(geo_id) > 1)
+
+fall.nbr.stp.plot <- ggplot(st_as_sf(America))+
+  geom_sf(colour = "black", fill = "white") +
+  coord_sf(xlim = c(-80, -45),ylim = c(-5, 15)) +
+  geom_errorbar(data = fall.nbr.stp , aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, width = 0, alpha = 0.2, color = "black") +
+  geom_errorbar(data = fall.nbr.stp , aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, width = 0, alpha = 0.2, color = "black") +
+  geom_path(data = fall.nbr.stp , mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, col = geo_id), col = adjustcolor("black", 0.5)) +
+  geom_point(data =  fall.nbr.stp , mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = period, fill = period), cex = 2.5, pch= 21)+
+  scale_fill_manual(values = c("purple", "yellow"), labels = c("wintering site", "stopover"), name = "")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
+        plot.title=element_text(size=8, vjust=-1),
+        legend.position = c(0.75, 0.75),
+        axis.title =element_blank(),
+        axis.text =element_blank(),
+        axis.ticks =element_blank(),
+        axis.ticks.length = unit(0, "pt"),
+        legend.spacing = unit(-5, "pt"),
+        plot.margin = unit(c(0,0,0,0), "pt"),
+        legend.key = element_rect(colour = "transparent", fill = "white"))
+  
+# spring stopovers in the nonbreeding range
+spring.nbr.stp <- spring.stat %>% filter(Lat.50. < 13) %>% group_by(geo_id) %>%
+  filter(length(geo_id) > 1)
+
+spring.nbr.stp.plot <- ggplot(st_as_sf(America))+
+  geom_sf(colour = "black", fill = "white") +
+  coord_sf(xlim = c(-80, -45),ylim = c(-5, 15)) +
+  geom_errorbar(data = spring.nbr.stp , aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, width = 0, alpha = 0.2, color = "black") +
+  geom_errorbar(data = spring.nbr.stp , aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, width = 0, alpha = 0.2, color = "black") +
+  geom_path(data = spring.nbr.stp , mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, col = geo_id), col = adjustcolor("black", 0.5)) +
+  geom_point(data =  spring.nbr.stp , mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = period, fill = period), cex = 2.5, pch= 21)+
+  scale_fill_manual(values = c("Non-breeding period" = "purple", "Pre-breeding migration" = "yellow"))+
+theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+      panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
+      plot.title=element_text(size=8, vjust=-1),
+      legend.position = "None",
+      axis.title =element_blank(),
+      axis.text =element_blank(),
+      axis.ticks =element_blank(),
+      axis.ticks.length = unit(0, "pt"),
+      legend.spacing = unit(-5, "pt"),
+      plot.margin = unit(c(0,0,0,0), "pt"),
+      legend.key = element_rect(colour = "transparent", fill = "white"))
 
