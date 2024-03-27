@@ -605,6 +605,15 @@ plot(wrld_simpl, xlim=xlim, ylim=ylim, col = "grey95")
 points(sm.fall.edit$Lon.50., sm.fall.edit$Lat.50., pch = 16, cex = 0, col = "firebrick", type = "o")
 points(sm.fall.stat$Lon.50., sm.fall.stat$Lat.50., pch = 16, cex = 1.5, col = "firebrick")
 
+# re-estimate time of establishment and departure from the nonbreeding grounds 
+arr.nbr.sgat <- sm.fall.edit %>% filter(Lat.50. < 12 & sitenum > 0 & duration > stat.nbr.lim) %>% 
+  first(.$StartTime) %>% .$StartTime
+
+
+#add a column that categorizes the locations (based on the groupthreshold model output)
+sm.fall.edit <-sm.fall.edit %>% rowwise() %>% mutate(period= case_when(StartTime < anytime(arr.nbr.sgat, asUTC = T, tz = "GMT")  ~ "Post-breeding migration",
+                                                                       StartTime >= anytime(arr.nbr.sgat, asUTC = T, tz = "GMT") ~ "Non-breeding period"))
+
 #Save the final location summary
 save(sm.fall.edit , file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary_fall_edit.csv"))
 

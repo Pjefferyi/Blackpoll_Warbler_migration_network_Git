@@ -218,18 +218,25 @@ fall.stat.ab <- merge(fall.stat, fall.breed.ab[,c("ab.unit", "geo_id")], by = "g
 # Summed time spent in each node for the fall
 fall.use.time <- fall.stat.ab %>% 
   mutate(duration = ifelse(site_type != "Stopover", 0, duration)) %>%
-  group_by(cluster) %>% 
-  summarize(time.per.node = mean(duration))
+  filter(!(cluster == 5 & study.site %in% c("Quebec","Mount Mansfield, Vermont, USA")),
+         !(cluster == 7 & study.site %in% c("Nova Scotia, Canada"))) %>%
+  group_by(cluster, geo_id) %>%
+  summarize(time.per.node.ind =sum(duration)) %>%
+  summarize(time.per.node = mean(time.per.node.ind))
 
 # Summed time spent in each node weighed by relative abundance for the spring 
 fall.use.timeab <- fall.stat.ab %>%
   mutate(duration = ifelse(site_type != "Stopover", 0, duration)) %>%
+  filter(!(cluster == 5 & study.site %in% c("Quebec","Mount Mansfield, Vermont, USA")),
+         !(cluster == 7 & study.site %in% c("Nova Scotia, Canada"))) %>%
+  group_by(cluster, geo_id) %>%
+  summarize(time.per.node = sum(duration), ab.units = unique(ab.unit)) %>%
+  mutate(time.per.ab.ind = time.per.node * ab.units) %>%
   group_by(cluster) %>%
-  summarize(time.per.node = mean(duration), ab.units = sum(ab.unit)) %>%
-  mutate(time.per.ab = time.per.node * ab.units)
+  summarize(time.per.ab = mean(time.per.ab.ind))
 
 V(fall.graph)$time.spent <- fall.use.time$time.per.node
-V(fall.graph)$time.spent.ab <- fall.use.timeab$time.per.ab
+V(fall.graph)$time.spent.ab <- fall.use.timeab$time.per.ab/max(fall.use.timeab$time.per.ab)
 
 # Extract abundance and time spent data for the spring
 spring.breed.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.abundance.per.bird.csv")
@@ -238,18 +245,21 @@ spring.stat.ab <- merge(spring.stat, spring.breed.ab[,c("ab.unit", "geo_id")], b
 # Summed time spent in each node for the spring
 spring.use.time <- spring.stat.ab %>% 
   mutate(duration = ifelse(site_type != "Stopover", 0, duration)) %>%
-  group_by(cluster) %>% 
-  summarize(time.per.node = mean(duration))
+  group_by(cluster, geo_id) %>%
+  summarize(time.per.node.ind =sum(duration)) %>%
+  summarize(time.per.node = mean(time.per.node.ind))
 
 # Summed time spent in each node weighed by relative abundance for the spring 
 spring.use.timeab <- spring.stat.ab %>%
   mutate(duration = ifelse(site_type != "Stopover", 0, duration)) %>%
+  group_by(cluster, geo_id) %>%
+  summarize(time.per.node = sum(duration), ab.units = unique(ab.unit)) %>%
+  mutate(time.per.ab.ind = time.per.node * ab.units) %>%
   group_by(cluster) %>%
-  summarize(time.per.node = mean(duration), ab.units = sum(ab.unit)) %>%
-  mutate(time.per.ab = time.per.node * ab.units)
+  summarize(time.per.ab = mean(time.per.ab.ind))
 
 V(spring.graph)$time.spent <- spring.use.time$time.per.node
-V(spring.graph)$time.spent.ab <- spring.use.timeab$time.per.ab
+V(spring.graph)$time.spent.ab <- spring.use.timeab$time.per.ab/max(spring.use.timeab$time.per.ab)
 
 # fall and spring bridge centrality
 fall.graph.brd <- fall.graph.disc 
@@ -363,7 +373,7 @@ fall.clustplot<- ggplot(st_as_sf(America))+
   #geom_path(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5) +
   geom_point(data = fall.stat[(fall.stat$site_type!= "Breeding"),], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = as.factor(cluster)), cex = 1, shape = 21, col = "white", stroke = 0.1) +
   #geom_text(data = meta.fall.ab[meta.fall.ab$node.type != "Breeding",], mapping = aes(x = Lon.50., y = Lat.50., label = vertex), cex = 3, fontface = "bold")+
-  geom_shadowtext(data = meta.fall.ab[meta.fall.ab$node.type != "Breeding",], mapping = aes(x = Lon.50., y = Lat.50., label = vertex), cex = 3, fontface = "bold", col = "black", bg.colour = "white")+
+  #geom_shadowtext(data = meta.fall.ab[meta.fall.ab$node.type != "Breeding",], mapping = aes(x = Lon.50., y = Lat.50., label = vertex), cex = 3, fontface = "bold", col = "black", bg.colour = "white")+
   labs(colour = "Cluster") +
   theme_bw() +
   ggtitle("(c) Fall stationary location clusters") + 
@@ -595,7 +605,7 @@ fall.gplot.comp.nbr <- ggplot(st_as_sf(America))+
   geom_pie_glyph(slices = c("Eastern.Region","Northwestern.Region", "Western.Region", "Central.Region"), colour = "black", data = fall.nbr.node.comp, mapping = aes(x = Lon.50., y = Lat.50., radius = tot.abundance))+
   scale_radius(range = c(1.2, 3), unit = "mm", guide = "none")+
   geom_point(data = fall.nbr.node.comp[fall.nbr.node.comp$reg.no == "single reg",], mapping = aes(x = Lon.50., y = Lat.50., size = tot.abundance, fill = single_reg), shape= 21,  show.legend = F)+
-  scale_size(range = c(1.2, 6), guide = "none")+
+  scale_size(range = c(1.2, 9), guide = "none")+
   scale_fill_manual(values = c("Northwestern.Region" = "#F0E442", "Western.Region" = "#D55E00", "Central.Region" = "#009E73", "Eastern.Region" = "#0072B2"), name = "Breeding Region") +
   ggtitle("(c) Edges in South America and \n final nonbreeding node use")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
@@ -920,7 +930,7 @@ spring.gplot.betw <- ggplot(st_as_sf(America))+
         plot.margin = unit(c(0,0,0,0), "pt"))
 
 
-## Refined node weight ----
+## Time-adjusted node weight ----
 fall.gplot.metric2 <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
   coord_sf(xlim = c(-170, -50),ylim = c(-3, 68)) +
@@ -929,7 +939,7 @@ fall.gplot.metric2 <- ggplot(st_as_sf(America))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
   scale_color_manual(values=c(adjustcolor("black", alpha = 0.5), adjustcolor("blue", alpha = 0)), guide = "none")+
   geom_nodes(data = fall.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = time.spent.ab), shape=21, size  = 3)+
-  scale_fill_viridis_c(direction = -1, option = "magma", name = "Refined node\nweight", begin  = 0.3,
+  scale_fill_viridis_c(direction = -1, option = "magma", name = "Time-adjusted \nnode weight", begin  = 0.3,
                        guide = guide_colorbar(frame.colour = "black"), limits = c(min(0), max(fall.ggnet$time.spent.ab, spring.ggnet$time.spent.ab)))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
@@ -943,7 +953,7 @@ fall.gplot.metric2 <- ggplot(st_as_sf(America))+
         axis.ticks.length = unit(0, "pt"),
         plot.margin = unit(c(0,0,0,0), "pt"))
 
-## Refined node weight ----
+## Time-adjusted node weight ----
 spring.gplot.metric2 <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
   coord_sf(xlim = c(-170, -50),ylim = c(-3, 68)) +
@@ -953,7 +963,7 @@ spring.gplot.metric2 <- ggplot(st_as_sf(America))+
   geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = time.spent.ab), shape=21, size  = 3)+
   scale_color_manual(values=c(adjustcolor("blue", alpha = 0), adjustcolor("black", alpha = 0.5)), guide = "none")+
   #geom_text(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, label = participation.coef))+
-  scale_fill_viridis_c(direction = -1, option = "magma", name = "Refined node \nweight", begin  = 0.3,
+  scale_fill_viridis_c(direction = -1, option = "magma", name = "Time-adjusted \nnode weight", begin  = 0.3,
                        guide = guide_colorbar(frame.colour = "black"), limits = c(min(0), max(fall.gdata$time.spent.ab, fall.gdata$time.spent.ab)))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),

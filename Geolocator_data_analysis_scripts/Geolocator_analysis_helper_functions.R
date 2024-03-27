@@ -251,6 +251,50 @@ findThresLocData <- function(geo.ids = NULL){
   return(location_set)
 }
 
+# findThresLocData ##################################################################
+
+# Function to retrieve threshold location data for each geolocator 
+
+findThresModData <- function(geo.ids = NULL){
+  
+  # Create a list of path to all files with location data 
+  folder_paths <- list.files("/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geolocator_data", full.names = T)
+  geo_names <- list.files("/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geolocator_data")
+  
+  location_set <- data.frame()
+  
+  #load the geolocator reference data/metadata
+  ref.data <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv")
+  
+  # If no vector of geo.ids was provided, extract data for all geolocators in dataset
+  if (is.null(geo.ids)){
+    geo.ids = unique(ref.data$geo.id)
+  }
+  
+  for (i in seq(1:length(folder_paths))){
+    # load the data from each file and add it to dataset if it is in geo_ids 
+    if (geo_names[i] %in% geo.ids | is.null(geo.ids)){
+      
+      print(geo_names[i])
+      
+      #extract threshold location data 
+      thresmod.path <- paste0(folder_paths[i], "/",geo_names[i],"_SGAT_Threshold_summary.csv")
+      
+      load(file = thresmod.path)
+      
+      # Add acolumn with the geo ID
+      sm.s$geo_id <- geo_names[i]
+      
+      location_set <- rbind(location_set, sm.s)
+    }
+  }
+  
+  # Add reference data 
+  location_set <- merge(location_set, ref.data, by.x = "geo_id", by.y = "geo.id")
+  
+  return(location_set)
+}
+
 # Test calls  for findThresLocData #############################################
 
 # Extract threshold location data for specific geolocators

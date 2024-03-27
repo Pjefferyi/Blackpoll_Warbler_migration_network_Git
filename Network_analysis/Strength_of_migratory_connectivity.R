@@ -126,16 +126,14 @@ write_sf(fall.nbr.regions, "C:/Users/Jelan/OneDrive/Desktop/University/Universit
 write.csv(data.frame(fall.nbr.sf), "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/fall.nbr.sf.csv")
 
 #geoBIas (in meters)
-# We will use the uncertainty for the threshold location estimates because the ouput of the
-# GroupThresholdModel provides only one location for stationary periods
-Thresh.loc.data <- findThresLocData()
-Thresh.loc.data$Twilight <- anytime(Thresh.loc.data$Twilight)
+# We will use daily location estimates from the grouped threshold model ran without stationary periods 
+Thresh.mod.data <- findThresModData()
 
 # We calculate spatial bias as the mean distance from the geolocator deployment site while the bird was known to be at that location
-geo.bias.dists <- Thresh.loc.data %>% group_by(geo_id) %>%
-  filter(Twilight > min(Twilight) + days(1) & Twilight < min(Twilight) + days(15)) %>%
-  mutate(lat.geo.bias = distHaversine(cbind(deploy.longitude,lat), cbind(deploy.longitude, deploy.latitude))) %>%
-  mutate(lon.geo.bias = distHaversine(cbind(lon,deploy.latitude), cbind(deploy.longitude, deploy.latitude)))
+geo.bias.dists <- Thresh.mod.data %>% group_by(geo_id) %>%
+  filter(Time1 > IH.calib.start & Time1  < IH.calib.end) %>%
+  mutate(lat.geo.bias = distHaversine(cbind(deploy.longitude,`Lat.50%`), cbind(deploy.longitude, deploy.latitude))) %>%
+  mutate(lon.geo.bias = distHaversine(cbind(`Lon.50%` ,deploy.latitude), cbind(deploy.longitude, deploy.latitude)))
 
 # bias in longitude and latitude estimates, in meters
 geo.bias <- c(lon.bias = mean(geo.bias.dists$lon.geo.bias),

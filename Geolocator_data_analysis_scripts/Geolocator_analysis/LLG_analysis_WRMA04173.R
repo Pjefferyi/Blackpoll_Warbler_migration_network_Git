@@ -535,7 +535,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                beta =  beta,
                                x0 = x0, # median point for each group (defined by twl$group)
                                z0 = z0, # middle points between the x0 points
-                               zenith = zeniths0,
+                               zenith = zenith0,
                                logp.x = logp,# land sea mask
                                fixedx = fixedx)
 
@@ -625,3 +625,4 @@ dev.off()
 # Save the threshold model estimate ############################################
 save(sm.s, file = paste0(dir,"/", geo.id,"_SGAT_Threshold_summary.csv"))
 save(fit.s, file = paste0(dir,"/", geo.id,"_SGAT_Threshold_fit.s.R"))
+

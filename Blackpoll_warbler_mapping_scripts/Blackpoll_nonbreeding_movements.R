@@ -29,7 +29,7 @@ geo.all <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Gu
 # extract Nonbreeding stationary sites
 NB.stat <- geo.all %>% dplyr::filter(sitenum > 0, site_type %in% c("Nonbreeding"),
                    period %in% c("Non-breeding period"),
-                   Recorded_North_South_mig %in% c("Both", "South and partial North")) %>%
+                   Recorded_North_South_mig %in% c("Both", "South and partial North") | geo_id == "WRMA04173") %>%
   ungroup()
 
 # Remove points for movements where the distance is less than 250 km

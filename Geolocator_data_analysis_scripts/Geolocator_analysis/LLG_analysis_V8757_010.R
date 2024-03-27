@@ -218,14 +218,14 @@ stationarySite <- which(table(site) == max(table(site))) # find the site where b
 start <- min(which(mS$site == stationarySite))
 end   <- max(which(mS$site == stationarySite))
 
-# startDate <- "2019-11-20"
-# endDate   <- "2020-02-20"
-# 
+# startDate <- "2020-03-20"
+# endDate   <- "2020-04-18"
+
 # start = min(which(as.Date(twl$Twilight) == startDate))
 # end = max(which(as.Date(twl$Twilight) == endDate))
 
-#calculate the zenith angle that minimizes variation in latitude during this period 
-(zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end))) 
+#calculate the zenith angle that minimizes variation in latitude during this period
+(zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
 
 # The angles obtained with in-habitat and Hill-Ekstrom Calibration differ by less than 0.5
 # we can use the same zenith angle throughout the annual cycle
@@ -251,12 +251,13 @@ dep.nbr <- "2020-04-20"
 jpeg(paste0(dir, "/", geo.id, "_LatLon_scatterplot.png"), width = 1024, height = 990)
 
 par(mfrow = c(2,1))
-plot(twl$Twilight, x0_r[,1], ylab = "longitude")
+plot(twl$Twilight[300:600], x0_r[300:600,1], ylab = "longitude")
 abline(v = anytime(arr.nbr))
 abline(v = anytime(dep.nbr))
 abline(v = fall.equi, col = "orange")
 abline(v = spring.equi, col = "orange")
-plot(twl$Twilight, x0_r[,2], ylab = "latitude")
+plot(twl$Twilight[300:700], x0_r[300:700,2], ylab = "latitude")
+abline(h= 0)
 abline(v = anytime(arr.nbr))
 abline(v = anytime(dep.nbr))
 abline(v = fall.equi, col = "orange")
@@ -267,8 +268,8 @@ dev.off()
 # Using approximate timings of arrival and departure from the breeding grounds
 zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith0,
-                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad+2,
-                            Date > anytime(dep.nbr) ~ zenith0_ad+2))
+                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad + 2,
+                            Date > anytime(dep.nbr) ~ zenith0_ad + 2))
 
 zeniths0 <- zenith_twl_zero$zenith
 
@@ -306,7 +307,7 @@ abline(v = spring.equi, col = "orange")
 dev.off()
 
 # Initial Path #################################################################
-tol_ini <- 0.18
+tol_ini <- 0.1
 path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol = tol_ini)
 
 x0 <- path$x
@@ -337,11 +338,11 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-q <- 0.76
+q <- 0.82
 cL <- changeLight(twl=geo_twl, quantile= q, summary = F, days = days, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = dist)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = dist)
 
 #back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 

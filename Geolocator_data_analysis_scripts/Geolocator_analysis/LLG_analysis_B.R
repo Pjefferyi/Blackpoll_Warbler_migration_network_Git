@@ -617,6 +617,19 @@ sm.fall.edit <- insertLoc(data = sm,
                           sep1 = days(3),
                           sep2 = days (1))
 
+
+# re-estimate time of establishment and departure from the nonbreeding grounds 
+arr.nbr.sgat <- sm.fall.edit %>% filter(Lat.50. < 12 & sitenum > 0 & duration > stat.nbr.lim) %>% 
+  first(.$StartTime) %>% .$StartTime
+dep.nbr.sgat <- sm.fall.edit %>% filter(Lat.50. < 12 & sitenum > 0 & duration > stat.nbr.lim) %>%
+  last(.$EndTime)%>% .$EndTime
+
+#add a column that categorizes the locations (based on the groupthreshold model output)
+sm.fall.edit <-sm.fall.edit %>% rowwise() %>% mutate(period= case_when(StartTime < anytime(arr.nbr.sgat, asUTC = T, tz = "GMT")  ~ "Post-breeding migration",
+                                                                       StartTime >= anytime(arr.nbr.sgat, asUTC = T, tz = "GMT") & StartTime < anytime(dep.nbr.sgat, asUTC = T, tz = "GMT") ~ "Non-breeding period",
+                                                                       StartTime > anytime(dep.nbr.sgat , asUTC = T, tz = "GMT") ~ "Pre-breeding migration"))
+
+
 #plot the final stationary locations 
 sm.fall.stat <- sm.fall.edit[(sm.fall.edit$sitenum > 0), ]
 
