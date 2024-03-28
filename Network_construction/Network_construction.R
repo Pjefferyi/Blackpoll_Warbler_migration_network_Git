@@ -233,7 +233,7 @@ fall.stat <- fall.stat %>% group_by(geo_id) %>% filter(StartTime <= NB.first.sit
   filter(case_when(!(study.site %in% c("Quebec", "Mount Mansfield, Vermont, USA", "Nova Scotia, Canada")) ~ site_type != "Breeding",
                    T ~ site_type == site_type )) %>%
   filter(ifelse(study.site %in% c("Quebec", "Mount Mansfield, Vermont, USA", "Nova Scotia, Canada"), sitenum > 1, distHaversine(cbind(Lon.50.,Lat.50.), cbind(deploy.longitude, deploy.latitude)) > 250000)) %>%
-  mutate(site_type = ifelse(site_type == "Breeding", "Stopover", site_type), 
+  mutate(site_type = ifelse(site_type == "Breeding", "Stopover", site_type),
          period  = ifelse(site_type == "Breeding", "Post-breeding migration", period),)
   
 # Create clusters in two steps to account for the equinox 
@@ -927,12 +927,12 @@ fall.ab.by.origin <- fall.stat.ab %>% group_by(cluster, Breeding_region_MC) %>%
 fall.ab.by.origin <- fall.ab.by.origin %>% pivot_wider(names_from = Breeding_region_MC, values_from = c(region.ab.units, region.n)) %>%
   rename(prop.ab.central = `region.ab.units_Central Region`,
          prop.ab.eastern = `region.ab.units_Eastern Region`,
-         prop.ab.western = `region.ab.units_Northwestern Region`,
-         prop.ab.northwestern = `region.ab.units_Western Region`,
+         prop.ab.western = `region.ab.units_Western Region`,
+         prop.ab.northwestern = `region.ab.units_Northwestern Region`,
          n.central = `region.n_Central Region`,
          n.eastern = `region.n_Eastern Region`,
-         n.western = `region.n_Northwestern Region`,
-         n.northwestern = `region.n_Western Region`)
+         n.western = `region.n_Western Region`,
+         n.northwestern = `region.n_Northwestern Region`)
 
 # Merge abundance data with the node metadata
 meta.fall.ab <- merge(meta.fall, fall.ab.by.origin, by.x = "vertex", by.y = "cluster") 
@@ -1024,12 +1024,12 @@ spring.ab.by.origin <- spring.stat.ab %>% group_by(cluster, Breeding_region_MC) 
 spring.ab.by.origin <- spring.ab.by.origin %>% pivot_wider(names_from = Breeding_region_MC, values_from = c(region.ab.units, region.n)) %>%
   rename(prop.ab.central = `region.ab.units_Central Region`,
          prop.ab.eastern = `region.ab.units_Eastern Region`,
-         prop.ab.western = `region.ab.units_Northwestern Region`,
-         prop.ab.northwestern = `region.ab.units_Western Region`,
+         prop.ab.western = `region.ab.units_Western Region`,
+         prop.ab.northwestern = `region.ab.units_Northwestern Region`,
          n.central = `region.n_Central Region`,
          n.eastern = `region.n_Eastern Region`,
-         n.western = `region.n_Northwestern Region`,
-         n.northwestern = `region.n_Western Region`)
+         n.western = `region.n_Western Region`,
+         n.northwestern = `region.n_Northwestern Region`)
 
 # Merge abundance data with the node metadata
 meta.spring.ab <- merge(meta.spring, spring.ab.by.origin, by.x = "vertex", by.y = "cluster") 

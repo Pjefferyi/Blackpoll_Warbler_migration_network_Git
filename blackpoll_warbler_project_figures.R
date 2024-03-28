@@ -373,7 +373,7 @@ fall.clustplot<- ggplot(st_as_sf(America))+
   #geom_path(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5) +
   geom_point(data = fall.stat[(fall.stat$site_type!= "Breeding"),], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = as.factor(cluster)), cex = 1, shape = 21, col = "white", stroke = 0.1) +
   #geom_text(data = meta.fall.ab[meta.fall.ab$node.type != "Breeding",], mapping = aes(x = Lon.50., y = Lat.50., label = vertex), cex = 3, fontface = "bold")+
-  #geom_shadowtext(data = meta.fall.ab[meta.fall.ab$node.type != "Breeding",], mapping = aes(x = Lon.50., y = Lat.50., label = vertex), cex = 3, fontface = "bold", col = "black", bg.colour = "white")+
+  geom_shadowtext(data = meta.fall.ab[meta.fall.ab$node.type != "Breeding",], mapping = aes(x = Lon.50., y = Lat.50., label = vertex), cex = 3, fontface = "bold", col = "black", bg.colour = "white")+
   labs(colour = "Cluster") +
   theme_bw() +
   ggtitle("(c) Fall stationary location clusters") + 
@@ -462,7 +462,7 @@ fall.gplot.comp <- ggplot(st_as_sf(America))+
              arrow = arrow(length = unit(9, "pt"), type = "closed", angle = 10))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
   scale_color_manual(values=c(adjustcolor("black", alpha = 0.5), adjustcolor("blue", alpha = 0)), guide = "none")+
-  geom_pie_glyph(slices= c("West", "Central", "East", "Northwest"), colour = "black", data = fall.data[fall.data$node.comp < 3,], mapping = aes(x = long, y = lat, radius = node.weight)) +
+  geom_pie_glyph(slices= c( "Northwest", "West", "Central", "East"), colour = "black", data = fall.data[fall.data$node.comp < 3,], mapping = aes(x = long, y = lat, radius = node.weight)) +
   scale_radius(range = c(0.6, 3), unit = "mm", guide = "none")+
   geom_point(data = fall.data[fall.data$node.comp == 3,], mapping = aes(x = long, y = lat, fill = single.reg, size = node.weight), shape= 21, colour = "black",  show.legend = F)+
   scale_size(range = c(1.2, 6), guide = "none")+

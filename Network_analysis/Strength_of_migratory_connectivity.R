@@ -125,24 +125,43 @@ fall.nbr.regions <- st_difference(fall.nbr.regions)
 write_sf(fall.nbr.regions, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/fall.nbr.regions.shp")
 write.csv(data.frame(fall.nbr.sf), "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/fall.nbr.sf.csv")
 
-#geoBIas (in meters)
+# Uncertainty and error estimation 
 # We will use daily location estimates from the grouped threshold model ran without stationary periods 
-Thresh.mod.data <- findThresModData()
+locs <- findThresModData() 
+locs <- locs %>% group_by(geo_id) %>% filter(Time1 > IH.calib.start & Time1  < IH.calib.end)
+
+# modelled locations, projected
+Thresh.mod.data.loc <- locs %>% st_as_sf(coords = c("Lon.mean",
+                                                              "Lat.mean"),
+                                                   crs = 4326) %>%
+  st_transform(proj)
+
+# origin locations, projected
+Thresh.mod.data.or <- locs %>% st_as_sf(coords = c("deploy.longitude",
+                                                                 "deploy.latitude"),
+                                                      crs = 4326) %>%
+  st_transform(proj)
 
 # We calculate spatial bias as the mean distance from the geolocator deployment site while the bird was known to be at that location
-geo.bias.dists <- Thresh.mod.data %>% group_by(geo_id) %>%
-  filter(Time1 > IH.calib.start & Time1  < IH.calib.end) %>%
-  mutate(lat.geo.bias = distHaversine(cbind(deploy.longitude,`Lat.50%`), cbind(deploy.longitude, deploy.latitude))) %>%
-  mutate(lon.geo.bias = distHaversine(cbind(`Lon.50%` ,deploy.latitude), cbind(deploy.longitude, deploy.latitude)))
+lon.errors <- rep(NA, nrow(fall.nbr.sf))
+lat.errors <- rep(NA, nrow(fall.nbr.sf))
 
-# bias in longitude and latitude estimates, in meters
-geo.bias <- c(lon.bias = mean(geo.bias.dists$lon.geo.bias),
-              lat.bias = mean(geo.bias.dists$lat.geo.bias))
+for (i in seq(1, length(fall.nbr.sf$geo_id))){
+  
+  mod.locs <- Thresh.mod.data.loc %>% filter(geo_id == fall.nbr.sf$geo_id[i])
+  or.locs <-  Thresh.mod.data.or %>% filter(geo_id == fall.nbr.sf$geo_id[i])
+  
+  lon.error <- mean(st_coordinates(mod.locs)[,1] - st_coordinates(or.locs)[,1])
+  lat.error <- mean(st_coordinates(mod.locs)[,2] - st_coordinates(or.locs)[,2])
+  
+  lon.errors[i] <- lon.error
+  lat.errors[i] <- lat.error
+}
 
-# Geolocator variance covariance at origin sites
-#mod <- lm(cbind(geo.bias.dists$lon.geo.bias, geo.bias.dists$lat.geo.bias) ~ 1)
-#geo.vcov <- cov(fall.nbr[, c("Lon.50.","Lat.50.")])
-geo.vcov <- cov(st_coordinates(fall.nbr.sf))
+# Geolocator error and variance/covariance at origin sites
+mod <- lm(cbind(lon.errors, lat.errors) ~ 1)
+geo.bias <- coef(mod)
+geo.vcov <- vcov(mod)
 
 #number of bootstrap samples 
 nSamples <- 100
@@ -197,6 +216,10 @@ GL_psi_nbr1 <- estTransition(isGL=TRUE,
                         nSamples = nSamples,
                         resampleProjection = CRS(proj),
                         maxTries = 1000)
+
+x <- as.data.frame(GL_psi_nbr1$psi$mean)
+colnames(x) <- fall.nbr.regions$cluster
+rownames(x) <- br.regions$region
 
 # Save the output of estTransition
 save(GL_psi_nbr1, file = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_analysis/estTransition_ouput_nbr1.R")
@@ -262,7 +285,9 @@ rM_metric_nbr1 <- estMantel(isGL= T,#Logical vector: light-level GL(T)/GPS(F)
 #Save output 
 save(rM_metric_nbr1, file = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_analysis/rM_metric_nbr1.R")
 
-# Data preparation for MC between Breeding site and second nonbreeding site ######
+################################################################################
+# Data preparation for MC between Breeding site and second nonbreeding site 
+################################################################################
 
 # spring network breeding points
 spring.br <- spring.breed %>% arrange(geo_id)
@@ -286,6 +311,30 @@ spring.nbr <- spring.stat %>% group_by(geo_id) %>%
 
 spring.nbr.sf <- st_as_sf(spring.nbr, coords = c("Lon.50.", "Lat.50."), crs = st_crs(wrld_simpl), remove = F)
 spring.nbr.sf <- st_transform(spring.nbr.sf, st_crs(proj)) 
+
+# Uncertainty and error estimation for the spring 
+# We again use daily location estimates from the grouped threshold model ran without stationary periods 
+
+# We calculate spatial bias as the mean distance from the geolocator deployment site while the bird was known to be at that location
+lon.errors <- rep(NA, nrow(spring.nbr.sf))
+lat.errors <- rep(NA, nrow(spring.nbr.sf))
+
+for (i in seq(1, length(spring.nbr.sf$geo_id))){
+  
+  mod.locs <- Thresh.mod.data.loc %>% filter(geo_id == spring.nbr.sf$geo_id[i])
+  or.locs <-  Thresh.mod.data.or %>% filter(geo_id == spring.nbr.sf$geo_id[i])
+  
+  lon.error <- mean(st_coordinates(mod.locs)[,1] - st_coordinates(or.locs)[,1])
+  lat.error <- mean(st_coordinates(mod.locs)[,2] - st_coordinates(or.locs)[,2])
+  
+  lon.errors[i] <- lon.error
+  lat.errors[i] <- lat.error
+}
+
+# Geolocator error and variance/covariance at origin sites
+mod <- lm(cbind(lon.errors, lat.errors) ~ 1)
+geo.bias <- coef(mod)
+geo.vcov <- vcov(mod)
 
 # Origin sites  (polygons)
 spring.br.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Relative_abundance_propagation/bpw_abundance_regions_adjusted.shp") %>%
@@ -389,6 +438,18 @@ ggplot(st_as_sf(wrld_simpl))+
   theme()+
   ggtitle("Blackpoll warbler breeding regions")
 
+# Generate an indicator to signal that WRMA04173 was captured in the nonbreeding range
+capture.loc <- ifelse(spring.nbr.sf$geo_id != "WRMA04173", "origin", "target")
+
+# # recover abundance information for the target sites 
+# spring.nbr.sf <- merge(spring.nbr.sf, spring.breed.ab[, c("geo_id", "ab.unit")], by = "geo_id")
+# spring.nbr.ab <- st_intersection(spring.nbr.sf, spring.nbr.regions) %>% group_by(cluster.1) %>%
+#   summarize(abd = sum(ab.unit)) 
+# 
+# #re-order to match nbr.regions 
+# reg.order <- match(spring.nbr.ab$cluster.1, spring.nbr.regions$cluster)
+# spring.nbr.ab <- spring.nbr.ab[reg.order,]
+
 # Estimation and resampling of uncertainty for transition probabilities (psi) ################################################################################
 GL_psi_nbr2 <- estTransition(isGL=TRUE,
                         geoBias = geo.bias,
@@ -397,10 +458,15 @@ GL_psi_nbr2 <- estTransition(isGL=TRUE,
                         originSites = spring.br.regions,
                         originPoints = spring.br.sf,
                         targetPoints = spring.nbr.sf,
+                        captured = capture.loc,
                         verbose = 2,
                         nSamples = nSamples,
                         resampleProjection = CRS(proj),
                         maxTries = 1000)
+
+x <- as.data.frame(GL_psi_nbr2$psi$mean)
+colnames(x) <- spring.nbr.regions$cluster
+rownames(x) <- spring.br.regions$region
 
 # Save the output of estTransition
 save(GL_psi_nbr2, file = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_analysis/estTransition_ouput_nbr2.R")
@@ -457,3 +523,13 @@ rM_metric_nbr2 <- estMantel(isGL= T,#Logical vector: light-level GL(T)/GPS(F)
 #Save output 
 save(rM_metric_nbr2, file = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_analysis/rM_metric_nbr2.R")
 
+st_distance(spring.br.sf)
+
+
+# Calculate a simple matel coefficient 
+x <- calcMantel(originPoints = fall.br.sf, # Capture Locations
+           targetPoints = fall.nbr.sf, # Target locations,
+           targetDist = st_distance(fall.nbr.sf),
+           originDist = st_distance(fall.br.sf))
+
+           
