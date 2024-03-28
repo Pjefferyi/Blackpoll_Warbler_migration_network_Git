@@ -154,7 +154,7 @@ undirected.fall.graph <- as.undirected(fall.graph, mode = "collapse",
 
 fall.label.prop <- concensusCluster(graph = undirected.fall.graph, thresh = 0.5, algiter = 1000)
 fall.infomap <- cluster_infomap(fall.graph)
-fall.walktrap <- cluster_walktrap(fall.graph)
+fall.walktrap <- cluster_walktrap(fall.graph, steps = 5)
 
 modularity(fall.graph, fall.label.prop$`community structure`$membership)
 modularity(fall.graph, fall.infomap$membership)
@@ -170,7 +170,7 @@ undirected.spring.graph <- as.undirected(spring.graph, mode = "collapse",
 
 spring.label.prop <- concensusCluster(graph = undirected.spring.graph, thresh = 0.5, algiter = 1000)
 spring.infomap <- cluster_infomap(spring.graph)
-spring.walktrap <- cluster_walktrap(spring.graph)
+spring.walktrap <- cluster_walktrap(spring.graph, steps = 5)
 
 modularity(spring.graph, spring.label.prop$`community structure`$membership)
 modularity(spring.graph, spring.infomap$membership)
@@ -1510,7 +1510,7 @@ plot_a_list <- function(plots, nrows, ncols) {
 }
 
 loc.ind.panel1 <- plot_a_list(loc.ind[1:24], 6, 4)
-loc.ind.panel2 <- plot_a_list(loc.ind[25:45], 6, 4)
+loc.ind.panel2 <- plot_a_list(loc.ind[25:44], 6, 4)
 
 ## Save the plots ----
 ggsave(plot = loc.ind.panel1, filename = "individual.movements1.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures",

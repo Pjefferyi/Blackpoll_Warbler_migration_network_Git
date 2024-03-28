@@ -89,7 +89,7 @@ geo.all <- geo.all %>% mutate(IQR.lon.dist = distHaversine(cbind(Lon.97.5.,Lat.5
 geo.all.br.departure <- geo.all %>% filter(period %in% c("Post-breeding migration","Non-breeding period"), 
                                            Recorded_North_South_mig %in% c("Both", "South and partial North", "South")) %>%
   group_by(geo_id) %>% mutate(proximity = distHaversine(cbind(Lon.50., Lat.50.), cbind(deploy.longitude, deploy.latitude))) %>%
-  filter(proximity <= 250000) %>% summarize(fall.br.departure = max(EndTime )) 
+  filter(proximity <= 250000) %>% summarize(fall.br.departure = max(EndTime)) 
   #mutate(lon.proximity = deploy.longitude - Lon.50., lat.proximity = deploy.latitude - Lat.50.) %>%
   #filter(abs(lon.proximity) <= 2 & abs(lat.proximity) <= 4) %>% summarize(fall.br.departure = max(EndTime)) 
   #filter(ifelse(study.site %in% c("Quebec", "Mount Mansfield, Vermont, USA", "Nova Scotia, Canada"), (abs(lon.proximity) < 0.1 & abs(lat.proximity) < 0.1), (abs(lon.proximity) <= 2 & abs(lat.proximity) <= 4))) %>% summarize(fall.br.departure = max(EndTime )) 
@@ -107,7 +107,7 @@ geo.all.br.arrival <- geo.all %>%  filter(period %in% c("Pre-breeding migration"
   #filter(abs(lon.proximity) <= 2 & abs(lat.proximity) <= 4) %>% summarize(spring.br.arrival = min(StartTime))
 
 # Merge breeding grounds arrival & departure times with location data #######
-geo.all <- geo.all %>% merge(geo.all.br.departure, by = "geo_id", all = T) %>%
+geo.all <- geo.all %>% dplyr::select(!c(fall.br.departure, spring.br.arrival)) %>% merge(geo.all.br.departure, by = "geo_id", all = T) %>%
   merge(geo.all.br.arrival, by = "geo_id", all = T) %>% group_by(geo_id) %>% 
   arrange(geo_id, StartTime) %>%
   group_by(geo_id) %>%
@@ -230,11 +230,15 @@ fall.stat <- merge(fall.stat, fall.timings.nb, by = "geo_id")
 
 #only retain the stopovers and the first nonbreeding sites occupied, and filter out stopovers that are within 250 km of breeding site 
 fall.stat <- fall.stat %>% group_by(geo_id) %>% filter(StartTime <= NB.first.site.arrival) %>% 
-  filter(case_when(!(study.site %in% c("Quebec", "Mount Mansfield, Vermont, USA", "Nova Scotia, Canada")) ~ site_type != "Breeding",
-                   T ~ site_type == site_type )) %>%
-  filter(ifelse(study.site %in% c("Quebec", "Mount Mansfield, Vermont, USA", "Nova Scotia, Canada"), sitenum > 1, distHaversine(cbind(Lon.50.,Lat.50.), cbind(deploy.longitude, deploy.latitude)) > 250000)) %>%
+  # filter(case_when(!(study.site %in% c("Quebec", "Mount Mansfield, Vermont, USA", "Nova Scotia, Canada")) ~ site_type != "Breeding",
+  #                  T ~ site_type == site_type )) %>%
+  # filter(ifelse(study.site %in% c("Quebec", "Mount Mansfield, Vermont, USA", "Nova Scotia, Canada"), distHaversine(cbind(Lon.50.,Lat.50.), cbind(deploy.longitude, deploy.latitude)) > 150000, distHaversine(cbind(Lon.50.,Lat.50.), cbind(deploy.longitude, deploy.latitude)) > 250000)) %>%
+  # mutate(site_type = ifelse(site_type == "Breeding", "Stopover", site_type),
+  #        period  = ifelse(site_type == "Breeding", "Post-breeding migration", period),)
+  filter(distHaversine(cbind(Lon.50.,Lat.50.), cbind(deploy.longitude, deploy.latitude)) > 250000) %>%
   mutate(site_type = ifelse(site_type == "Breeding", "Stopover", site_type),
-         period  = ifelse(site_type == "Breeding", "Post-breeding migration", period),)
+         period = ifelse(period == "Breeding", "Post-breeding migration", period))
+  
   
 # Create clusters in two steps to account for the equinox 
 
@@ -250,7 +254,7 @@ fall.stat.norm <- st_difference(fall.stat.sf, equipol)
 fall.stat.norm <- st_drop_geometry(fall.stat.norm )
 
 # cluster points in each group separately, then merge the cluster info 
-cluster.data1 <- clusterLocs(locs = fall.stat.equi, maxdiam = 753, lon.only = T)
+cluster.data1 <- clusterLocs(locs = fall.stat.equi, maxdiam = 743, lon.only = T)
 cluster.data2 <- clusterLocs(locs = fall.stat.norm, maxdiam = 777)
 
 cluster.data2$clusters <- cluster.data2$clusters + max(cluster.data1$clusters)
@@ -434,7 +438,7 @@ legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
 # Either import a file with manual clusters, or create cluster in R
 
 # Create clusters for spring stopover locations and last nonbreeding locations in R 
-spring.stat <- geo.all %>% filter(sitenum > 0, duration > 2, site_type %in% c("Stopover","Nonbreeding"),
+spring.stat <- geo.all %>% filter(sitenum > 0, duration > 2,# site_type %in% c("Stopover","Nonbreeding"),
                                   period %in% c("Pre-breeding migration","Non-breeding period"),
                                   Recorded_North_South_mig %in% c("Both","North", "South and partial North"),
                                   !(geo_id %in% c("V8296_007", "V8296_008")))
@@ -451,10 +455,12 @@ spring.stat <- merge(spring.stat, spring.timings.nb, by = "geo_id")
 
 #only retain the stopovers and the first nonbreeding sites occupied, and filter out stopovers that are within 250 km of breeding site 
 spring.stat <- spring.stat %>% group_by(geo_id) %>% filter(StartTime >= NB.last.site.arrival) %>% group_by(geo_id)%>% 
-  filter(distHaversine(cbind(Lon.50.,Lat.50.), cbind(deploy.longitude, deploy.latitude)) > 250000 | geo_id == "WRMA04173")
+  filter(distHaversine(cbind(Lon.50.,Lat.50.), cbind(deploy.longitude, deploy.latitude)) > 250000 | geo_id == "WRMA04173")%>%
+  mutate(site_type = ifelse(site_type == "Breeding", "Stopover", site_type),
+         period = ifelse(period == "Breeding", "Post-breeding migration", period))
 
 # Uncomment this code to generate clusters using the pam function
-cluster.data <- clusterLocs(locs = spring.stat, maxdiam = 732)
+cluster.data <- clusterLocs(locs = spring.stat, maxdiam = 642)
 spring.stat$cluster <- cluster.data$clusters
 
 # # export spring stat sites for manual clustering
@@ -486,9 +492,10 @@ spring.stat <- bind_rows(spring.stat, spring.breed) %>% arrange(geo_id, StartTim
 # plot stationary stopover and nonbreeding sites 
 ggplot(st_as_sf(wrld_simpl))+
   geom_sf(colour = NA, fill = "lightgray") +
+  geom_sf(data = reg.bounds, fill = NA, lwd = 0.2, alpha = 1) +
   coord_sf(xlim = c(-170, -30),ylim = c(-15, 70)) +
   geom_path(data = spring.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5) +
-  geom_point(data = spring.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, colour = site_type))+ 
+  geom_point(data = spring.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, colour = Breeding_region_MC))+ 
   theme_bw() +
   theme(text = element_text(size = 14))
 

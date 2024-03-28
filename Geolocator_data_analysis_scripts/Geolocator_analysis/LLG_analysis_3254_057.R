@@ -46,10 +46,10 @@ lat.calib <- ref_data$deploy.latitude[which(ref_data$geo.id == geo.id)]
 lon.calib <- ref_data$deploy.longitude[which(ref_data$geo.id == geo.id)]
 
 # time of deployment (from reference file)
-deploy.start <- anytime(ref_data[ref_data$geo.id == geo.id,]$deploy.on.date, asUTC = T, tz = "GMT")
+#deploy.start <- anytime("", asUTC = T, tz = "GMT")
 
 # time of recovery (estimate from light data)
-deploy.end <- anytime(ref_data[ref_data$geo.id == geo.id,]$deploy.off.date, asUTC = T, tz = "GMT")
+#deploy.end <- anytime("", asUTC = T, tz = "GMT")
 
 #Equinox times
 fall.equi <- anytime("2016-09-22", asUTC = T, tz = "GMT")
@@ -61,7 +61,7 @@ spring.equi <- anytime("2017-03-20", asUTC = T, tz = "GMT")
 lig <- readLig(paste0(dir,"/Raw_light_data_", geo.id, ".lig"), skip = 1)
 
 #remove rows before and after deployment time 
-lig <- lig[(lig$Date > deploy.start & lig$Date < deploy.end),]
+#lig <- lig[(lig$Date > deploy.start),]
 
 #parameter to visualize the data 
 offset <- 20 # adjusts the y-axis to put night (dark shades) in the middle
@@ -70,7 +70,7 @@ offset <- 20 # adjusts the y-axis to put night (dark shades) in the middle
 threshold <- 1.5
 
 # visualize threshold over light levels  
-thresholdOverLight(lig, threshold, span =c(nrow(lig)-100000, nrow(lig)))
+thresholdOverLight(lig, threshold, span =c(0, 25000))
 
 # FIND TIME SHIFT ##############################################################
 
@@ -106,7 +106,7 @@ dev.off()
 #               col = ifelse(twl$Rise, "dodgerblue", "firebrick"))
 
 # Save the twilight times
-#write.csv(twl, paste0(dir,"/",geo.id , "_twl_times.csv"))
+# write.csv(twl, paste0(dir,"/",geo.id , "_twl_times.csv"))
 
 ###############################################################################
 # SGAT ANALYSIS ###############################################################
@@ -136,7 +136,7 @@ lightImage( tagdata = lig,
             offset = offset,     
             zlim = c(0, 20))
 
-tsimageDeploymentLines(twl$Twilight, lon.calib, lat.calib, offset, lwd = 2, col = "orange", zenith = 92)
+tsimageDeploymentLines(twl$Twilight, lon.calib, lat.calib, offset, lwd = 2, col = "orange")
 
 #calibration period before the migration 
 tm.calib <- as.POSIXct(c("2016-08-01", "2016-08-20"), tz = "UTC")
@@ -157,6 +157,14 @@ alpha <- calib[3:4]
 
 # # Calibration V2 ###############################################################
 # 
+# # Find the zenith angle that best matches the light data recording 
+# lightImage( tagdata = lig,
+#             offset = offset,     
+#             zlim = c(0, 20))
+# 
+# tsimageDeploymentLines(twl$Twilight, lon.calib, lat.calib, offset, lwd = 2, col = "orange", quantile(zenith.calib , probs = 0.95))
+# 
+# 
 # # Calculate solar times and declination from calibration period
 # sun <- solar(d_calib [,1])
 # 
@@ -172,7 +180,7 @@ alpha <- calib[3:4]
 #            lon = lon.calib,
 #            lat = lat.calib,
 #            rise = d_calib$Rise,
-#            zenith = median(zenith.calib ))
+#            zenith = quantile(zenith.calib , probs = 0.95))
 # 
 # # Determine difference in minutes from known and observed sunrise times
 # twl.calib.deviation <-
@@ -189,6 +197,28 @@ alpha <- calib[3:4]
 # 
 # alpha <- twl.calib.dist$estimate
 # 
+# # Visualize twilight errors 
+# par(mfrow=c(1,2))  
+# hist(abs(twl.calib.deviation), freq = F,
+#      yaxt="n",
+#      xlim = c(0, 60),
+#      breaks=10,
+#      col="gray",
+#      main = "",
+#      xlab = "Twilight error (mins)")
+# axis(2,las=2)
+# lines(seq(0, 60, length = 100),
+#       dlnorm(seq(0,60, length = 100), alpha[1], alpha[2]), 
+#       col ="red",lwd = 3, lty = 2)
+# 
+# ### Zenith angle
+# par(bty = "l")
+# plot(median(zenith, na.rm = TRUE),
+#      ylim = c(80,100), 
+#      pch = 19, cex = 1.25, 
+#      ylab = "Zenith Angle")
+# segments(1, quantile(zenith, probs = 0.025), 1, quantile(zenith, probs = 0.975))
+# points(1, max(zenith, na.rm = TRUE), col = "red", pch = 20)
 # hist(abs(twl.calib.deviation), breaks = 30)
 
 # Alternative calibration #######################################################
@@ -212,7 +242,7 @@ end   <- max(which(mS$site == stationarySite))
 (zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
 
 # startDate <- "2016-10-20"
-# endDate   <- "2017-03-08"
+# endDate   <- "2017-05-08"
 # 
 # start = min(which(as.Date(twl$Twilight) == startDate))
 # end = max(which(as.Date(twl$Twilight) == endDate))
@@ -298,7 +328,7 @@ abline(v = spring.equi, col = "orange")
 dev.off()
 
 # Initial Path #################################################################
-tol_ini <- 0.14
+tol_ini <- 0.12
 path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol = tol_ini)
 
 #Adjusted tol until second stopover was located over North Carolina rather than further South. 
@@ -337,9 +367,9 @@ cL <- changeLight(twl=geo_twl, quantile= q, summary = F, days = days, plot = T)
 mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = dist)
 
 ##back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
-twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2], tz = "utc"), 
+twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 
                       Rise     = c(ifelse(geo_twl[,3]==1, TRUE, FALSE), ifelse(geo_twl[,3]==1, FALSE, TRUE)),
-                      Site     = rep(mS$site,2)) 
+                      Site     = rep(mS$site,2))
 twl.rev <- subset(twl.rev, !duplicated(Twilight), sort = Twilight)
 
 grouped <- rep(FALSE, nrow(twl.rev))
@@ -438,7 +468,7 @@ z.proposal <- mvnorm(S = diag(c(0.005, 0.005)), n = nrow(z0))
 #Tuning ########################################################################
 
 # Fit a first chain for tuning
-fit <- estelleMetropolis(model, x.proposal, z.proposal, iters = 1000, thin = 20)
+fit <- estelleMetropolis(model, x.proposal, z.proposal, iters = 500, thin = 20)
 
 # Fit additional chains for tuning
 for (k in 1:2) {
@@ -452,7 +482,7 @@ for (k in 1:2) {
   z.med <- list(as.matrix(chain.sm.z[,c("Lon.50%","Lat.50%")]))
   
   fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = x.med,
-                           z0 = z.med, iters = 1000, thin = 20)
+                           z0 = z.med, iters = 500, thin = 20)
 }
 
 ## Check if chains mix
@@ -474,7 +504,7 @@ x.proposal <- mvnorm(chainCov(fit$x), s = 0.3)
 z.proposal <- mvnorm(chainCov(fit$z), s = 0.3)
 
 fit <- estelleMetropolis(model, x.proposal, z.proposal, x0 = x.med,
-                         z0 = z.med , iters = 3000, thin = 20, chain = 1)
+                         z0 = z.med , iters = 500, thin = 20, chain = 1)
 
 #Summarize results #############################################################
 
@@ -641,29 +671,52 @@ par(cex.axis= 1)
 # There is a series of three days with clear light transitions around dusk and dawn suggesting that this bird may have bmade a direct flight from the coast of North America to South America
 # between October 10th and 13th.
 # This is also supported by a continuous change in latitude over this period
-# However, latitude stabilized at around 20 degrees LAT for a short period, alos suggesting a short stop in the carribean
+# However, latitude stabilized at around 20 deggrees LAT for a short period, alos suggesting a short stop in the carribean
 
 dev.off()
 
-# Estimate timing of departure and arrival from the breeding and nonbreeding grounds ############################################################
+# Examine twilights ############################################################
 
-# Here we need to extract positions over the full tracking deployment period 
-twl.full <- findTwilights(lig,include = lig$Date, threshold = 20, dark.min = 60)
-path.full <- thresholdPath(twl.full$Twilight, twl.full$Rise, zenith = zenith, tol = 0.01)
+#load the adjusted threshold path path x0_ad
+load(file = paste0(dir,"/", geo.id, "adjusted_initial_path_raw.csv"))
 
-x0.full <- path.full$x
+#Fall transoceanic flight
+start <- "2016-09-15"
+end <- "2016-10-15"
 
-dep.br <- "2016-08-23 14:58"
-arr.br <- "2017-06-01"
+#first flight
+f1.start <- "2016-10-10"
+f1.end <- "2016-10-13"
 
-par(mfrow=c(2,1))
-plot(twl.full$Twilight, type  = "l", x0.full[,1])
-abline(v = anytime(dep.br))
-abline(v = anytime(arr.br))
-plot(twl.full$Twilight, type  = "l", x0.full[,2])
-abline(v = anytime(dep.br))
-abline(v = anytime(arr.br))
-par(mfrow=c(1,1))
+# #second flight
+# f2.start <- "2016-10-08"
+# f2.end <- "2016-10-09"
+
+# Plot lat, lon and light transitions  
+jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition.png"), width = 1024 , height = 990, quality = 100, res = 200)
+
+par(cex.lab=1.4)
+par(cex.axis=1.4)
+par(mfrow=c(3,1), mar = c(5,5,0.1,5))
+plot(lig$Date[lig$Date > start & lig$Date < end], lig$Light[lig$Date > start & lig$Date < end], type = "o",
+     ylab = "Light level", xlab = "Time")
+rect(anytime(f1.start), min(lig$Light)-2, anytime(f1.end), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
+#rect(anytime(f2.start), min(lig$Light)-2, anytime(f2.end), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
+
+plot(twl$Twilight[twl$Twilight> start & twl$Twilight < end], x0_ad[,1][twl$Twilight > start & twl$Twilight < end],
+     ylab = "Longitude", xlab = "Time")
+rect(anytime(f1.start), min(x0_ad[,1])-2, anytime(f1.end), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
+#rect(anytime(f2.start), min(x0_ad[,1])-2, anytime(f2.end), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
+
+plot(twl$Twilight[twl$Twilight > start & twl$Twilight < end], x0_ad[,2][twl$Twilight > start & twl$Twilight < end],
+     ylab = "Latitude", xlab = "Time")
+rect(anytime(f1.start), min(x0_ad[,2])-2, anytime(f1.end), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
+#rect(anytime(f2.start), min(x0_ad[,2])-2, anytime(f2.end), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
+par(cex.lab= 1)
+par(cex.axis= 1)
+
+dev.off()
+
 
 # Record details for the geolocator analysis ###################################
 geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
@@ -675,122 +728,10 @@ geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- dep.nbr
 geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.start <- as.character(tm.calib[1])
 geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.end <- as.character(tm.calib[2])
 geo.ref[(geo.ref$geo.id == geo.id),]$tol <-tol_ini
-geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- as.Date(arr.nbr.sgat)
-geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- as.Date(dep.nbr.sgat)
-geo.ref[(geo.ref$geo.id == geo.id),]$br.departure <- as.Date(dep.br)
-geo.ref[(geo.ref$geo.id == geo.id),]$br.arrival <- as.Date(arr.br)
+geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- as.character(arr.nbr.sgat)
+geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- as.character(dep.nbr.sgat)
 geo.ref[(geo.ref$geo.id == geo.id),]$changelight.quantile <- q
 write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE) 
 
-#################################################################################
-# Simple thresold estimate
-#################################################################################
 
-# movement model with slower speed ##############################################
-beta  <- c(2.2, 0.08)
-matplot(0:100, dgamma(0:100, beta[1], beta[2]),
-        type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
 
-# Perform threshold model without stationary location ###########################
-twl$index <- seq(1, length(twl$group))
-x0 <- path$x
-z0 <- trackMidpts(x0)
-
-model <- groupedThresholdModel(twl$Twilight,
-                               twl$Rise,
-                               group = twl$index, 
-                               twilight.model = "ModifiedGamma",
-                               alpha = alpha,
-                               beta =  beta,
-                               x0 = x0, # median point for each group (defined by twl$group)
-                               z0 = z0, # middle points between the x0 points
-                               zenith = zeniths0,
-                               logp.x = logp,# land sea mask
-                               fixedx = fixedx)
-
-# define the error shape
-x.proposal <- mvnorm(S = diag(c(0.005, 0.005)), n = nrow(x0))
-z.proposal <- mvnorm(S = diag(c(0.005, 0.005)), n = nrow(z0))
-
-#Tuning ########################################################################
-
-# fit.s a first chain for tuning
-fit.s <- estelleMetropolis(model, x.proposal, z.proposal, iters = 300, thin = 20)
-
-# fit.s additional chains for tuning
-for (k in 1:2) {
-  x.proposal <- mvnorm(chainCov(fit.s$x), s = 0.3)
-  z.proposal <- mvnorm(chainCov(fit.s$z), s = 0.3)
-  
-  # get Median of chains
-  chain.sm.s.x <- SGAT2Movebank(fit.s$x)
-  x.med <- list(as.matrix(chain.sm.s.x[,c("Lon.50%","Lat.50%")]))
-  chain.sm.s.z <- SGAT2Movebank(fit.s$z)
-  z.med <- list(as.matrix(chain.sm.s.z[,c("Lon.50%","Lat.50%")]))
-  
-  fit.s <- estelleMetropolis(model, x.proposal, z.proposal, x0 = x.med,
-                           z0 = z.med, iters = 300, thin = 20)
-}
-
-## Check if chains mix
-opar <- par(mfrow = c(2, 1), mar = c(3, 5, 2, 1) + 0.1)
-matplot(t(fit.s$x[[1]][!fixedx, 1, ]), type = "l", lty = 1, col = "dodgerblue", ylab = "Lon")
-matplot(t(fit.s$x[[1]][!fixedx, 2, ]), type = "l", lty = 1, col = "firebrick", ylab = "Lat")
-par(opar)
-
-#Final model run ###############################################################
-
-# get Median of chains
-chain.sm.s.x <- SGAT2Movebank(fit.s$x)
-x.med <- list(as.matrix(chain.sm.s.x[,c("Lon.50%","Lat.50%")]))
-chain.sm.s.z <- SGAT2Movebank(fit.s$z)
-z.med <- list(as.matrix(chain.sm.s.z[,c("Lon.50%","Lat.50%")]))
-
-# get proposals 
-x.proposal <- mvnorm(chainCov(fit.s$x), s = 0.3)
-z.proposal <- mvnorm(chainCov(fit.s$z), s = 0.3)
-
-fit.s <- estelleMetropolis(model, x.proposal, z.proposal, x0 = x.med,
-                         z0 = z.med , iters = 1000, thin = 20, chain = 1)
-
-# Summarize and plot the results ########################################################
-sm.s <- locationSummary(fit.s$z, time=fit.s$model$time)
-
-# open jpeg
-jpeg(paste0(dir, "/", geo.id,"_simple_threshold_model_map.png"), width = 1024 , height = 990)
-
-# empty raster of the extent
-r <- raster(nrows = 2 * diff(ylim), ncols = 2 * diff(xlim), xmn = xlim[1]-5,
-            xmx = xlim[2]+5, ymn = ylim[1]-5, ymx = ylim[2]+5, crs = proj4string(wrld_simpl))
-
-s <- slices(type = "intermediate", breaks = "week", mcmc = fit.s, grid = r)
-sk <- slice(s, sliceIndices(s))
-
-plot(sk, useRaster = F,col = rev(viridis::viridis(50)))
-plot(wrld_simpl, xlim=xlim, ylim=ylim,add = T, bg = adjustcolor("black",alpha=0.1))
-
-lines(sm.s[,"Lon.50%"], sm.s[,"Lat.50%"], col = adjustcolor("firebrick", alpha.f = 0.6), type = "o", pch = 16)
-
-dev.off()
-
-# open jpeg
-jpeg(paste0(dir, "/", geo.id,"_threshold_model_lon_lat.png"), width = 1024 , height = 990)
-
-par(mfrow=c(2,1),mar=c(4,4,1,1))
-plot(sm.s$Time1, sm.s$"Lon.50%", ylab = "Longitude", xlab = "", yaxt = "n", type = "n", ylim = xlim)
-axis(2, las = 2)
-polygon(x=c(sm.s$Time1,rev(sm.s$Time1)), y=c(sm.s$`Lon.2.5%`,rev(sm.s$`Lon.97.5%`)), border="gray", col="gray")
-lines(sm.s$Time1,sm.s$"Lon.50%", lwd = 2)
-
-plot(sm.s$Time1,sm.s$"Lat.50%", type="n", ylab = "Latitude", xlab = "", yaxt = "n", ylim = ylim)
-axis(2, las = 2)
-polygon(x=c(sm.s$Time1,rev(sm.s$Time1)), y=c(sm.s$`Lat.2.5%`,rev(sm.s$`Lat.97.5%`)), border="gray", col="gray")
-lines(sm.s$Time1,sm.s$"Lat.50%", lwd = 2)
-
-par(mfrow=c(1,1),mar=c(1,1,1,1))
-
-dev.off()
-
-# Save the threshold model estimate ############################################
-save(sm.s, file = paste0(dir,"/", geo.id,"_SGAT_Threshold_summary.csv"))
-save(fit.s, file = paste0(dir,"/", geo.id,"_SGAT_Threshold_fit.s.R"))
