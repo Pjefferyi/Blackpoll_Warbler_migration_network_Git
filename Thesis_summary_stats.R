@@ -81,7 +81,7 @@ spring.num <- spring.stat %>% group_by(geo_id) %>% summarise(num_stopovers = sum
 
 ## migration distance ----
 
-# Fall migration distance 
+# Fall migration distance total
 fall.dist <- fall.stat %>% group_by(geo_id) %>% mutate(Lon.50.next = lead(Lon.50.),
                                                       Lat.50.next = lead(Lat.50.)) %>%
   rowwise() %>%
@@ -91,7 +91,7 @@ fall.dist <- fall.stat %>% group_by(geo_id) %>% mutate(Lon.50.next = lead(Lon.50
   filter(!is.na(dists)) %>%
   summarize(distance = sum(dists)/1000)
 
-# Spring migration distance
+# Spring migration distance total 
 spring.dist <- spring.stat %>% group_by(geo_id) %>% mutate(Lon.50.next = lead(Lon.50.),
                                                        Lat.50.next = lead(Lat.50.)) %>%
   rowwise() %>%
@@ -427,6 +427,7 @@ NB.mover.cat <- NB.move %>% group_by(geo_id) %>%
   
 ## How many birds performed nonbreeding movements? ----
 NB.mover.cat %>% group_by(status) %>% summarize(n = n())
+#View(NB.mover.cat %>% group_by(status) %>% summarize(geo_id = unique(geo_id)))
 
 ## test whether the probability of nonbreeding movements was influenced by the longitude of the first nonbreeding site occupied ---- 
 nbr.lon.mod <- glm(as.factor(status) ~ initial.nbr.lon, data = NB.mover.cat, family = binomial(link = "logit"))
@@ -450,10 +451,17 @@ NB.move.mod <- NB.move %>% filter(nbr.mover == "mover") %>% group_by(geo_id) %>%
   filter(move.start < move.end, !is.na(move.end)) %>%
   mutate(move.direction = ifelse(start.lat < end.lat, "North", "South"))
 
-# movement direction (North south) and timing 
+# movement direction (North south) summary
 NB.move.mod %>% group_by(move.direction) %>%summarise (n = n())
+
+# movement timing summary 
 NB.move.mod %>% group_by(timing.nbr.move) %>%summarise (n = n())
+
+# movement proximity to the equinox summary
 NB.move.mod %>% mutate(equi.prox.cat = ifelse(abs(equinox.proximity) < 14, "close", "far")) %>% 
   group_by(equi.prox.cat) %>%summarise (n = n())
 
+#time spent at the last nonbreeding sites occupied by individuals that movemed
+geo.all %>% group_by(geo_id) %>% filter(geo_id %in% NB.move.mod$geo_id, NB_count == max(NB_count, na.rm = T)) %>% 
+  summarize(time.last.site = max(duration)) %.% merge 
 

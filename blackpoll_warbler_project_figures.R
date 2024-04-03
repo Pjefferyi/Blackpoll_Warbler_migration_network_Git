@@ -154,7 +154,7 @@ undirected.fall.graph <- as.undirected(fall.graph, mode = "collapse",
 
 fall.label.prop <- concensusCluster(graph = undirected.fall.graph, thresh = 0.5, algiter = 1000)
 fall.infomap <- cluster_infomap(fall.graph)
-fall.walktrap <- cluster_walktrap(fall.graph, steps = 5)
+fall.walktrap <- cluster_walktrap(fall.graph, steps = 6)
 
 modularity(fall.graph, fall.label.prop$`community structure`$membership)
 modularity(fall.graph, fall.infomap$membership)
@@ -218,8 +218,8 @@ fall.stat.ab <- merge(fall.stat, fall.breed.ab[,c("ab.unit", "geo_id")], by = "g
 # Summed time spent in each node for the fall
 fall.use.time <- fall.stat.ab %>% 
   mutate(duration = ifelse(site_type != "Stopover", 0, duration)) %>%
-  filter(!(cluster == 5 & study.site %in% c("Quebec","Mount Mansfield, Vermont, USA")),
-         !(cluster == 7 & study.site %in% c("Nova Scotia, Canada"))) %>%
+  # filter(!(cluster == 5 & study.site %in% c("Quebec","Mount Mansfield, Vermont, USA")),
+  #        !(cluster == 7 & study.site %in% c("Nova Scotia, Canada"))) %>%
   group_by(cluster, geo_id) %>%
   summarize(time.per.node.ind =sum(duration)) %>%
   summarize(time.per.node = mean(time.per.node.ind))
@@ -227,16 +227,16 @@ fall.use.time <- fall.stat.ab %>%
 # Summed time spent in each node weighed by relative abundance for the spring 
 fall.use.timeab <- fall.stat.ab %>%
   mutate(duration = ifelse(site_type != "Stopover", 0, duration)) %>%
-  filter(!(cluster == 5 & study.site %in% c("Quebec","Mount Mansfield, Vermont, USA")),
-         !(cluster == 7 & study.site %in% c("Nova Scotia, Canada"))) %>%
+  # filter(!(cluster == 5 & study.site %in% c("Quebec","Mount Mansfield, Vermont, USA")),
+  #        !(cluster == 7 & study.site %in% c("Nova Scotia, Canada"))) %>%
   group_by(cluster, geo_id) %>%
   summarize(time.per.node = sum(duration), ab.units = unique(ab.unit)) %>%
   mutate(time.per.ab.ind = time.per.node * ab.units) %>%
   group_by(cluster) %>%
-  summarize(time.per.ab = mean(time.per.ab.ind))
+  summarize(time.per.ab = sum(time.per.ab.ind))
 
 V(fall.graph)$time.spent <- fall.use.time$time.per.node
-V(fall.graph)$time.spent.ab <- fall.use.timeab$time.per.ab/max(fall.use.timeab$time.per.ab)
+V(fall.graph)$time.spent.ab <- (fall.use.time$time.per.node * V(fall.graph)$node.weight)/max(fall.use.time$time.per.node * V(fall.graph)$node.weight)#fall.use.timeab$time.per.ab/max(fall.use.timeab$time.per.ab)
 
 # Extract abundance and time spent data for the spring
 spring.breed.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.abundance.per.bird.csv")
@@ -1510,7 +1510,7 @@ plot_a_list <- function(plots, nrows, ncols) {
 }
 
 loc.ind.panel1 <- plot_a_list(loc.ind[1:24], 6, 4)
-loc.ind.panel2 <- plot_a_list(loc.ind[25:44], 6, 4)
+loc.ind.panel2 <- plot_a_list(loc.ind[25:45], 6, 4)
 
 ## Save the plots ----
 ggsave(plot = loc.ind.panel1, filename = "individual.movements1.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures",
@@ -1642,7 +1642,8 @@ fall.nbr.stp.plot <- ggplot(st_as_sf(America))+
   geom_errorbar(data = fall.nbr.stp , aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, width = 0, alpha = 0.2, color = "black") +
   geom_errorbar(data = fall.nbr.stp , aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, width = 0, alpha = 0.2, color = "black") +
   geom_path(data = fall.nbr.stp , mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, col = geo_id), col = adjustcolor("black", 0.5)) +
-  geom_point(data =  fall.nbr.stp , mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = period, fill = period), cex = 2.5, pch= 21)+
+  geom_point(data =  fall.nbr.stp , mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = period), cex = 2.5, pch= 21)+
+  geom_text(data =  fall.nbr.stp , mapping = aes(x = Lon.50., y = Lat.50., label = round(duration)), cex = 2.5)+
   scale_fill_manual(values = c("purple", "yellow"), labels = c("wintering site", "stopover"), name = "")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
@@ -1666,7 +1667,8 @@ spring.nbr.stp.plot <- ggplot(st_as_sf(America))+
   geom_errorbar(data = spring.nbr.stp , aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, width = 0, alpha = 0.2, color = "black") +
   geom_errorbar(data = spring.nbr.stp , aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, width = 0, alpha = 0.2, color = "black") +
   geom_path(data = spring.nbr.stp , mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, col = geo_id), col = adjustcolor("black", 0.5)) +
-  geom_point(data =  spring.nbr.stp , mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = period, fill = period), cex = 2.5, pch= 21)+
+  geom_point(data =  spring.nbr.stp , mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = period), cex = 2.5, pch= 21)+
+  geom_text(data =  spring.nbr.stp , mapping = aes(x = Lon.50., y = Lat.50., label = round(duration)), cex = 2.5)+
   scale_fill_manual(values = c("Non-breeding period" = "purple", "Pre-breeding migration" = "yellow"))+
 theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
       panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
@@ -1679,4 +1681,36 @@ theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
       legend.spacing = unit(-5, "pt"),
       plot.margin = unit(c(0,0,0,0), "pt"),
       legend.key = element_rect(colour = "transparent", fill = "white"))
+
+
+# Figure 15 time spent at nonbreeding sites  ----
+NB.move <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/nonbreeding.movements.csv")
+
+# Get movement data for of birds that performed nonbreeding movments
+nb.mover.df <- NB.move %>% filter(nbr.mover == "mover") %>% reframe(geo_id = unique(geo_id))
+
+nb.move.loc <- geo.all %>% filter(sitenum > 0, site_type == "Nonbreeding", geo_id %in% nb.mover.df$geo_id)
+
+# plot nonbreeding movments
+
+ggplot(st_as_sf(America))+
+  geom_sf(colour = "black", fill = "white") +
+  coord_sf(xlim = c(-80, -45),ylim = c(-5, 15)) +
+  geom_errorbar(data = nb.move.loc , aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, width = 0, alpha = 0.2, color = "black") +
+  geom_errorbar(data = nb.move.loc, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, width = 0, alpha = 0.2, color = "black") +
+  geom_path(data = nb.move.loc , mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, col = geo_id), col = adjustcolor("black", 0.5)) +
+  geom_point(data =  nb.move.loc , mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = difftime(anytime(StartTime), anytime(nbr.arrival))), cex = 5, pch= 21)+
+  geom_text(data = nb.move.loc , mapping = aes(x = Lon.50., y = Lat.50., label = round(duration)), cex = 2.5)+
+  scale_fill_viridis( begin = 0.3)+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
+        plot.title=element_text(size=8, vjust=-1),
+        #legend.position = "None",
+        axis.title =element_blank(),
+        axis.text =element_blank(),
+        axis.ticks =element_blank(),
+        axis.ticks.length = unit(0, "pt"),
+        legend.spacing = unit(-5, "pt"),
+        plot.margin = unit(c(0,0,0,0), "pt"),
+        legend.key = element_rect(colour = "transparent", fill = "white"))
 

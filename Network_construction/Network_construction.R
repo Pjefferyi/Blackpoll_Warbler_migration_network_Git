@@ -255,7 +255,7 @@ fall.stat.norm <- st_drop_geometry(fall.stat.norm )
 
 # cluster points in each group separately, then merge the cluster info 
 cluster.data1 <- clusterLocs(locs = fall.stat.equi, maxdiam = 743, lon.only = T)
-cluster.data2 <- clusterLocs(locs = fall.stat.norm, maxdiam = 777)
+cluster.data2 <- clusterLocs(locs = fall.stat.norm, maxdiam = 700)
 
 cluster.data2$clusters <- cluster.data2$clusters + max(cluster.data1$clusters)
 
@@ -309,14 +309,14 @@ reg.bounds <- st_read("C:/Users/Jelan/OneDrive/Desktop/University/University of 
 ggplot(st_as_sf(wrld_simpl))+
   geom_sf(colour = NA, fill = "lightgray") +
   geom_sf(data = reg.bounds, fill = NA, lwd = 0.2, alpha = 1) +
-  coord_sf(xlim = c(-170, -30),ylim = c(-15, 70)) +
-  geom_errorbar(data = fall.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
-  geom_errorbar(data = fall.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
-  #geom_path(data = fall.stat[fall.stat$geo_id == "V8757_010",], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5) +
-  #geom_point(data = fall.stat[fall.stat$geo_id == "V8757_010",], mapping = aes(x = Lon.50., y = Lat.50.), alpha = 0.5) +
+   coord_sf(xlim = c(-170, -30),ylim = c(-15, 70)) +
+  # geom_errorbar(data = fall.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
+  # geom_errorbar(data = fall.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
+  geom_path(data = fall.stat[fall.stat$geo_id == "V8296_005",], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5) +
+  geom_point(data = fall.stat[fall.stat$geo_id == "V8296_005",], mapping = aes(x = Lon.50., y = Lat.50.), alpha = 0.5) +
   #geom_text(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., label = geo_id))+
-  geom_path(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5, linewidth = 0.1) +
-  geom_point(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, colour = as.factor(cluster)), cex = 2) +
+  # geom_path(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5, linewidth = 0.1) +
+  # geom_point(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, colour = as.factor(cluster)), cex = 2) +
   labs(colour = "Cluster") +
   theme_bw() +
   theme(text = element_text(size = 16), legend.position = "None")
@@ -460,7 +460,7 @@ spring.stat <- spring.stat %>% group_by(geo_id) %>% filter(StartTime >= NB.last.
          period = ifelse(period == "Breeding", "Post-breeding migration", period))
 
 # Uncomment this code to generate clusters using the pam function
-cluster.data <- clusterLocs(locs = spring.stat, maxdiam = 642)
+cluster.data <- clusterLocs(locs = spring.stat, maxdiam = 732)
 spring.stat$cluster <- cluster.data$clusters
 
 # # export spring stat sites for manual clustering
