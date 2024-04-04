@@ -9,6 +9,7 @@ library(purrr)
 library(glmmTMB)
 library(MuMIn)
 library(lme4)
+library(jtools)
 
 # Load the helper functions script  
 source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis_helper_functions.R")
@@ -289,13 +290,16 @@ mod1.data <- analysis_ref %>% filter_at(vars(deploy.longitude, deploy.latitude, 
 #mod1 <- glmmTMB(nbr1.lon ~ deploy.latitude + (1|study.site), data = mod1.data, na.action = "na.fail")
 # mod1 <- plsr(nbr1.lon ~ deploy.latitude + deploy.longitude, data = mod1.data, scale = T, validation = "CV",
 #              ncomp = 1, method = "oscorespls")
-mod1 <- lm(nbr1.lon ~ deploy.longitude, data = mod1.data, na.action = "na.fail")
+mod1 <- glmmTMB(nbr1.lon ~ poly(deploy.longitude, degree = 2) + (1|study.site), data = mod1.data, na.action = "na.fail")
 summary(mod1)
 check_model(mod1)
 #with(mod1.data, table(study.site))
 
 simulationOutput <- simulateResiduals(fittedModel =  mod1, plot = F, quantreg = T)
 plot(simulationOutput)
+plotResiduals(simulationOutput)
+
+effect_plot(mod1, pred = deploy.longitude, interval = TRUE, plot.points = TRUE)
 
 ## Plot the second nonbreeding longitude against the breeding longitude ----
 long.plot2 <- ggplot(data = analysis_ref, aes(x = deploy.longitude, y = nbr2.lon)) + 
@@ -326,6 +330,8 @@ check_model(mod2)
 simulationOutput <- simulateResiduals(fittedModel =  mod2, plot = F)
 plot(simulationOutput)
 
+effect_plot(mod2, pred = deploy.longitude, interval = TRUE, plot.points = TRUE)
+
 ## Plot the first nonbreeding latitude against the breeding latitude ----
 lat.plot1 <- ggplot(data = analysis_ref, aes(x = deploy.latitude, y = nbr1.lat)) + 
   geom_point(aes(col = Breeding_region_MC)) + 
@@ -337,13 +343,15 @@ lat.plot1 <- ggplot(data = analysis_ref, aes(x = deploy.latitude, y = nbr1.lat))
 
 # run a regression model
 mod3.data <- analysis_ref %>% filter_at(vars(deploy.latitude, nbr1.lat),all_vars(!is.na(.)))
-mod3 <- lm(nbr1.lat ~ deploy.longitude, data = mod3.data )
-plot(nbr1.lat ~ deploy.longitude, data = mod3.data )
+mod3 <- glmmTMB(nbr1.lat ~ poly(deploy.latitude, degree = 2) + (1|study.site), data = mod3.data )
+plot(nbr1.lat ~ deploy.latitude, data = mod3.data )
 summary(mod3)
 check_model(mod3)
 
 simulationOutput <- simulateResiduals(fittedModel =  mod3, plot = F)
 plot(simulationOutput)
+
+effect_plot(mod3, pred = deploy.latitude, interval = TRUE, plot.points = TRUE)
 
 ## Plot the second nonbreeding latitude against the breeding latitude ----
 lat.plot2 <- ggplot(data = analysis_ref, aes(x = deploy.latitude, y = nbr2.lat)) + 
@@ -357,13 +365,15 @@ lat.plot2 <- ggplot(data = analysis_ref, aes(x = deploy.latitude, y = nbr2.lat))
 # run a regression model
 mod4.data <- analysis_ref %>% filter_at(vars(deploy.latitude, nbr2.lat),all_vars(!is.na(.)))
 #mod4 <- glmmTMB(nbr2.lat ~ deploy.latitude + (1|study_site), data = mod4.data, na.action = "na.fail")
-mod4 <- lm(nbr2.lat ~ deploy.longitude, data = mod4.data )
-plot(nbr2.lat ~ deploy.longitude, data = mod4.data )
+mod4 <- lm(nbr2.lat ~ deploy.latitude, data = mod4.data )
+plot(nbr2.lat ~ deploy.latitude, data = mod4.data )
 summary(mod4)
 check_model(mod4)
 
 simulationOutput <- simulateResiduals(fittedModel =  mod4, plot = F)
 plot(simulationOutput)
+
+effect_plot(mod4, pred = deploy.latitude, interval = TRUE, plot.points = TRUE)
 
 x <- analysis_ref$nbr2.lon[!is.na(analysis_ref$nbr2.lon)]
 y <- analysis_ref$deploy.longitude[!is.na(analysis_ref$nbr2.lon)]
@@ -465,3 +475,13 @@ NB.move.mod %>% mutate(equi.prox.cat = ifelse(abs(equinox.proximity) < 14, "clos
 geo.all %>% group_by(geo_id) %>% filter(geo_id %in% NB.move.mod$geo_id, NB_count == max(NB_count, na.rm = T)) %>% 
   summarize(time.last.site = max(duration)) %.% merge 
 
+
+# Average arrival and departure dates ----
+
+# average date of arrival from the nonbreeding grounds 
+avg.nbr.arr <- mean(yday(geo.all$nbr.arrival), na.rm = T)
+as.Date(avg.nbr.arr, origin = "2020-01-01")
+
+# average date of departure from the nonbreeding grounds 
+avg.nbr.dep <- mean(yday(geo.all$nbr.departure), na.rm = T)
+as.Date(avg.nbr.dep, origin = "2020-01-01")

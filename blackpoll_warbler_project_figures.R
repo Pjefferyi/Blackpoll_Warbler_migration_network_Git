@@ -187,12 +187,15 @@ fall.e <- which(E(fall.graph)$edge.type == "spring")
 fall.graph.disc <- fall.graph - edge(fall.e)
 
 V(fall.graph)$betweenness <- betweenness(fall.graph.disc, directed = T, weights = 1/E(fall.graph.disc)$weight) 
+V(fall.graph)$betweenness.unweighted <- betweenness(fall.graph.disc, directed = T, weights = NULL) 
 
 # spring migratory network without fall edges  
 spring.e <- which(E(spring.graph)$edge.type == "fall")
 spring.graph.disc <- spring.graph - edge(spring.e)
 
 V(spring.graph)$betweenness <- betweenness(spring.graph.disc, directed = T, weights = 1/E(spring.graph.disc)$weight) 
+V(spring.graph)$betweenness.unweighted <- betweenness(spring.graph.disc, directed = T, weights = NULL) 
+
 
 # fall and spring eigenvector centrality coefficient
 V(fall.graph)$eigen <- eigen_centrality(as.undirected(fall.graph.disc))$vector
@@ -605,7 +608,7 @@ fall.gplot.comp.nbr <- ggplot(st_as_sf(America))+
   geom_pie_glyph(slices = c("Eastern.Region","Northwestern.Region", "Western.Region", "Central.Region"), colour = "black", data = fall.nbr.node.comp, mapping = aes(x = Lon.50., y = Lat.50., radius = tot.abundance))+
   scale_radius(range = c(1.2, 3), unit = "mm", guide = "none")+
   geom_point(data = fall.nbr.node.comp[fall.nbr.node.comp$reg.no == "single reg",], mapping = aes(x = Lon.50., y = Lat.50., size = tot.abundance, fill = single_reg), shape= 21,  show.legend = F)+
-  scale_size(range = c(1.2, 9), guide = "none")+
+  scale_size(range = c(1.2, 10), guide = "none")+
   scale_fill_manual(values = c("Northwestern.Region" = "#F0E442", "Western.Region" = "#D55E00", "Central.Region" = "#009E73", "Eastern.Region" = "#0072B2"), name = "Breeding Region") +
   ggtitle("(c) Edges in South America and \n final nonbreeding node use")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
@@ -913,7 +916,7 @@ spring.gplot.betw <- ggplot(st_as_sf(America))+
              arrow = arrow(length = unit(9, "pt"), type = "closed", angle = 10))+
   scale_color_manual(values=c(adjustcolor("blue", alpha = 0), adjustcolor("black", alpha = 0.5)), guide = "none")+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
-  geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = betweenness), shape=21, size  = 3)+
+  geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = betweenness.unweighted), shape=21, size  = 3)+
   scale_fill_viridis_c(direction = -1, option = "magma", name = "Betweenness \ncentrality", begin   = 0.3,
                        guide = guide_colorbar(frame.colour = "black"), limits = c(min(0),  max(fall.ggnet$betweenness, spring.ggnet$betweenness)))+
   ggtitle("Spring network") + 
