@@ -119,8 +119,8 @@ nbr.move.plot <- ggplot(st_as_sf(wrld_simpl))+
          linetype = guide_legend(order=2),
          fill = guide_legend(order=3))
 
-ggsave(plot = nbr.move.plot, filename = "nbr.movements.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
-       units = "cm", width = 24*1.2, height = 10*1.2, dpi = "print", bg = "white")
+#ggsave(plot = nbr.move.plot, filename = "nbr.movements.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
+#       units = "cm", width = 24*1.2, height = 10*1.2, dpi = "print", bg = "white")
 
   
 

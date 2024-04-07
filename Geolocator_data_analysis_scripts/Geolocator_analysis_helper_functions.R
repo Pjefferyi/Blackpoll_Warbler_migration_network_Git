@@ -525,7 +525,7 @@ earthseaMask <- function(xlim, ylim, n = 2, pacific=FALSE, index) {
 # Test calls  for earthseaMask  ###############################################
 
 # arguments must be defined using geolocator data
-# mask <- earthseaMask(xlim, ylim, n = 10, index=index)
+#mask <- earthseaMask(xlim, ylim, n = 10, index=index)
 
 # earthseaMask2 ####################################################################
 
@@ -539,7 +539,8 @@ earthseaMask2 <- function(xlim, ylim, pacific=FALSE, index, twl, res = "lr") {
   if (pacific) {wrld_simpl <- nowrapRecenter(wrld_simpl, avoidGEOS = TRUE)}
   
   #load weekly rasters of blackpoll warbler abundance (only uncommon if want to import a different abundance raster)
-  ab.ras <- load_raster("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_imports/2021/bkpwar",
+  ab.ras <- load_raster(path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_imports/2022",
+                        species = "bkpwar",
                         product = "abundance",
                         period = "weekly",
                         resolution = res)

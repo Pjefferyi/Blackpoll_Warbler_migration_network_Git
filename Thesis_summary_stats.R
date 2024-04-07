@@ -287,19 +287,22 @@ long.plot1 <- ggplot(data = analysis_ref, aes(x = deploy.longitude, y = nbr1.lon
 
 # run a regression model
 mod1.data <- analysis_ref %>% filter_at(vars(deploy.longitude, deploy.latitude, nbr1.lon),all_vars(!is.na(.)))
-#mod1 <- glmmTMB(nbr1.lon ~ deploy.latitude + (1|study.site), data = mod1.data, na.action = "na.fail")
-# mod1 <- plsr(nbr1.lon ~ deploy.latitude + deploy.longitude, data = mod1.data, scale = T, validation = "CV",
-#              ncomp = 1, method = "oscorespls")
-mod1 <- glmmTMB(nbr1.lon ~ poly(deploy.longitude, degree = 2) + (1|study.site), data = mod1.data, na.action = "na.fail")
-summary(mod1)
-check_model(mod1)
-#with(mod1.data, table(study.site))
+# #mod1 <- glmmTMB(nbr1.lon ~ deploy.latitude + (1|study.site), data = mod1.data, na.action = "na.fail")
+# # mod1 <- plsr(nbr1.lon ~ deploy.latitude + deploy.longitude, data = mod1.data, scale = T, validation = "CV",
+# #              ncomp = 1, method = "oscorespls")
+# mod1 <- glmmTMB(nbr1.lon ~ poly(deploy.longitude, degree = 2) + (1|study.site), data = mod1.data, na.action = "na.fail")
+# summary(mod1)
+# check_model(mod1)
+# #with(mod1.data, table(study.site))
+# 
+# simulationOutput <- simulateResiduals(fittedModel =  mod1, plot = F, quantreg = T)
+# plot(simulationOutput)
+# plotResiduals(simulationOutput)
+# 
+# effect_plot(mod1, pred = deploy.longitude, interval = TRUE, plot.points = TRUE)
 
-simulationOutput <- simulateResiduals(fittedModel =  mod1, plot = F, quantreg = T)
-plot(simulationOutput)
-plotResiduals(simulationOutput)
-
-effect_plot(mod1, pred = deploy.longitude, interval = TRUE, plot.points = TRUE)
+# spearman's rank correlation
+cor.test(mod1.data$nbr1.lon, mod1.data$deploy.longitude, method = "spearman", exact = F)
 
 ## Plot the second nonbreeding longitude against the breeding longitude ----
 long.plot2 <- ggplot(data = analysis_ref, aes(x = deploy.longitude, y = nbr2.lon)) + 
@@ -313,24 +316,27 @@ long.plot2 <- ggplot(data = analysis_ref, aes(x = deploy.longitude, y = nbr2.lon
 
 # run a regression model
 mod2.data <- analysis_ref %>% filter_at(vars(deploy.longitude, deploy.latitude, nbr2.lon),all_vars(!is.na(.)))
-#mod2 <- glmmTMB(nbr2.lon ~ deploy.longitude + deploy.latitude + (1|study,site), data = mod2.data, na.action = "na.fail")
-mod2 <- lm(nbr2.lon ~ deploy.longitude, data = mod2.data, na.action = "na.fail")
-summary(mod2)
-check_model(mod2)
+# #mod2 <- glmmTMB(nbr2.lon ~ deploy.longitude + deploy.latitude + (1|study,site), data = mod2.data, na.action = "na.fail")
+# mod2 <- lm(nbr2.lon ~ deploy.longitude, data = mod2.data, na.action = "na.fail")
+# summary(mod2)
+# check_model(mod2)
+# 
+# # mod1.data.reg1 <- mod1.data %>% filter(Breeding_region_MC == "Eastern Region")
+# # cor(mod1.data.reg1$deploy.latitude, mod1.data.reg1$deploy.longitude)
+# # mod1.data.reg2 <- mod1.data %>% filter(Breeding_region_MC == "Central Region")
+# # plot(mod1.data.reg2$deploy.latitude, mod1.data.reg2$deploy.longitude)
+# # mod1.data.reg3 <- mod1.data %>% filter(Breeding_region_MC == "Western Region")
+# # plot(mod1.data.reg3$deploy.latitude, mod1.data.reg3$deploy.longitude)
+# # mod1.data.reg4 <- mod1.data %>% filter(Breeding_region_MC == "Northwestern Region")
+# # cor(mod1.data.reg4$deploy.latitude, mod1.data.reg4$deploy.longitude)
+# 
+# simulationOutput <- simulateResiduals(fittedModel =  mod2, plot = F)
+# plot(simulationOutput)
+# 
+# effect_plot(mod2, pred = deploy.longitude, interval = TRUE, plot.points = TRUE)
 
-# mod1.data.reg1 <- mod1.data %>% filter(Breeding_region_MC == "Eastern Region")
-# cor(mod1.data.reg1$deploy.latitude, mod1.data.reg1$deploy.longitude)
-# mod1.data.reg2 <- mod1.data %>% filter(Breeding_region_MC == "Central Region")
-# plot(mod1.data.reg2$deploy.latitude, mod1.data.reg2$deploy.longitude)
-# mod1.data.reg3 <- mod1.data %>% filter(Breeding_region_MC == "Western Region")
-# plot(mod1.data.reg3$deploy.latitude, mod1.data.reg3$deploy.longitude)
-# mod1.data.reg4 <- mod1.data %>% filter(Breeding_region_MC == "Northwestern Region")
-# cor(mod1.data.reg4$deploy.latitude, mod1.data.reg4$deploy.longitude)
-
-simulationOutput <- simulateResiduals(fittedModel =  mod2, plot = F)
-plot(simulationOutput)
-
-effect_plot(mod2, pred = deploy.longitude, interval = TRUE, plot.points = TRUE)
+# spearman's rank correlation
+cor.test(mod2.data$nbr2.lon, mod2.data$deploy.longitude, method = "spearman", exact = F)
 
 ## Plot the first nonbreeding latitude against the breeding latitude ----
 lat.plot1 <- ggplot(data = analysis_ref, aes(x = deploy.latitude, y = nbr1.lat)) + 
@@ -343,50 +349,56 @@ lat.plot1 <- ggplot(data = analysis_ref, aes(x = deploy.latitude, y = nbr1.lat))
 
 # run a regression model
 mod3.data <- analysis_ref %>% filter_at(vars(deploy.latitude, nbr1.lat),all_vars(!is.na(.)))
-mod3 <- glmmTMB(nbr1.lat ~ poly(deploy.latitude, degree = 2) + (1|study.site), data = mod3.data )
-plot(nbr1.lat ~ deploy.latitude, data = mod3.data )
-summary(mod3)
-check_model(mod3)
+# mod3 <- glmmTMB(nbr1.lat ~ poly(deploy.latitude, degree = 2) + (1|study.site), data = mod3.data )
+# plot(nbr1.lat ~ deploy.latitude, data = mod3.data )
+# summary(mod3)
+# check_model(mod3)
+# 
+# simulationOutput <- simulateResiduals(fittedModel =  mod3, plot = F)
+# plot(simulationOutput)
+# 
+# effect_plot(mod3, pred = deploy.latitude, interval = TRUE, plot.points = TRUE)
+# 
+# ## Plot the second nonbreeding latitude against the breeding latitude ----
+# lat.plot2 <- ggplot(data = analysis_ref, aes(x = deploy.latitude, y = nbr2.lat)) + 
+#   geom_point(aes(col = Breeding_region_MC)) + 
+#   geom_smooth(method = "lm", se = F, colour="black", size=0.5, linetype = "dashed") + 
+#   theme_bw() +
+#   theme(text = element_text(size = 14)) +
+#   labs(x = "Breeding latitude",
+#        y = "Second nonbreeding site latitude")
 
-simulationOutput <- simulateResiduals(fittedModel =  mod3, plot = F)
-plot(simulationOutput)
-
-effect_plot(mod3, pred = deploy.latitude, interval = TRUE, plot.points = TRUE)
-
-## Plot the second nonbreeding latitude against the breeding latitude ----
-lat.plot2 <- ggplot(data = analysis_ref, aes(x = deploy.latitude, y = nbr2.lat)) + 
-  geom_point(aes(col = Breeding_region_MC)) + 
-  geom_smooth(method = "lm", se = F, colour="black", size=0.5, linetype = "dashed") + 
-  theme_bw() +
-  theme(text = element_text(size = 14)) +
-  labs(x = "Breeding latitude",
-       y = "Second nonbreeding site latitude")
+# spearman's rank correlation
+cor.test(mod3.data$nbr1.lat, mod3.data$deploy.latitude, method = "spearman", exact = F)
 
 # run a regression model
 mod4.data <- analysis_ref %>% filter_at(vars(deploy.latitude, nbr2.lat),all_vars(!is.na(.)))
-#mod4 <- glmmTMB(nbr2.lat ~ deploy.latitude + (1|study_site), data = mod4.data, na.action = "na.fail")
-mod4 <- lm(nbr2.lat ~ deploy.latitude, data = mod4.data )
-plot(nbr2.lat ~ deploy.latitude, data = mod4.data )
-summary(mod4)
-check_model(mod4)
+# #mod4 <- glmmTMB(nbr2.lat ~ deploy.latitude + (1|study_site), data = mod4.data, na.action = "na.fail")
+# mod4 <- lm(nbr2.lat ~ deploy.latitude, data = mod4.data )
+# plot(nbr2.lat ~ deploy.latitude, data = mod4.data )
+# summary(mod4)
+# check_model(mod4)
+# 
+# simulationOutput <- simulateResiduals(fittedModel =  mod4, plot = F)
+# plot(simulationOutput)
+# 
+# effect_plot(mod4, pred = deploy.latitude, interval = TRUE, plot.points = TRUE)
+# 
+# x <- analysis_ref$nbr2.lon[!is.na(analysis_ref$nbr2.lon)]
+# y <- analysis_ref$deploy.longitude[!is.na(analysis_ref$nbr2.lon)]
+# cor(x,y, method = "pearson")
+# 
+# ## Plot the first nonbreeding latitude against the breeding longitude ----
+# lonlat.plot1 <- ggplot(data = analysis_ref, aes(x = deploy.longitude, y = nbr1.lat)) + 
+#   geom_point() + 
+#   geom_smooth(method = "lm", se = F, colour="black", size=0.5, linetype = "dashed") + 
+#   theme_bw() +
+#   theme(text = element_text(size = 14)) +
+#   labs(x = "Breeding longitude",
+#        y = "First nonbreeding site latitude")
 
-simulationOutput <- simulateResiduals(fittedModel =  mod4, plot = F)
-plot(simulationOutput)
-
-effect_plot(mod4, pred = deploy.latitude, interval = TRUE, plot.points = TRUE)
-
-x <- analysis_ref$nbr2.lon[!is.na(analysis_ref$nbr2.lon)]
-y <- analysis_ref$deploy.longitude[!is.na(analysis_ref$nbr2.lon)]
-cor(x,y, method = "pearson")
-
-## Plot the first nonbreeding latitude against the breeding longitude ----
-lonlat.plot1 <- ggplot(data = analysis_ref, aes(x = deploy.longitude, y = nbr1.lat)) + 
-  geom_point() + 
-  geom_smooth(method = "lm", se = F, colour="black", size=0.5, linetype = "dashed") + 
-  theme_bw() +
-  theme(text = element_text(size = 14)) +
-  labs(x = "Breeding longitude",
-       y = "First nonbreeding site latitude")
+# spearman's rank correlation
+cor.test(mod4.data$nbr2.lat, mod4.data$deploy.latitude, method = "spearman", exact = F)
 
 ## network metric scores by nodes ----
 
@@ -454,20 +466,28 @@ NB.move.mod <- NB.move %>% filter(nbr.mover == "mover") %>% group_by(geo_id) %>%
          end.lon = lead(Lon.50.),
          end.lat = lead(Lat.50.),
          dist = lead(dist),
+        nbr.stage = as.numeric(difftime(anytime(EndTime), anytime(nbr.arrival), units = "days"))/
+                  as.numeric(difftime(anytime(nbr.departure), anytime(nbr.arrival), units = "days")),
          equinox.proximity = difftime(move.start, spring.equinox.date, units = "days")) %>% 
   dplyr::select(geo_id, move.start, move.end, start.lon,
-                start.lat, end.lon, end.lat, dist, timing.nbr.move,
+                start.lat, end.lon, end.lat, dist, nbr.stage, timing.nbr.move,
                 equinox.proximity, spring.equinox.date) %>%
   filter(move.start < move.end, !is.na(move.end)) %>%
-  mutate(move.direction = ifelse(start.lat < end.lat, "North", "South"))
-
-# movement direction (North south) summary
-NB.move.mod %>% group_by(move.direction) %>%summarise (n = n())
+  mutate(move.direction = ifelse(start.lat < end.lat, "North", "South")) %>%
+  rowwise() %>%
+  mutate(bearing = bearing(c(start.lon, start.lat), c(end.lon, end.lat)))
 
 # movement timing summary 
 NB.move.mod %>% group_by(timing.nbr.move) %>%summarise (n = n())
 
-# movement proximity to the equinox summary
+# movement occurrence by month 
+NB.move.mod <- NB.move.mod %>% mutate(move.month = month(move.start))
+NB.move.mod %>% group_by(move.month) %>% summarise(n())
+
+# movement direction (North south) summary
+NB.move.mod %>% group_by(move.month, move.direction) %>% summarise (n = n())
+
+# movement proximity to the equinox summamove.month# movement proximity to the equinox summary
 NB.move.mod %>% mutate(equi.prox.cat = ifelse(abs(equinox.proximity) < 14, "close", "far")) %>% 
   group_by(equi.prox.cat) %>%summarise (n = n())
 
@@ -475,6 +495,45 @@ NB.move.mod %>% mutate(equi.prox.cat = ifelse(abs(equinox.proximity) < 14, "clos
 geo.all %>% group_by(geo_id) %>% filter(geo_id %in% NB.move.mod$geo_id, NB_count == max(NB_count, na.rm = T)) %>% 
   summarize(time.last.site = max(duration)) %.% merge 
 
+# Average movement distance mean and SE ----
+mean(NB.move.mod$dist)
+sd(NB.move.mod$dist)/sqrt(length(NB.move.mod$dist))
+
+## Statistics for the number of movements per bird ----
+NB.move.mod %>%  group_by(geo_id)%>% summarize(move.num = n()) %>% group_by(move.num) %>%
+  summarize(birds = n())
+
+## Statistics for the bearing of movements between the first and last nonbreeding sites ---- 
+NB.all <- geo.all %>% group_by(geo_id) %>% filter(NB_count == min(NB_count, na.rm =  T) | NB_count == max(NB_count, na.rm =  T),
+                             geo_id %in% NB.move.mod$geo_id) %>%
+  mutate(Lon.50.next = lead(Lon.50.),
+         Lat.50.next = lead(Lat.50.)) %>% rowwise() %>%
+    mutate(bearing = bearing(c(Lon.50., Lat.50.), c(Lon.50.next, Lat.50.next)),
+           course = (bearing + 360) %% 360) %>%
+  filter(!is.na(bearing)) %>% dplyr::select(geo_id, bearing, course)
+
+mean(circular(NB.all$course, units = "degrees"))
+rayleigh.test(circular(all.bearings, units = "degrees"))
+
+nrow(NB.all[abs(NB.all$bearing) < 90,])
+nrow(NB.all)
+
+# ggplot(st_as_sf(wrld_simpl))+
+#   geom_sf(colour = "black", fill = "#F7F7F7", lwd = 0.3) +
+#   coord_sf(xlim = c(-95, -45),ylim = c(-10, 15)) +
+#   geom_arrowsegment(data = NB.all[month(NB.all$EndTime) %in% c(2,3,4, 5),], mapping = aes(x = Lon.50., y = Lat.50., xend = Lon.50.next, yend = Lat.50.next),
+#                     arrows = arrow(end = "last", type = "closed", length = unit(0.1, "inches")), arrow_positions = 1, lwd = 0.6)+
+#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+#         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
+#         plot.title=element_text(size=8, vjust=-1),
+#         legend.position = c(0.14, 0.4),
+#         axis.title =element_blank(),
+#         axis.text =element_blank(),
+#         axis.ticks =element_blank(),
+#         axis.ticks.length = unit(0, "pt"),
+#         legend.spacing = unit(-5, "pt"),
+#         plot.margin = unit(c(0,0,0,0), "pt"),
+#         legend.key = element_rect(colour = "transparent", fill = "white"))
 
 # Average arrival and departure dates ----
 
@@ -485,3 +544,5 @@ as.Date(avg.nbr.arr, origin = "2020-01-01")
 # average date of departure from the nonbreeding grounds 
 avg.nbr.dep <- mean(yday(geo.all$nbr.departure), na.rm = T)
 as.Date(avg.nbr.dep, origin = "2020-01-01")
+
+
