@@ -917,7 +917,7 @@ spring.gplot.betw <- ggplot(st_as_sf(America))+
              arrow = arrow(length = unit(9, "pt"), type = "closed", angle = 10))+
   scale_color_manual(values=c(adjustcolor("blue", alpha = 0), adjustcolor("black", alpha = 0.5)), guide = "none")+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
-  geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = betweenness.unweighted), shape=21, size  = 3)+
+  geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = betweenness), shape=21, size  = 3)+
   scale_fill_viridis_c(direction = -1, option = "magma", name = "Betweenness \ncentrality", begin   = 0.3,
                        guide = guide_colorbar(frame.colour = "black"), limits = c(min(0),  max(fall.ggnet$betweenness, spring.ggnet$betweenness)))+
   ggtitle("Spring network") + 

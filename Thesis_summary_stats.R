@@ -485,7 +485,7 @@ NB.move.mod <- NB.move.mod %>% mutate(move.month = month(move.start))
 NB.move.mod %>% group_by(move.month) %>% summarise(n())
 
 # movement direction (North south) summary
-NB.move.mod %>% group_by(move.month, move.direction) %>% summarise (n = n())
+print(NB.move.mod %>% group_by(move.direction) %>% summarise (n = n()), n = 24)
 
 # movement proximity to the equinox summamove.month# movement proximity to the equinox summary
 NB.move.mod %>% mutate(equi.prox.cat = ifelse(abs(equinox.proximity) < 14, "close", "far")) %>% 
