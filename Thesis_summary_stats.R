@@ -487,6 +487,12 @@ NB.move.mod %>% group_by(move.month) %>% summarise(n())
 # movement direction (North south) summary
 print(NB.move.mod %>% group_by(move.direction) %>% summarise (n = n()), n = 24)
 
+# individual bird movement directions 
+move.schedule <- NB.move.mod %>% group_by(geo_id,move.direction) %>% 
+  reframe(n = n(), move.start) %>%
+  arrange(move.start)
+print(move.schedule, n = nrow(move.schedule))
+
 # movement proximity to the equinox summamove.month# movement proximity to the equinox summary
 NB.move.mod %>% mutate(equi.prox.cat = ifelse(abs(equinox.proximity) < 14, "close", "far")) %>% 
   group_by(equi.prox.cat) %>%summarise (n = n())

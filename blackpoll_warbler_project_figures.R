@@ -1234,6 +1234,7 @@ fall.nbr.sf <- st_transform(fall.nbr.sf, st_crs(wrld_simpl))
 fall.nbr.regions <- st_read("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/fall.nbr.regions.shp") 
 
 ## Fall nonbreeding regions plot ----
+fall.nbr.sf$Breeding_region_MC <- factor(fall.nbr.sf$Breeding_region_MC , levels = c("Eastern Region", "Central Region", "Western Region", "Northwestern Region"))
 First.nbr.regions <- ggplot(st_as_sf(wrld_simpl))+
   geom_sf(colour = "black", fill = "#F7F7F7")+
   geom_sf(data = fall.nbr.regions, col = "black",fill = "lightgray", alpha = 0.9)+
@@ -1271,6 +1272,7 @@ spring.nbr.sf <- st_transform(spring.nbr.sf, st_crs(proj))
 spring.nbr.regions <- st_read("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/spring.nbr.regions.shp") 
 
 ## spring nonbreeding regions plot ----
+spring.nbr.sf$Breeding_region_MC <- factor(spring.nbr.sf$Breeding_region_MC , levels = c("Eastern Region", "Central Region", "Western Region", "Northwestern Region"))
 second.nbr.regions <- ggplot(st_as_sf(wrld_simpl))+
   geom_sf(colour = "black", fill = "#F7F7F7")+
   geom_sf(data = spring.nbr.regions, col = "black", fill = "lightgray", alpha = 0.9)+
@@ -1688,79 +1690,44 @@ theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
 
 
 # Figure 15 time spent at nonbreeding sites  ----
-NB.move <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/nonbreeding.movements.csv")
 
 # Run the script for nonbreeding movements 
 source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Blackpoll_warbler_mapping_scripts/Blackpoll_nonbreeding_movements.R")
 
-# Get movement data for of birds that performed nonbreeding movments
-nb.mover.df <- NB.move %>% filter(nbr.mover == "mover") %>% reframe(geo_id = unique(geo_id))
-
-# filter out locations that are closer than 250 km 
-nb.move.loc <- geo.all %>% filter(sitenum > 0, site_type == "Nonbreeding", geo_id %in% nb.mover.df$geo_id) %>%
-  group_by(geo_id) %>% mutate(Lon.50.lag = lag(Lon.50.),
-                                  Lat.50.lag = lag(Lat.50.),
-                                  geo_id.lag = lag(geo_id))%>%
-  rowwise() %>%
-  mutate(proximity = distHaversine(c(Lon.50.,Lat.50.), c(Lon.50.lag, Lat.50.lag)),.after = geo_id) %>%
-  filter(proximity > 250000 | is.na(proximity))
-
-# make dataset for segments
-nb.move.segs <- NB.move %>% group_by(geo_id) %>% mutate(Lon.50.next = lead(Lon.50.), Lat.50.next = lead(Lat.50.)) %>%
-  filter(StartTime != lead(StartTime)) # remove duplicates
-
-## plot nonbreeding movements with time spent ----
-ggplot(st_as_sf(America))+
-  geom_sf(colour = "black", fill = "white") +
-  coord_sf(xlim = c(-80, -45),ylim = c(-5, 15)) +
-  geom_errorbar(data = nb.move.loc , aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, width = 0, alpha = 0.2, color = "black") +
-  geom_errorbar(data = nb.move.loc, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, width = 0, alpha = 0.2, color = "black") +
-  geom_path(data = nb.move.loc , mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, col = geo_id), col = adjustcolor("black", 0.5)) +
-  geom_point(data =  nb.move.loc , mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = difftime(anytime(StartTime), anytime(nbr.arrival))), cex = 5, pch= 21)+
-  geom_text(data = nb.move.loc , mapping = aes(x = Lon.50., y = Lat.50., label = round(duration)), cex = 2.5)+
-  scale_fill_viridis( begin = 0.3)+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
-        plot.title=element_text(size=8, vjust=-1),
-        #legend.position = "None",
-        axis.title =element_blank(),
-        axis.text =element_blank(),
-        axis.ticks =element_blank(),
-        axis.ticks.length = unit(0, "pt"),
-        legend.spacing = unit(-5, "pt"),
-        plot.margin = unit(c(0,0,0,0), "pt"),
-        legend.key = element_rect(colour = "transparent", fill = "white"))
-
+NB.move <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/nonbreeding.movements.csv")
+NB.stat.mean <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/nonbreeding.mean.csv")
 
 ## Create new column assessing the stage of the nonbreeding season ----
-nb.move.segs <- nb.move.segs %>% mutate(nbr.stage = as.numeric(difftime(anytime(EndTime), anytime(nbr.arrival), units = "days"))/
-                                          as.numeric(difftime(anytime(nbr.departure), anytime(nbr.arrival), units = "days")))
+NB.move <- NB.move%>% mutate(nbr.stage = as.numeric(difftime(anytime(move.start), anytime(nbr.arrival), units = "days"))/
+                                           as.numeric(difftime(anytime(nbr.departure), anytime(nbr.arrival), units = "days")))
 
 ## Nonbreeding movement directions ----
 nbr.move.plot <- ggplot(st_as_sf(wrld_simpl))+
   geom_sf(colour = "black", fill = "#F7F7F7", lwd = 0.3) +
-  coord_sf(xlim = c(-95, -45),ylim = c(-10, 15)) +
-  geom_point(data = NB.stat[NB.stat$nbr.mover == "nonmover",], mapping = aes(x = Lon.50., y = Lat.50.,fill = "darkgray"), colour = "black", cex = 2, shape = 21, stroke = 0.5) +
+  coord_sf(xlim = c(-95, -48),ylim = c(-8, 15)) +
+  #geom_point(data = NB.stat[NB.stat$nbr.mover == "nonmover",], mapping = aes(x = Lon.50., y = Lat.50.,fill = "darkgray"), colour = "black", cex = 3, shape = 21, stroke = 0.5) +
   scale_fill_manual(values = c("darkgray"),label = c("Stationary individuals"), name = "") +
   new_scale_fill()+
-  geom_arrowsegment(data = nb.move.segs, mapping = aes(x = Lon.50., y = Lat.50., xend = Lon.50.next, yend = Lat.50.next,
+  geom_arrowsegment(data = NB.move, mapping = aes(x = start.lon, y = start.lat, xend = end.lon, yend = end.lat,
                     col = nbr.stage, 
-                    fill = nbr.stage),
+                    fill = nbr.stage,
+                    linetype = equinox.nbr.move),
             arrows = arrow(end = "last", type = "closed", length = unit(0.1, "inches")), arrow_positions = 1, lwd = 0.6)+
   scale_fill_viridis( begin = 0, end = 0.9, breaks = c("Early" = 0.25, "Middle" = 0.50, "Late" = 0.75),
-                      name = "Timing during the \nnonbreeding season")+
-  scale_color_viridis( begin = 0, end = 0.9, name = "Time since arrival", guide = "none")+
-  geom_text(data = nb.move.loc , mapping = aes(x = Lon.50., y = Lat.50., label = geo_id), cex = 2.5)+
+                      name = "Timing")+
+  scale_color_viridis( begin = 0, end = 0.9, guide = "none")+
+  geom_text(data = NB.move, mapping = aes(x = Lon.50., y = Lat.50., label = geo_id), cex = 2.5)+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
+        text = element_text(size = 14),
         plot.title=element_text(size=8, vjust=-1),
         legend.position = c(0.14, 0.4),
         axis.title =element_blank(),
-        axis.text =element_blank(),
-        axis.ticks =element_blank(),
-        axis.ticks.length = unit(0, "pt"),
+        #axis.text =element_blank(),
+        #axis.ticks =element_blank(),
+        #axis.ticks.length = unit(0, "pt"),
         legend.spacing = unit(-5, "pt"),
-        plot.margin = unit(c(0,0,0,0), "pt"),
+        #plot.margin = unit(c(0,0,0,0), "pt"),
         legend.key = element_rect(colour = "transparent", fill = "white"))
 
 ## Save the plot ----

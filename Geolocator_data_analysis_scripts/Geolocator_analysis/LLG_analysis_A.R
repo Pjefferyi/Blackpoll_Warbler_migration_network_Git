@@ -383,7 +383,7 @@ twl_adjusted$Twilight <- twl$Twilight + (diff.sec.change * timestep)
 twl_adjusted$Twilight0 <- twl$Twilight + (diff.sec.change * timestep)
 
 # Initial Path with Clock Drift Adjustment  ####################################
-path <- thresholdPath(twl_adjusted$Twilight, twl_adjusted$Rise, zenith = zeniths_med, tol=0.12)
+path <- thresholdPath(twl_adjusted$Twilight, twl_adjusted$Rise, zenith = zeniths_med, tol= tol_ini)
 
 x0 <- path$x
 z0 <- trackMidpts(x0)
