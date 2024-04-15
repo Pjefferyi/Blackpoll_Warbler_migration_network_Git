@@ -230,7 +230,8 @@ fall.use.time <- fall.stat.ab %>%
 
 # Summed time spent in each node weighed by relative abundance for the spring 
 fall.use.timeab <- fall.stat.ab %>%
-  mutate(duration = ifelse(site_type != "Stopover", 0, duration)) %>%
+  mutate(duration = ifelse(site_type != "Stopover", 0, duration),
+         ab.unit = ifelse(site_type != "Stopover", 0, ab.unit )) %>%
   # filter(!(cluster == 5 & study.site %in% c("Quebec","Mount Mansfield, Vermont, USA")),
   #        !(cluster == 7 & study.site %in% c("Nova Scotia, Canada"))) %>%
   group_by(cluster, geo_id) %>%
@@ -255,12 +256,13 @@ spring.use.time <- spring.stat.ab %>%
 
 # Summed time spent in each node weighed by relative abundance for the spring 
 spring.use.timeab <- spring.stat.ab %>%
-  mutate(duration = ifelse(site_type != "Stopover", 0, duration)) %>%
-  group_by(cluster, geo_id) %>%
+  mutate(duration = ifelse(site_type != "Stopover", 0, duration),
+         ab.unit = ifelse(site_type != "Stopover", 0, ab.unit )) %>%
+  group_by(geo_id, cluster) %>%
   summarize(time.per.node = sum(duration), ab.units = unique(ab.unit)) %>%
   mutate(time.per.ab.ind = time.per.node * ab.units) %>%
   group_by(cluster) %>%
-  summarize(time.per.ab = mean(time.per.ab.ind))
+  summarize(time.per.ab = sum(time.per.ab.ind))
 
 V(spring.graph)$time.spent <- spring.use.time$time.per.node
 V(spring.graph)$time.spent.ab <- spring.use.timeab$time.per.ab/max(spring.use.timeab$time.per.ab)
@@ -1697,21 +1699,28 @@ source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/B
 NB.move <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/nonbreeding.movements.csv")
 NB.stat.mean <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/nonbreeding.mean.csv")
 
-## Create new column assessing the stage of the nonbreeding season ----
+## Create new column measuring the stage of the nonbreeding season for individual birds ----
 NB.move <- NB.move%>% mutate(nbr.stage = as.numeric(difftime(anytime(move.start), anytime(nbr.arrival), units = "days"))/
-                                           as.numeric(difftime(anytime(nbr.departure), anytime(nbr.arrival), units = "days")))
+                                           as.numeric(difftime(anytime(nbr.departure), anytime(nbr.arrival), units = "days"))) 
+
+## Create new column measuring the stage of the nonbreeding movement base on average start of the nonbreeding season 
+avg.nbr.arrival <- as.Date(mean(yday(NB.move$nbr.arrival), na.rm = T))
+NB.move <- NB.move %>% group_by(geo_id) %>% mutate(avg.nbr.arrival = anytime(avg.nbr.arrival))
+year(NB.move$avg.nbr.arrival) <- ifelse(NB.move$geo_id != "WRMA04173" , year(NB.move$deploy.on.date), year(NB.move$deploy.on.date)-1)
+
+NB.move <- NB.move%>% mutate(nbr.stage.common = as.numeric(difftime(anytime(move.start), anytime(avg.nbr.arrival), units = "days"))/
+                               as.numeric(difftime(anytime(nbr.departure), anytime(avg.nbr.arrival), units = "days"))) 
 
 ## Nonbreeding movement directions ----
 nbr.move.plot <- ggplot(st_as_sf(wrld_simpl))+
   geom_sf(colour = "black", fill = "#F7F7F7", lwd = 0.3) +
   coord_sf(xlim = c(-95, -48),ylim = c(-8, 15)) +
-  #geom_point(data = NB.stat[NB.stat$nbr.mover == "nonmover",], mapping = aes(x = Lon.50., y = Lat.50.,fill = "darkgray"), colour = "black", cex = 3, shape = 21, stroke = 0.5) +
+  geom_point(data = NB.stat.mean, mapping = aes(x =  mean.lon, y =  mean.lat,fill = "darkgray"), colour = "black", cex = 3, shape = 21, stroke = 0.5) +
   scale_fill_manual(values = c("darkgray"),label = c("Stationary individuals"), name = "") +
   new_scale_fill()+
   geom_arrowsegment(data = NB.move, mapping = aes(x = start.lon, y = start.lat, xend = end.lon, yend = end.lat,
-                    col = nbr.stage, 
-                    fill = nbr.stage,
-                    linetype = equinox.nbr.move),
+                    col = nbr.stage.common , 
+                    fill = nbr.stage.common ),
             arrows = arrow(end = "last", type = "closed", length = unit(0.1, "inches")), arrow_positions = 1, lwd = 0.6)+
   scale_fill_viridis( begin = 0, end = 0.9, breaks = c("Early" = 0.25, "Middle" = 0.50, "Late" = 0.75),
                       name = "Timing")+

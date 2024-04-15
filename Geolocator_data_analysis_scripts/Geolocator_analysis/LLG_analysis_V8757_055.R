@@ -282,7 +282,7 @@ zenith_twl_med <- data.frame(Date = twl$Twilight) %>%
 zeniths_med <- zenith_twl_med$zenith
 
 # plot longitudes and latitudes with the new zenith angles 
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol= 0.18)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol= 0)
 
 x0_ad <- path$x
 z0 <- trackMidpts(x0_ad)
