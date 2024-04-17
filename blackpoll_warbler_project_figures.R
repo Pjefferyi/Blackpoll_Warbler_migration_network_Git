@@ -241,8 +241,8 @@ fall.use.timeab <- fall.stat.ab %>%
   summarize(time.per.ab = sum(time.per.ab.ind))
 
 V(fall.graph)$time.spent <- fall.use.time$time.per.node
-V(fall.graph)$time.spent.ab <- (fall.use.time$time.per.node * V(fall.graph)$node.weight)/max(fall.use.time$time.per.node * V(fall.graph)$node.weight)#fall.use.timeab$time.per.ab/max(fall.use.timeab$time.per.ab)
-
+V(fall.graph)$time.spent.ab <- fall.use.timeab$time.per.ab/(max(fall.use.timeab$time.per.ab))
+  
 # Extract abundance and time spent data for the spring
 spring.breed.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.abundance.per.bird.csv")
 spring.stat.ab <- merge(spring.stat, spring.breed.ab[,c("ab.unit", "geo_id")], by = "geo_id")
@@ -256,8 +256,8 @@ spring.use.time <- spring.stat.ab %>%
 
 # Summed time spent in each node weighed by relative abundance for the spring 
 spring.use.timeab <- spring.stat.ab %>%
-  mutate(duration = ifelse(site_type != "Stopover", 0, duration),
-         ab.unit = ifelse(site_type != "Stopover", 0, ab.unit )) %>%
+   mutate(duration = ifelse(site_type != "Stopover", 0, duration),
+          ab.unit = ifelse(site_type != "Stopover", 0, ab.unit )) %>%
   group_by(geo_id, cluster) %>%
   summarize(time.per.node = sum(duration), ab.units = unique(ab.unit)) %>%
   mutate(time.per.ab.ind = time.per.node * ab.units) %>%
@@ -1529,6 +1529,9 @@ ggsave(plot = loc.ind.panel2, filename = "individual.movements2.png" ,  path = "
 
 
 # Figure 11 group migratory tracks for full year  ----
+
+
+## Migratory track fro eastern breeders in the fall ----
 east.fall.data <- geo.all %>% filter(Breeding_region_MC == "Eastern Region") %>%
   group_by(geo_id) %>%
   filter(StartTime <= StartTime[which(NB_count == 1)])
@@ -1540,6 +1543,87 @@ east.fall.mig.routes <- ggplot(st_as_sf(America))+
   geom_errorbar(data = east.fall.data[east.fall.data$sitenum > 0,], aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5., group = geo_id), linewidth = 0.5, width = 1, alpha = 0.8, color = "black") +
   geom_path(data = east.fall.data[east.fall.data$sitenum > 0,], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, col = period), alpha = 0.9, col = "firebrick") +
   geom_point(data =  east.fall.data[east.fall.data$sitenum > 0,], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = period, pch = period, col = period), cex = 2.5)+
+  scale_shape_manual(values=c("Post-breeding migration" = 21 , "Non-breeding period"  = 22, "Pre-breeding migration" = 21, "Breeding"  = 24, "Failure" = 4)) +
+  scale_colour_manual(values=c("Post-breeding migration" = "black" , "Non-breeding period"  = "white", "Pre-breeding migration" = "black", "Breeding"  = "white", "Failure" = "black")) +
+  scale_fill_manual(values=c("Post-breeding migration" = "#FDE725FF" , "Non-breeding period"  = "black", "Pre-breeding migration" = "#21908CFF", "Breeding"  = "black"))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
+        plot.title=element_text(size=8, vjust=-1),
+        legend.position = "None",
+        axis.title =element_blank(),
+        axis.text =element_blank(),
+        axis.ticks =element_blank(),
+        axis.ticks.length = unit(0, "pt"),
+        legend.spacing = unit(-5, "pt"),
+        plot.margin = unit(c(0,0,0,0), "pt"),
+        legend.key = element_rect(colour = "transparent", fill = "white"))
+
+## Migratory track for eastern breeders in the spring ----
+east.spring.data <- geo.all %>% filter(Breeding_region_MC == "Eastern Region") %>%
+  group_by(geo_id) %>%
+  filter(StartTime >= StartTime[which(NB_count == max(NB_count, na.rm = T))])
+
+east.spring.mig.routes <- ggplot(st_as_sf(America))+
+  geom_sf(colour = "black", fill = "white") +
+  coord_sf(xlim = c(-170, -30),ylim = c(-15, 70)) +
+  geom_errorbar(data = east.spring.data [east.spring.data$sitenum > 0,], aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5., group = geo_id), linewidth = 0.5, width = 1, alpha = 0.8, color = "black") +
+  geom_errorbar(data = east.spring.data [east.spring.data$sitenum > 0,], aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5., group = geo_id), linewidth = 0.5, width = 1, alpha = 0.8, color = "black") +
+  geom_path(data = east.spring.data [east.spring.data$sitenum > 0,], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, col = period), alpha = 0.9, col = "firebrick") +
+  geom_point(data =  east.spring.data [east.spring.data $sitenum > 0,], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = period, pch = period, col = period), cex = 2.5)+
+  scale_shape_manual(values=c("Post-breeding migration" = 21 , "Non-breeding period"  = 22, "Pre-breeding migration" = 21, "Breeding"  = 24, "Failure" = 4)) +
+  scale_colour_manual(values=c("Post-breeding migration" = "black" , "Non-breeding period"  = "white", "Pre-breeding migration" = "black", "Breeding"  = "white", "Failure" = "black")) +
+  scale_fill_manual(values=c("Post-breeding migration" = "#FDE725FF" , "Non-breeding period"  = "black", "Pre-breeding migration" = "#21908CFF", "Breeding"  = "black"))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
+        plot.title=element_text(size=8, vjust=-1),
+        legend.position = "None",
+        axis.title =element_blank(),
+        axis.text =element_blank(),
+        axis.ticks =element_blank(),
+        axis.ticks.length = unit(0, "pt"),
+        legend.spacing = unit(-5, "pt"),
+        plot.margin = unit(c(0,0,0,0), "pt"),
+        legend.key = element_rect(colour = "transparent", fill = "white"))
+
+## Migratory track for western breeders in the fall ----
+west.fall.data <- geo.all %>% filter(Breeding_region_MC %in% c("Western Region", "Northwestern Region", "Central")) %>%
+  group_by(geo_id) %>%
+  filter(StartTime <= StartTime[which(NB_count == 1)])
+
+west.fall.mig.routes <- ggplot(st_as_sf(America))+
+  geom_sf(colour = "black", fill = "white") +
+  coord_sf(xlim = c(-170, -30),ylim = c(-15, 70)) +
+  geom_errorbar(data = west.fall.data [west.fall.data $sitenum > 0,], aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5., group = geo_id), linewidth = 0.5, width = 1, alpha = 0.8, color = "black") +
+  geom_errorbar(data = west.fall.data [west.fall.data $sitenum > 0,], aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5., group = geo_id), linewidth = 0.5, width = 1, alpha = 0.8, color = "black") +
+  geom_path(data = west.fall.data [west.fall.data $sitenum > 0,], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, col = period), alpha = 0.9, col = "firebrick") +
+  geom_point(data =  west.fall.data [west.fall.data $sitenum > 0,], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = period, pch = period, col = period), cex = 2.5)+
+  scale_shape_manual(values=c("Post-breeding migration" = 21 , "Non-breeding period"  = 22, "Pre-breeding migration" = 21, "Breeding"  = 24, "Failure" = 4)) +
+  scale_colour_manual(values=c("Post-breeding migration" = "black" , "Non-breeding period"  = "white", "Pre-breeding migration" = "black", "Breeding"  = "white", "Failure" = "black")) +
+  scale_fill_manual(values=c("Post-breeding migration" = "#FDE725FF" , "Non-breeding period"  = "black", "Pre-breeding migration" = "#21908CFF", "Breeding"  = "black"))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
+        plot.title=element_text(size=8, vjust=-1),
+        legend.position = "None",
+        axis.title =element_blank(),
+        axis.text =element_blank(),
+        axis.ticks =element_blank(),
+        axis.ticks.length = unit(0, "pt"),
+        legend.spacing = unit(-5, "pt"),
+        plot.margin = unit(c(0,0,0,0), "pt"),
+        legend.key = element_rect(colour = "transparent", fill = "white"))
+
+## Migratory track for western breeders in the spring ----
+west.spring.data <- geo.all %>% filter(Breeding_region_MC %in% c("Western Region", "Northwestern Region", "Central")) %>%
+  group_by(geo_id) %>%
+  filter(StartTime >= StartTime[which(NB_count == max(NB_count, na.rm = T))])
+
+west.spring.mig.routes <- ggplot(st_as_sf(America))+
+  geom_sf(colour = "black", fill = "white") +
+  coord_sf(xlim = c(-170, -30),ylim = c(-15, 70)) +
+  geom_errorbar(data = west.spring.data [west.spring.data $sitenum > 0,], aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5., group = geo_id), linewidth = 0.5, width = 1, alpha = 0.8, color = "black") +
+  geom_errorbar(data = west.spring.data [west.spring.data $sitenum > 0,], aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5., group = geo_id), linewidth = 0.5, width = 1, alpha = 0.8, color = "black") +
+  geom_path(data = west.spring.data [west.spring.data $sitenum > 0,], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, col = period), alpha = 0.9, col = "firebrick") +
+  geom_point(data =  west.spring.data [west.spring.data $sitenum > 0,], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = period, pch = period, col = period), cex = 2.5)+
   scale_shape_manual(values=c("Post-breeding migration" = 21 , "Non-breeding period"  = 22, "Pre-breeding migration" = 21, "Breeding"  = 24, "Failure" = 4)) +
   scale_colour_manual(values=c("Post-breeding migration" = "black" , "Non-breeding period"  = "white", "Pre-breeding migration" = "black", "Breeding"  = "white", "Failure" = "black")) +
   scale_fill_manual(values=c("Post-breeding migration" = "#FDE725FF" , "Non-breeding period"  = "black", "Pre-breeding migration" = "#21908CFF", "Breeding"  = "black"))+
@@ -1744,5 +1828,10 @@ ggsave(plot = nbr.move.plot, filename = "nbr.movements.png" ,  path = "C:/Users/
        units = "cm", width = 24*1.2, height = 10*1.2, dpi = "print", bg = "white")
 
 
-  
+# Figure 16 stopovers in the Caribbean -----
+
+## fall stopovers in the Caribbean 
+
+
+
   

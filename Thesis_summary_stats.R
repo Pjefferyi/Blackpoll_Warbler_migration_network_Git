@@ -102,6 +102,18 @@ spring.dist <- spring.stat %>% group_by(geo_id) %>% mutate(Lon.50.next = lead(Lo
   filter(!is.na(dists)) %>%
   summarize(distance = sum(dists)/1000)
 
+# Fall migration between successive sites 
+fall.dist.succ <- fall.stat %>% group_by(geo_id) %>% mutate(Lon.50.next = lead(Lon.50.),
+                                                       Lat.50.next = lead(Lat.50.)) %>%
+  rowwise() %>%
+  mutate(dist.to.next.site = distHaversine(c(Lon.50.,Lat.50.), c(Lon.50.next, Lat.50.next)), .after = sitenum) 
+
+# spring migration between successive sites 
+spring.dist.succ <- spring.stat %>% group_by(geo_id) %>% mutate(Lon.50.next = lead(Lon.50.),
+                                                           Lat.50.next = lead(Lat.50.)) %>%
+  rowwise() %>%
+  mutate(dist.to.next.site  = distHaversine(c(Lon.50.,Lat.50.), c(Lon.50.next, Lat.50.next)), .after = sitenum)
+  
 ## Number of nodes used ----
 
 # Load fall and spring intra node movement datasets
@@ -440,58 +452,53 @@ ggplot(data = spring.gdata, aes(y = bridge.indegree, x = as.factor(cluster), fil
 
 # read nonbreeding movement data generated with this script C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Blackpoll_warbler_mapping_scripts/Blackpoll_nonbreeding_movements.R
 NB.move <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/nonbreeding.movements.csv")
+NB.stat.mean <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/nonbreeding.mean.csv")
 
-# get dataframe with categorical information on movement vs no-movement, longituide of the first nonbreeding site, and number of movements per individual
-NB.mover.cat <- NB.move %>% group_by(geo_id) %>%
-  mutate(initial.nbr.lon = first(Lon.50.))%>%
-  summarise(status = unique(nbr.mover), n.movements = n(), initial.nbr.lon = first(initial.nbr.lon), breeding.lon = first(deploy.longitude)) %>%
-  mutate(n.movements = ifelse(status == "nonmover", 0, n.movements/2))
-  
+# Update reference and location data with the status of each individual: whether or not they performed nonbreeding movements 
+analysis_ref <- analysis_ref %>% mutate(move.status = ifelse(geo_id %in% NB.move$geo_id, "mover", "nonmover")) %>%
+  filter(geo_id %in% NB.move$geo_id | geo_id %in% NB.stat.mean$geo_id)
+geo.all.nbr <- geo.all %>% mutate(move.status = ifelse(geo_id %in% NB.move$geo_id, "mover", "nonmover")) %>%
+  filter(geo_id %in% NB.move$geo_id | geo_id %in% NB.stat.mean$geo_id)
+
 ## How many birds performed nonbreeding movements? ----
-NB.mover.cat %>% group_by(status) %>% summarize(n = n())
+analysis_ref %>% group_by(move.status) %>% summarize(n = n())
 #View(NB.mover.cat %>% group_by(status) %>% summarize(geo_id = unique(geo_id)))
 
 ## test whether the probability of nonbreeding movements was influenced by the longitude of the first nonbreeding site occupied ---- 
-nbr.lon.mod <- glm(as.factor(status) ~ initial.nbr.lon, data = NB.mover.cat, family = binomial(link = "logit"))
-boxplot(initial.nbr.lon ~ as.factor(status), data = NB.mover.cat)
+nbr.locations <- geo.all.nbr  %>% filter(NB_count == 1)  
+nbr.lon.mod <- glm(as.factor(move.status) ~ Lon.50., data = nbr.locations, family = binomial(link = "logit"))
+boxplot(as.factor(move.status) ~ Lon.50., data = nbr.locations)
 summary(nbr.lon.mod)
 check_model(nbr.lon.mod)
 
-## get dataframe for movements that classifies timing and direction -----
-NB.move.mod <- NB.move %>% filter(nbr.mover == "mover") %>% group_by(geo_id) %>%
-  mutate(move.start = EndTime,
-         move.end = lead(StartTime),
-         start.lon = Lon.50.,
-         start.lat = Lat.50.,
-         end.lon = lead(Lon.50.),
-         end.lat = lead(Lat.50.),
-         dist = lead(dist),
-        nbr.stage = as.numeric(difftime(anytime(EndTime), anytime(nbr.arrival), units = "days"))/
-                  as.numeric(difftime(anytime(nbr.departure), anytime(nbr.arrival), units = "days")),
-         equinox.proximity = difftime(move.start, spring.equinox.date, units = "days")) %>% 
-  dplyr::select(geo_id, move.start, move.end, start.lon,
-                start.lat, end.lon, end.lat, dist, nbr.stage, timing.nbr.move,
-                equinox.proximity, spring.equinox.date) %>%
-  filter(move.start < move.end, !is.na(move.end)) %>%
-  mutate(move.direction = ifelse(start.lat < end.lat, "North", "South")) %>%
-  rowwise() %>%
-  mutate(bearing = bearing(c(start.lon, start.lat), c(end.lon, end.lat)))
+simulationOutput <- simulateResiduals(fittedModel = nbr.lon.mod, plot = F)
+plot(simulationOutput)
+testDispersion(simulationOutput)
 
 # movement timing summary 
-NB.move.mod %>% group_by(timing.nbr.move) %>%summarise (n = n())
+NB.move %>% group_by(timing.nbr.move) %>%summarise (n = n())
 
 # movement occurrence by month 
-NB.move.mod <- NB.move.mod %>% mutate(move.month = month(move.start))
-NB.move.mod %>% group_by(move.month) %>% summarise(n())
+NB.move <- NB.move %>% mutate(move.month = month(move.start))
+NB.move %>% group_by(move.month) %>% summarise(n())
 
 # movement direction (North south) summary
-print(NB.move.mod %>% group_by(move.direction) %>% summarise (n = n()), n = 24)
+NB.move <- NB.move %>% rowwise() %>% mutate(move.bearing = bearing(c(start.lon, start.lat), c(end.lon, end.lat)), 
+                                            move.direction = ifelse(abs(move.bearing) < 90, "north", "south")) 
+print(NB.move %>% group_by(move.direction) %>% summarise (n = n()), n = 24)
 
-# individual bird movement directions 
-move.schedule <- NB.move.mod %>% group_by(geo_id,move.direction) %>% 
-  reframe(n = n(), move.start) %>%
-  arrange(move.start)
-print(move.schedule, n = nrow(move.schedule))
+# time spent at northern nonbreeding grounds 
+northward.nbr <- NB.move %>% group_by(geo_id) %>% filter(move.direction == "north", StartTime == max(StartTime),
+                                                         duration < 100)
+mean(northward.nbr$duration) 
+range(northward.nbr$duration)
+sd(northward.nbr$duration)/sqrt(length(northward.nbr$duration))
+
+# # individual bird movement directions 
+# move.schedule <- NB.move.mod %>% group_by(geo_id,move.direction) %>% 
+#   reframe(n = n(), move.start) %>%
+#   arrange(move.start)
+# print(move.schedule, n = nrow(move.schedule))
 
 # movement proximity to the equinox summamove.month# movement proximity to the equinox summary
 NB.move.mod %>% mutate(equi.prox.cat = ifelse(abs(equinox.proximity) < 14, "close", "far")) %>% 
@@ -501,7 +508,7 @@ NB.move.mod %>% mutate(equi.prox.cat = ifelse(abs(equinox.proximity) < 14, "clos
 geo.all %>% group_by(geo_id) %>% filter(geo_id %in% NB.move.mod$geo_id, NB_count == max(NB_count, na.rm = T)) %>% 
   summarize(time.last.site = max(duration)) %.% merge 
 
-# Average movement distance mean and SE ----
+# Average nonbreeding movement distance mean and SE ----
 mean(NB.move.mod$dist)
 sd(NB.move.mod$dist)/sqrt(length(NB.move.mod$dist))
 
@@ -541,7 +548,7 @@ nrow(NB.all)
 #         plot.margin = unit(c(0,0,0,0), "pt"),
 #         legend.key = element_rect(colour = "transparent", fill = "white"))
 
-# Average arrival and departure dates ----
+# Average arrival and departure dates in the nonbreeding grounds ----
 
 # average date of arrival from the nonbreeding grounds 
 avg.nbr.arr <- mean(yday(geo.all$nbr.arrival), na.rm = T)
@@ -551,4 +558,42 @@ as.Date(avg.nbr.arr, origin = "2020-01-01")
 avg.nbr.dep <- mean(yday(geo.all$nbr.departure), na.rm = T)
 as.Date(avg.nbr.dep, origin = "2020-01-01")
 
+# Transoceanic crossings ----
 
+# load Caribbean polygon 
+caribb.poly <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Mapping_components/Data/Caribb.poly.shp") %>%
+  st_transform(st_crs(fall.stat.sf))
+
+caribb.countries <- st_as_sf(wrld_simpl[wrld_simpl$SUBREGION == 29,])
+
+# get the fall caribbean stopovers 
+fall.carib.stops1 <- st_intersection(fall.stat.sf , caribb.countries)
+fall.carib.stops2 <- st_intersection(fall.stat.sf , caribb.poly)
+
+# convert fall locations to spatial points 
+fall.stat.sf <- st_as_sf(fall.stat, coords = c("Lon.50.", "Lat.50."), crs = st_crs(wrld_simpl), remove = F)
+
+# convert springlocations to spatial points 
+spring.stat.sf <- st_as_sf(spring.stat, coords = c("Lon.50.", "Lat.50."), crs = st_crs(wrld_simpl), remove = F)
+
+# get the spring caribbean stopovers 
+spring.carib.stops1 <- st_intersection(spring.stat.sf , caribb.countries)
+spring.carib.stops2 <- st_intersection(spring.stat.sf , caribb.poly)
+
+# plot of carribean stopovers
+America <- wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),]
+ggplot(st_as_sf(America))+
+  geom_sf(colour = "black", fill = "#F7F7F7") +
+  geom_sf(data = fall.carib.stops2, colour = "#D55E00")+
+  geom_sf(data = spring.carib.stops2, colour = "#009E73")+
+  #geom_sf_text(data = fall.carib.stops2, aes(label =  geo_id))+
+  #geom_sf_text(data = spring.carib.stops2, aes(label =  geo_id))+
+  coord_sf(xlim = c(-90, -50),ylim = c(10, 30)) 
+  
+# Add stopover information to reference data 
+analysis_ref_carib <- analysis_ref %>% mutate(fall.carib.stop = ifelse(geo.id %in% fall.carib.stops2$geo_id, "stopover", "direct"),
+                              spring.carib.stop = ifelse(geo.id %in% spring.carib.stops2$geo_id, "stopover", "direct"),
+                              fall.carib.stop = ifelse(geo.id %in% fall.stat$geo_id, fall.carib.stop, NA),
+                              spring.carib.stop = ifelse(geo.id %in% spring.stat$geo_id, spring.carib.stop, NA))
+
+x <- analysis_ref_carib %>% group_by(Breeding_region_MC, fall.carib.stop) %>% summarize(unique(geo.id)) 

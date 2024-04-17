@@ -91,7 +91,7 @@ geo.all.br.departure <- geo.all %>% filter(period %in% c("Post-breeding migratio
   group_by(geo_id) %>% mutate(proximity = distHaversine(cbind(Lon.50., Lat.50.), cbind(deploy.longitude, deploy.latitude))) %>%
   filter(proximity <= 250000) %>% summarize(fall.br.departure = max(EndTime)) 
   #mutate(lon.proximity = deploy.longitude - Lon.50., lat.proximity = deploy.latitude - Lat.50.) %>%
-  #filter(abs(lon.proximity) <= 2 & abs(lat.proximity) <= 4) %>% summarize(fall.br.departure = max(EndTime)) 
+  #filter(abs(lon.proximity) <= 2 & abs(lat.proximity) <= 4) %>% summarize(fall.br.departure = max(EndTime))
   #filter(ifelse(study.site %in% c("Quebec", "Mount Mansfield, Vermont, USA", "Nova Scotia, Canada"), (abs(lon.proximity) < 0.1 & abs(lat.proximity) < 0.1), (abs(lon.proximity) <= 2 & abs(lat.proximity) <= 4))) %>% summarize(fall.br.departure = max(EndTime )) 
 
 # Find the time of return to the breeding grounds #############
@@ -216,7 +216,7 @@ write.csv(geo.all, "C:/Users/Jelan/OneDrive/Desktop/University/University of Gue
 # Either import a file with manual clusters, or create cluster in R
 
 # first we must filter our location data to retain only those relevant to the first breeding period and fall migration 
-fall.stat <- geo.all %>% filter(sitenum > 0, duration > 2, 
+fall.stat <- geo.all %>% filter(sitenum > 0, duration >= 2, 
                                 anydate(StartTime, asUTC = T) <= anydate(nbr.arrival),
                                 Recorded_North_South_mig %in% c("Both", "South and partial North", "South"))
 
@@ -230,15 +230,15 @@ fall.stat <- merge(fall.stat, fall.timings.nb, by = "geo_id")
 
 #only retain the stopovers and the first nonbreeding sites occupied, and filter out stopovers that are within 250 km of breeding site 
 fall.stat <- fall.stat %>% group_by(geo_id) %>% filter(StartTime <= NB.first.site.arrival) %>% 
-  # filter(case_when(!(study.site %in% c("Quebec", "Mount Mansfield, Vermont, USA", "Nova Scotia, Canada")) ~ site_type != "Breeding",
-  #                  T ~ site_type == site_type )) %>%
-  # filter(ifelse(study.site %in% c("Quebec", "Mount Mansfield, Vermont, USA", "Nova Scotia, Canada"), distHaversine(cbind(Lon.50.,Lat.50.), cbind(deploy.longitude, deploy.latitude)) > 150000, distHaversine(cbind(Lon.50.,Lat.50.), cbind(deploy.longitude, deploy.latitude)) > 250000)) %>%
+  filter(case_when(!(study.site %in% c("Quebec", "Mount Mansfield, Vermont, USA", "Nova Scotia, Canada")) ~ site_type != "Breeding",
+                   T ~ site_type == site_type )) %>%
+  # filter(ifelse(study.site %in% c("Quebec", "Mount Mansfield, Vermont, USA", "Nova Scotia, Canada"), distHaversine(cbind(Lon.50.,Lat.50.), cbind(deploy.longitude, deploy.latitude)) > 50000, distHaversine(cbind(Lon.50.,Lat.50.), cbind(deploy.longitude, deploy.latitude)) > 250000)) %>%
   # mutate(site_type = ifelse(site_type == "Breeding", "Stopover", site_type),
   #        period  = ifelse(site_type == "Breeding", "Post-breeding migration", period),)
   filter(distHaversine(cbind(Lon.50.,Lat.50.), cbind(deploy.longitude, deploy.latitude)) > 250000) %>%
   mutate(site_type = ifelse(site_type == "Breeding", "Stopover", site_type),
          period = ifelse(period == "Breeding", "Post-breeding migration", period))
-  
+
   
 # Create clusters in two steps to account for the equinox 
 
@@ -312,8 +312,8 @@ ggplot(st_as_sf(wrld_simpl))+
    coord_sf(xlim = c(-170, -30),ylim = c(-15, 70)) +
   # geom_errorbar(data = fall.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
   # geom_errorbar(data = fall.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
-  geom_path(data = fall.stat[fall.stat$geo_id == "V8296_005",], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5) +
-  geom_point(data = fall.stat[fall.stat$geo_id == "V8296_005",], mapping = aes(x = Lon.50., y = Lat.50.), alpha = 0.5) +
+  geom_path(data = fall.stat[fall.stat$geo_id == "A",], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5) +
+  geom_point(data = fall.stat[fall.stat$geo_id == "A",], mapping = aes(x = Lon.50., y = Lat.50.), alpha = 0.5) +
   #geom_text(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., label = geo_id))+
   # geom_path(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5, linewidth = 0.1) +
   # geom_point(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, colour = as.factor(cluster)), cex = 2) +
