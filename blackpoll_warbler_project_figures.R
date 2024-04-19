@@ -155,7 +155,7 @@ undirected.fall.graph <- as.undirected(fall.graph, mode = "collapse",
 
 fall.label.prop <- concensusCluster(graph = undirected.fall.graph, thresh = 0.5, algiter = 1000)
 fall.infomap <- cluster_infomap(fall.graph)
-fall.walktrap <- cluster_walktrap(fall.graph, steps = 6)
+fall.walktrap <- cluster_walktrap(fall.graph, steps = 5)
 
 modularity(fall.graph, fall.label.prop$`community structure`$membership)
 modularity(fall.graph, fall.infomap$membership)
@@ -171,7 +171,7 @@ undirected.spring.graph <- as.undirected(spring.graph, mode = "collapse",
 
 spring.label.prop <- concensusCluster(graph = undirected.spring.graph, thresh = 0.5, algiter = 1000)
 spring.infomap <- cluster_infomap(spring.graph)
-spring.walktrap <- cluster_walktrap(spring.graph, steps = 5)
+spring.walktrap <- cluster_walktrap(spring.graph, steps = 4)
 
 modularity(spring.graph, spring.label.prop$`community structure`$membership)
 modularity(spring.graph, spring.infomap$membership)

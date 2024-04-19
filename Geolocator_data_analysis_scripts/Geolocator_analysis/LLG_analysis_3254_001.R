@@ -553,8 +553,8 @@ start <- "2016-10-01"
 end <- "2016-11-01"
 
 #first flight
-f1.start <- "2016-10-23"
-f1.end <- "2016-10-26"
+f1.start <- "2016-10-14"
+f1.end <- "2016-10-17"
 
 # Plot lat, lon and light transitions  
 jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition.png"), width = 1024 , height = 990, quality = 100, res = 200)
