@@ -220,7 +220,7 @@ stationarySite <- which(table(site) == max(table(site))) # find the site where b
 start <- min(which(mS$site == stationarySite))
 end   <- max(which(mS$site == stationarySite))
 
-(zenith_sd <- findHEZenith(twl, tol=0.05, range=c(start,end)))
+(zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
 
 # startDate <- "2013-11-01"
 # endDate   <- "2014-04-15"

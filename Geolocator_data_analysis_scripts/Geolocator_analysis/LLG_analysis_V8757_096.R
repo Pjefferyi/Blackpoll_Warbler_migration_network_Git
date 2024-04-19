@@ -675,20 +675,20 @@ save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 load(file = paste0(dir,"/", geo.id, "adjusted_initial_path_raw.csv"))
 
 #Fall transoceanic flight
-start <- "2012-10-01"
-end <- "2012-11-20"
+start <- "2012-10-25"
+end <- "2012-11-15"
 
 #first flight
 f1.start <- "2012-11-01"
 f1.end <- "2012-11-05"
 
 # Plot lat, lon and light transitions  
-jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition.png"), width = 1024 , height = 990, quality = 100, res = 200)
+jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition.png"), width = 1024 , height = 990, quality = 100, res = 200, )
 
 par(cex.lab=1.4)
 par(cex.axis=1.4)
 par(mfrow=c(3,1), mar = c(5,5,0.1,5))
-plot(lig$Date[lig$Date > start & lig$Date < end], lig$Light[lig$Date > start & lig$Date < end], type = "o",
+plot(lig$Date[lig$Date > start & lig$Date < end], lig$Light[lig$Date > start & lig$Date < end], type = "line",
      ylab = "Light level", xlab = "Time")
 rect(anytime(f1.start), min(lig$Light)-2, anytime(f1.end), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
 
