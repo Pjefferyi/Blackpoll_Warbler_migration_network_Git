@@ -154,6 +154,7 @@ undirected.fall.graph <- as.undirected(fall.graph, mode = "collapse",
                                        edge.attr.comb = list(weight = "sum", edge.type = "ignore"))
 
 fall.label.prop <- concensusCluster(graph = undirected.fall.graph, thresh = 0.5, algiter = 1000)
+x <- cluster_louvain(undirected.fall.graph)
 fall.infomap <- cluster_infomap(fall.graph)
 fall.walktrap <- cluster_walktrap(fall.graph, steps = 6)
 
@@ -1804,12 +1805,14 @@ nbr.move.plot <- ggplot(st_as_sf(wrld_simpl))+
   new_scale_fill()+
   geom_arrowsegment(data = NB.move, mapping = aes(x = start.lon, y = start.lat, xend = end.lon, yend = end.lat,
                     col = nbr.stage.common , 
-                    fill = nbr.stage.common ),
+                    fill = nbr.stage.common,
+                    linetype = equinox.nbr.move),
             arrows = arrow(end = "last", type = "closed", length = unit(0.1, "inches")), arrow_positions = 1, lwd = 0.6)+
   scale_fill_viridis( begin = 0, end = 0.9, breaks = c("Early" = 0.25, "Middle" = 0.50, "Late" = 0.75),
                       name = "Timing")+
   scale_color_viridis( begin = 0, end = 0.9, guide = "none")+
-  geom_text(data = NB.move, mapping = aes(x = Lon.50., y = Lat.50., label = geo_id), cex = 2.5)+
+  scale_linetype_manual(values = c("dashed", "solid"), guide = "none")+
+  #geom_text(data = NB.move, mapping = aes(x = Lon.50., y = Lat.50., label = geo_id), cex = 2.5)+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         text = element_text(size = 14),
@@ -1821,17 +1824,68 @@ nbr.move.plot <- ggplot(st_as_sf(wrld_simpl))+
         #axis.ticks.length = unit(0, "pt"),
         legend.spacing = unit(-5, "pt"),
         #plot.margin = unit(c(0,0,0,0), "pt"),
-        legend.key = element_rect(colour = "transparent", fill = "white"))
+        legend.key = element_rect(colour = "transparent", fill = "white"))+
+          guides(fill = guide_colourbar(order=1))
 
 ## Save the plot ----
 ggsave(plot = nbr.move.plot, filename = "nbr.movements.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
        units = "cm", width = 24*1.2, height = 10*1.2, dpi = "print", bg = "white")
 
 
-# Figure 16 stopovers in the Caribbean -----
+# Flight by individuals with ID V8757-096 -----
 
-## fall stopovers in the Caribbean 
+geo.id <- "V8757_096"
+
+# data directory
+dir <- paste0("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geolocator_data/", geo.id)
+
+# import lig data 
+lig <- readLig(paste0(dir,"/Raw_light_data_", geo.id, ".lig"), skip = 1)
+
+# Import file with twilight times  
+twl <- read.csv(paste0(dir,"/", geo.id, "_twl_times.csv"))
+
+#load the adjusted threshold path path x0_ad
+load(file = paste0(dir,"/", geo.id, "adjusted_initial_path_raw.csv"))
+
+#Fall transoceanic flight
+start <- "2012-10-25"
+end <- "2012-11-12"
+
+#first flight
+f1.start <- "2012-11-01"
+f1.end <- "2012-11-05"
 
 
+# plot  of light transitions 
+ggplot()+
+  geom_line(aes(x = lig$Date[lig$Date > start & lig$Date < end],
+                y = lig$Light[lig$Date > start & lig$Date < end]))+
+  annotate("rect", xmin = anytime(f1.start), xmax = anytime(f1.end), ymin = min(lig$Light)-2, ymax = max(lig$Light)+2,
+           alpha = .1,fill = "yellow")
 
+# Plot lat, lon and light transitions  
+jpeg("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures/light_transitions_V8757_096.png",
+            width = 2124 , height = 1090, quality = 100, res = 300)
+
+par(cex.lab=1, cex.axis=1, mfrow=c(3,1), 
+    mar = c(1,5,0.1,5), ps = 12)
+
+plot(lig$Date[lig$Date > start & lig$Date < end], lig$Light[lig$Date > start & lig$Date < end], type = "o",
+     ylab = "Light level", xaxt='n')
+rect(anytime(f1.start), min(lig$Light)-2, anytime(f1.end), max(lig$Light)+2, col = alpha("yellow", 0.3), lty=0)
+
+plot(anytime(twl$Twilight[twl$Twilight> start & twl$Twilight < end], tz = "UTC"), x0_ad[,1][twl$Twilight > start & twl$Twilight < end],
+     ylab = "Longitude", xaxt='n')
+rect(anytime(f1.start), min(x0_ad[,1])-2, anytime(f1.end), max(x0_ad[,1])+2, col = alpha("yellow", 0.3), lty=0)
+
+par(mar = c(5,5,0.1,5))
+
+plot(anytime(twl$Twilight[twl$Twilight> start & twl$Twilight < end], tz = "UTC"), x0_ad[,2][twl$Twilight > start & twl$Twilight < end],
+     ylab = "Latitude", xlab = "Time")
+rect(anytime(f1.start), min(x0_ad[,2])-2, anytime(f1.end), max(x0_ad[,2])+2, col = alpha("yellow", 0.3), lty=0)
+
+par(cex.lab= 1, cex.axis= 1)
+
+dev.off()
   

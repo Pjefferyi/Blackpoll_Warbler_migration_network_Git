@@ -485,7 +485,7 @@ NB.move %>% group_by(move.month) %>% summarise(n())
 # movement direction (North south) summary
 NB.move <- NB.move %>% rowwise() %>% mutate(move.bearing = bearing(c(start.lon, start.lat), c(end.lon, end.lat)), 
                                             move.direction = ifelse(abs(move.bearing) < 90, "north", "south")) 
-print(NB.move %>% group_by(move.direction) %>% summarise (n = n()), n = 24)
+print(NB.move %>% group_by(move.direction) %>% summarise (n = length(unique(geo_id))), n = 24)
 
 # time spent at northern nonbreeding grounds 
 northward.nbr <- NB.move %>% group_by(geo_id) %>% filter(move.direction == "north", StartTime == max(StartTime),
@@ -494,15 +494,22 @@ mean(northward.nbr$duration)
 range(northward.nbr$duration)
 sd(northward.nbr$duration)/sqrt(length(northward.nbr$duration))
 
-# # individual bird movement directions 
-# move.schedule <- NB.move.mod %>% group_by(geo_id,move.direction) %>% 
-#   reframe(n = n(), move.start) %>%
-#   arrange(move.start)
-# print(move.schedule, n = nrow(move.schedule))
+# time spent at southern nonbreeding grounds (and one nonbreeding grounds from a northward movement in the early winter)
+southward.nbr <- NB.move %>% group_by(geo_id) %>% filter(move.direction == "south" | duration > 100)
 
-# movement proximity to the equinox summamove.month# movement proximity to the equinox summary
-NB.move.mod %>% mutate(equi.prox.cat = ifelse(abs(equinox.proximity) < 14, "close", "far")) %>% 
-  group_by(equi.prox.cat) %>%summarise (n = n())
+mean(southward.nbr$duration) 
+range(southward.nbr$duration)
+sd(southward.nbr$duration)/sqrt(length(southward.nbr$duration))
+
+# individual bird movement directions
+move.schedule <- NB.move %>% group_by(geo_id,move.direction) %>%
+  reframe(n = n(), move.start) %>%
+  arrange(move.start)
+print(move.schedule, n = nrow(move.schedule))
+
+# movement proximity to the equinox summamove.month
+NB.move %>% 
+  group_by(move.direction, equinox.nbr.move) %>%summarise (n = n())
 
 #time spent at the last nonbreeding sites occupied by individuals that movemed
 geo.all %>% group_by(geo_id) %>% filter(geo_id %in% NB.move.mod$geo_id, NB_count == max(NB_count, na.rm = T)) %>% 
