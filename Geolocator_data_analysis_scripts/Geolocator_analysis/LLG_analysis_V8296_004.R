@@ -606,8 +606,8 @@ save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 load(file = paste0(dir,"/", geo.id, "adjusted_initial_path_raw.csv"))
 
 #Fall transoceanic flight
-start <- "2019-09-10"
-end <- "2019-10-25"
+start <- "2019-09-18"
+end <- "2019-10-18"
 
 # Plot lat, lon and light transitions  
 jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition"), width = 1024 , height = 990)
@@ -617,19 +617,19 @@ par(cex.axis=1.4)
 par(mfrow=c(3,1), mar = c(5,5,0.1,5))
 plot(lig$Date[lig$Date > start & lig$Date < end], lig$Light[lig$Date > start & lig$Date < end], type = "o",
      ylab = "Light level", xlab = "Time")
-rect(anytime("2019-09-28"), min(lig$Light)-2, anytime("2019-10-02"), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
-rect(anytime("2019-10-13 12:00"), min(lig$Light)-2, anytime("2019-10-14 12:00"), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime("2019-09-30"), min(lig$Light)-2, anytime("2019-10-02"), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime("2019-10-08"), min(lig$Light)-2, anytime("2019-10-08 12:00"), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
 
 plot(twl$Twilight[twl$Twilight> start & twl$Twilight < end], x0_ad[,1][twl$Twilight > start & twl$Twilight < end],
      ylab = "Longitude", xlab = "Time")
-rect(anytime("2019-09-28"), min(x0_ad[,1])-2, anytime("2019-10-02"), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
-rect(anytime("2019-10-13 12:00"), min(x0_ad[,1])-2, anytime("2019-10-14 12:00"), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime("2019-09-30"), min(x0_ad[,1])-2, anytime("2019-10-02"), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime("2019-10-08"), min(x0_ad[,1])-2, anytime("2019-10-08 12:00"), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
 
 
 plot(twl$Twilight[twl$Twilight > start & twl$Twilight < end], x0_ad[,2][twl$Twilight > start & twl$Twilight < end],
      ylab = "Latitude", xlab = "Time")
-rect(anytime("2019-09-28"), min(x0_ad[,2])-2, anytime("2019-10-02"), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
-rect(anytime("2019-10-13 12:00"), min(x0_ad[,2])-2, anytime("2019-10-14 12:00"), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime("2019-09-30"), min(x0_ad[,2])-2, anytime("2019-10-02"), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime("2019-10-08"), min(x0_ad[,2])-2, anytime("2019-10-08 12:00"), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
 
 par(cex.lab= 1)
 par(cex.axis= 1)

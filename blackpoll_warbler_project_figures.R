@@ -31,6 +31,7 @@ library(intergraph)
 library(networktools)
 library(clustAnalytics)
 library(pls)
+library(tnet)
 
 # ebird
 library(ebirdst)
@@ -188,16 +189,29 @@ V(spring.graph)$walktrap.comm <- spring.walktrap$membership
 fall.e <- which(E(fall.graph)$edge.type == "spring")
 fall.graph.disc <- fall.graph - edge(fall.e)
 
+#betweenness calculation 
 V(fall.graph)$betweenness <- betweenness(fall.graph.disc, directed = T, weights = 1/E(fall.graph.disc)$weight) 
-V(fall.graph)$betweenness.unweighted <- betweenness(fall.graph.disc, directed = T, weights = NULL) 
+V(fall.graph)$betweenness.unweighted <- 1/betweenness(fall.graph.disc, directed = T, weights = NULL) 
+
+#betweenness calculation (Opshal et al.)
+fall.edge.list <- cbind(get.edgelist(fall.graph.disc), E(fall.graph.disc)$weight)
+fall.net <- as.tnet(fall.edge.list, type = "weighted one-mode tnet")
+
+V(fall.graph)$betweenness.TO <- betweenness_w(fall.edge.list, directed = T, alpha = 0.2)[,2]
 
 # spring migratory network without fall edges  
 spring.e <- which(E(spring.graph)$edge.type == "fall")
 spring.graph.disc <- spring.graph - edge(spring.e)
 
-V(spring.graph)$betweenness <- betweenness(spring.graph.disc, directed = T, weights = 1/E(spring.graph.disc)$weight) 
-V(spring.graph)$betweenness.unweighted <- betweenness(spring.graph.disc, directed = T, weights = NULL) 
+#betweenness calculation 
+V(spring.graph)$betweenness <- betweenness(spring.graph.disc, directed = F, weights = 1/E(spring.graph.disc)$weight) 
+V(spring.graph)$betweenness.unweighted <- 1/betweenness(spring.graph.disc, directed = T, weights = NULL) 
 
+#betweenness calculation (Opshal et al.)
+spring.edge.list <- cbind(get.edgelist(spring.graph.disc), E(spring.graph.disc)$weight)
+spring.net <- as.tnet(spring.edge.list, type = "weighted one-mode tnet")
+
+V(spring.graph)$betweenness.TO <- betweenness_w(spring.edge.list, directed = T, alpha = 0.2)[,2]
 
 # fall and spring eigenvector centrality coefficient
 V(fall.graph)$eigen <- eigen_centrality(as.undirected(fall.graph.disc))$vector
@@ -917,7 +931,8 @@ spring.gplot.betw <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
   coord_sf(xlim = c(-170, -50),ylim = c(-3, 68)) +
   geom_edges(data = spring.ggnet, mapping = aes(x = x, y = y, xend = xend, yend = yend, lwd = weight, colour = edge.type),
-             arrow = arrow(length = unit(9, "pt"), type = "closed", angle = 10))+
+             arrow = arrow(length = unit(9, "pt"), type = "closed", angle = 10),
+             curvature = 0.2)+
   scale_color_manual(values=c(adjustcolor("blue", alpha = 0), adjustcolor("black", alpha = 0.5)), guide = "none")+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
   geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = betweenness), shape=21, size  = 3)+
@@ -935,7 +950,6 @@ spring.gplot.betw <- ggplot(st_as_sf(America))+
         axis.ticks =element_blank(),
         axis.ticks.length = unit(0, "pt"),
         plot.margin = unit(c(0,0,0,0), "pt"))
-
 
 ## Time-adjusted node weight ----
 fall.gplot.metric2 <- ggplot(st_as_sf(America))+
@@ -1587,7 +1601,7 @@ east.spring.mig.routes <- ggplot(st_as_sf(America))+
         legend.key = element_rect(colour = "transparent", fill = "white"))
 
 ## Migratory track for western breeders in the fall ----
-west.fall.data <- geo.all %>% filter(Breeding_region_MC %in% c("Western Region", "Northwestern Region", "Central")) %>%
+west.fall.data <- geo.all %>% filter(Breeding_region_MC %in% c("Western Region", "Northwestern Region", "Central Region")) %>%
   group_by(geo_id) %>%
   filter(StartTime <= StartTime[which(NB_count == 1)])
 
@@ -1597,10 +1611,10 @@ west.fall.mig.routes <- ggplot(st_as_sf(America))+
   geom_errorbar(data = west.fall.data [west.fall.data $sitenum > 0,], aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5., group = geo_id), linewidth = 0.5, width = 1, alpha = 0.8, color = "black") +
   geom_errorbar(data = west.fall.data [west.fall.data $sitenum > 0,], aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5., group = geo_id), linewidth = 0.5, width = 1, alpha = 0.8, color = "black") +
   geom_path(data = west.fall.data [west.fall.data $sitenum > 0,], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, col = period), alpha = 0.9, col = "firebrick") +
-  geom_point(data =  west.fall.data [west.fall.data $sitenum > 0,], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = period, pch = period, col = period), cex = 2.5)+
+  geom_point(data =  west.fall.data [west.fall.data $sitenum > 0,], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = Breeding_region_MC, pch = period, col = period), cex = 2.5)+
   scale_shape_manual(values=c("Post-breeding migration" = 21 , "Non-breeding period"  = 22, "Pre-breeding migration" = 21, "Breeding"  = 24, "Failure" = 4)) +
   scale_colour_manual(values=c("Post-breeding migration" = "black" , "Non-breeding period"  = "white", "Pre-breeding migration" = "black", "Breeding"  = "white", "Failure" = "black")) +
-  scale_fill_manual(values=c("Post-breeding migration" = "#FDE725FF" , "Non-breeding period"  = "black", "Pre-breeding migration" = "#21908CFF", "Breeding"  = "black"))+
+  #scale_fill_manual(values=c("Post-breeding migration" = "#FDE725FF" , "Non-breeding period"  = "black", "Pre-breeding migration" = "#21908CFF", "Breeding"  = "black"))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         plot.title=element_text(size=8, vjust=-1),
@@ -1614,7 +1628,7 @@ west.fall.mig.routes <- ggplot(st_as_sf(America))+
         legend.key = element_rect(colour = "transparent", fill = "white"))
 
 ## Migratory track for western breeders in the spring ----
-west.spring.data <- geo.all %>% filter(Breeding_region_MC %in% c("Western Region", "Northwestern Region", "Central")) %>%
+west.spring.data <- geo.all %>% filter(Breeding_region_MC %in% c("Western Region", "Northwestern Region", "Central Region")) %>%
   group_by(geo_id) %>%
   filter(StartTime >= StartTime[which(NB_count == max(NB_count, na.rm = T))])
 
@@ -1623,11 +1637,11 @@ west.spring.mig.routes <- ggplot(st_as_sf(America))+
   coord_sf(xlim = c(-170, -30),ylim = c(-15, 70)) +
   geom_errorbar(data = west.spring.data [west.spring.data $sitenum > 0,], aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5., group = geo_id), linewidth = 0.5, width = 1, alpha = 0.8, color = "black") +
   geom_errorbar(data = west.spring.data [west.spring.data $sitenum > 0,], aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5., group = geo_id), linewidth = 0.5, width = 1, alpha = 0.8, color = "black") +
-  geom_path(data = west.spring.data [west.spring.data $sitenum > 0,], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, col = period), alpha = 0.9, col = "firebrick") +
-  geom_point(data =  west.spring.data [west.spring.data $sitenum > 0,], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = period, pch = period, col = period), cex = 2.5)+
+  geom_path(data = west.spring.data, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, col = period), alpha = 0.9, col = "darkgray") +
+  geom_point(data =  west.spring.data [west.spring.data $sitenum > 0,], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = Breeding_region_MC, pch = period, col = period), cex = 2.5, alpha = 0.8)+
   scale_shape_manual(values=c("Post-breeding migration" = 21 , "Non-breeding period"  = 22, "Pre-breeding migration" = 21, "Breeding"  = 24, "Failure" = 4)) +
   scale_colour_manual(values=c("Post-breeding migration" = "black" , "Non-breeding period"  = "white", "Pre-breeding migration" = "black", "Breeding"  = "white", "Failure" = "black")) +
-  scale_fill_manual(values=c("Post-breeding migration" = "#FDE725FF" , "Non-breeding period"  = "black", "Pre-breeding migration" = "#21908CFF", "Breeding"  = "black"))+
+  #scale_fill_manual(values=c("Post-breeding migration" = "#FDE725FF" , "Non-breeding period"  = "black", "Pre-breeding migration" = "#21908CFF", "Breeding"  = "black"))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         plot.title=element_text(size=8, vjust=-1),
@@ -1857,12 +1871,12 @@ f1.start <- "2012-11-01"
 f1.end <- "2012-11-05"
 
 
-# plot  of light transitions 
-ggplot()+
-  geom_line(aes(x = lig$Date[lig$Date > start & lig$Date < end],
-                y = lig$Light[lig$Date > start & lig$Date < end]))+
-  annotate("rect", xmin = anytime(f1.start), xmax = anytime(f1.end), ymin = min(lig$Light)-2, ymax = max(lig$Light)+2,
-           alpha = .1,fill = "yellow")
+# # plot  of light transitions 
+# ggplot()+
+#   geom_line(aes(x = lig$Date[lig$Date > start & lig$Date < end],
+#                 y = lig$Light[lig$Date > start & lig$Date < end]))+
+#   annotate("rect", xmin = anytime(f1.start), xmax = anytime(f1.end), ymin = min(lig$Light)-2, ymax = max(lig$Light)+2,
+#            alpha = .1,fill = "yellow")
 
 # Plot lat, lon and light transitions  
 jpeg("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures/light_transitions_V8757_096.png",

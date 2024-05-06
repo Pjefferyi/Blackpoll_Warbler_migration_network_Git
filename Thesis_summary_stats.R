@@ -604,3 +604,29 @@ analysis_ref_carib <- analysis_ref %>% mutate(fall.carib.stop = ifelse(geo.id %i
                               spring.carib.stop = ifelse(geo.id %in% spring.stat$geo_id, spring.carib.stop, NA))
 
 x <- analysis_ref_carib %>% group_by(Breeding_region_MC, fall.carib.stop) %>% summarize(unique(geo.id)) 
+
+
+
+
+
+# Assesss the proportion of individuals using a node 
+
+spring.stat %>% filter(geo_id %in% spring.stat[spring.stat$cluster %in% c(11),]$geo_id) %>%
+  group_by(Breeding_region_MC) %>%
+  summarize(n = length(unique(geo_id)))
+
+spring.stat %>% group_by(Breeding_region_MC) %>%
+  summarize(n = length(unique(geo_id)))
+
+spring.stat %>% filter(!(geo_id %in% spring.stat[spring.stat$cluster %in% c(6, 11),]$geo_id)) %>%
+  group_by(Breeding_region_MC) %>%
+  summarize(n = length(unique(geo_id)))
+
+fall.stat %>% filter(geo_id %in% fall.stat[fall.stat$cluster %in% c(3,5),]$geo_id) %>%
+  group_by(Breeding_region_MC) %>%
+  summarize(n = length(unique(geo_id)))
+
+fall.stat.ab %>% filter(geo_id %in% fall.stat.ab[fall.stat.ab$cluster %in% c(3, 5),]$geo_id) %>%
+  group_by(Breeding_region_MC, geo_id) %>%
+  summarize(ab.unit = unique(ab.unit)) %>%
+  summarize(ab.total = sum(ab.unit))
