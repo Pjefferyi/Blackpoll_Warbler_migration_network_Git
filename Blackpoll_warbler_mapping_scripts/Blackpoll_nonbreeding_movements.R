@@ -9,7 +9,7 @@ library(ggplot2)
 library(geosphere)
 library(terra)
 library(sf)
-library(maptools)
+#library(maptools)
 library(ebirdst)
 library(fmdates)
 

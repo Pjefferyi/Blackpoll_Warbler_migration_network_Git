@@ -10,7 +10,7 @@ library(ggplot2)
 library(geosphere)
 library(terra)
 library(sf)
-library(maptools)
+#library(maptools)
 library(ebirdst)
 library(scatterpie)
 
@@ -220,6 +220,9 @@ fall.stat <- geo.all %>% filter(sitenum > 0, duration >= 2,
                                 anydate(StartTime, asUTC = T) <= anydate(nbr.arrival),
                                 Recorded_North_South_mig %in% c("Both", "South and partial North", "South"))
 
+# We will censor locations over the carribean due to the equinox
+
+
 # we will also extract all fall locations (including while the bird was moving), for figures
 fall.move <- geo.all %>% filter(site_type %in% anydate(StartTime, asUTC = T) <= anydate(nbr.arrival),
                                 Recorded_North_South_mig %in% c("Both", "South and partial North", "South"))
@@ -299,7 +302,7 @@ ggplot(st_as_sf(wrld_simpl))+
   coord_sf(xlim = c(-170, -30),ylim = c(-15, 70)) +
   geom_path(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5) +
   geom_point(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, colour = site_type)) +
-  #geom_text(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., label = geo_id), cex = 2)+
+  geom_text(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., label = geo_id), cex = 2)+
   theme_bw() +
   theme(text = element_text(size = 16))
 
@@ -327,6 +330,26 @@ fall.breed.return <- fall.breed %>% group_by(geo_id) %>%
 fall.breed.return[,c("StartTime", "EndTime", "duration")] <- NA
 fall.breed.return[,c("period")] <- "Post-breeding migration"
 fall.stat <- bind_rows(fall.stat, fall.breed.return) %>% arrange(geo_id, sitenum)
+
+# # remove stopovers in the carribean
+# fall.stat <- fall.stat %>% dplyr::filter(!(cluster %in% c(14, 15)))
+
+# Change the numbering of clusters in fall.stat ################################
+fall.stat.site.use <- fall.stat %>% group_by(cluster) %>%
+  summarize(count.breeding = length(site_type[site_type == "Breeding"]),
+            count.stopover = length(site_type[site_type == "Stopover"]),
+            count.nonbreeding = length(site_type[site_type == "Nonbreeding"]),
+            Lat.50.med = median(Lat.50.)) %>%
+  mutate(site_type_num = case_when(
+    count.breeding > 0  ~ 3,
+    count.stopover > 0 & count.nonbreeding == 0 ~ 1,
+    count.nonbreeding > 0 ~ 2)) %>%
+  arrange(site_type_num, -Lat.50.med) %>%
+  mutate(unsorted.num = cluster, 
+         sorted.num = seq(1, max(cluster)))
+
+fall.stat <- fall.stat %>% merge(fall.stat.site.use[,c("unsorted.num", "sorted.num")], by.x = "cluster", by.y = "unsorted.num") %>%
+  mutate(cluster = sorted.num) %>% arrange(geo_id, StartTime)
 
 # Generate the network from our location data and clusters #####################
 
@@ -379,7 +402,7 @@ fall.node.type <- fall.stat %>% group_by(cluster) %>%
   mutate(site_type = factor(site_type, levels = c("Breeding", "Nonbreeding", "Stopover")))
 
 # Create a layout with node locations 
-meta.fall <- data.frame("vertex" = seq(1, max(fall.edge.df$cluster)), 
+meta.fall <- data.frame("vertex" = fall.node.type$cluster, 
                         #data.frame("vertex" = seq(min(fall.edge.df$cluster), max(fall.edge.df$cluster)), 
                         "Lon.50." = fall.node.lon$node.lon,
                         "Lat.50." = fall.node.lat$node.lat,
@@ -387,8 +410,9 @@ meta.fall <- data.frame("vertex" = seq(1, max(fall.edge.df$cluster)),
                         "node.type.num" = fall.node.type$site_type_num)
 
 # For fall nodes where latitudinal accuracy is low, set location close to the coast
-meta.fall[c(3, 5, 7),]$Lat.50. <- c(35.3, 41.45, 44.77)
+meta.fall[c(7, 6, 5),]$Lat.50. <- c(35.3, 41.45, 44.77)
 
+# create node location matrix 
 fall.location <- as.matrix(meta.fall[, c("Lon.50.", "Lat.50.")])
 
 # Create the fall network
@@ -535,12 +559,29 @@ ggplot(st_as_sf(wrld_simpl))+
   theme_bw() +
   theme(text = element_text(size = 16), legend.position = "None")
 
+# Change the numbering of clusters in spring.stat ##############################
+spring.stat.site.use <- spring.stat %>% group_by(cluster) %>%
+  summarize(count.breeding = length(site_type[site_type == "Breeding"]),
+            count.stopover = length(site_type[site_type == "Stopover"]),
+            count.nonbreeding = length(site_type[site_type == "Nonbreeding"]),
+            Lat.50.med = median(Lat.50.)) %>%
+  mutate(site_type_num = case_when(
+    count.breeding > 0  ~ 3,
+    count.stopover > 0 & count.nonbreeding == 0 ~ 1,
+    count.nonbreeding > 0 ~ 2)) %>%
+  arrange(site_type_num, -Lat.50.med) %>%
+  mutate(unsorted.num = cluster, 
+         sorted.num = seq(1,max(cluster)))
+
+spring.stat <- spring.stat %>% merge(spring.stat.site.use[,c("unsorted.num", "sorted.num")], by.x = "cluster", by.y = "unsorted.num") %>%
+  mutate(cluster = sorted.num) %>% arrange(geo_id, sitenum)
+
 # Generate the network from our location data and clusters #####################
 
 # Add a column with inter-cluster connections to our location dataset
 spring.stat  <- spring.stat %>% mutate(next.cluster = case_when(
   lead(cluster) != cluster & lead(geo_id) == geo_id ~ lead(cluster),
-  .default = NA)) 
+  .default = NA), .after= cluster) 
 
 # Create a dataframe with the edge info 
 spring.edge.df <- spring.stat %>% dplyr::select(cluster, next.cluster, geo_id, StartTime,
@@ -586,11 +627,12 @@ spring.node.type <- spring.stat %>% group_by(cluster) %>%
   mutate(site_type = factor(site_type, levels = c("Breeding", "Nonbreeding", "Stopover")))
 
 # Create a layout with node locations 
-meta.spring <- data.frame("vertex" = seq(min(spring.stat$cluster), max(spring.stat$cluster)), 
+meta.spring <- data.frame("vertex" = spring.node.type$cluster, 
                           "Lon.50." = spring.node.lon$node.lon,
                           "Lat.50." = spring.node.lat$node.lat,
                           "node.type.num" = spring.node.type$site_type_num,
                           "node.type" = spring.node.type$site_type)
+
 
 spring.location <- as.matrix(meta.spring[, c("Lon.50.", "Lat.50.")])
 
@@ -943,7 +985,7 @@ fall.ab.by.origin <- fall.ab.by.origin %>% pivot_wider(names_from = Breeding_reg
 
 # Merge abundance data with the node metadata
 meta.fall.ab <- merge(meta.fall, fall.ab.by.origin, by.x = "vertex", by.y = "cluster") 
-
+  
 # Also add a column with the overall abundance at each site, and the number of individual at each site 
 fall.stat.ab.per.site <- fall.stat.ab %>% group_by(cluster) %>% 
   summarize(r.abundance.at.cluster = sum(ab.unit))
@@ -1039,15 +1081,16 @@ spring.ab.by.origin <- spring.ab.by.origin %>% pivot_wider(names_from = Breeding
          n.northwestern = `region.n_Northwestern Region`)
 
 # Merge abundance data with the node metadata
-meta.spring.ab <- merge(meta.spring, spring.ab.by.origin, by.x = "vertex", by.y = "cluster") 
+meta.spring.ab <- merge(meta.spring, spring.ab.by.origin, by.x = "vertex", by.y = "cluster")
 
 # Also add a column with the overall abundance at each site, and the number of individual at each site 
 spring.stat.ab.per.site <- spring.stat.ab %>% group_by(cluster) %>% 
   summarize(r.abundance.at.cluster = sum(ab.unit))
 
-meta.spring.ab <- merge(meta.spring.ab, spring.stat.ab.per.site, by.x = "vertex", by.y = "cluster") %>% 
+meta.spring.ab <- merge(meta.spring.ab, spring.stat.ab.per.site, by.x = "vertex", by.y = "cluster")%>% 
   rowwise() %>%
   mutate(n.individuals.at.cluster = sum(n.central, n.eastern, n.western, n.northwestern))  
+
 
 #create a column that can be converted to a numeric vector
 meta.spring.ab <- transform(meta.spring.ab, num.reg.ab.vector = asplit(cbind(prop.ab.central, prop.ab.eastern, prop.ab.western, prop.ab.northwestern), 1))

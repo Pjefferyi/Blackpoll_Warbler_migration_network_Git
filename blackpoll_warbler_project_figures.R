@@ -9,20 +9,20 @@ library(ggplot2)
 library(geosphere)
 library(terra)
 library(sf)
-library(maptools)
+#library(maptools)
 library(ebirdst)
 library(scatterpie)
 library(ggnewscale)
 library(cowplot)
 library(ggpubr)
 library(patchwork)
-library(mmtable2)
 library(purrr)
 library(stringr)
 library(gt)
 library(shadowtext)
 library(PieGlyph)
 library(ggarchery)
+library(viridis)
 
 # network specific libraries ----
 library(igraph)
@@ -155,9 +155,8 @@ undirected.fall.graph <- as.undirected(fall.graph, mode = "collapse",
                                        edge.attr.comb = list(weight = "sum", edge.type = "ignore"))
 
 fall.label.prop <- concensusCluster(graph = undirected.fall.graph, thresh = 0.5, algiter = 1000)
-x <- cluster_louvain(undirected.fall.graph)
 fall.infomap <- cluster_infomap(fall.graph)
-fall.walktrap <- cluster_walktrap(fall.graph, steps = 6)
+fall.walktrap <- cluster_walktrap(fall.graph, steps =6)
 
 modularity(fall.graph, fall.label.prop$`community structure`$membership)
 modularity(fall.graph, fall.infomap$membership)
@@ -197,21 +196,21 @@ V(fall.graph)$betweenness.unweighted <- 1/betweenness(fall.graph.disc, directed 
 fall.edge.list <- cbind(get.edgelist(fall.graph.disc), E(fall.graph.disc)$weight)
 fall.net <- as.tnet(fall.edge.list, type = "weighted one-mode tnet")
 
-V(fall.graph)$betweenness.TO <- betweenness_w(fall.edge.list, directed = T, alpha = 0.2)[,2]
+V(fall.graph)$betweenness.TO <- betweenness_w(fall.edge.list, directed = T, alpha = 0.5)[,2]
 
 # spring migratory network without fall edges  
 spring.e <- which(E(spring.graph)$edge.type == "fall")
 spring.graph.disc <- spring.graph - edge(spring.e)
 
 #betweenness calculation 
-V(spring.graph)$betweenness <- betweenness(spring.graph.disc, directed = F, weights = 1/E(spring.graph.disc)$weight) 
+V(spring.graph)$betweenness <- betweenness(spring.graph.disc, directed =T, weights = 1/E(spring.graph.disc)$weight) 
 V(spring.graph)$betweenness.unweighted <- 1/betweenness(spring.graph.disc, directed = T, weights = NULL) 
 
 #betweenness calculation (Opshal et al.)
 spring.edge.list <- cbind(get.edgelist(spring.graph.disc), E(spring.graph.disc)$weight)
 spring.net <- as.tnet(spring.edge.list, type = "weighted one-mode tnet")
 
-V(spring.graph)$betweenness.TO <- betweenness_w(spring.edge.list, directed = T, alpha = 0.2)[,2]
+V(spring.graph)$betweenness.TO <- betweenness_w(spring.edge.list, directed = T, alpha = 0.5)[,2]
 
 # fall and spring eigenvector centrality coefficient
 V(fall.graph)$eigen <- eigen_centrality(as.undirected(fall.graph.disc))$vector
@@ -335,8 +334,8 @@ V(spring.graph)$participation.coef <-  p.spring
 fall.gdata <- igraph::as_data_frame(fall.graph, what = "vertices") %>% mutate(cluster = seq(1:vcount(fall.graph)))
 spring.gdata <- igraph::as_data_frame(spring.graph, what = "vertices") %>% mutate(cluster = seq(1:vcount(spring.graph)))
 
-write.csv(fall.gdata, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/fall.graph.data.csv")
-write.csv(spring.gdata, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/spring.graph.data.csv")
+# write.csv(fall.gdata, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/fall.graph.data.csv")
+# write.csv(spring.gdata, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/spring.graph.data.csv")
 
 # Figures 1 and 2: Fall and spring migratory network node types and stationary location clusters ----
 America <- wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),]
@@ -372,7 +371,7 @@ fall.gplot <- ggplot(st_as_sf(America))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         legend.box.background = element_rect(fill = "white", colour = "black", linewidth = 0.2),
-        legend.position = c(0.18, 0.4), legend.key = element_rect(fill = "white"),
+        legend.position = c(0.18, 0.4), legend.key = element_rect(fill = "white", colour = NA),
         legend.background = element_rect(fill = NA),
         legend.title=element_text(size=8),
         legend.text=element_text(size=8),
@@ -426,7 +425,7 @@ spring.gplot <- ggplot(st_as_sf(America))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         legend.box.background = element_rect(fill = "white", colour = "black", linewidth = 0.2),
-        legend.position = c(0.15, 0.4), legend.key = element_rect(fill = "white"),
+        legend.position = c(0.15, 0.4), legend.key = element_rect(fill = "white", colour = NA),
         legend.title=element_text(size=8),
         legend.text=element_text(size=8),
         title = element_text(size = 8),
@@ -702,7 +701,7 @@ fall.com.plot <- ggplot(st_as_sf(America))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         legend.box.background = element_rect(fill = "white", colour = "black", linewidth = 0.2),
-        legend.position = c(0.15, 0.4), legend.key = element_rect(fill = "white"),
+        legend.position = c(0.15, 0.4), legend.key = element_rect(fill = "white", colour = NA),
         legend.background = element_rect(fill = NA),
         legend.title=element_text(size=13),
         legend.text=element_text(size=13),
@@ -726,7 +725,7 @@ spring.com.plot <- ggplot(st_as_sf(America))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         legend.box.background = element_rect(fill = "white", colour = "black", linewidth = 0.2),
-        legend.position = c(0.17, 0.4), legend.key = element_rect(fill = "white"),
+        legend.position = c(0.17, 0.4), legend.key = element_rect(fill = "white", colour = NA),
         legend.background = element_rect(fill = NA),
         legend.title=element_text(size=13),
         legend.text=element_text(size=13),
@@ -932,7 +931,7 @@ spring.gplot.betw <- ggplot(st_as_sf(America))+
   coord_sf(xlim = c(-170, -50),ylim = c(-3, 68)) +
   geom_edges(data = spring.ggnet, mapping = aes(x = x, y = y, xend = xend, yend = yend, lwd = weight, colour = edge.type),
              arrow = arrow(length = unit(9, "pt"), type = "closed", angle = 10),
-             curvature = 0.2)+
+             curvature = 0.3)+
   scale_color_manual(values=c(adjustcolor("blue", alpha = 0), adjustcolor("black", alpha = 0.5)), guide = "none")+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
   geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = betweenness), shape=21, size  = 3)+
@@ -1546,7 +1545,7 @@ ggsave(plot = loc.ind.panel2, filename = "individual.movements2.png" ,  path = "
 # Figure 11 group migratory tracks for full year  ----
 
 
-## Migratory track fro eastern breeders in the fall ----
+## Migratory track for eastern breeders in the fall ----
 east.fall.data <- geo.all %>% filter(Breeding_region_MC == "Eastern Region") %>%
   group_by(geo_id) %>%
   filter(StartTime <= StartTime[which(NB_count == 1)])
@@ -1628,7 +1627,7 @@ west.fall.mig.routes <- ggplot(st_as_sf(America))+
         legend.key = element_rect(colour = "transparent", fill = "white"))
 
 ## Migratory track for western breeders in the spring ----
-west.spring.data <- geo.all %>% filter(Breeding_region_MC %in% c("Western Region", "Northwestern Region", "Central Region")) %>%
+west.spring.data <- geo.all %>% filter(Breeding_region_MC %in% c("Western Region", "Northwestern Region")) %>%
   group_by(geo_id) %>%
   filter(StartTime >= StartTime[which(NB_count == max(NB_count, na.rm = T))])
 
