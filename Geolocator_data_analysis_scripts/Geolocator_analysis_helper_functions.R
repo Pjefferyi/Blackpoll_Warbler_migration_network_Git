@@ -16,6 +16,7 @@ library(terra)
 library(spData)
 library(sf)
 library(cluster)
+library(raster)
 
 #load and install and load geolocator packages 
 # install_github("eldarrak/FLightR")

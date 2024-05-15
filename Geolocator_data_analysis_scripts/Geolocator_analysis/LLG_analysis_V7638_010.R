@@ -22,16 +22,16 @@ library(TwGeos)
 # install_github("SWotherspoon/SGAT")
 library(SGAT)
 # install_github("MTHallworth/LLmig")
-library(LLmig)
+#library(LLmig)
 # install_github("SLisovski/GeoLocTools")
 library(GeoLocTools)
-setupGeolocation()
+#setupGeolocation()
 
 # clear object from workspace
 rm(list=ls())
 
 # Load helper functions
-source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis/Geolocator_analysis_helper_functions.R")
+source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis_helper_functions.R")
 
 geo.id <- "V7638_010"
 
@@ -221,14 +221,14 @@ dev.off()
 zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith0 + 2,
                             Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad+4,
-                            Date > anytime(dep.nbr) ~ zenith0_ad + 4))
+                            Date > anytime(dep.nbr) ~ zenith0_ad + 2))
 
 zeniths0 <- zenith_twl_zero$zenith
 
 zenith_twl_med <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith,
                             Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith_sd,
-                            Date > anytime(dep.nbr) ~ zenith_sd))
+                            Date > anytime(dep.nbr) ~ zenith))
 
 zeniths_med <- zenith_twl_med$zenith
 
@@ -314,7 +314,7 @@ twl_adjusted <- twl %>% mutate(Twilight = Twilight + seconds(CD.model$coefficien
                                Twilight0 = Twilight0 + seconds(CD.model$coefficients[2] * 240 * timestep))
 
 # Initial Path with Clock Drift Adjustment  ####################################
-path <- thresholdPath(twl_adjusted$Twilight, twl_adjusted$Rise, zenith = zeniths_med, tol=tol_ini)
+path <- thresholdPath(twl_adjusted$Twilight, twl_adjusted$Rise, zenith = zenith, tol=tol_ini)
 
 x0 <- path$x
 z0 <- trackMidpts(x0)
@@ -615,8 +615,8 @@ save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 load(file = paste0(dir,"/", geo.id, "_initial_path__clock_drift_adjustment.csv"))
 
 #Fall transoceanic flight
-start <- "2018-10-01"
-end <- "2018-11-15"
+start <- "2018-10-07"
+end <- "2018-10-25"
 
 #first flight
 f1.start <- "2018-10-13"
@@ -639,11 +639,11 @@ rect(anytime(f2.start), min(lig$Light)-2, anytime(f2.end), max(lig$Light)+2, col
 plot(twl_adjusted$Twilight[twl_adjusted$Twilight> start & twl_adjusted$Twilight < end], x0[,1][twl_adjusted$Twilight > start & twl_adjusted$Twilight < end],
      ylab = "Longitude", xlab = "Time")
 rect(anytime(f1.start), min(x0_ad[,1])-2, anytime(f1.end), max(x0[,1])+2, col = alpha("yellow", 0.2), lty=0)
-rect(anytime(f2.start), min(lig$Light)-2, anytime(f2.end), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime(f2.start), min(x0_ad[,1])-2, anytime(f2.end), max(x0[,1])+2, col = alpha("yellow", 0.2), lty=0)
 plot(twl_adjusted$Twilight[twl_adjusted$Twilight > start & twl_adjusted$Twilight < end], x0[,2][twl_adjusted$Twilight > start & twl_adjusted$Twilight < end],
      ylab = "Latitude", xlab = "Time")
 rect(anytime(f1.start), min(x0_ad[,2])-2, anytime(f1.end), max(x0[,2])+2, col = alpha("yellow", 0.2), lty=0)
-rect(anytime(f2.start), min(lig$Light)-2, anytime(f2.end), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime(f2.start), min(x0_ad[,2])-2, anytime(f2.end), max(x0[,2])+2, col = alpha("yellow", 0.2), lty=0)
 par(cex.lab= 1)
 par(cex.axis= 1)
 

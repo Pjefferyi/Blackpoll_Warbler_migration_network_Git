@@ -22,16 +22,16 @@ library(TwGeos)
 # install_github("SWotherspoon/SGAT")
 library(SGAT)
 # install_github("MTHallworth/LLmig")
-library(LLmig)
+#library(LLmig)
 # install_github("SLisovski/GeoLocTools")
 library(GeoLocTools)
-setupGeolocation()
+#setupGeolocation()
 
 # clear object from workspace
 rm(list=ls())
 
 # Load helper functions 
-source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis/Geolocator_analysis_helper_functions.R")
+source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis_helper_functions.R")
 
 geo.id <- "V7638_005"
 
@@ -258,7 +258,7 @@ save(x0_r, file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
 
 # Initial Path #################################################################
 tol_ini <- 0.16
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol = tol_ini)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol = tol_ini)
 
 x0 <- path$x
 z0 <- trackMidpts(x0)
@@ -558,12 +558,12 @@ save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 load(file = paste0(dir,"/", geo.id, "adjusted_initial_path_raw.csv"))
 
 #Fall transoceanic flight
-start <- "2018-10-01"
+start <- "2018-10-15"
 end <- "2018-11-20"
 
 #first flight
-f1.start <- "2018-10-13"
-f1.end <- "2018-10-15"
+f1.start <- "2018-10-28"
+f1.end <- "2018-10-30"
 
 #Secondflight
 f2.start <- "2018-10-28"

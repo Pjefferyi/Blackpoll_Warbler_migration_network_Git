@@ -156,7 +156,7 @@ undirected.fall.graph <- as.undirected(fall.graph, mode = "collapse",
 
 fall.label.prop <- concensusCluster(graph = undirected.fall.graph, thresh = 0.5, algiter = 1000)
 fall.infomap <- cluster_infomap(fall.graph)
-fall.walktrap <- cluster_walktrap(fall.graph, steps =6)
+fall.walktrap <- cluster_walktrap(fall.graph, steps = 5) #cluster_walktrap(fall.graph.disc, steps =6)
 
 modularity(fall.graph, fall.label.prop$`community structure`$membership)
 modularity(fall.graph, fall.infomap$membership)
@@ -172,7 +172,7 @@ undirected.spring.graph <- as.undirected(spring.graph, mode = "collapse",
 
 spring.label.prop <- concensusCluster(graph = undirected.spring.graph, thresh = 0.5, algiter = 1000)
 spring.infomap <- cluster_infomap(spring.graph)
-spring.walktrap <- cluster_walktrap(spring.graph, steps = 4)
+spring.walktrap <- cluster_walktrap(spring.graph.disc, steps = 4)
 
 modularity(spring.graph, spring.label.prop$`community structure`$membership)
 modularity(spring.graph, spring.infomap$membership)
@@ -1320,10 +1320,6 @@ ggsave(plot = MC.nbr.regions.fig, filename = "MC.nbr.regions.png" ,  path = "C:/
 
 # Figure 7: Abundance propagation regions ---- 
 
-#Load blackpoll warbler reference dataset to get breeding site
-bpw.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") %>%
-  st_as_sf(coords = c("deploy.longitude", "deploy.latitude"), crs = crs(wrld_simpl))
-
 # Load abundance propagation region polygons 
 br.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Relative_abundance_propagation/bpw_abundance_regions_adjusted.shp") %>%
   st_transform(crs(wrld_simpl)) %>%
@@ -1347,11 +1343,16 @@ ab.prop.regions.fig <- ggplot(st_as_sf(America))+
   scale_fill_discrete(labels = c("Breeding range", "Nonbreeding range"), name = "", guide = guide_legend(order = 3)) +
   geom_sf(data = br.regions, aes(col = "Abundance propagation regions"), fill = NA, linewidth = 0.5) +
   scale_colour_manual(values = c("Abundance propagation regions" = "black"), name = "")+
-  geom_sf_label(data = br.regions, aes(label = region, stroke = region), nudge_y = c(-10, -12,-13 ,-13), nudge_x = c(10, 10, -4,0), cex =4)+
+  geom_sf_label(data = br.regions, aes(label = region), nudge_y = c(-10, -12,-13 ,-13), nudge_x = c(10, 10, -4,0), cex =4)+
   new_scale_fill() +
-  geom_sf(data =  bpw.ref, aes(fill = "black"), col = "white", shape = 21, cex = 3)+
+  # all breeding sites included in the fall network
+  geom_point(data =  fall.stat[fall.stat$sitenum == 1,], aes(fill = "black", x = Lon.50., y = Lat.50.), col = "white", shape = 21, cex = 3)+
+  scale_fill_manual(values = c("black"), labels = c("Geolocator deployment sites"), name = "", guide = guide_legend(order = 1))+
+  # Deployment location for WRMA04173
+  geom_point(data =  bpw.ref[bpw.ref$geo.id == "WRMA04173",], aes(fill = "black", x = mod.deploy.lon, y = mod.deploy.lat), col = "white", shape = 21, cex = 3)+
   scale_fill_manual(values = c("black"), labels = c("Geolocator deployment sites"), name = "", guide = guide_legend(order = 1))+
   coord_sf(xlim = c(-170, -40),ylim = c(-5, 70))+
+  # estimated breeding location for WRMA04173
   geom_point(data = spring.stat[spring.stat$geo_id == "WRMA04173" & spring.stat$sitenum == 5,],
              aes(x = Lon.50., y = Lat.50.), shape = 4, cex = 3)+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),

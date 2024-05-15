@@ -22,10 +22,10 @@ library(TwGeos)
 # install_github("SWotherspoon/SGAT")
 library(SGAT)
 # install_github("MTHallworth/LLmig")
-library(LLmig)
+#library(LLmig)
 # install_github("SLisovski/GeoLocTools")
 library(GeoLocTools)
-setupGeolocation()
+#setupGeolocation()
 
 # clear object from workspace
 rm(list=ls())
@@ -681,7 +681,7 @@ save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 load(file = paste0(dir,"/", geo.id, "adjusted_initial_path_raw.csv"))
 
 #Fall transoceanic flight
-start <- "2013-09-01"
+start <- "2013-10-01"
 end <- "2013-11-01"
 
 #first flight

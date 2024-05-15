@@ -22,16 +22,17 @@ library(TwGeos)
 # install_github("SWotherspoon/SGAT")
 library(SGAT)
 # install_github("MTHallworth/LLmig")
-library(LLmig)
+#library(LLmig)
 # install_github("SLisovski/GeoLocTools")
 library(GeoLocTools)
-setupGeolocation()
+#setupGeolocation()
+library(GeoLight)
 
 # clear object from workspace
 rm(list=ls())
 
 # Load helper functions 
-source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis/Geolocator_analysis_helper_functions.R")
+source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis_helper_functions.R")
 
 geo.id <- "V7638_011"
 
