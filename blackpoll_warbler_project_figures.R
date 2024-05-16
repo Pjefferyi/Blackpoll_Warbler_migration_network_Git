@@ -172,7 +172,7 @@ undirected.spring.graph <- as.undirected(spring.graph, mode = "collapse",
 
 spring.label.prop <- concensusCluster(graph = undirected.spring.graph, thresh = 0.5, algiter = 1000)
 spring.infomap <- cluster_infomap(spring.graph)
-spring.walktrap <- cluster_walktrap(spring.graph.disc, steps = 4)
+spring.walktrap <- cluster_walktrap(spring.graph, steps = 4)
 
 modularity(spring.graph, spring.label.prop$`community structure`$membership)
 modularity(spring.graph, spring.infomap$membership)
@@ -189,8 +189,8 @@ fall.e <- which(E(fall.graph)$edge.type == "spring")
 fall.graph.disc <- fall.graph - edge(fall.e)
 
 #betweenness calculation 
-V(fall.graph)$betweenness <- betweenness(fall.graph.disc, directed = T, weights = 1/E(fall.graph.disc)$weight) 
-V(fall.graph)$betweenness.unweighted <- 1/betweenness(fall.graph.disc, directed = T, weights = NULL) 
+V(fall.graph)$betweenness <- betweenness(fall.graph.disc, weights = 1/E(fall.graph.disc)$weight) 
+V(fall.graph)$betweenness.unweighted <- betweenness(fall.graph.disc, directed = T, weights = NULL) 
 
 #betweenness calculation (Opshal et al.)
 fall.edge.list <- cbind(get.edgelist(fall.graph.disc), E(fall.graph.disc)$weight)
@@ -339,6 +339,8 @@ spring.gdata <- igraph::as_data_frame(spring.graph, what = "vertices") %>% mutat
 
 # Figures 1 and 2: Fall and spring migratory network node types and stationary location clusters ----
 America <- wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),]
+Lakes <- st_read("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/World_map/ne_110m_lakes/ne_110m_lakes.shp")%>%
+  st_transform(crs = crs(wrld_simpl))
 
 # Create the equinox region for the fall network 
 
@@ -358,6 +360,7 @@ bpw.range.full <- st_intersection(st_as_sf(America), st_union(bpw.range))
 fall.ggnet <- ggnetwork(fall.graph, layout = as.matrix(meta.fall.ab[, c("Lon.50.", "Lat.50.")]), scale = F)
 fall.gplot <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
+  geom_sf(data = Lakes, fill = "lightblue", lwd = 0.2, alpha = 1) +
   geom_sf(data = equi.region, fill = "#D9D5B2", lwd = 0.2, alpha = 1) +
   coord_sf(xlim = c(-165, -50),ylim = c(-5, 70)) +
   geom_edges(data = fall.ggnet, mapping = aes(x = x, y = y, xend = xend, yend = yend, col = edge.type, lwd = weight),
@@ -387,6 +390,7 @@ fall.gplot <- ggplot(st_as_sf(America))+
 ## fall stationary location clusters 
 fall.clustplot<- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
+  geom_sf(data = Lakes, fill = "lightblue", lwd = 0.2, alpha = 1) +
   coord_sf(xlim = c(-165, -50),ylim = c(-5, 70)) +
   geom_errorbar(data = fall.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.1, alpha = 0.3, color = "black") +
   geom_errorbar(data = fall.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.1, alpha = 0.3, color = "black") +
@@ -413,6 +417,7 @@ fall.clustplot<- ggplot(st_as_sf(America))+
 spring.ggnet <- ggnetwork(spring.graph, layout = as.matrix(meta.spring.ab[, c("Lon.50.", "Lat.50.")]), scale = F)
 spring.gplot <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
+  geom_sf(data = Lakes, fill = "lightblue", lwd = 0.2, alpha = 1) +
   coord_sf(xlim = c(-165, -50),ylim = c(-5, 70)) +
   geom_edges(data = spring.ggnet, mapping = aes(x = x, y = y, xend = xend, yend = yend, col = edge.type, lwd = weight),
              arrow = arrow(length = unit(6, "pt"), type = "closed", angle = 10))+
@@ -440,6 +445,7 @@ spring.gplot <- ggplot(st_as_sf(America))+
 ## spring stationary location clusters 
 spring.clustplot<- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
+  geom_sf(data = Lakes, fill = "lightblue", lwd = 0.2, alpha = 1) +
   coord_sf(xlim = c(-165, -50),ylim = c(-5, 70)) +
   geom_errorbar(data = spring.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.1, alpha = 0.3, color = "black") +
   geom_errorbar(data = spring.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.1, alpha = 0.3, color = "black") +
@@ -477,6 +483,7 @@ ggsave(plot = nodes.fig, filename = "nodes.figure.png" ,  path = "C:/Users/Jelan
 fall.data <- igraph::as_data_frame(fall.graph, "vertices")
 fall.gplot.comp <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
+  geom_sf(data = Lakes, fill = "lightblue", lwd = 0.2, alpha = 1) +
   coord_sf(xlim = c(-165, -50),ylim = c(-5, 70)) +
   geom_edges(data = fall.ggnet, mapping = aes(x = x, y = y, xend = xend, yend = yend, col = edge.type, lwd = weight),
              arrow = arrow(length = unit(9, "pt"), type = "closed", angle = 10))+
@@ -503,6 +510,7 @@ fall.gplot.comp <- ggplot(st_as_sf(America))+
 spring.data <- igraph::as_data_frame(spring.graph, "vertices")
 spring.gplot.comp <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
+  geom_sf(data = Lakes, fill = "lightblue", lwd = 0.2, alpha = 1) +
   coord_sf(xlim = c(-165, -50),ylim = c(-5, 70)) +
   geom_edges(data = spring.ggnet, mapping = aes(x = x, y = y, xend = xend, yend = yend, col = edge.type, lwd = weight),
              arrow = arrow(length = unit(9, "pt"), type = "closed", angle = 10))+
@@ -691,6 +699,7 @@ dev.off()
 ## Fall network communities ----
 fall.com.plot <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
+  geom_sf(data = Lakes, fill = "lightblue", lwd = 0.2, alpha = 1) +
   coord_sf(xlim = c(-170, -40),ylim = c(-5, 70)) +
   geom_edges(data = fall.ggnet, mapping = aes(x = x, y = y, xend = xend, yend = yend, col = edge.type, lwd = weight),
              arrow = arrow(length = unit(9, "pt"), type = "closed", angle = 10))+
@@ -715,6 +724,7 @@ fall.com.plot <- ggplot(st_as_sf(America))+
 ## Spring network communities -----
 spring.com.plot <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
+  geom_sf(data = Lakes, fill = "lightblue", lwd = 0.2, alpha = 1) +
   coord_sf(xlim = c(-170, -40),ylim = c(-5, 70)) +
   geom_edges(data = spring.ggnet, mapping = aes(x = x, y = y, xend = xend, yend = yend, col = edge.type, lwd = weight),
              arrow = arrow(length = unit(9, "pt"), type = "closed", angle = 10))+
@@ -903,6 +913,7 @@ ggsave(plot = communities.fig, filename = "communities.figure.png" ,  path = "C:
 ## Betweenness centrality in fall network ----
 fall.gplot.betw <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
+  geom_sf(data = Lakes, fill = "lightblue", lwd = 0.2, alpha = 1) +
   coord_sf(xlim = c(-170, -50),ylim = c(-3, 68)) +
   geom_edges(data = fall.ggnet, mapping = aes(x = x, y = y, xend = xend, yend = yend, col = edge.type, lwd = weight),
              arrow = arrow(length = unit(9, "pt"), type = "closed", angle = 10))+
@@ -923,15 +934,17 @@ fall.gplot.betw <- ggplot(st_as_sf(America))+
         axis.text =element_blank(),
         axis.ticks =element_blank(),
         axis.ticks.length = unit(0, "pt"),
-        plot.margin = unit(c(0,0,0,0), "pt"))
+        plot.margin = unit(c(0,0,0,0), "pt"))+
+  annotate("text", label = "(a)", x = -165, y = 48)
 
 ## Betweenness centrality in spring network ----
 spring.gplot.betw <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
+  geom_sf(data = Lakes, fill = "lightblue", lwd = 0.2, alpha = 1) +
   coord_sf(xlim = c(-170, -50),ylim = c(-3, 68)) +
   geom_edges(data = spring.ggnet, mapping = aes(x = x, y = y, xend = xend, yend = yend, lwd = weight, colour = edge.type),
              arrow = arrow(length = unit(9, "pt"), type = "closed", angle = 10),
-             curvature = 0.3)+
+             curvature = 0)+
   scale_color_manual(values=c(adjustcolor("blue", alpha = 0), adjustcolor("black", alpha = 0.5)), guide = "none")+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
   geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = betweenness), shape=21, size  = 3)+
@@ -948,11 +961,14 @@ spring.gplot.betw <- ggplot(st_as_sf(America))+
         axis.text =element_blank(),
         axis.ticks =element_blank(),
         axis.ticks.length = unit(0, "pt"),
-        plot.margin = unit(c(0,0,0,0), "pt"))
+        plot.margin = unit(c(0,0,0,0), "pt"))+
+  annotate("text", label = "(b)", x = -165, y = 48)
+
 
 ## Time-adjusted node weight ----
 fall.gplot.metric2 <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
+  geom_sf(data = Lakes, fill = "lightblue", lwd = 0.2, alpha = 1) +
   coord_sf(xlim = c(-170, -50),ylim = c(-3, 68)) +
   geom_edges(data = fall.ggnet, mapping = aes(x = x, y = y, xend = xend, yend = yend, col = edge.type, lwd = weight),
              arrow = arrow(length = unit(9, "pt"), type = "closed", angle = 10))+
@@ -971,11 +987,14 @@ fall.gplot.metric2 <- ggplot(st_as_sf(America))+
         axis.text =element_blank(),
         axis.ticks =element_blank(),
         axis.ticks.length = unit(0, "pt"),
-        plot.margin = unit(c(0,0,0,0), "pt"))
+        plot.margin = unit(c(0,0,0,0), "pt"))+
+  annotate("text", label = "(c)", x = -165, y = 48)
+
 
 ## Time-adjusted node weight ----
 spring.gplot.metric2 <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
+  geom_sf(data = Lakes, fill = "lightblue", lwd = 0.2, alpha = 1) +
   coord_sf(xlim = c(-170, -50),ylim = c(-3, 68)) +
   geom_edges(data = spring.ggnet, mapping = aes(x = x, y = y, xend = xend, yend = yend, col = edge.type, lwd = weight),
              arrow = arrow(length = unit(9, "pt"), type = "closed", angle = 10))+
@@ -995,14 +1014,17 @@ spring.gplot.metric2 <- ggplot(st_as_sf(America))+
         axis.text =element_blank(),
         axis.ticks =element_blank(),
         axis.ticks.length = unit(0, "pt"),
-        plot.margin = unit(c(0,0,0,0), "pt"))
+        plot.margin = unit(c(0,0,0,0), "pt"))+
+  annotate("text", label = "(d)", x = -165, y = 48)
+
 
 ## create panel ----
-metrics.fig <- (fall.gplot.betw | spring.gplot.betw)/ (fall.gplot.metric2| spring.gplot.metric2 )
-
+metrics.fig <- (fall.gplot.betw | spring.gplot.betw)/ (fall.gplot.metric2| spring.gplot.metric2 ) #&
+  # theme(plot.tag.position  = c(.10, .7)) & plot_annotation(tag_levels = list(c("(a)", "(b)", "(c)", "(d)")))&
+  # theme(plot.tag = element_text(size= 10)) + theme(plot.margin = unit(c(0,0,0,0), "pt"))
+   
 ggsave(plot = metrics.fig, filename = "nodes.metrics.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
        units = "cm", width = 24*1.2, height = 10*1.2, dpi = "print", bg = "white")
-
 
 # Figure 4.2: average time spent at each node 
 
@@ -1343,13 +1365,13 @@ ab.prop.regions.fig <- ggplot(st_as_sf(America))+
   scale_fill_discrete(labels = c("Breeding range", "Nonbreeding range"), name = "", guide = guide_legend(order = 3)) +
   geom_sf(data = br.regions, aes(col = "Abundance propagation regions"), fill = NA, linewidth = 0.5) +
   scale_colour_manual(values = c("Abundance propagation regions" = "black"), name = "")+
-  geom_sf_label(data = br.regions, aes(label = region), nudge_y = c(-10, -12,-13 ,-13), nudge_x = c(10, 10, -4,0), cex =4)+
+  geom_sf_label(data = br.regions, aes(label = region), nudge_y = c(-10, -8,-13 ,-13), nudge_x = c(10, 10, -4,0), cex =4)+
   new_scale_fill() +
   # all breeding sites included in the fall network
   geom_point(data =  fall.stat[fall.stat$sitenum == 1,], aes(fill = "black", x = Lon.50., y = Lat.50.), col = "white", shape = 21, cex = 3)+
   scale_fill_manual(values = c("black"), labels = c("Geolocator deployment sites"), name = "", guide = guide_legend(order = 1))+
   # Deployment location for WRMA04173
-  geom_point(data =  bpw.ref[bpw.ref$geo.id == "WRMA04173",], aes(fill = "black", x = mod.deploy.lon, y = mod.deploy.lat), col = "white", shape = 21, cex = 3)+
+  geom_point(data =  ref_data[ref_data$geo.id == "WRMA04173",], aes(fill = "black", x = mod.deploy.lon, y = mod.deploy.lat), col = "white", shape = 21, cex = 3)+
   scale_fill_manual(values = c("black"), labels = c("Geolocator deployment sites"), name = "", guide = guide_legend(order = 1))+
   coord_sf(xlim = c(-170, -40),ylim = c(-5, 70))+
   # estimated breeding location for WRMA04173
@@ -1628,7 +1650,7 @@ west.fall.mig.routes <- ggplot(st_as_sf(America))+
         legend.key = element_rect(colour = "transparent", fill = "white"))
 
 ## Migratory track for western breeders in the spring ----
-west.spring.data <- geo.all %>% filter(Breeding_region_MC %in% c("Western Region", "Northwestern Region")) %>%
+west.spring.data <- geo.all %>% filter(Breeding_region_MC %in% c("Western Region", "Northwestern Region", "Central Region")) %>%
   group_by(geo_id) %>%
   filter(StartTime >= StartTime[which(NB_count == max(NB_count, na.rm = T))])
 

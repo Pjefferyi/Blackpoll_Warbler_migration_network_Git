@@ -31,6 +31,7 @@ library(SGAT)
 library(GeoLocTools)
 #install_github("slisovski/invMovement")
 library(invMovement)
+library(GeoLight)
 
 #setupGeolocation()
 

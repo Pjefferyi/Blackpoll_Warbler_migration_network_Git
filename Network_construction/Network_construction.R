@@ -257,8 +257,8 @@ fall.stat.norm <- st_difference(fall.stat.sf, equipol)
 fall.stat.norm <- st_drop_geometry(fall.stat.norm )
 
 # cluster points in each group separately, then merge the cluster info 
-cluster.data1 <- clusterLocs(locs = fall.stat.equi, maxdiam = 743, lon.only = T)
-cluster.data2 <- clusterLocs(locs = fall.stat.norm, maxdiam = 700)
+cluster.data1 <- clusterLocs(locs = fall.stat.equi, maxdiam = 743, lon.only = T) #743
+cluster.data2 <- clusterLocs(locs = fall.stat.norm, maxdiam = 700) #700
 
 cluster.data2$clusters <- cluster.data2$clusters + max(cluster.data1$clusters)
 
@@ -862,6 +862,14 @@ points(geo.breed$Lon.50., geo.breed$Lat.50., cex = 1, col = "black", pch = 19)
 ab.extract <- terra::extract(bpw.fall.ab$breeding, abundance.regions, fun = sum, na.rm=TRUE)
 ab.extract$ID <- abundance.regions$geo_id
 ab.extract$breedregionname <- abundance.regions$region
+
+# # # # # abundance extraction from the BAM Modeled density estimates (note: these are for Canada only)
+# x <- rast("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/BAM/pred-BLPW-CAN-Mean.tif")
+# plot(x)
+# x <- terra::project(x, crs(abundance.regions))
+# y <- terra::extract(x, abundance.regions, fun = sum, na.rm=TRUE)
+# y$ID <- abundance.regions$geo_id
+# y$breedregionname <- abundance.regions$region
 
 # Create a dataframe with the relative abundance per region
 ab.per.region <- merge(as.data.frame(abundance.regions), ab.extract, by.x = "geo_id", by.y = "ID") %>%

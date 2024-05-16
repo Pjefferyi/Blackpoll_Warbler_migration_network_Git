@@ -614,8 +614,8 @@ f1.start <- "2019-09-30"
 f1.end <- "2019-10-02"
 
 #second flight
-f2.start <- "2019-10-12"
-f2.end <- "2019-10-13"
+f2.start <- "2019-10-13 12:00"
+f2.end <- "2019-10-14"
 
 # Plot lat, lon and light transitions  
 jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition"), width = 1024 , height = 990)

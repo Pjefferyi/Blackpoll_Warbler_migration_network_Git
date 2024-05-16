@@ -217,7 +217,7 @@ with(analysis_ref, table(spring.stopover.nodes.occupied, Range_region))
 mod.fall.stopover.node <- glmmTMB(fall.stopover.nodes.occupied   ~ as.factor(Range_region), data = analysis_ref, family = genpois(link = "log"))
 boxplot(fall.stopover.nodes.occupied ~ Range_region, data = analysis_ref)
 summary(mod.fall.stopover.node)
-check_model(mod.fall.stopover.node)
+#check_model(mod.fall.stopover.node)
 
 simulationOutput <- simulateResiduals(fittedModel = mod.fall.stopover.node, plot = F)
 plot(simulationOutput)
@@ -226,7 +226,7 @@ testDispersion(simulationOutput)
 mod.spring.stopover.node <- glmmTMB(spring.stopover.nodes.occupied  ~ as.factor(Range_region), data = analysis_ref, family = genpois(link = "log"))
 boxplot(spring.stopover.nodes.occupied ~ Range_region, data = analysis_ref)
 summary(mod.spring.stopover.node)
-check_model(mod.spring.stopover.node)
+#check_model(mod.spring.stopover.node)
 
 simulationOutput <- simulateResiduals(fittedModel = mod.spring.stopover.node , plot = F)
 plot(simulationOutput)
@@ -248,7 +248,7 @@ with(analysis_ref, table(spring.nbr.nodes.occupied, Range_region))
 mod.fall.nbr.node <- glmmTMB(fall.nbr.nodes.occupied ~ as.factor(Range_region), data = analysis_ref, family = genpois(link = "log"))
 boxplot(fall.nbr.nodes.occupied ~ as.factor(Range_region), data = analysis_ref)
 summary(mod.fall.nbr.node)
-check_model(mod.fall.nbr.node)
+#check_model(mod.fall.nbr.node)
 
 simulationOutput <- simulateResiduals(fittedModel = mod.fall.nbr.node, plot = F)
 plot(simulationOutput)
@@ -257,7 +257,7 @@ testDispersion(simulationOutput)
 mod.spring.nbr.node <- glm(spring.nbr.nodes.occupied ~ as.factor(Range_region), data = analysis_ref, family = poisson(link = "log"))
 boxplot(spring.nbr.nodes.occupied ~ as.factor(Range_region), data = analysis_ref)
 summary(mod.spring.nbr.node)
-check_model(mod.spring.nbr.node)
+#check_model(mod.spring.nbr.node)
 
 simulationOutput <- simulateResiduals(fittedModel = mod.spring.stopover.node, plot = F)
 plot(simulationOutput)
@@ -299,17 +299,17 @@ long.plot1 <- ggplot(data = analysis_ref, aes(x = deploy.longitude, y = nbr1.lon
 
 # run a regression model
 mod1.data <- analysis_ref %>% filter_at(vars(deploy.longitude, deploy.latitude, nbr1.lon),all_vars(!is.na(.)))
-# #mod1 <- glmmTMB(nbr1.lon ~ deploy.latitude + (1|study.site), data = mod1.data, na.action = "na.fail")
+mod1 <- glmmTMB(nbr1.lon ~ deploy.longitude + I(deploy.longitude^2) +(1|study.site), data = mod1.data, na.action = "na.fail")
 # # mod1 <- plsr(nbr1.lon ~ deploy.latitude + deploy.longitude, data = mod1.data, scale = T, validation = "CV",
 # #              ncomp = 1, method = "oscorespls")
 # mod1 <- glmmTMB(nbr1.lon ~ poly(deploy.longitude, degree = 2) + (1|study.site), data = mod1.data, na.action = "na.fail")
-# summary(mod1)
+ summary(mod1)
 # check_model(mod1)
 # #with(mod1.data, table(study.site))
 # 
-# simulationOutput <- simulateResiduals(fittedModel =  mod1, plot = F, quantreg = T)
-# plot(simulationOutput)
-# plotResiduals(simulationOutput)
+simulationOutput <- simulateResiduals(fittedModel =  mod1, plot = F, quantreg = T)
+plot(simulationOutput)
+plotResiduals(simulationOutput)
 # 
 # effect_plot(mod1, pred = deploy.longitude, interval = TRUE, plot.points = TRUE)
 
@@ -328,7 +328,7 @@ long.plot2 <- ggplot(data = analysis_ref, aes(x = deploy.longitude, y = nbr2.lon
 
 # run a regression model
 mod2.data <- analysis_ref %>% filter_at(vars(deploy.longitude, deploy.latitude, nbr2.lon),all_vars(!is.na(.)))
-# #mod2 <- glmmTMB(nbr2.lon ~ deploy.longitude + deploy.latitude + (1|study,site), data = mod2.data, na.action = "na.fail")
+mod2 <- glmmTMB(nbr2.lon ~ deploy.longitude + (1|study.site), data = mod2.data, na.action = "na.fail")
 # mod2 <- lm(nbr2.lon ~ deploy.longitude, data = mod2.data, na.action = "na.fail")
 # summary(mod2)
 # check_model(mod2)
@@ -342,9 +342,9 @@ mod2.data <- analysis_ref %>% filter_at(vars(deploy.longitude, deploy.latitude, 
 # # mod1.data.reg4 <- mod1.data %>% filter(Breeding_region_MC == "Northwestern Region")
 # # cor(mod1.data.reg4$deploy.latitude, mod1.data.reg4$deploy.longitude)
 # 
-# simulationOutput <- simulateResiduals(fittedModel =  mod2, plot = F)
-# plot(simulationOutput)
-# 
+simulationOutput <- simulateResiduals(fittedModel =  mod2, plot = F)
+plot(simulationOutput)
+
 # effect_plot(mod2, pred = deploy.longitude, interval = TRUE, plot.points = TRUE)
 
 # spearman's rank correlation
@@ -361,15 +361,15 @@ lat.plot1 <- ggplot(data = analysis_ref, aes(x = deploy.latitude, y = nbr1.lat))
 
 # run a regression model
 mod3.data <- analysis_ref %>% filter_at(vars(deploy.latitude, nbr1.lat),all_vars(!is.na(.)))
-# mod3 <- glmmTMB(nbr1.lat ~ poly(deploy.latitude, degree = 2) + (1|study.site), data = mod3.data )
+mod3 <- glmmTMB(nbr1.lat ~ deploy.latitude + I(deploy.latitude^2) + (1|study.site), data = mod3.data )
 # plot(nbr1.lat ~ deploy.latitude, data = mod3.data )
-# summary(mod3)
+ summary(mod3)
 # check_model(mod3)
 # 
-# simulationOutput <- simulateResiduals(fittedModel =  mod3, plot = F)
-# plot(simulationOutput)
-# 
-# effect_plot(mod3, pred = deploy.latitude, interval = TRUE, plot.points = TRUE)
+simulationOutput <- simulateResiduals(fittedModel =  mod3, plot = F)
+plot(simulationOutput)
+
+effect_plot(mod3, pred = deploy.latitude, interval = TRUE, plot.points = TRUE)
 # 
 # ## Plot the second nonbreeding latitude against the breeding latitude ----
 # lat.plot2 <- ggplot(data = analysis_ref, aes(x = deploy.latitude, y = nbr2.lat)) + 
@@ -385,16 +385,16 @@ cor.test(mod3.data$nbr1.lat, mod3.data$deploy.latitude, method = "spearman", exa
 
 # run a regression model
 mod4.data <- analysis_ref %>% filter_at(vars(deploy.latitude, nbr2.lat),all_vars(!is.na(.)))
-# #mod4 <- glmmTMB(nbr2.lat ~ deploy.latitude + (1|study_site), data = mod4.data, na.action = "na.fail")
+mod4 <- glmmTMB(nbr2.lat ~ deploy.latitude + (1|study.site), data = mod4.data, na.action = "na.fail")
 # mod4 <- lm(nbr2.lat ~ deploy.latitude, data = mod4.data )
 # plot(nbr2.lat ~ deploy.latitude, data = mod4.data )
-# summary(mod4)
+summary(mod4)
 # check_model(mod4)
 # 
-# simulationOutput <- simulateResiduals(fittedModel =  mod4, plot = F)
-# plot(simulationOutput)
-# 
-# effect_plot(mod4, pred = deploy.latitude, interval = TRUE, plot.points = TRUE)
+simulationOutput <- simulateResiduals(fittedModel =  mod4, plot = F)
+plot(simulationOutput)
+
+effect_plot(mod4, pred = deploy.latitude, interval = TRUE, plot.points = TRUE)
 # 
 # x <- analysis_ref$nbr2.lon[!is.na(analysis_ref$nbr2.lon)]
 # y <- analysis_ref$deploy.longitude[!is.na(analysis_ref$nbr2.lon)]
@@ -618,15 +618,20 @@ spring.stat %>% filter(geo_id %in% spring.stat[spring.stat$cluster %in% c(11),]$
 spring.stat %>% group_by(Breeding_region_MC) %>%
   summarize(n = length(unique(geo_id)))
 
-spring.stat %>% filter(!(geo_id %in% spring.stat[spring.stat$cluster %in% c(6, 11),]$geo_id)) %>%
+spring.stat %>% filter(!(geo_id %in% spring.stat[(spring.stat$cluster %in% c(11)),]$geo_id)) %>%
   group_by(Breeding_region_MC) %>%
   summarize(n = length(unique(geo_id)))
+
+spring.stat.ab %>% filter((geo_id %in% spring.stat[(spring.stat$cluster %in% c(11)),]$geo_id)) %>%
+  group_by(Breeding_region_MC, geo_id) %>%
+  summarize(ab.unit = unique(ab.unit)) %>%
+  summarize(ab.total = sum(ab.unit))
 
 fall.stat %>% filter(geo_id %in% fall.stat[fall.stat$cluster %in% c(3,5),]$geo_id) %>%
   group_by(Breeding_region_MC) %>%
   summarize(n = length(unique(geo_id)))
 
-fall.stat.ab %>% filter(geo_id %in% fall.stat.ab[fall.stat.ab$cluster %in% c(3, 5),]$geo_id) %>%
+fall.stat.ab %>% filter(geo_id %in% fall.stat.ab[fall.stat.ab$cluster %in% c(5),]$geo_id) %>%
   group_by(Breeding_region_MC, geo_id) %>%
   summarize(ab.unit = unique(ab.unit)) %>%
   summarize(ab.total = sum(ab.unit))
