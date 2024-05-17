@@ -920,9 +920,9 @@ fall.gplot.betw <- ggplot(st_as_sf(America))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
   #geom_text(data = fall.ggnet, mapping = aes(x = x, y = y, label = weight), nudge_x = 4)+
   scale_color_manual(values=c(adjustcolor("black", alpha = 0.5), adjustcolor("blue", alpha = 0)), guide = "none")+
-  geom_nodes(data = fall.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = betweenness), shape=21, size  = 3)+
+  geom_nodes(data = fall.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = betweenness.TO), shape=21, size  = 3)+
   scale_fill_viridis_c(direction = -1, option = "magma", name = "Betweenness \ncentrality", begin  = 0.3,
-                       guide = guide_colorbar(frame.colour = "black"), limits = c(min(0),  max(fall.ggnet$betweenness, spring.ggnet$betweenness)))+
+                       guide = guide_colorbar(frame.colour = "black"), limits = c(min(0),  max(fall.ggnet$betweenness.TO, spring.ggnet$betweenness.TO)))+
   ggtitle("Fall network") + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
@@ -945,11 +945,12 @@ spring.gplot.betw <- ggplot(st_as_sf(America))+
   geom_edges(data = spring.ggnet, mapping = aes(x = x, y = y, xend = xend, yend = yend, lwd = weight, colour = edge.type),
              arrow = arrow(length = unit(9, "pt"), type = "closed", angle = 10),
              curvature = 0)+
+  #geom_nodelabel(data = spring.ggnet, aes(label = cluster.num, x = x, y = y), nudge_x =  2, nudge_y =  2)+
   scale_color_manual(values=c(adjustcolor("blue", alpha = 0), adjustcolor("black", alpha = 0.5)), guide = "none")+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
-  geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = betweenness), shape=21, size  = 3)+
+  geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = betweenness.TO), shape=21, size  = 3)+
   scale_fill_viridis_c(direction = -1, option = "magma", name = "Betweenness \ncentrality", begin   = 0.3,
-                       guide = guide_colorbar(frame.colour = "black"), limits = c(min(0),  max(fall.ggnet$betweenness, spring.ggnet$betweenness)))+
+                       guide = guide_colorbar(frame.colour = "black"), limits = c(min(0),  max(fall.ggnet$betweenness.TO, spring.ggnet$betweenness.TO)))+
   ggtitle("Spring network") + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
@@ -1088,13 +1089,13 @@ ggsave(plot = metrics.time.fig, filename = "nodes.metrics.time.png" ,  path = "C
 
 ## Fall node characteristics
 fall.char <- fall.gdata %>% dplyr::select("cluster", "node.type", "node.weight", "n.individuals",
-                                   "betweenness", "bridge.indegree", "time.spent", "time.spent.ab") %>% arrange(factor(node.type, levels = c("Breeding","Stopover","Nonbreeding"))) 
+                                   "betweenness", "betweenness.TO", "bridge.indegree", "time.spent", "time.spent.ab") %>% arrange(factor(node.type, levels = c("Breeding","Stopover","Nonbreeding"))) 
 
 write_csv(fall.char, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Table_data/Fall_node_table_data.csv")
 
 ## Spring node characteristics
 spring.char <- spring.gdata %>% dplyr::select("cluster", "node.type", "node.weight", "n.individuals",
-                  "betweenness", "bridge.indegree", "time.spent", "time.spent.ab") %>% arrange(factor(node.type, levels = c("Breeding","Stopover","Nonbreeding")))
+                  "betweenness", "betweenness.TO", "bridge.indegree", "time.spent", "time.spent.ab") %>% arrange(factor(node.type, levels = c("Breeding","Stopover","Nonbreeding")))
 
 write_csv(spring.char, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Table_data/Spring_node_table_data.csv")
 
@@ -1342,6 +1343,9 @@ ggsave(plot = MC.nbr.regions.fig, filename = "MC.nbr.regions.png" ,  path = "C:/
 
 # Figure 7: Abundance propagation regions ---- 
 
+#load reference data
+ref.data <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv")
+
 # Load abundance propagation region polygons 
 br.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Relative_abundance_propagation/bpw_abundance_regions_adjusted.shp") %>%
   st_transform(crs(wrld_simpl)) %>%
@@ -1371,7 +1375,7 @@ ab.prop.regions.fig <- ggplot(st_as_sf(America))+
   geom_point(data =  fall.stat[fall.stat$sitenum == 1,], aes(fill = "black", x = Lon.50., y = Lat.50.), col = "white", shape = 21, cex = 3)+
   scale_fill_manual(values = c("black"), labels = c("Geolocator deployment sites"), name = "", guide = guide_legend(order = 1))+
   # Deployment location for WRMA04173
-  geom_point(data =  ref_data[ref_data$geo.id == "WRMA04173",], aes(fill = "black", x = mod.deploy.lon, y = mod.deploy.lat), col = "white", shape = 21, cex = 3)+
+  geom_point(data =  ref.data[ref.data$geo.id == "WRMA04173",], aes(fill = "black", x = mod.deploy.lon, y = mod.deploy.lat), col = "white", shape = 21, cex = 3)+
   scale_fill_manual(values = c("black"), labels = c("Geolocator deployment sites"), name = "", guide = guide_legend(order = 1))+
   coord_sf(xlim = c(-170, -40),ylim = c(-5, 70))+
   # estimated breeding location for WRMA04173
@@ -1650,7 +1654,7 @@ west.fall.mig.routes <- ggplot(st_as_sf(America))+
         legend.key = element_rect(colour = "transparent", fill = "white"))
 
 ## Migratory track for western breeders in the spring ----
-west.spring.data <- geo.all %>% filter(Breeding_region_MC %in% c("Western Region", "Northwestern Region", "Central Region")) %>%
+west.spring.data <- geo.all %>% filter(Breeding_region_MC %in% c("Central Region")) %>%
   group_by(geo_id) %>%
   filter(StartTime >= StartTime[which(NB_count == max(NB_count, na.rm = T))])
 
