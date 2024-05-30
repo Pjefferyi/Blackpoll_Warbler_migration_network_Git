@@ -1889,13 +1889,12 @@ twl <- read.csv(paste0(dir,"/", geo.id, "_twl_times.csv"))
 load(file = paste0(dir,"/", geo.id, "adjusted_initial_path_raw.csv"))
 
 #Fall transoceanic flight
-start <- "2012-10-25"
-end <- "2012-11-12"
+start <- "2012-10-30"
+end <- "2012-11-08"
 
 #first flight
 f1.start <- "2012-11-01"
 f1.end <- "2012-11-05"
-
 
 # # plot  of light transitions 
 # ggplot()+
@@ -1928,4 +1927,4 @@ rect(anytime(f1.start), min(x0_ad[,2])-2, anytime(f1.end), max(x0_ad[,2])+2, col
 par(cex.lab= 1, cex.axis= 1)
 
 dev.off()
-  
+

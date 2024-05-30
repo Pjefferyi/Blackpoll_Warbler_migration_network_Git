@@ -9,6 +9,7 @@ library(remotes)
 library(anytime)
 library(lubridate)
 library(ebirdst)
+library(MASS)
 
 #load spatial packages 
 library(ggmap)

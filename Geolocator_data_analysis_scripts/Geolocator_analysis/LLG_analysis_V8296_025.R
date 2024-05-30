@@ -261,7 +261,7 @@ zenith_twl_med <- data.frame(Date = twl$Twilight) %>%
 zeniths_med <- zenith_twl_med$zenith
 
 # plot longitudes and latitudes with the new zenith angles 
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol= 0.08)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol= 0)
 
 x0_ad <- path$x
 z0 <- trackMidpts(x0_ad)
@@ -575,8 +575,8 @@ save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 load(file = paste0(dir,"/", geo.id, "adjusted_initial_path_raw.csv"))
 
 #Fall transoceanic flight
-start <- "2019-09-25"
-end <- "2019-10-25"
+start <- "2019-10-01"
+end <- "2019-10-08"
 
 # Plot lat, lon and light transitions  
 jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition.png"), width = 1024 , height = 990, quality = 100, res = 200)
@@ -586,18 +586,24 @@ par(cex.axis=1.4)
 par(mfrow=c(3,1), mar = c(5,5,0.1,5))
 plot(lig$Date[lig$Date > start & lig$Date < end], lig$Light[lig$Date > start & lig$Date < end], type = "o",
      ylab = "Light level", xlab = "Time")
-rect(anytime("2019-10-03"), min(lig$Light)-2, anytime("2019-10-06"), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime("2019-10-04"), min(lig$Light)-2, anytime("2019-10-06"), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
 rect(anytime("2019-10-16"), min(lig$Light)-2, anytime("2019-10-17"), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
 
 plot(twl$Twilight[twl$Twilight> start & twl$Twilight < end], x0_ad[,1][twl$Twilight > start & twl$Twilight < end],
      ylab = "Longitude", xlab = "Time")
-rect(anytime("2019-10-03"), min(x0_ad[,1])-2, anytime("2019-10-06"), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime("2019-10-04"), min(x0_ad[,1])-2, anytime("2019-10-06"), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
 rect(anytime("2019-10-16"), min(x0_ad[,1])-2, anytime("2019-10-17"), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
 
 plot(twl$Twilight[twl$Twilight > start & twl$Twilight < end], x0_ad[,2][twl$Twilight > start & twl$Twilight < end],
      ylab = "Latitude", xlab = "Time")
 rect(anytime("2019-10-03"), min(x0_ad[,2])-2, anytime("2019-10-06"), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
 rect(anytime("2019-10-16"), min(x0_ad[,2])-2, anytime("2019-10-17"), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
+# 
+# x0_equi <- x0_ad[twl$Twilight <= fall.equi + days(14) & twl$Twilight >= fall.equi - days(14),]
+# twl_equi <- twl[twl$Twilight <= fall.equi + days(14) & twl$Twilight >= fall.equi - days(14),]
+# points(twl_equi$Twilight, x0_equi[,2],
+#      ylab = "Latitude", xlab = "Time", col = "blue")
+
 par(cex.lab= 1)
 par(cex.axis= 1)
 

@@ -318,11 +318,11 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-q <- 0.86
+q <- 0.7
 cL <- changeLight(twl=geo_twl, quantile= q, summary = F, days = days, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
-mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = dist)
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith, distThreshold = dist)
 
 #back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl.rev <- data.frame(Twilight = as.POSIXct(geo_twl[,1], geo_twl[,2]), 
@@ -593,7 +593,7 @@ f2.start <- "2019-10-12"
 f2.end <- "2019-10-12 12:00"
 
 # Plot lat, lon and light transitions  
-jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition.png"), width = 1024 , height = 990, quality = 100, res = 200)
+jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition.png"), width = 24 , height = 16, quality = 100, res = 400, units = "cm")
 
 par(cex.lab=1.4)
 par(cex.axis=1.4)
@@ -612,7 +612,6 @@ plot(twl$Twilight[twl$Twilight > start & twl$Twilight < end], x0_ad[,2][twl$Twil
      ylab = "Latitude", xlab = "Time")
 rect(anytime(f1.start), min(x0_ad[,2])-2, anytime(f1.end), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
 rect(anytime(f2.start), min(x0_ad[,2])-2, anytime(f2.end), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
-abline(h = 20)
 par(cex.lab= 1)
 par(cex.axis= 1)
 

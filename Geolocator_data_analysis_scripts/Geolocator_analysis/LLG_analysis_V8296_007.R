@@ -682,7 +682,7 @@ f2.start <- "2019-10-06"
 f2.end <- "2019-10-07"
 
 # Plot lat, lon and light transitions  
-jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition"), width = 1024 , height = 990)
+jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition.png"), width = 24 , height = 16, quality = 100, res = 400, units = "cm")
 
 par(cex.lab=1.4)
 par(cex.axis=1.4)
@@ -709,14 +709,14 @@ dev.off()
 
 # A stopover over the Caribbean was identified between approximately 2019-10-03 and 2019-10-06 based on the light levels and longitude data
 # A stopover in the carribean was already shown by the geolocator analysis (though it differs slightly in length)
-# consequently no modification is need here. 
+# consequently no modification is need here.
 
 
 # # Add the new stopover to the location summary obtained at the end of the geolocator analysis
 # sm.fall.edit <- insertLoc(data = sm,
 #                           lat.at.loc = 19.171833,
 #                           start.date = f1.end ,
-#                           end.date = f2.start , 
+#                           end.date = f2.start ,
 #                           period = "Post-breeding migration",
 #                           thresh.locs = x0_ad,
 #                           twl = twl,
@@ -724,7 +724,7 @@ dev.off()
 #                           sep1 = days(4),
 #                           sep2 = days (1))
 # 
-# #plot the final stationary locations 
+# #plot the final stationary locations
 # sm.fall.stat <- sm.fall.edit[(sm.fall.edit$sitenum > 0), ]
 # 
 # par(mfrow=c(1,1))

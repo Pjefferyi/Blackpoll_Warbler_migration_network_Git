@@ -10,6 +10,8 @@ library(glmmTMB)
 library(MuMIn)
 library(lme4)
 library(jtools)
+library(geosphere)
+library(circular)
 
 # Load the helper functions script  
 source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis_helper_functions.R")
@@ -511,21 +513,21 @@ print(move.schedule, n = nrow(move.schedule))
 NB.move %>% 
   group_by(move.direction, equinox.nbr.move) %>%summarise (n = n())
 
-#time spent at the last nonbreeding sites occupied by individuals that movemed
-geo.all %>% group_by(geo_id) %>% filter(geo_id %in% NB.move.mod$geo_id, NB_count == max(NB_count, na.rm = T)) %>% 
-  summarize(time.last.site = max(duration)) %.% merge 
+#time spent at the last nonbreeding sites occupied by individuals that moved
+geo.all %>% group_by(geo_id) %>% filter(geo_id %in% NB.move$geo_id, NB_count == max(NB_count, na.rm = T)) %>% 
+  summarize(time.last.site = max(duration)) 
 
 # Average nonbreeding movement distance mean and SE ----
-mean(NB.move.mod$dist)
-sd(NB.move.mod$dist)/sqrt(length(NB.move.mod$dist))
+mean(NB.move$dist)
+sd(NB.move$dist)/sqrt(length(NB.move$dist))
 
 ## Statistics for the number of movements per bird ----
-NB.move.mod %>%  group_by(geo_id)%>% summarize(move.num = n()) %>% group_by(move.num) %>%
+NB.move %>%  group_by(geo_id)%>% summarize(move.num = n()) %>% group_by(move.num) %>%
   summarize(birds = n())
 
 ## Statistics for the bearing of movements between the first and last nonbreeding sites ---- 
 NB.all <- geo.all %>% group_by(geo_id) %>% filter(NB_count == min(NB_count, na.rm =  T) | NB_count == max(NB_count, na.rm =  T),
-                             geo_id %in% NB.move.mod$geo_id) %>%
+                             geo_id %in% NB.move$geo_id) %>%
   mutate(Lon.50.next = lead(Lon.50.),
          Lat.50.next = lead(Lat.50.)) %>% rowwise() %>%
     mutate(bearing = bearing(c(Lon.50., Lat.50.), c(Lon.50.next, Lat.50.next)),
@@ -533,7 +535,7 @@ NB.all <- geo.all %>% group_by(geo_id) %>% filter(NB_count == min(NB_count, na.r
   filter(!is.na(bearing)) %>% dplyr::select(geo_id, bearing, course)
 
 mean(circular(NB.all$course, units = "degrees"))
-rayleigh.test(circular(all.bearings, units = "degrees"))
+rayleigh.test(circular(NB.all$bearing, units = "degrees"))
 
 nrow(NB.all[abs(NB.all$bearing) < 90,])
 nrow(NB.all)
@@ -567,6 +569,9 @@ as.Date(avg.nbr.dep, origin = "2020-01-01")
 
 # Transoceanic crossings ----
 
+# shapefile with fall stationary locations
+fall.stat.sf <- st_as_sf(fall.stat, coords = c("Lon.50.", "Lat.50."), crs = crs(wrld_simpl))
+
 # load Caribbean polygon 
 caribb.poly <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Mapping_components/Data/Caribb.poly.shp") %>%
   st_transform(st_crs(fall.stat.sf))
@@ -580,7 +585,7 @@ fall.carib.stops2 <- st_intersection(fall.stat.sf , caribb.poly)
 # convert fall locations to spatial points 
 fall.stat.sf <- st_as_sf(fall.stat, coords = c("Lon.50.", "Lat.50."), crs = st_crs(wrld_simpl), remove = F)
 
-# convert springlocations to spatial points 
+# convert spring locations to spatial points 
 spring.stat.sf <- st_as_sf(spring.stat, coords = c("Lon.50.", "Lat.50."), crs = st_crs(wrld_simpl), remove = F)
 
 # get the spring caribbean stopovers 
@@ -604,10 +609,6 @@ analysis_ref_carib <- analysis_ref %>% mutate(fall.carib.stop = ifelse(geo.id %i
                               spring.carib.stop = ifelse(geo.id %in% spring.stat$geo_id, spring.carib.stop, NA))
 
 x <- analysis_ref_carib %>% group_by(Breeding_region_MC, fall.carib.stop) %>% summarize(unique(geo.id)) 
-
-
-
-
 
 # Assesss the proportion of individuals using a node 
 
