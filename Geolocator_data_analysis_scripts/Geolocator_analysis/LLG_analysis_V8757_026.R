@@ -205,7 +205,7 @@ alpha <- calib[3:4]
 geo_twl <- export2GeoLight(twl)
 
 # this is just to find places where birds have been for a long time, would not use these parameters for stopover identification, detailed can be found in grouped model section
-cL <- changeLight(twl=geo_twl, quantile=0.8, summary = F, days = 10, plot = T)
+cL <- changeLight(twl=geo_twl, quantile=0.9, summary = F, days = 10, plot = T)
 # merge site helps to put sites together that are separated by single outliers.
 mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 1000)
 
@@ -245,7 +245,7 @@ z0 <- trackMidpts(x0_r)
 save(x0_r, file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
 
 # Check the following times of arrival and departure using a plot 
-arr.nbr <- "2019-09-30" 
+arr.nbr <- "2019-10-17" 
 dep.nbr <- "2020-05-08" 
 
 # open jpeg
@@ -338,7 +338,7 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers
-q <- 0.9#0.84
+q <- 0.9
 cL <- changeLight(twl=geo_twl, quantile= q, summary = F, days = days, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
@@ -522,8 +522,6 @@ points(sm[,"Lon.50."], sm[,"Lat.50."], pch=21, bg=colours[sitenum+1],
 #The text in the symbols indicates the estimated number of days spent at each stopover location 
 text(sm[,"Lon.50."], sm[,"Lat.50."], ifelse(sitenum>0, as.integer(((sm$EndTime - sm$StartTime)/86400)), ""), col="black") 
 
-points(dtx0[sitenum > 0,], pch = 16, cex = 1, col = "green")
-
 #Show dates
 #text(sm[,"Lon.50."], sm[,"Lat.50."], ifelse(sitenum>0, as.character(sm$StartTime), ""), col="red", pos = 1) 
 
@@ -617,11 +615,11 @@ f1.start <- "2019-09-30"
 f1.end <- "2019-10-02"
 
 #second flight
-f2.start <- "2019-10-09 00:00"
-f2.end <- "2019-10-09 12:00"
+f2.start <- "2019-10-03 00:00"
+f2.end <- "2019-10-03 12:00"
 
 # Plot lat, lon and light transitions  
-jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition.png"), width = 24 , height = 16, quality = 100, res = 400, units = "cm")
+jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition.png"), width = 1024 , height = 990, quality = 100, res = 200)
 
 par(cex.lab=1.4)
 par(cex.axis=1.4)
@@ -645,31 +643,7 @@ par(cex.axis= 1)
 
 dev.off()
 
-# # A stopover can be identified between 2019-10-02 and 2019-10-09 
-# # Add the new stopover to the location summary obtained at the end of the geolocator analysis
-# sm.fall.edit <- insertLoc(data = sm,
-#                           lat.at.loc = 18.747636,
-#                           start.date = f1.end ,
-#                           end.date = f2.start , 
-#                           period = "Post-breeding migration",
-#                           thresh.locs = x0_ad,
-#                           twl = twl,
-#                           geo_id = geo.id,
-#                           sep1 = days(3),
-#                           sep2 = days (1))
-# 
-# #plot the final stationary locations 
-# sm.fall.stat <- sm.fall.edit[(sm.fall.edit$sitenum > 0), ]
-# 
-# par(mfrow=c(1,1))
-# 
-# data(wrld_simpl)
-# plot(wrld_simpl, xlim=xlim, ylim=ylim, col = "grey95")
-# points(sm.fall.edit$Lon.50., sm.fall.edit$Lat.50., pch = 16, cex = 0, col = "firebrick", type = "o")
-# points(sm.fall.stat$Lon.50., sm.fall.stat$Lat.50., pch = 16, cex = 1.5, col = "firebrick")
-# 
-# #Save the final location summary
-# save(sm.fall.edit , file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary_fall_edit.csv"))
+# A stopover can be identified between 2019-10-02 and 2019-10-03 
 
 # Estimate timing of departure and arrival from the breeding and nonbreeding grounds ############################################################
 dep.br <- NA #Can't estimate due to equinox and low variation in longitude estimates
@@ -686,7 +660,7 @@ par(mfrow=c(1,1))
 geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
 geo.ref[(geo.ref$geo.id == geo.id),]$In_habitat_median_zenith_angle <- zenith
 geo.ref[(geo.ref$geo.id == geo.id),]$Hill_Ekstrom_median_angle <- zenith_sd 
-geo.ref[(geo.ref$geo.id == geo.id),]$Fall_carrib_edits <- F
+geo.ref[(geo.ref$geo.id == geo.id),]$Fall_carrib_edits <- FALSE
 geo.ref[(geo.ref$geo.id == geo.id),]$Time_shift_hours <- shift$shift
 geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- arr.nbr
 geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- dep.nbr

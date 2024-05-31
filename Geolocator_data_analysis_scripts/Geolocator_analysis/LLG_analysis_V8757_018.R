@@ -281,7 +281,7 @@ zenith_twl_med <- data.frame(Date = twl$Twilight) %>%
 zeniths_med <- zenith_twl_med$zenith
 
 # plot longitudes and latitudes with the new zenith angles 
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol= 0)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol= 0.05)
 
 x0_ad <- path$x
 z0 <- trackMidpts(x0_ad)
@@ -616,7 +616,7 @@ f2.start <- "2019-10-02"
 f2.end <- "2019-10-03"
 
 # Plot lat, lon and light transitions  
-jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition.png"), width = 24 , height = 16, quality = 100, res = 400, units = "cm")
+jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition.png"), width = 1024 , height = 990, quality = 100, res = 200)
 
 par(cex.lab=1.4)
 par(cex.axis=1.4)

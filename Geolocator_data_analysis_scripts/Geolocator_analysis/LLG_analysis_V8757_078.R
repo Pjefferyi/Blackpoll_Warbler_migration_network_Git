@@ -247,7 +247,7 @@ z0 <- trackMidpts(x0_r)
 save(x0_r, file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
 
 # Check the following times of arrival and departure using a plot 
-arr.nbr <- "2019-10-03" 
+arr.nbr <- "2019-10-09" 
 dep.nbr <- "2020-05-15" 
 
 # open jpeg
@@ -616,7 +616,7 @@ load(file = paste0(dir,"/", geo.id, "adjusted_initial_path_raw.csv"))
 
 #Fall transoceanic flight
 start <- "2019-09-20"
-end <- "2019-10-25"
+end <- "2019-10-18"
 
 #first flight
 f1.start <- "2019-09-30"
@@ -626,12 +626,8 @@ f1.end <- "2019-10-02"
 f2.start <- "2019-10-08"
 f2.end <- "2019-10-09"
 
-#possible third flight
-f3.start <- "2019-10-13 12:00"
-f3.end <- "2019-10-14"
-
 # Plot lat, lon and light transitions  
-jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition.png"), width = 24 , height = 16, quality = 100, res = 400, units = "cm")
+jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition.png"), width = 1024 , height = 990, quality = 100, res = 200)
 
 par(cex.lab=1.4)
 par(cex.axis=1.4)
@@ -640,25 +636,22 @@ plot(lig$Date[lig$Date > start & lig$Date < end], lig$Light[lig$Date > start & l
      ylab = "Light level", xlab = "Time")
 rect(anytime(f1.start), min(lig$Light)-2, anytime(f1.end), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
 rect(anytime(f2.start), min(lig$Light)-2, anytime(f2.end), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
-rect(anytime(f3.start), min(lig$Light)-2, anytime(f3.end), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
 
 plot(twl$Twilight[twl$Twilight> start & twl$Twilight < end], x0_ad[,1][twl$Twilight > start & twl$Twilight < end],
      ylab = "Longitude", xlab = "Time")
 rect(anytime(f1.start), min(x0_ad[,1])-2, anytime(f1.end), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
 rect(anytime(f2.start), min(x0_ad[,1])-2, anytime(f2.end), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
-rect(anytime(f3.start), min(x0_ad[,1])-2, anytime(f3.end), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
 
 plot(twl$Twilight[twl$Twilight > start & twl$Twilight < end], x0_ad[,2][twl$Twilight > start & twl$Twilight < end],
      ylab = "Latitude", xlab = "Time")
 rect(anytime(f1.start), min(x0_ad[,2])-2, anytime(f1.end), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
 rect(anytime(f2.start), min(x0_ad[,2])-2, anytime(f2.end), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
-rect(anytime(f3.start), min(x0_ad[,2])-2, anytime(f3.end), max(x0_ad[,2])+2, col = alpha("yellow", 0.2), lty=0)
 par(cex.lab= 1)
 par(cex.axis= 1)
 
 dev.off()
 
-# A stopover in the Caribbean can be identified between 2019-10-02 and 2019-10-08. 
+# A stopover in the Caribbean can be identified between 2019-10-02 and 2019-10-09. 
 # It was already successfully identified during the geolocator analysis
 
 # Add the new stopover to the location summary obtained at the end of the geolocator analysis

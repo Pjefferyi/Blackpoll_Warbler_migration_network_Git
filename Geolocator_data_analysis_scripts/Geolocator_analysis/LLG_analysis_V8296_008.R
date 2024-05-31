@@ -602,19 +602,19 @@ save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 load(file = paste0(dir,"/", geo.id, "adjusted_initial_path_raw.csv"))
 
 #Fall transoceanic flight
-start <- "2019-09-10"
-end <- "2019-10-10"
+start <- "2019-09-15"
+end <- "2019-10-15"
 
 #first flight
-f1.start <- "2019-09-15 12:00"
-f1.end <- "2019-09-17 12:00"
+f1.start <- "2019-09-20"
+f1.end <- "2019-09-22"
 
 #Second flight
-f2.start <- "2019-10-04"
-f2.end <- "2019-10-05"
+f2.start <- "2019-10-05"
+f2.end <- "2019-10-07"
 
 # Plot lat, lon and light transitions  
-jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition.png"), width = 24 , height = 16, quality = 100, res = 400, units = "cm")
+jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition.png"), width = 1024 , height = 990, quality = 100, res = 200)
 
 par(cex.lab=1.4)
 par(cex.axis=1.4)
