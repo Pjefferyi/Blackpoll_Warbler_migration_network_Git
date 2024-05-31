@@ -21,8 +21,6 @@ library(FLightR)
 library(TwGeos)
 # install_github("SWotherspoon/SGAT")
 library(SGAT)
-# install_github("MTHallworth/LLmig")
-#library(LLmig)
 # install_github("SLisovski/GeoLocTools")
 library(GeoLocTools)
 #setupGeolocation()
@@ -219,9 +217,9 @@ dev.off()
 
 # Using approximate timings of arrival and departure from the breeding grounds
 zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
-  mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith0 + 2,
-                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad+4,
-                            Date > anytime(dep.nbr) ~ zenith0_ad + 2))
+  mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith0 + 1,
+                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad+2,
+                            Date > anytime(dep.nbr) ~ zenith0_ad + 1))
 
 zeniths0 <- zenith_twl_zero$zenith
 
