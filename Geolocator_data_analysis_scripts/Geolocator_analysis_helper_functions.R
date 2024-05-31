@@ -26,13 +26,10 @@ library(FLightR)
 library(TwGeos)
 # install_github("SWotherspoon/SGAT")
 library(SGAT)
-# install_github("MTHallworth/LLmig")
-#library(LLmig)
 # install_github("SLisovski/GeoLocTools")
 library(GeoLocTools)
 #install_github("slisovski/invMovement")
-library(invMovement)
-library(GeoLight)
+
 
 #setupGeolocation()
 

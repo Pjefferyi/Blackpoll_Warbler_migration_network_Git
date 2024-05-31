@@ -21,8 +21,6 @@ library(FLightR)
 library(TwGeos)
 # install_github("SWotherspoon/SGAT")
 library(SGAT)
-# install_github("MTHallworth/LLmig")
-#library(LLmig)
 # install_github("SLisovski/GeoLocTools")
 library(GeoLocTools)
 #setupGeolocation()
@@ -251,7 +249,7 @@ abline(v = spring.equi, col = "orange")
 dev.off()
 
 # Initial Path #################################################################
-tol_ini <- 0.01
+tol_ini <- 0.05
 path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol = tol_ini)
 
 x0 <- path$x
@@ -282,7 +280,7 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-q <- 0.86
+q <- 0.8
 cL <- changeLight(twl=geo_twl, quantile= q, summary = F, days = days, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
