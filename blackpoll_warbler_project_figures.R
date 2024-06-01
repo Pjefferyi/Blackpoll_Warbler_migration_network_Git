@@ -1546,7 +1546,8 @@ for (i in unique(geo.all$geo_id)){
           axis.ticks.length = unit(0, "pt"),
           legend.spacing = unit(-5, "pt"),
           plot.margin = unit(c(0,0,0,0), "pt"),
-          legend.key = element_rect(colour = "transparent", fill = "white"))
+          legend.key = element_rect(colour = "transparent", fill = "white")) +
+    if (i == "V8757_096"){theme(panel.border = element_rect(colour = "firebrick", fill=NA, size=1))}
    #if (i == first(unique(geo.all$geo_id))){theme(legend.position = c(0.5, 0.2))} else {theme(legend.position = "None")}
 }
 
@@ -1852,7 +1853,7 @@ nbr.move.plot <- ggplot(st_as_sf(wrld_simpl))+
                       name = "Timing")+
   scale_color_viridis( begin = 0, end = 0.9, guide = "none")+
   scale_linetype_manual(values = c("dashed", "solid"), guide = "none")+
-  #geom_text(data = NB.move, mapping = aes(x = Lon.50., y = Lat.50., label = geo_id), cex = 2.5)+
+  geom_text(data = NB.move, mapping = aes(x = Lon.50., y = Lat.50., label = geo_id), cex = 2.5)+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         text = element_text(size = 14),

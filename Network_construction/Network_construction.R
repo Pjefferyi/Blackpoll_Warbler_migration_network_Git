@@ -257,8 +257,8 @@ fall.stat.norm <- st_difference(fall.stat.sf, equipol)
 fall.stat.norm <- st_drop_geometry(fall.stat.norm )
 
 # cluster points in each group separately, then merge the cluster info 
-cluster.data1 <- clusterLocs(locs = fall.stat.equi, maxdiam = 743, lon.only = T) #743
-cluster.data2 <- clusterLocs(locs = fall.stat.norm, maxdiam = 700) #700
+cluster.data1 <- clusterLocs(locs = fall.stat.equi, maxdiam = 1027, lon.only = T) #743
+cluster.data2 <- clusterLocs(locs = fall.stat.norm, maxdiam = 753) #700
 
 cluster.data2$clusters <- cluster.data2$clusters + max(cluster.data1$clusters)
 
@@ -850,7 +850,7 @@ bpw.fall.ab <- load_raster(path = "C:/Users/Jelan/OneDrive/Desktop/University/Un
 bpw.fall.ab <- terra::project(bpw.fall.ab, crs(abundance.regions))
 
 # plot breeding regions, breeding sites/geolocator deployment sites, and abundance 
-# NOTE: the breeding site for WRMA04173 in Northern Quebec will only be used for the spring migration
+# NOTE: the breeding site for WRMA04173 in Northern Quffebec will only be used for the spring migration
 abundance.regions <- st_transform(abundance.regions , crs = crs(wrld_simpl))
 plot(bpw.fall.ab$breeding, xlim = c(-180, -30), ylim = c(30, 80), legend = FALSE)
 plot(as_Spatial(abundance.regions), col = NA, border = "darkred", lwd = 3, add = T)
