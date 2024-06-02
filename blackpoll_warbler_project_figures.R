@@ -156,7 +156,7 @@ undirected.fall.graph <- as.undirected(fall.graph, mode = "collapse",
 
 fall.label.prop <- concensusCluster(graph = undirected.fall.graph, thresh = 0.5, algiter = 1000)
 fall.infomap <- cluster_infomap(fall.graph)
-fall.walktrap <- cluster_walktrap(fall.graph, steps = 5) #cluster_walktrap(fall.graph.disc, steps =6)
+fall.walktrap <- cluster_walktrap(fall.graph, steps =6) #cluster_walktrap(fall.graph.disc, steps =6)
 
 modularity(fall.graph, fall.label.prop$`community structure`$membership)
 modularity(fall.graph, fall.infomap$membership)
@@ -370,7 +370,7 @@ fall.gplot <- ggplot(st_as_sf(America))+
   geom_nodes(data = fall.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = node.type), shape=21)+
   scale_size(range = c(0.8, 4), guide = "none")+
   scale_fill_manual(values=c("Breeding"  = "#440154FF", "Stopover" = "#FDE725FF", "Nonbreeding" = "#21908CFF"), name = "Node type")+
-  ggtitle("(a) Fall migration network") + 
+  ggtitle("(a) Post-breeding migration network") + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         legend.box.background = element_rect(fill = "white", colour = "black", linewidth = 0.2),
@@ -400,7 +400,7 @@ fall.clustplot<- ggplot(st_as_sf(America))+
   geom_shadowtext(data = meta.fall.ab[meta.fall.ab$node.type != "Breeding",], mapping = aes(x = Lon.50., y = Lat.50., label = vertex), cex = 3, fontface = "bold", col = "black", bg.colour = "white")+
   labs(colour = "Cluster") +
   theme_bw() +
-  ggtitle("(c) Fall stationary location clusters") + 
+  ggtitle("(c) Post-breeding migration stationary location clusters") + 
   theme(text = element_text(size = 6), legend.position = "None",
         axis.line=element_blank(),
         axis.text =element_blank(),
@@ -426,7 +426,7 @@ spring.gplot <- ggplot(st_as_sf(America))+
   geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = node.type), shape=21)+
   scale_size(range = c(0.8, 4), breaks = c(0.1, 0.2, 0.3), name = "Node weight")+
   scale_fill_manual(values=c("Breeding"  = "#440154FF", "Stopover" = "#FDE725FF", "Nonbreeding" = "#21908CFF"), guide = "none")+
-  ggtitle("(b) Spring migration network") + 
+  ggtitle("(b) Pre-breeding migration network") + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         legend.box.background = element_rect(fill = "white", colour = "black", linewidth = 0.2),
@@ -455,7 +455,7 @@ spring.clustplot<- ggplot(st_as_sf(America))+
   geom_shadowtext(data = meta.spring.ab[meta.spring.ab$node.type != "Breeding",], mapping = aes(x = Lon.50., y = Lat.50., label = vertex), cex = 3, fontface = "bold", col = "black", bg.colour = "white")+
   labs(colour = "Cluster") +
   theme_bw() +
-  ggtitle("(d) Spring stationary location clusters") + 
+  ggtitle("(d) Pre-breeding migrationstationary location clusters") + 
   theme(text = element_text(size = 8), legend.position = "None",
         axis.line=element_blank(),
         axis.text =element_blank(),
@@ -494,7 +494,7 @@ fall.gplot.comp <- ggplot(st_as_sf(America))+
   geom_point(data = fall.data[fall.data$node.comp == 3,], mapping = aes(x = long, y = lat, fill = single.reg, size = node.weight), shape= 21, colour = "black",  show.legend = F)+
   scale_size(range = c(1.2, 6), guide = "none")+
   scale_fill_manual(values = c("West" = "#D55E00", "Central" = "#009E73", "East" = "#0072B2", "Northwest" = "#F0E442"), name = "Breeding origin") +
-  ggtitle("(a) Fall node use")+
+  ggtitle("(a) Post-breeding migration node use")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         legend.position = c(0.15, 0.58), text = element_text(size = 10), legend.key = element_blank(),
@@ -522,7 +522,7 @@ spring.gplot.comp <- ggplot(st_as_sf(America))+
   geom_point(data = spring.data, mapping = aes(x = long, y = lat, fill = single.reg, size = node.weight), colour = NA, shape= 21)+
   scale_size(range = c(1.2, 7), breaks = c(0.1, 0.2, 0.3), name = "Node weight")+
   scale_fill_manual(values = c("West" = "#D55E00", "Central" = "#009E73", "East" = "#0072B2", "Northwest" = "#F0E442"), guide = "none") +
-  ggtitle("(b) Spring node use")+
+  ggtitle("(b) Pre-breeding migration node use")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         legend.position = c(0.15, 0.55), text = element_text(size = 10), legend.key = element_blank(),
@@ -707,10 +707,12 @@ fall.com.plot <- ggplot(st_as_sf(America))+
   scale_color_manual(values=c(adjustcolor("black", alpha = 0.5), adjustcolor("blue", alpha = 0)), guide = "none")+
   geom_nodes(data = fall.ggnet, mapping = aes(x = x, y = y, cex = , fill = as.factor(walktrap.comm)), shape=21, size = 4)+
   scale_fill_viridis(discrete = T, begin= 0.2) +
+  ggtitle("(e) Post-breeding migration communities")+
+  geom_text(x=-150, y=40, label= paste0("Modularity = ", as.character(round(modularity(fall.graph, fall.walktrap$membership), digits = 2))))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         legend.box.background = element_rect(fill = "white", colour = "black", linewidth = 0.2),
-        legend.position = c(0.15, 0.4), legend.key = element_rect(fill = "white", colour = NA),
+        legend.position = "none", legend.key = element_rect(fill = "white", colour = NA),
         legend.background = element_rect(fill = NA),
         legend.title=element_text(size=13),
         legend.text=element_text(size=13),
@@ -719,7 +721,7 @@ fall.com.plot <- ggplot(st_as_sf(America))+
         axis.ticks =element_blank(),
         axis.ticks.length = unit(0, "pt"),
         plot.margin = unit(c(0,0,0,0), "pt"))+ 
-  guides(fill=guide_legend(title="Fall communities"))
+  guides(fill=guide_legend(title="Post-breeding migration communities"))
 
 ## Spring network communities -----
 spring.com.plot <- ggplot(st_as_sf(America))+
@@ -732,10 +734,12 @@ spring.com.plot <- ggplot(st_as_sf(America))+
   scale_color_manual(values=c(adjustcolor("blue", alpha = 0), adjustcolor("black", alpha = 0.5)), guide = "none")+
   geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = , fill = as.factor(walktrap.comm)), shape=21, size = 4)+
   scale_fill_viridis(discrete = T, begin= 0.2) +
+  ggtitle("(f) Pre-breeding migration communities")+
+  geom_text(x=-150, y=40, label= paste0("Modularity = ", as.character(round(modularity(spring.graph, spring.walktrap$membership), digits = 2))))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         legend.box.background = element_rect(fill = "white", colour = "black", linewidth = 0.2),
-        legend.position = c(0.17, 0.4), legend.key = element_rect(fill = "white", colour = NA),
+        legend.position = "none", legend.key = element_rect(fill = "white", colour = NA),
         legend.background = element_rect(fill = NA),
         legend.title=element_text(size=13),
         legend.text=element_text(size=13),
@@ -744,13 +748,24 @@ spring.com.plot <- ggplot(st_as_sf(America))+
         axis.ticks =element_blank(),
         axis.ticks.length = unit(0, "pt"),
         plot.margin = unit(c(0,0,0,0), "pt"))+ 
-  guides(fill=guide_legend(title="Spring communities"))
+  guides(fill=guide_legend(title="Pre-breeding migration \ncommunities"))
 
 ## Panel ----
 communities.fig <- (fall.com.plot | spring.com.plot)
 
 ggsave(plot = communities.fig, filename = "communities.figure.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
        units = "cm", width = 24*1.2, height = 10*1.2, dpi = "print", bg = "white")
+
+## Create a Panel with the node composition by breeding region --- 
+
+Migration.struct <- node.comp.insert / (fall.com.plot | spring.com.plot) 
+
+ggsave(plot = Migration.struct, filename = "migratory.structure.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
+       units = "cm", width = 24*1.2, height = 10*1.2*2, dpi = "print", bg = "white")
+
+png("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures/Migratory.structure.png", units = "cm", width = 24*1.2, height = 10*1.2*2, res = 400)
+Migration.struct 
+dev.off()
 
 # # Table 1: Significance of the spring and fall network communities ----
 # 
@@ -1280,6 +1295,7 @@ First.nbr.regions <- ggplot(st_as_sf(wrld_simpl))+
   geom_errorbar(data = fall.nbr.sf, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), col = "black", linewidth = 0.5)+
   geom_errorbar(data = fall.nbr.sf, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), col = "black", linewidth = 0.5)+
   geom_sf(data = fall.nbr.sf, aes(fill = Breeding_region_MC), shape = 21, cex = 3)+
+  geom_sf_text(data = fall.nbr.sf, aes(label = geo_id), shape = 21, cex = 3)+
   scale_fill_manual(values = c("Northwestern Region" = "#F0E442",
                                "Central Region" = "#009E73",
                                "Eastern Region" = "#0072B2",
@@ -1560,7 +1576,7 @@ plot_a_list <- function(plots, nrows, ncols) {
 }
 
 loc.ind.panel1 <- plot_a_list(loc.ind[1:24], 6, 4)
-loc.ind.panel2 <- plot_a_list(loc.ind[25:45], 6, 4)
+loc.ind.panel2 <- plot_a_list(loc.ind[25:47], 6, 4)
 
 ## Save the plots ----
 ggsave(plot = loc.ind.panel1, filename = "individual.movements1.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures",
@@ -1608,10 +1624,10 @@ east.spring.data <- geo.all %>% filter(Breeding_region_MC == "Eastern Region") %
 east.spring.mig.routes <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "white") +
   coord_sf(xlim = c(-170, -30),ylim = c(-15, 70)) +
-  geom_errorbar(data = east.spring.data [east.spring.data$sitenum > 0,], aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5., group = geo_id), linewidth = 0.5, width = 1, alpha = 0.8, color = "black") +
-  geom_errorbar(data = east.spring.data [east.spring.data$sitenum > 0,], aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5., group = geo_id), linewidth = 0.5, width = 1, alpha = 0.8, color = "black") +
-  geom_path(data = east.spring.data [east.spring.data$sitenum > 0,], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, col = period), alpha = 0.9, col = "firebrick") +
-  geom_point(data =  east.spring.data [east.spring.data $sitenum > 0,], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = period, pch = period, col = period), cex = 2.5)+
+  geom_errorbar(data = east.spring.data[east.spring.data$sitenum > 0,], aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5., group = geo_id), linewidth = 0.5, width = 1, alpha = 0.8, color = "black") +
+  geom_errorbar(data = east.spring.data[east.spring.data$sitenum > 0,], aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5., group = geo_id), linewidth = 0.5, width = 1, alpha = 0.8, color = "black") +
+  geom_path(data = east.spring.data[east.spring.data$sitenum > 0,], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, col = period), alpha = 0.9, col = "firebrick") +
+  geom_point(data =  east.spring.data[east.spring.data $sitenum > 0,], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = period, pch = period, col = period), cex = 2.5)+
   scale_shape_manual(values=c("Post-breeding migration" = 21 , "Non-breeding period"  = 22, "Pre-breeding migration" = 21, "Breeding"  = 24, "Failure" = 4)) +
   scale_colour_manual(values=c("Post-breeding migration" = "black" , "Non-breeding period"  = "white", "Pre-breeding migration" = "black", "Breeding"  = "white", "Failure" = "black")) +
   scale_fill_manual(values=c("Post-breeding migration" = "#FDE725FF" , "Non-breeding period"  = "black", "Pre-breeding migration" = "#21908CFF", "Breeding"  = "black"))+
@@ -1752,10 +1768,10 @@ plot_a_list <- function(plots, nrows, ncols) {
                         nrow = nrows, ncol = ncols)
 }
 
-loc.ind.panel1 <- plot_a_list(dates.ind.lon[1:24], 6, 4)
-loc.ind.panel2 <- plot_a_list(dates.ind.lon[25:47], 6, 4)
-loc.ind.panel3 <- plot_a_list(dates.ind.lat[1:24], 6, 4)
-loc.ind.panel4 <- plot_a_list(dates.ind.lat[25:47], 6, 4)
+tim.ind.panel1 <- plot_a_list(dates.ind.lon[1:24], 6, 4)
+tim.ind.panel2 <- plot_a_list(dates.ind.lon[25:47], 6, 4)
+tim.ind.panel3 <- plot_a_list(dates.ind.lat[1:24], 6, 4)
+tim.ind.panel4 <- plot_a_list(dates.ind.lat[25:47], 6, 4)
 
 ## Save the plots ----
 ggsave(plot = loc.ind.panel1, filename = "Movement.timings.longitude1.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures",
@@ -1773,8 +1789,8 @@ fall.nbr.stp <- fall.stat %>% filter(Lat.50. < 13) %>% group_by(geo_id) %>%
 fall.nbr.stp.plot <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "white") +
   coord_sf(xlim = c(-80, -45),ylim = c(-5, 15)) +
-  #geom_errorbar(data = fall.nbr.stp , aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, width = 0, alpha = 0.2, color = "black") +
-  #geom_errorbar(data = fall.nbr.stp , aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, width = 0, alpha = 0.2, color = "black") +
+  geom_errorbar(data = fall.nbr.stp , aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, width = 0, alpha = 0.2, color = "black") +
+  geom_errorbar(data = fall.nbr.stp , aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, width = 0, alpha = 0.2, color = "black") +
   geom_path(data = fall.nbr.stp , mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, col = geo_id), col = adjustcolor("black", 0.5)) +
   geom_point(data =  fall.nbr.stp , mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = period), cex = 2.5, pch= 21)+
   #geom_text(data =  fall.nbr.stp , mapping = aes(x = Lon.50., y = Lat.50., label = round(duration)), cex = 2.5)+

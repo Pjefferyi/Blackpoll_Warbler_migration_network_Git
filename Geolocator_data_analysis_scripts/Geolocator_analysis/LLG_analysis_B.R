@@ -643,12 +643,14 @@ save(sm.fall.edit , file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summar
 
 # Estimate timing of departure and arrival from the breeding and nonbreeding grounds ############################################################
 dep.br <- "2013-09-03"
-arr.br <- NA # geolocator stopped before return
+arr.br <- "2014-05-13"
 
 par(mfrow=c(2,1))
 plot(twl$Twilight, type  = "l", x0_ad[,1])
+abline(v = anytime(arr.br))
 abline(v = anytime(dep.br))
 plot(twl$Twilight, type  = "l", x0_ad[,2])
+abline(v = anytime(arr.br))
 abline(v = anytime(dep.br))
 par(mfrow=c(1,1))
 

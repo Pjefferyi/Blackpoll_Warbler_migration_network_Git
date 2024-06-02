@@ -19,6 +19,7 @@ library(cluster)
 library(raster)
 
 #load and install and load geolocator packages 
+library(GeoLight)
 # install_github("eldarrak/FLightR")
 library(FLightR)
 # install_github("SLisovski/TwGeos")

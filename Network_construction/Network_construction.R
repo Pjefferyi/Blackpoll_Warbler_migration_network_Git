@@ -257,8 +257,8 @@ fall.stat.norm <- st_difference(fall.stat.sf, equipol)
 fall.stat.norm <- st_drop_geometry(fall.stat.norm )
 
 # cluster points in each group separately, then merge the cluster info 
-cluster.data1 <- clusterLocs(locs = fall.stat.equi, maxdiam = 1027, lon.only = T) #743
-cluster.data2 <- clusterLocs(locs = fall.stat.norm, maxdiam = 753) #700
+cluster.data1 <- clusterLocs(locs = fall.stat.equi, maxdiam = 700, lon.only = T) #743
+cluster.data2 <- clusterLocs(locs = fall.stat.norm, maxdiam = 739) #700
 
 cluster.data2$clusters <- cluster.data2$clusters + max(cluster.data1$clusters)
 

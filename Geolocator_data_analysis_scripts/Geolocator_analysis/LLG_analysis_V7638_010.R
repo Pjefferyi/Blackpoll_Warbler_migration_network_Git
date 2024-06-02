@@ -217,16 +217,16 @@ dev.off()
 
 # Using approximate timings of arrival and departure from the breeding grounds
 zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
-  mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith0 + 1,
-                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad+2,
-                            Date > anytime(dep.nbr) ~ zenith0_ad + 1))
+  mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith0,
+                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad+3,
+                            Date > anytime(dep.nbr) ~ zenith0_ad))
 
 zeniths0 <- zenith_twl_zero$zenith
 
 zenith_twl_med <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith,
                             Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith_sd,
-                            Date > anytime(dep.nbr) ~ zenith))
+                            Date > anytime(dep.nbr) ~ zenith_sd))
 
 zeniths_med <- zenith_twl_med$zenith
 
@@ -342,7 +342,7 @@ geo_twl_adjusted <- export2GeoLight(twl_adjusted)
 q <- 0.83
 cL <- changeLight(twl=geo_twl_adjusted, quantile= q, summary = F, days = days, plot = T)
 
-# merge site helps to put sites together that are separated by single outliers.
+# merge site helps to put sites together that are separated by single outliers
 mS <- mergeSites(twl = geo_twl_adjusted, site = cL$site, degElevation = 90-zenith, distThreshold = dist)
 
 #back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
@@ -668,8 +668,6 @@ geo.ref[(geo.ref$geo.id == geo.id),]$Hill_Ekstrom_median_angle <- zenith_sd
 geo.ref[(geo.ref$geo.id == geo.id),]$Fall_carrib_edits <- FALSE
 geo.ref[(geo.ref$geo.id == geo.id),]$Clock_drift_edits <- TRUE
 geo.ref[(geo.ref$geo.id == geo.id),]$path.elongated <- TRUE
-geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- arr.nbr
-geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- dep.nbr
 geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.start <- as.character(tm.calib1[1])
 geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.end <- as.character(tm.calib1[2])
 geo.ref[(geo.ref$geo.id == geo.id),]$tol <-tol_ini
