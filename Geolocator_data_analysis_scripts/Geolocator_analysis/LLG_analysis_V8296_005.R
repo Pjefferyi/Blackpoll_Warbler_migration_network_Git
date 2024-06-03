@@ -415,7 +415,7 @@ mask <- earthseaMask(xlim, ylim, n = 10, index=index)
 ## Define the log prior for x and z
 logp <- function(p) {
   f <- mask(p)
-  ifelse(is.na(f), -1000, log(100))
+  ifelse(is.na(f), -1000, log(2))
 }
 
 # Define the Estelle model ####################################################
@@ -427,7 +427,7 @@ model <- groupedThresholdModel(twl$Twilight,
                                beta =  beta,
                                x0 = x0, # median point for each group (defined by twl$group)
                                z0 = z0, # middle points between the x0 points
-                               zenith = zenith0,
+                               zenith = zeniths0,
                                logp.x = logp,# land sea mask
                                fixedx = fixedx)
 

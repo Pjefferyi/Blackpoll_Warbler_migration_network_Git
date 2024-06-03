@@ -1295,7 +1295,7 @@ First.nbr.regions <- ggplot(st_as_sf(wrld_simpl))+
   geom_errorbar(data = fall.nbr.sf, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), col = "black", linewidth = 0.5)+
   geom_errorbar(data = fall.nbr.sf, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), col = "black", linewidth = 0.5)+
   geom_sf(data = fall.nbr.sf, aes(fill = Breeding_region_MC), shape = 21, cex = 3)+
-  geom_sf_text(data = fall.nbr.sf, aes(label = geo_id), shape = 21, cex = 3)+
+  #geom_sf_text(data = fall.nbr.sf, aes(label = geo_id), shape = 21, cex = 3)+
   scale_fill_manual(values = c("Northwestern Region" = "#F0E442",
                                "Central Region" = "#009E73",
                                "Eastern Region" = "#0072B2",
@@ -1833,7 +1833,7 @@ theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
       legend.key = element_rect(colour = "transparent", fill = "white"))
 
 
-# Figure 15 time spent at nonbreeding sites  ----
+# Figure 15 Nonbreeding movements  ----
 
 # Run the script for nonbreeding movements 
 source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Blackpoll_warbler_mapping_scripts/Blackpoll_nonbreeding_movements.R")
@@ -1869,7 +1869,7 @@ nbr.move.plot <- ggplot(st_as_sf(wrld_simpl))+
                       name = "Timing")+
   scale_color_viridis( begin = 0, end = 0.9, guide = "none")+
   scale_linetype_manual(values = c("dashed", "solid"), guide = "none")+
-  geom_text(data = NB.move, mapping = aes(x = Lon.50., y = Lat.50., label = geo_id), cex = 2.5)+
+  #geom_text(data = NB.move, mapping = aes(x = Lon.50., y = Lat.50., label = geo_id), cex = 2.5)+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         text = element_text(size = 14),

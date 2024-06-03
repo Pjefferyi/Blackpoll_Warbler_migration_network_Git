@@ -1,5 +1,5 @@
 # Thesis summary stats  
-
+  
 # load necessary libraries 
 library(performance)
 library(DHARMa)
@@ -10,6 +10,8 @@ library(glmmTMB)
 library(MuMIn)
 library(lme4)
 library(jtools)
+library(geosphere)
+library(circular)
 
 # Load the helper functions script  
 source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis_helper_functions.R")
@@ -84,7 +86,7 @@ spring.num <- spring.stat %>% group_by(geo_id) %>% summarise(num_stopovers = sum
 
 # Fall migration distance total
 fall.dist <- fall.stat %>% group_by(geo_id) %>% mutate(Lon.50.next = lead(Lon.50.),
-                                                      Lat.50.next = lead(Lat.50.)) %>%
+                                                       Lat.50.next = lead(Lat.50.)) %>%
   rowwise() %>%
   mutate(dists = distHaversine(c(Lon.50.,Lat.50.), c(Lon.50.next, Lat.50.next))) %>%
   ungroup() %>%
@@ -94,7 +96,7 @@ fall.dist <- fall.stat %>% group_by(geo_id) %>% mutate(Lon.50.next = lead(Lon.50
 
 # Spring migration distance total 
 spring.dist <- spring.stat %>% group_by(geo_id) %>% mutate(Lon.50.next = lead(Lon.50.),
-                                                       Lat.50.next = lead(Lat.50.)) %>%
+                                                           Lat.50.next = lead(Lat.50.)) %>%
   rowwise() %>%
   mutate(dists = distHaversine(c(Lon.50.,Lat.50.), c(Lon.50.next, Lat.50.next))) %>%
   ungroup() %>%
@@ -104,16 +106,16 @@ spring.dist <- spring.stat %>% group_by(geo_id) %>% mutate(Lon.50.next = lead(Lo
 
 # Fall migration between successive sites 
 fall.dist.succ <- fall.stat %>% group_by(geo_id) %>% mutate(Lon.50.next = lead(Lon.50.),
-                                                       Lat.50.next = lead(Lat.50.)) %>%
+                                                            Lat.50.next = lead(Lat.50.)) %>%
   rowwise() %>%
   mutate(dist.to.next.site = distHaversine(c(Lon.50.,Lat.50.), c(Lon.50.next, Lat.50.next)), .after = sitenum) 
 
 # spring migration between successive sites 
 spring.dist.succ <- spring.stat %>% group_by(geo_id) %>% mutate(Lon.50.next = lead(Lon.50.),
-                                                           Lat.50.next = lead(Lat.50.)) %>%
+                                                                Lat.50.next = lead(Lat.50.)) %>%
   rowwise() %>%
   mutate(dist.to.next.site  = distHaversine(c(Lon.50.,Lat.50.), c(Lon.50.next, Lat.50.next)), .after = sitenum)
-  
+
 ## Number of nodes used ----
 
 # Load fall and spring intra node movement datasets
@@ -129,13 +131,13 @@ spring.edge.df.ab <- merge(spring.edge.df.ab, meta.spring.ab[,c("vertex","node.t
 
 # number of nodes used in the fall network
 fall.node.used.df <- fall.edge.df.ab %>% group_by(geo_id) %>% reframe(fall.nodes.occupied = length(unique(cluster, next.cluster)),
-                                                                        fall.stopover.nodes.occupied = length(unique(cluster[node.type == "Stopover"], next.cluster[node.type == "Stopover"])),
-                                                                        fall.nbr.nodes.occupied = length(unique(cluster[node.type == "Nonbreeding"], next.cluster[node.type == "Nonbreeding"]))) 
+                                                                      fall.stopover.nodes.occupied = length(unique(cluster[node.type == "Stopover"], next.cluster[node.type == "Stopover"])),
+                                                                      fall.nbr.nodes.occupied = length(unique(cluster[node.type == "Nonbreeding"], next.cluster[node.type == "Nonbreeding"]))) 
 
 # number of nodes used in the spring network 
 spring.node.used.df <- spring.edge.df.ab %>% group_by(geo_id) %>% reframe(spring.nodes.occupied = length(unique(cluster, next.cluster)),
-                                                                        spring.stopover.nodes.occupied = length(unique(cluster[node.type == "Stopover"], next.cluster[node.type == "Stopover"])),
-                                                                        spring.nbr.nodes.occupied = length(unique(cluster[node.type == "Nonbreeding"], next.cluster[node.type == "Nonbreeding"]))) 
+                                                                          spring.stopover.nodes.occupied = length(unique(cluster[node.type == "Stopover"], next.cluster[node.type == "Stopover"])),
+                                                                          spring.nbr.nodes.occupied = length(unique(cluster[node.type == "Nonbreeding"], next.cluster[node.type == "Nonbreeding"]))) 
 
 # merge the information collected with the reference dataset 
 analysis_ref <- merge(analysis_ref, fall.node.used.df, by.x = "geo.id", by.y = "geo_id", all = T)
@@ -187,7 +189,7 @@ range(spring.node.times$mean.stat.dur)
 
 # Calculate the difference between the length of the fall and spring migration for every tracked individual 
 migration_times <- geo.all %>% group_by(geo_id) %>% filter(StartTime == first(StartTime)) %>% summarize(fall.mig.duration = as.Date(nbr.arrival) - as.Date(br.departure),
-                      spring.mig.duration = as.Date(br.arrival) - as.Date(nbr.departure)) %>%
+                                                                                                        spring.mig.duration = as.Date(br.arrival) - as.Date(nbr.departure)) %>%
   mutate(timing.difference = fall.mig.duration - spring.mig.duration) %>%
   filter(!is.na(timing.difference))
 
@@ -303,7 +305,7 @@ mod1 <- glmmTMB(nbr1.lon ~ deploy.longitude + I(deploy.longitude^2) +(1|study.si
 # # mod1 <- plsr(nbr1.lon ~ deploy.latitude + deploy.longitude, data = mod1.data, scale = T, validation = "CV",
 # #              ncomp = 1, method = "oscorespls")
 # mod1 <- glmmTMB(nbr1.lon ~ poly(deploy.longitude, degree = 2) + (1|study.site), data = mod1.data, na.action = "na.fail")
- summary(mod1)
+summary(mod1)
 # check_model(mod1)
 # #with(mod1.data, table(study.site))
 # 
@@ -363,7 +365,7 @@ lat.plot1 <- ggplot(data = analysis_ref, aes(x = deploy.latitude, y = nbr1.lat))
 mod3.data <- analysis_ref %>% filter_at(vars(deploy.latitude, nbr1.lat),all_vars(!is.na(.)))
 mod3 <- glmmTMB(nbr1.lat ~ deploy.latitude + I(deploy.latitude^2) + (1|study.site), data = mod3.data )
 # plot(nbr1.lat ~ deploy.latitude, data = mod3.data )
- summary(mod3)
+summary(mod3)
 # check_model(mod3)
 # 
 simulationOutput <- simulateResiduals(fittedModel =  mod3, plot = F)
@@ -427,7 +429,7 @@ fall.gdata <-  merge(fall.gdata, fall.stat.clusters, by = "cluster")
 ggplot(data = fall.gdata, aes(y = betweenness, x = factor(cluster), fill = node.type))+
   geom_col()+
   coord_flip()
-  
+
 # Plot indegree strengthscores
 ggplot(data = fall.gdata, aes(y = bridge.indegree, x = factor(cluster), fill = node.type))+
   geom_col()+
@@ -511,29 +513,29 @@ print(move.schedule, n = nrow(move.schedule))
 NB.move %>% 
   group_by(move.direction, equinox.nbr.move) %>%summarise (n = n())
 
-#time spent at the last nonbreeding sites occupied by individuals that movemed
-geo.all %>% group_by(geo_id) %>% filter(geo_id %in% NB.move.mod$geo_id, NB_count == max(NB_count, na.rm = T)) %>% 
-  summarize(time.last.site = max(duration)) %.% merge 
+#time spent at the last nonbreeding sites occupied by individuals that moved
+geo.all %>% group_by(geo_id) %>% filter(geo_id %in% NB.move$geo_id, NB_count == max(NB_count, na.rm = T)) %>% 
+  summarize(time.last.site = max(duration)) 
 
 # Average nonbreeding movement distance mean and SE ----
-mean(NB.move.mod$dist)
-sd(NB.move.mod$dist)/sqrt(length(NB.move.mod$dist))
+mean(NB.move$dist)
+sd(NB.move$dist)/sqrt(length(NB.move$dist))
 
 ## Statistics for the number of movements per bird ----
-NB.move.mod %>%  group_by(geo_id)%>% summarize(move.num = n()) %>% group_by(move.num) %>%
+NB.move %>%  group_by(geo_id)%>% summarize(move.num = n()) %>% group_by(move.num) %>%
   summarize(birds = n())
 
 ## Statistics for the bearing of movements between the first and last nonbreeding sites ---- 
 NB.all <- geo.all %>% group_by(geo_id) %>% filter(NB_count == min(NB_count, na.rm =  T) | NB_count == max(NB_count, na.rm =  T),
-                             geo_id %in% NB.move.mod$geo_id) %>%
+                                                  geo_id %in% NB.move$geo_id) %>%
   mutate(Lon.50.next = lead(Lon.50.),
          Lat.50.next = lead(Lat.50.)) %>% rowwise() %>%
-    mutate(bearing = bearing(c(Lon.50., Lat.50.), c(Lon.50.next, Lat.50.next)),
-           course = (bearing + 360) %% 360) %>%
+  mutate(bearing = bearing(c(Lon.50., Lat.50.), c(Lon.50.next, Lat.50.next)),
+         course = (bearing + 360) %% 360) %>%
   filter(!is.na(bearing)) %>% dplyr::select(geo_id, bearing, course)
 
 mean(circular(NB.all$course, units = "degrees"))
-rayleigh.test(circular(all.bearings, units = "degrees"))
+rayleigh.test(circular(NB.all$bearing, units = "degrees"))
 
 nrow(NB.all[abs(NB.all$bearing) < 90,])
 nrow(NB.all)
@@ -567,6 +569,9 @@ as.Date(avg.nbr.dep, origin = "2020-01-01")
 
 # Transoceanic crossings ----
 
+# shapefile with fall stationary locations
+fall.stat.sf <- st_as_sf(fall.stat, coords = c("Lon.50.", "Lat.50."), crs = crs(wrld_simpl))
+
 # load Caribbean polygon 
 caribb.poly <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Mapping_components/Data/Caribb.poly.shp") %>%
   st_transform(st_crs(fall.stat.sf))
@@ -580,7 +585,7 @@ fall.carib.stops2 <- st_intersection(fall.stat.sf , caribb.poly)
 # convert fall locations to spatial points 
 fall.stat.sf <- st_as_sf(fall.stat, coords = c("Lon.50.", "Lat.50."), crs = st_crs(wrld_simpl), remove = F)
 
-# convert springlocations to spatial points 
+# convert spring locations to spatial points 
 spring.stat.sf <- st_as_sf(spring.stat, coords = c("Lon.50.", "Lat.50."), crs = st_crs(wrld_simpl), remove = F)
 
 # get the spring caribbean stopovers 
@@ -596,12 +601,12 @@ ggplot(st_as_sf(America))+
   #geom_sf_text(data = fall.carib.stops2, aes(label =  geo_id))+
   #geom_sf_text(data = spring.carib.stops2, aes(label =  geo_id))+
   coord_sf(xlim = c(-90, -50),ylim = c(10, 30)) 
-  
+
 # Add stopover information to reference data 
 analysis_ref_carib <- analysis_ref %>% mutate(fall.carib.stop = ifelse(geo.id %in% fall.carib.stops2$geo_id, "stopover", "direct"),
-                              spring.carib.stop = ifelse(geo.id %in% spring.carib.stops2$geo_id, "stopover", "direct"),
-                              fall.carib.stop = ifelse(geo.id %in% fall.stat$geo_id, fall.carib.stop, NA),
-                              spring.carib.stop = ifelse(geo.id %in% spring.stat$geo_id, spring.carib.stop, NA))
+                                              spring.carib.stop = ifelse(geo.id %in% spring.carib.stops2$geo_id, "stopover", "direct"),
+                                              fall.carib.stop = ifelse(geo.id %in% fall.stat$geo_id, fall.carib.stop, NA),
+                                              spring.carib.stop = ifelse(geo.id %in% spring.stat$geo_id, spring.carib.stop, NA))
 
 x <- analysis_ref_carib %>% group_by(Breeding_region_MC, fall.carib.stop) %>% summarize(unique(geo.id)) 
 

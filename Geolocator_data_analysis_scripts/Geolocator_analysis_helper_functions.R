@@ -798,7 +798,7 @@ clusterLocs <- function(locs, maxdiam = 300, lon.only = F){
           # Generate distance matrix
           subset.dist.matrix <- geo.dist(clust.subset [,c("Lon.50.","Lat.50.")])
           
-          # Calculate the cluster diameter (here defined as the distance between the two furtherst locations in the cluster)
+          # Calculate the cluster diameter (here defined as the distance between the two furthest locations in the cluster)
           diam.list <- append(diam.list, max(subset.dist.matrix))
         }
       }

@@ -16,196 +16,198 @@ library(scatterpie)
 
 source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis_helper_functions.R")
 
-# Import data ##################################################################
+# # Import data ##################################################################
+# 
+# # path to reference data file 
+# ref_path <- "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv"
+# ref_data <- read.csv(ref_path)
+# 
+# # location data 
+# geo.all <- findLocData(geo.ids = c("V8757_010",
+#                                    "V8296_004",
+#                                    "V8296_005",
+#                                    "V8296_006",
+#                                    "V8757_055",
+#                                    "V8757_018",
+#                                    "V8296_015",
+#                                    "V8296_017",
+#                                    "V8296_021",
+#                                    "V8296_026",
+#                                    "V8296_025",
+#                                    "V8296_007",
+#                                    "V8296_008",
+#                                    "V8757_019",
+#                                    "V8757_096",
+#                                    "V8757_134",
+#                                    "V8757_029",
+#                                    "V8757_078",
+#                                    "V7638_001",
+#                                    "V7638_005",
+#                                    "V7638_009",
+#                                    "V7638_010",
+#                                    "V7638_011",
+#                                    "blpw09",
+#                                    "blpw12",
+#                                    "3254_001",
+#                                    "4068_014",
+#                                    "blpw14",
+#                                    "3254_003",
+#                                    "3254_008",
+#                                    "3254_011",
+#                                    "3254_057",
+#                                    "blpw15",
+#                                    "blpw25",
+#                                    "4105_008",
+#                                    "4105_009",
+#                                    "4105_016",
+#                                    "4105_017",
+#                                    "4210_002",
+#                                    "4210_004",
+#                                    "4210_006",
+#                                    "4210_010",
+#                                    "WRMA04173",
+#                                    "A",
+#                                    "B",
+#                                    "C",
+#                                    "E",
+#                                    "D"), check_col_length = F)
+# 
+# # Define stationary periods as breeding, stopover, or non-breeding #############
+# geo.all <- geo.all %>% group_by(geo_id) %>% mutate(site_type = case_when(
+#   (sitenum == 1 | sitenum == max(sitenum)) & Recorded_North_South_mig == "Both" ~ "Breeding",
+#   sitenum == 1 & Recorded_North_South_mig %in% c("South and partial North", "South" ) ~ "Breeding",
+#   (sitenum == max(sitenum)) & Recorded_North_South_mig == "North" ~ "Breeding",
+#   (sitenum == max(sitenum)) & Recorded_North_South_mig == "South and partial North" & path.elongated == T ~ "Breeding",
+#   period == "Non-breeding period" & (duration >= 14 | sitenum == 1 | sitenum == max(sitenum)) ~ "Nonbreeding",
+#   .default = "Stopover"))
+# 
+# # Calculate IQR between 97.5 and 2.5 quantiles 
+# geo.all <- geo.all %>% mutate(IQR.lon.dist = distHaversine(cbind(Lon.97.5.,Lat.50.), cbind(Lon.2.5., Lat.50.)),
+#                               IQR.lat.dist = distHaversine(cbind(Lon.50.,Lat.97.5.), cbind(Lon.50.,Lat.2.5.)))
+# 
+# # Find the time of departure from the breeding grounds #############
+# geo.all.br.departure <- geo.all %>% filter(period %in% c("Post-breeding migration","Non-breeding period"), 
+#                                            Recorded_North_South_mig %in% c("Both", "South and partial North", "South")) %>%
+#   group_by(geo_id) %>% mutate(proximity = distHaversine(cbind(Lon.50., Lat.50.), cbind(deploy.longitude, deploy.latitude))) %>%
+#   filter(proximity <= 250000) %>% summarize(fall.br.departure = max(EndTime)) 
+#   #mutate(lon.proximity = deploy.longitude - Lon.50., lat.proximity = deploy.latitude - Lat.50.) %>%
+#   #filter(abs(lon.proximity) <= 2 & abs(lat.proximity) <= 4) %>% summarize(fall.br.departure = max(EndTime))
+#   #filter(ifelse(study.site %in% c("Quebec", "Mount Mansfield, Vermont, USA", "Nova Scotia, Canada"), (abs(lon.proximity) < 0.1 & abs(lat.proximity) < 0.1), (abs(lon.proximity) <= 2 & abs(lat.proximity) <= 4))) %>% summarize(fall.br.departure = max(EndTime )) 
+# 
+# # Find the time of return to the breeding grounds #############
+# geo.all.br.arrival <- geo.all %>%  filter(period %in% c("Pre-breeding migration","Non-breeding period"),
+#                                           Recorded_North_South_mig %in% c("Both","North"),
+#                                           path.elongated == F, 
+#                                           !(geo_id %in% c("V8296_007", "V8296_008"))) %>%
+#   group_by(geo_id) %>% mutate(proximity = ifelse(geo_id != "WRMA04173", distHaversine(cbind(Lon.50., Lat.50.), cbind(deploy.longitude, deploy.latitude)),
+#                                                   distHaversine(cbind(Lon.50., Lat.50.), cbind(last(Lon.50.), last(Lat.50.))))) %>%
+#   filter(proximity <= 250000) %>% summarize(spring.br.arrival = min(StartTime )) 
+#   #mutate(lon.proximity = ifelse(geo_id != "WRMA04173", deploy.longitude - Lon.50., last(Lon.50.) - Lon.50.),
+#   #       lat.proximity =ifelse(geo_id != "WRMA04173", deploy.latitude - Lat.50., last(Lat.50.) - Lat.50.)) %>%
+#   #filter(abs(lon.proximity) <= 2 & abs(lat.proximity) <= 4) %>% summarize(spring.br.arrival = min(StartTime))
+# 
+# # Merge breeding grounds arrival & departure times with location data #######
+# geo.all <- geo.all %>% dplyr::select(!c(fall.br.departure, spring.br.arrival)) %>% merge(geo.all.br.departure, by = "geo_id", all = T) %>%
+#   merge(geo.all.br.arrival, by = "geo_id", all = T) %>% group_by(geo_id) %>% 
+#   arrange(geo_id, StartTime) %>%
+#   group_by(geo_id) %>%
+#   mutate(period = ifelse((EndTime <= fall.br.departure | StartTime >= spring.br.arrival) & Recorded_North_South_mig == "Both" & path.elongated == F, "Breeding", period),
+#          site_type = ifelse((EndTime  <= fall.br.departure | StartTime >= spring.br.arrival) & Recorded_North_South_mig == "Both"& path.elongated == F, "Breeding", site_type),
+#          period = ifelse(EndTime <= fall.br.departure & (Recorded_North_South_mig %in% c("South and partial North", "South") | path.elongated == T), "Breeding", period),
+#          site_type = ifelse(EndTime <= fall.br.departure & (Recorded_North_South_mig %in% c("South and partial North", "South") | path.elongated == T), "Breeding", site_type),
+#          period = ifelse(StartTime >= spring.br.arrival & Recorded_North_South_mig == "North", "Breeding", period),
+#          site_type = ifelse(StartTime >= spring.br.arrival & Recorded_North_South_mig == "North", "Breeding", site_type))
+# 
+# # For geolocators that were deployed in close proximity, assign one location to the geolocator deployment site
+# # Here this location will be the median of all geolocator deployment locations for that site. 
+# 
+# # we first add new columns with the median deployment locations in our reference dataset (metadata for each geolcator)
+# ref_data <- ref_data %>% group_by(study.site) %>% 
+#   mutate(mod.deploy.lon = median(deploy.longitude))%>%
+#   mutate(mod.deploy.lat = median(deploy.latitude))
+# 
+# #View(ref_data %>% group_by(study.site, geo.id) %>% summarise(disp = mean(deploy.longitude)))
+# 
+# # Now we can modify our location dataset
+# #geo.all <- merge(geo.all, ref_data[,c("geo.id", "mod.deploy.lon", "mod.deploy.lat")], by.x = "geo_id", by.y = "geo.id")
+# 
+# geo.all <- geo.all %>% group_by(geo_id) %>% mutate(Lon.50. = case_when(
+#   (sitenum == 1 | sitenum == max(sitenum)) & Recorded_North_South_mig == "Both" ~ mod.deploy.lon,
+#   sitenum == 1 & Recorded_North_South_mig %in% c("South and partial North", "South" ) ~ mod.deploy.lon,
+#   #(sitenum == max(sitenum)) & Recorded_North_South_mig == "North" ~ mod.deploy.lon,
+#   .default = Lon.50.)) %>%
+#   mutate(Lat.50. = case_when(
+#     (sitenum == 1 | sitenum == max(sitenum)) & Recorded_North_South_mig == "Both" ~ mod.deploy.lat,
+#     sitenum == 1 & Recorded_North_South_mig %in% c("South and partial North", "South" ) ~ mod.deploy.lat,
+#     # (sitenum == max(sitenum)) & Recorded_North_South_mig == "North" ~ mod.deploy.lat,
+#     .default = Lat.50.))
+# 
+# # Check the location of breeding and nonbreeding sites   
+# #View(geo.all[,c("geo_id", "Lon.50.", "Lat.50.", "mod.deploy.lon", "mod.deploy.lat")])
+# 
+# # plot locations of deployment sites (there should be 10) 
+# dep.sites <- geo.all[(geo.all$sitenum == 1),]
+# plot(wrld_simpl, col = "lightgray", xlim = c(-170, -30), ylim = c(-20, 70))
+# points(dep.sites$Lon.50., dep.sites$Lat.50., col = "darkred")
+# 
+# # plot locations of all stationary sites 
+# stat.sites <- geo.all[(geo.all$sitenum > 0),]
+# plot(wrld_simpl, col = "lightgray", xlim = c(-170, -30), ylim = c(-20, 70))
+# points(stat.sites$Lon.50., stat.sites$Lat.50., col = "darkred")
+# 
+# # Count stationary sites by season for each geolocator #########################
+# geo.all <- geo.all %>% arrange(geo_id, StartTime)
+# num <- 1
+# geo.all$NB_count <- NA
+# geo.id.ind <- geo.all$geo_id[1]
+# 
+# for (i in seq(1, nrow(geo.all))){
+#   
+#   if (geo.all$site_type[i] == "Nonbreeding" & geo.all$geo_id[i] == geo.id.ind){
+#     geo.all$NB_count[i] <- num
+#     num <- num + 1 
+#   }
+#   
+#   if (geo.all$site_type[i] == "Nonbreeding" & geo.all$geo_id[i] != geo.id.ind){
+#     geo.id.ind <- geo.all$geo_id[i]
+#     num <-1 
+#     geo.all$NB_count[i] <- num
+#     num <- num + 1 
+#   }
+# }
+# 
+# # fix dates for geolocators that recorded with the wrong date ##################
+# geo.all <- geo.all %>% arrange(geo_id, StartTime) %>% 
+#   group_by(geo_id) %>% mutate(year.difference = year(deploy.on.date) - year(first(StartTime)))
+# 
+# year(geo.all$StartTime) <- year(geo.all$StartTime) + geo.all$year.difference  
+# year(geo.all$EndTime) <- year(geo.all$EndTime) + geo.all$year.difference  
+# 
+# geo.all$IH.calib.start <- anytime(geo.all$IH.calib.start)
+# geo.all$IH.calib.end <- anytime(geo.all$IH.calib.end)
+# 
+# year(geo.all$IH.calib.start) <- year(geo.all$IH.calib.start) + geo.all$year.difference  
+# year(geo.all$IH.calib.end) <- year(geo.all$IH.calib.end) + geo.all$year.difference
+# 
+# geo.all$nbr.arrival <-  as.Date(as.numeric(geo.all$nbr.arrival), optional = T)
+# geo.all$nbr.departure <- as.Date(as.numeric(geo.all$nbr.departure), optional = T)
+# geo.all$br.arrival <- as.Date(as.numeric(geo.all$br.arrival), optional = T)
+# geo.all$br.departure <- as.Date(as.numeric(geo.all$br.departure), optional = T)
+# 
+# year(geo.all$nbr.arrival) <-  year(geo.all$nbr.arrival) + geo.all$year.difference  
+# year(geo.all$nbr.departure) <- year(geo.all$nbr.departure) + geo.all$year.difference  
+# year(geo.all$br.arrival) <- year(geo.all$br.arrival) + geo.all$year.difference  
+# year(geo.all$br.departure) <- year(geo.all$br.departure) + geo.all$year.difference
+# 
+# # Save the data edited here  ###################################################
+# 
+# #Save the new columns in the reference data
+# write.csv(ref_data,"C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE)
+# 
+# #save the processed geolocatorlocations 
+# write.csv(geo.all, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/All.locations.csv",row.names=FALSE)
 
-# path to reference data file 
-ref_path <- "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv"
-ref_data <- read.csv(ref_path)
-
-# location data 
-geo.all <- findLocData(geo.ids = c("V8757_010",
-                                   "V8296_004",
-                                   "V8296_005",
-                                   "V8296_006",
-                                   "V8757_055",
-                                   "V8757_018",
-                                   "V8296_015",
-                                   "V8296_017",
-                                   "V8296_021",
-                                   "V8296_026",
-                                   "V8296_025",
-                                   "V8296_007",
-                                   "V8296_008",
-                                   "V8757_019",
-                                   "V8757_096",
-                                   "V8757_134",
-                                   "V8757_029",
-                                   "V8757_078",
-                                   "V7638_001",
-                                   "V7638_005",
-                                   "V7638_009",
-                                   "V7638_010",
-                                   "V7638_011",
-                                   "blpw09",
-                                   "blpw12",
-                                   "3254_001",
-                                   "4068_014",
-                                   "blpw14",
-                                   "3254_003",
-                                   "3254_008",
-                                   "3254_011",
-                                   "3254_057",
-                                   "blpw15",
-                                   "blpw25",
-                                   "4105_008",
-                                   "4105_009",
-                                   "4105_016",
-                                   "4105_017",
-                                   "4210_002",
-                                   "4210_004",
-                                   "4210_006",
-                                   "4210_010",
-                                   "WRMA04173",
-                                   "A",
-                                   "B",
-                                   "C",
-                                   "E",
-                                   "D"), check_col_length = F)
-
-# Define stationary periods as breeding, stopover, or non-breeding #############
-geo.all <- geo.all %>% group_by(geo_id) %>% mutate(site_type = case_when(
-  (sitenum == 1 | sitenum == max(sitenum)) & Recorded_North_South_mig == "Both" ~ "Breeding",
-  sitenum == 1 & Recorded_North_South_mig %in% c("South and partial North", "South" ) ~ "Breeding",
-  (sitenum == max(sitenum)) & Recorded_North_South_mig == "North" ~ "Breeding",
-  (sitenum == max(sitenum)) & Recorded_North_South_mig == "South and partial North" & path.elongated == T ~ "Breeding",
-  period == "Non-breeding period" & (duration >= 14 | sitenum == 1 | sitenum == max(sitenum)) ~ "Nonbreeding",
-  .default = "Stopover"))
-
-# Calculate IQR between 97.5 and 2.5 quantiles 
-geo.all <- geo.all %>% mutate(IQR.lon.dist = distHaversine(cbind(Lon.97.5.,Lat.50.), cbind(Lon.2.5., Lat.50.)),
-                              IQR.lat.dist = distHaversine(cbind(Lon.50.,Lat.97.5.), cbind(Lon.50.,Lat.2.5.)))
-
-# Find the time of departure from the breeding grounds #############
-geo.all.br.departure <- geo.all %>% filter(period %in% c("Post-breeding migration","Non-breeding period"), 
-                                           Recorded_North_South_mig %in% c("Both", "South and partial North", "South")) %>%
-  group_by(geo_id) %>% mutate(proximity = distHaversine(cbind(Lon.50., Lat.50.), cbind(deploy.longitude, deploy.latitude))) %>%
-  filter(proximity <= 250000) %>% summarize(fall.br.departure = max(EndTime)) 
-  #mutate(lon.proximity = deploy.longitude - Lon.50., lat.proximity = deploy.latitude - Lat.50.) %>%
-  #filter(abs(lon.proximity) <= 2 & abs(lat.proximity) <= 4) %>% summarize(fall.br.departure = max(EndTime))
-  #filter(ifelse(study.site %in% c("Quebec", "Mount Mansfield, Vermont, USA", "Nova Scotia, Canada"), (abs(lon.proximity) < 0.1 & abs(lat.proximity) < 0.1), (abs(lon.proximity) <= 2 & abs(lat.proximity) <= 4))) %>% summarize(fall.br.departure = max(EndTime )) 
-
-# Find the time of return to the breeding grounds #############
-geo.all.br.arrival <- geo.all %>%  filter(period %in% c("Pre-breeding migration","Non-breeding period"),
-                                          Recorded_North_South_mig %in% c("Both","North"),
-                                          path.elongated == F, 
-                                          !(geo_id %in% c("V8296_007", "V8296_008"))) %>%
-  group_by(geo_id) %>% mutate(proximity = ifelse(geo_id != "WRMA04173", distHaversine(cbind(Lon.50., Lat.50.), cbind(deploy.longitude, deploy.latitude)),
-                                                  distHaversine(cbind(Lon.50., Lat.50.), cbind(last(Lon.50.), last(Lat.50.))))) %>%
-  filter(proximity <= 250000) %>% summarize(spring.br.arrival = min(StartTime )) 
-  #mutate(lon.proximity = ifelse(geo_id != "WRMA04173", deploy.longitude - Lon.50., last(Lon.50.) - Lon.50.),
-  #       lat.proximity =ifelse(geo_id != "WRMA04173", deploy.latitude - Lat.50., last(Lat.50.) - Lat.50.)) %>%
-  #filter(abs(lon.proximity) <= 2 & abs(lat.proximity) <= 4) %>% summarize(spring.br.arrival = min(StartTime))
-
-# Merge breeding grounds arrival & departure times with location data #######
-geo.all <- geo.all %>% dplyr::select(!c(fall.br.departure, spring.br.arrival)) %>% merge(geo.all.br.departure, by = "geo_id", all = T) %>%
-  merge(geo.all.br.arrival, by = "geo_id", all = T) %>% group_by(geo_id) %>% 
-  arrange(geo_id, StartTime) %>%
-  group_by(geo_id) %>%
-  mutate(period = ifelse((EndTime <= fall.br.departure | StartTime >= spring.br.arrival) & Recorded_North_South_mig == "Both" & path.elongated == F, "Breeding", period),
-         site_type = ifelse((EndTime  <= fall.br.departure | StartTime >= spring.br.arrival) & Recorded_North_South_mig == "Both"& path.elongated == F, "Breeding", site_type),
-         period = ifelse(EndTime <= fall.br.departure & (Recorded_North_South_mig %in% c("South and partial North", "South") | path.elongated == T), "Breeding", period),
-         site_type = ifelse(EndTime <= fall.br.departure & (Recorded_North_South_mig %in% c("South and partial North", "South") | path.elongated == T), "Breeding", site_type),
-         period = ifelse(StartTime >= spring.br.arrival & Recorded_North_South_mig == "North", "Breeding", period),
-         site_type = ifelse(StartTime >= spring.br.arrival & Recorded_North_South_mig == "North", "Breeding", site_type))
-
-# For geolocators that were deployed in close proximity, assign one location to the geolocator deployment site
-# Here this location will be the median of all geolocator deployment locations for that site. 
-
-# we first add new columns with the median deployment locations in our reference dataset (metadata for each geolcator)
-ref_data <- ref_data %>% group_by(study.site) %>% 
-  mutate(mod.deploy.lon = median(deploy.longitude))%>%
-  mutate(mod.deploy.lat = median(deploy.latitude))
-
-#View(ref_data %>% group_by(study.site, geo.id) %>% summarise(disp = mean(deploy.longitude)))
-
-# Now we can modify our location dataset
-#geo.all <- merge(geo.all, ref_data[,c("geo.id", "mod.deploy.lon", "mod.deploy.lat")], by.x = "geo_id", by.y = "geo.id")
-
-geo.all <- geo.all %>% group_by(geo_id) %>% mutate(Lon.50. = case_when(
-  (sitenum == 1 | sitenum == max(sitenum)) & Recorded_North_South_mig == "Both" ~ mod.deploy.lon,
-  sitenum == 1 & Recorded_North_South_mig %in% c("South and partial North", "South" ) ~ mod.deploy.lon,
-  #(sitenum == max(sitenum)) & Recorded_North_South_mig == "North" ~ mod.deploy.lon,
-  .default = Lon.50.)) %>%
-  mutate(Lat.50. = case_when(
-    (sitenum == 1 | sitenum == max(sitenum)) & Recorded_North_South_mig == "Both" ~ mod.deploy.lat,
-    sitenum == 1 & Recorded_North_South_mig %in% c("South and partial North", "South" ) ~ mod.deploy.lat,
-    # (sitenum == max(sitenum)) & Recorded_North_South_mig == "North" ~ mod.deploy.lat,
-    .default = Lat.50.))
-
-# Check the location of breeding and nonbreeding sites   
-#View(geo.all[,c("geo_id", "Lon.50.", "Lat.50.", "mod.deploy.lon", "mod.deploy.lat")])
-
-# plot locations of deployment sites (there should be 10) 
-dep.sites <- geo.all[(geo.all$sitenum == 1),]
-plot(wrld_simpl, col = "lightgray", xlim = c(-170, -30), ylim = c(-20, 70))
-points(dep.sites$Lon.50., dep.sites$Lat.50., col = "darkred")
-
-# plot locations of all stationary sites 
-stat.sites <- geo.all[(geo.all$sitenum > 0),]
-plot(wrld_simpl, col = "lightgray", xlim = c(-170, -30), ylim = c(-20, 70))
-points(stat.sites$Lon.50., stat.sites$Lat.50., col = "darkred")
-
-# Count stationary sites by season for each geolocator #########################
-geo.all <- geo.all %>% arrange(geo_id, StartTime)
-num <- 1
-geo.all$NB_count <- NA
-geo.id.ind <- geo.all$geo_id[1]
-
-for (i in seq(1, nrow(geo.all))){
-  
-  if (geo.all$site_type[i] == "Nonbreeding" & geo.all$geo_id[i] == geo.id.ind){
-    geo.all$NB_count[i] <- num
-    num <- num + 1 
-  }
-  
-  if (geo.all$site_type[i] == "Nonbreeding" & geo.all$geo_id[i] != geo.id.ind){
-    geo.id.ind <- geo.all$geo_id[i]
-    num <-1 
-    geo.all$NB_count[i] <- num
-    num <- num + 1 
-  }
-}
-
-# fix dates for geolocators that recorded with the wrong date ##################
-geo.all <- geo.all %>% arrange(geo_id, StartTime) %>% 
-  group_by(geo_id) %>% mutate(year.difference = year(deploy.on.date) - year(first(StartTime)))
-
-year(geo.all$StartTime) <- year(geo.all$StartTime) + geo.all$year.difference  
-year(geo.all$EndTime) <- year(geo.all$EndTime) + geo.all$year.difference  
-
-geo.all$IH.calib.start <- anytime(geo.all$IH.calib.start)
-geo.all$IH.calib.end <- anytime(geo.all$IH.calib.end)
-
-year(geo.all$IH.calib.start) <- year(geo.all$IH.calib.start) + geo.all$year.difference  
-year(geo.all$IH.calib.end) <- year(geo.all$IH.calib.end) + geo.all$year.difference
-
-geo.all$nbr.arrival <-  as.Date(as.numeric(geo.all$nbr.arrival), optional = T)
-geo.all$nbr.departure <- as.Date(as.numeric(geo.all$nbr.departure), optional = T)
-geo.all$br.arrival <- as.Date(as.numeric(geo.all$br.arrival), optional = T)
-geo.all$br.departure <- as.Date(as.numeric(geo.all$br.departure), optional = T)
-
-year(geo.all$nbr.arrival) <-  year(geo.all$nbr.arrival) + geo.all$year.difference  
-year(geo.all$nbr.departure) <- year(geo.all$nbr.departure) + geo.all$year.difference  
-year(geo.all$br.arrival) <- year(geo.all$br.arrival) + geo.all$year.difference  
-year(geo.all$br.departure) <- year(geo.all$br.departure) + geo.all$year.difference
-
-# Save the data edited here  ###################################################
-
-#Save the new columns in the reference data
-write.csv(ref_data,"C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE)
-
-#save the processed geolocatorlocations 
-write.csv(geo.all, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/All.locations.csv",row.names=FALSE)
+geo.all <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/All.locations.csv")
 
 ################################################################################
 # Fall migration network #######################################################
@@ -217,11 +219,9 @@ write.csv(geo.all, "C:/Users/Jelan/OneDrive/Desktop/University/University of Gue
 
 # first we must filter our location data to retain only those relevant to the first breeding period and fall migration 
 fall.stat <- geo.all %>% filter(sitenum > 0, duration >= 2, 
+                                #period %in% c("Post-breeding migration","Non-breeding period"),
                                 anydate(StartTime, asUTC = T) <= anydate(nbr.arrival),
                                 Recorded_North_South_mig %in% c("Both", "South and partial North", "South"))
-
-# We will censor locations over the carribean due to the equinox
-
 
 # we will also extract all fall locations (including while the bird was moving), for figures
 fall.move <- geo.all %>% filter(site_type %in% anydate(StartTime, asUTC = T) <= anydate(nbr.arrival),
@@ -254,16 +254,16 @@ fall.stat.equi <- st_intersection(fall.stat.sf, equipol)
 fall.stat.equi <- st_drop_geometry(fall.stat.equi)
 
 fall.stat.norm <- st_difference(fall.stat.sf, equipol)
-fall.stat.norm <- st_drop_geometry(fall.stat.norm )
+fall.stat.norm <- st_drop_geometry(fall.stat.norm)
 
 # cluster points in each group separately, then merge the cluster info 
-cluster.data1 <- clusterLocs(locs = fall.stat.equi, maxdiam = 700, lon.only = T) #743
-cluster.data2 <- clusterLocs(locs = fall.stat.norm, maxdiam = 739) #700
+cluster.data1 <- clusterLocs(locs = fall.stat.equi, maxdiam = 992, lon.only = T) #743
+cluster.data2 <- clusterLocs(locs = fall.stat.norm, maxdiam = 700) #700
 
 cluster.data2$clusters <- cluster.data2$clusters + max(cluster.data1$clusters)
 
 fall.stat.equi$cluster <- cluster.data1$clusters
-fall.stat.norm$cluster <- cluster.data2$clusters
+fall.stat.norm$cluster <-  cluster.data2$clusters
 
 fall.stat <- rbind(fall.stat.equi, fall.stat.norm)
 
@@ -410,7 +410,7 @@ meta.fall <- data.frame("vertex" = fall.node.type$cluster,
                         "node.type.num" = fall.node.type$site_type_num)
 
 # For fall nodes where latitudinal accuracy is low, set location close to the coast
-meta.fall[c(7, 6, 5),]$Lat.50. <- c(35.3, 41.45, 44.77)
+#meta.fall[c(7, 6, 5),]$Lat.50. <- c(35.3, 41.45, 44.77)
 
 # create node location matrix 
 fall.location <- as.matrix(meta.fall[, c("Lon.50.", "Lat.50.")])
@@ -484,7 +484,7 @@ spring.stat <- spring.stat %>% group_by(geo_id) %>% filter(StartTime >= NB.last.
          period = ifelse(period == "Breeding", "Post-breeding migration", period))
 
 # Uncomment this code to generate clusters using the pam function
-cluster.data <- clusterLocs(locs = spring.stat, maxdiam = 732)
+cluster.data <- clusterLocs(locs = spring.stat, maxdiam = 738)
 spring.stat$cluster <- cluster.data$clusters
 
 # # export spring stat sites for manual clustering

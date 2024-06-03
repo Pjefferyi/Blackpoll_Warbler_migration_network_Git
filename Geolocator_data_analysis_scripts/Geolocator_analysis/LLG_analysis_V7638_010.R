@@ -217,9 +217,9 @@ dev.off()
 
 # Using approximate timings of arrival and departure from the breeding grounds
 zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
-  mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith0,
-                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad+3,
-                            Date > anytime(dep.nbr) ~ zenith0_ad))
+  mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith0 + 2,
+                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad+4,
+                            Date > anytime(dep.nbr) ~ zenith0_ad + 4))
 
 zeniths0 <- zenith_twl_zero$zenith
 
@@ -312,7 +312,7 @@ twl_adjusted <- twl %>% mutate(Twilight = Twilight + seconds(CD.model$coefficien
                                Twilight0 = Twilight0 + seconds(CD.model$coefficients[2] * 240 * timestep))
 
 # Initial Path with Clock Drift Adjustment  ####################################
-path <- thresholdPath(twl_adjusted$Twilight, twl_adjusted$Rise, zenith = zenith, tol=tol_ini)
+path <- thresholdPath(twl_adjusted$Twilight, twl_adjusted$Rise, zenith = zeniths_med, tol=tol_ini)
 
 x0 <- path$x
 z0 <- trackMidpts(x0)
@@ -342,13 +342,13 @@ geo_twl_adjusted <- export2GeoLight(twl_adjusted)
 q <- 0.83
 cL <- changeLight(twl=geo_twl_adjusted, quantile= q, summary = F, days = days, plot = T)
 
-# merge site helps to put sites together that are separated by single outliers
+# merge site helps to put sites together that are separated by single outliers.
 mS <- mergeSites(twl = geo_twl_adjusted, site = cL$site, degElevation = 90-zenith, distThreshold = dist)
 
 #back transfer the twilight table and create a group vector with TRUE or FALSE according to which twilights to merge 
 twl_adjusted.rev <- data.frame(Twilight = as.POSIXct(geo_twl_adjusted[,1], geo_twl_adjusted[,2]), 
-                      Rise     = c(ifelse(geo_twl_adjusted[,3]==1, TRUE, FALSE), ifelse(geo_twl_adjusted[,3]==1, FALSE, TRUE)),
-                      Site     = rep(mS$site,2))
+                               Rise     = c(ifelse(geo_twl_adjusted[,3]==1, TRUE, FALSE), ifelse(geo_twl_adjusted[,3]==1, FALSE, TRUE)),
+                               Site     = rep(mS$site,2))
 twl_adjusted.rev <- subset(twl_adjusted.rev, !duplicated(Twilight), sort = Twilight)
 
 grouped <- rep(FALSE, nrow(twl_adjusted.rev))
@@ -613,8 +613,8 @@ save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 load(file = paste0(dir,"/", geo.id, "_initial_path__clock_drift_adjustment.csv"))
 
 #Fall transoceanic flight
-start <- "2018-10-07"
-end <- "2018-10-25"
+start <- "2018-10-01"
+end <- "2018-11-15"
 
 #first flight
 f1.start <- "2018-10-13"
@@ -637,11 +637,11 @@ rect(anytime(f2.start), min(lig$Light)-2, anytime(f2.end), max(lig$Light)+2, col
 plot(twl_adjusted$Twilight[twl_adjusted$Twilight> start & twl_adjusted$Twilight < end], x0[,1][twl_adjusted$Twilight > start & twl_adjusted$Twilight < end],
      ylab = "Longitude", xlab = "Time")
 rect(anytime(f1.start), min(x0_ad[,1])-2, anytime(f1.end), max(x0[,1])+2, col = alpha("yellow", 0.2), lty=0)
-rect(anytime(f2.start), min(x0_ad[,1])-2, anytime(f2.end), max(x0[,1])+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime(f2.start), min(lig$Light)-2, anytime(f2.end), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
 plot(twl_adjusted$Twilight[twl_adjusted$Twilight > start & twl_adjusted$Twilight < end], x0[,2][twl_adjusted$Twilight > start & twl_adjusted$Twilight < end],
      ylab = "Latitude", xlab = "Time")
 rect(anytime(f1.start), min(x0_ad[,2])-2, anytime(f1.end), max(x0[,2])+2, col = alpha("yellow", 0.2), lty=0)
-rect(anytime(f2.start), min(x0_ad[,2])-2, anytime(f2.end), max(x0[,2])+2, col = alpha("yellow", 0.2), lty=0)
+rect(anytime(f2.start), min(lig$Light)-2, anytime(f2.end), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
 par(cex.lab= 1)
 par(cex.axis= 1)
 
@@ -668,6 +668,8 @@ geo.ref[(geo.ref$geo.id == geo.id),]$Hill_Ekstrom_median_angle <- zenith_sd
 geo.ref[(geo.ref$geo.id == geo.id),]$Fall_carrib_edits <- FALSE
 geo.ref[(geo.ref$geo.id == geo.id),]$Clock_drift_edits <- TRUE
 geo.ref[(geo.ref$geo.id == geo.id),]$path.elongated <- TRUE
+geo.ref[(geo.ref$geo.id == geo.id),]$nbr.arrival <- arr.nbr
+geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- dep.nbr
 geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.start <- as.character(tm.calib1[1])
 geo.ref[(geo.ref$geo.id == geo.id),]$IH.calib.end <- as.character(tm.calib1[2])
 geo.ref[(geo.ref$geo.id == geo.id),]$tol <-tol_ini
