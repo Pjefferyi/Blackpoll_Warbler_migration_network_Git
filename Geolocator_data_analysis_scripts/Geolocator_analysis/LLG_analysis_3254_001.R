@@ -150,6 +150,50 @@ zenith0 <- calib[2]
 
 alpha <- calib[3:4]
 
+# Calibration V2 ###############################################################
+
+# Calculate solar times and declination from calibration period
+sun <- solar(d_calib [,1])
+
+# Adjust zenith angle for atmospheric refraction
+zenith.calib <-
+  refracted(zenith(sun = sun,
+                   lon = lon.calib,
+                   lat = lat.calib))
+
+# Find calibration period
+tm.calib <- as.POSIXct(c("2016-07-12", "2016-07-26"), tz = "UTC")
+
+abline(v = tm.calib, lwd = 2, lty = 2, col = "orange")
+
+# subset of twilight times that are within the calibration period
+d_calib <- subset(twl, Twilight>=tm.calib[1] & Twilight<=tm.calib[2])
+
+# Known twilight times for calibration period
+twl.calib.time <-
+  twilight(tm = d_calib$Twilight,
+           lon = lon.calib,
+           lat = lat.calib,
+           rise = d_calib$Rise,
+           zenith = median(zenith.calib ))
+
+# Determine difference in minutes from known and observed sunrise times
+twl.calib.deviation <-
+  ifelse(d_calib$Rise,
+         as.numeric(difftime(d_calib[,1], twl.calib.time, units = "mins")),
+         as.numeric(difftime(twl.calib.time, d_calib[,1], units = "mins")))
+
+# Describe distribution of the error
+twl.calib.dist <- fitdistr(abs(twl.calib.deviation), "Gamma")
+
+#parameters of the error distribution
+zenith  <- median(zenith.calib)
+zenith0 <- quantile(zenith.calib , probs = 0.95)
+
+alpha <- twl.calib.dist$estimate
+
+# hist(abs(twl.calib.deviation), breaks = 30)
+
 # Alternative calibration #######################################################
 
 #convert to geolight format
@@ -249,7 +293,7 @@ abline(v = spring.equi, col = "orange")
 dev.off()
 
 # Initial Path #################################################################
-tol_ini <- 0.05
+tol_ini <- 0.13
 path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol = tol_ini)
 
 x0 <- path$x
@@ -280,7 +324,7 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-q <- 0.8
+q <- 0.7
 cL <- changeLight(twl=geo_twl, quantile= q, summary = F, days = days, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
@@ -464,6 +508,8 @@ text(sm[,"Lon.50."], sm[,"Lat.50."], ifelse(sitenum>0, as.integer(((sm$EndTime -
 
 #Show dates
 #text(sm[,"Lon.50."], sm[,"Lat.50."], ifelse(sitenum>0, as.character(sm$StartTime), ""), col="red", pos = 1) 
+
+points(dtx0[sitenum > 0,], pch = 16, cex = 1, col = "green")
 
 #Close jpeg
 dev.off()

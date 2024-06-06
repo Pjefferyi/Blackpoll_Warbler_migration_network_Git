@@ -156,7 +156,7 @@ undirected.fall.graph <- as.undirected(fall.graph, mode = "collapse",
 
 fall.label.prop <- concensusCluster(graph = undirected.fall.graph, thresh = 0.5, algiter = 1000)
 fall.infomap <- cluster_infomap(fall.graph)
-fall.walktrap <- cluster_walktrap(fall.graph, steps =6) #cluster_walktrap(fall.graph.disc, steps =6)
+fall.walktrap <- cluster_walktrap(fall.graph, steps =7) #cluster_walktrap(fall.graph.disc, steps =6)
 
 modularity(fall.graph, fall.label.prop$`community structure`$membership)
 modularity(fall.graph, fall.infomap$membership)
@@ -938,7 +938,7 @@ fall.gplot.betw <- ggplot(st_as_sf(America))+
   geom_nodes(data = fall.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = betweenness.TO), shape=21, size  = 3)+
   scale_fill_viridis_c(direction = -1, option = "magma", name = "Betweenness \ncentrality", begin  = 0.3,
                        guide = guide_colorbar(frame.colour = "black"), limits = c(min(0),  max(fall.ggnet$betweenness.TO, spring.ggnet$betweenness.TO)))+
-  ggtitle("Fall network") + 
+  ggtitle("Post-breeding migration") + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         legend.position = c(-0.18, 0.5), legend.key = element_blank(),
@@ -966,7 +966,7 @@ spring.gplot.betw <- ggplot(st_as_sf(America))+
   geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = betweenness.TO), shape=21, size  = 3)+
   scale_fill_viridis_c(direction = -1, option = "magma", name = "Betweenness \ncentrality", begin   = 0.3,
                        guide = guide_colorbar(frame.colour = "black"), limits = c(min(0),  max(fall.ggnet$betweenness.TO, spring.ggnet$betweenness.TO)))+
-  ggtitle("Spring network") + 
+  ggtitle("Pre-breeding migration") + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         legend.position = "None", legend.key = element_blank(),
@@ -1295,7 +1295,7 @@ First.nbr.regions <- ggplot(st_as_sf(wrld_simpl))+
   geom_errorbar(data = fall.nbr.sf, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), col = "black", linewidth = 0.5)+
   geom_errorbar(data = fall.nbr.sf, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), col = "black", linewidth = 0.5)+
   geom_sf(data = fall.nbr.sf, aes(fill = Breeding_region_MC), shape = 21, cex = 3)+
-  #geom_sf_text(data = fall.nbr.sf, aes(label = geo_id), shape = 21, cex = 3)+
+  geom_sf_text(data = fall.nbr.sf, aes(label = geo_id), shape = 21, cex = 3)+
   scale_fill_manual(values = c("Northwestern Region" = "#F0E442",
                                "Central Region" = "#009E73",
                                "Eastern Region" = "#0072B2",
@@ -1563,7 +1563,7 @@ for (i in unique(geo.all$geo_id)){
           legend.spacing = unit(-5, "pt"),
           plot.margin = unit(c(0,0,0,0), "pt"),
           legend.key = element_rect(colour = "transparent", fill = "white")) +
-    if (i == "V8757_096"){theme(panel.border = element_rect(colour = "firebrick", fill=NA, size=1))}
+    if (i == "V8757_096"){theme(panel.border = element_rect(colour = "firebrick", fill=NA, size=2))}
    #if (i == first(unique(geo.all$geo_id))){theme(legend.position = c(0.5, 0.2))} else {theme(legend.position = "None")}
 }
 
@@ -1671,7 +1671,7 @@ west.fall.mig.routes <- ggplot(st_as_sf(America))+
         legend.key = element_rect(colour = "transparent", fill = "white"))
 
 ## Migratory track for western breeders in the spring ----
-west.spring.data <- geo.all %>% filter(Breeding_region_MC %in% c("Central Region")) %>%
+west.spring.data <- geo.all %>% filter(Breeding_region_MC %in% c("Western Region", "Northwestern Region", "Central Region")) %>%
   group_by(geo_id) %>%
   filter(StartTime >= StartTime[which(NB_count == max(NB_count, na.rm = T))])
 
@@ -1818,7 +1818,7 @@ spring.nbr.stp.plot <- ggplot(st_as_sf(America))+
   geom_errorbar(data = spring.nbr.stp , aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, width = 0, alpha = 0.2, color = "black") +
   geom_path(data = spring.nbr.stp , mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, col = geo_id), col = adjustcolor("black", 0.5)) +
   geom_point(data =  spring.nbr.stp , mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = period), cex = 2.5, pch= 21)+
-  geom_text(data =  spring.nbr.stp , mapping = aes(x = Lon.50., y = Lat.50., label = round(duration)), cex = 2.5)+
+  #geom_text(data =  spring.nbr.stp , mapping = aes(x = Lon.50., y = Lat.50., label = round(duration)), cex = 2.5)+
   scale_fill_manual(values = c("Non-breeding period" = "purple", "Pre-breeding migration" = "yellow"))+
 theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
       panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
@@ -1913,14 +1913,6 @@ end <- "2012-11-12"
 f1.start <- "2012-11-01"
 f1.end <- "2012-11-05"
 
-
-# # plot  of light transitions 
-# ggplot()+
-#   geom_line(aes(x = lig$Date[lig$Date > start & lig$Date < end],
-#                 y = lig$Light[lig$Date > start & lig$Date < end]))+
-#   annotate("rect", xmin = anytime(f1.start), xmax = anytime(f1.end), ymin = min(lig$Light)-2, ymax = max(lig$Light)+2,
-#            alpha = .1,fill = "yellow")
-
 # Plot lat, lon and light transitions  
 jpeg("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures/light_transitions_V8757_096.png",
             width = 2124 , height = 1090, quality = 100, res = 300)
@@ -1946,3 +1938,34 @@ par(cex.lab= 1, cex.axis= 1)
 
 dev.off()
   
+
+# geolocator intinerary for individual with the tag V8757_096
+v96 <- geo.all %>% filter(geo_id == "V8757_096")
+
+v96.plot <- ggplot(st_as_sf(America))+
+  geom_sf(colour = "black", fill = "white") +
+  coord_sf(xlim = c(-100, -45),ylim = c(-10, 60)) +
+  geom_errorbar(data = v96[v96$sitenum >0,] , aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, width = 1, alpha = 0.8, color = "black") +
+  geom_errorbar(data = v96[v96$sitenum >0,] , aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, width = 1, alpha = 0.8, color = "black") +
+  geom_path(data = v96, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, col = period), alpha = 0.9, col = "firebrick") +
+  geom_point(data = v96[v96$sitenum >0,], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = period, pch = period, col = period), cex = 2.5)+
+  scale_shape_manual(values=c("Post-breeding migration" = 21 , "Non-breeding period"  = 22, "Pre-breeding migration" = 21, "Breeding"  = 24, "Failure" = 4)) +
+  scale_colour_manual(values=c("Post-breeding migration" = "black" , "Non-breeding period"  = "white", "Pre-breeding migration" = "black", "Breeding"  = "white", "Failure" = "black")) +
+  scale_fill_manual(values=c("Post-breeding migration" = "#FDE725FF" , "Non-breeding period"  = "black", "Pre-breeding migration" = "#21908CFF", "Breeding"  = "black"))+
+  #scale_fill_continuous(low = "yellow", high = "purple")+
+  ggtitle("") +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_rect(colour = "lightgray"), panel.border = element_rect(colour = "black", fill = NA),
+        plot.title=element_text(size=8, vjust=-1),
+        legend.position = "None",
+        axis.title =element_blank(),
+        axis.text =element_blank(),
+        axis.ticks =element_blank(),
+        axis.ticks.length = unit(0, "pt"),
+        legend.spacing = unit(-5, "pt"),
+        plot.margin = unit(c(0,0,0,0), "pt"),
+        legend.key = element_rect(colour = "transparent", fill = "white"))
+
+
+fig <- (v96.plot| spring.gplot.time.spent)
+

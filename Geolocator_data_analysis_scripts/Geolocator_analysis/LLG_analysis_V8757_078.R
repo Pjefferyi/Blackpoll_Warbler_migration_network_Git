@@ -680,13 +680,16 @@ points(sm.fall.stat$Lon.50., sm.fall.stat$Lat.50., pch = 16, cex = 1.5, col = "f
 save(sm.fall.edit , file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary_fall_edit.csv"))
 
 # Estimate timing of departure and arrival from the breeding and nonbreeding grounds ############################################################
-dep.br <- NA # Can't estimate due to the equinox
+dep.br <- "2019-07-20 1:00" # Can't estimate due to the equinox
 arr.br <- "2020-05-28 1:00"
 
 par(mfrow=c(2,1))
 plot(twl$Twilight, type  = "l", x0_ad[,1])
+abline(v = anytime(dep.br))
 abline(v = anytime(arr.br))
+abline(h = -72)
 plot(twl$Twilight, type  = "l", x0_ad[,2])
+abline(v = anytime(dep.br))
 abline(v = anytime(arr.br))
 par(mfrow=c(1,1))
 
