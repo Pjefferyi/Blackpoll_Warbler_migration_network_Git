@@ -602,6 +602,7 @@ ggplot(st_as_sf(America))+
   #geom_sf_text(data = spring.carib.stops2, aes(label =  geo_id))+
   coord_sf(xlim = c(-90, -50),ylim = c(10, 30)) 
 
+
 # Add stopover information to reference data 
 analysis_ref_carib <- analysis_ref %>% mutate(fall.carib.stop = ifelse(geo.id %in% fall.carib.stops2$geo_id, "stopover", "direct"),
                                               spring.carib.stop = ifelse(geo.id %in% spring.carib.stops2$geo_id, "stopover", "direct"),
@@ -611,7 +612,54 @@ analysis_ref_carib <- analysis_ref %>% mutate(fall.carib.stop = ifelse(geo.id %i
 x <- analysis_ref_carib %>% group_by(Breeding_region_MC, fall.carib.stop) %>% summarize(unique(geo.id)) 
 
 
+# Estimate geolocator error and bias
 
+# the projection used for location data 
+proj <- '+proj=aeqd +lat_0=0 +lon_0=-74'
+
+# modelled locations, projected
+Thresh.mod.data.loc <- locs %>% st_as_sf(coords = c("Lon.mean",
+                                                    "Lat.mean"),
+                                         crs = 4326) %>%
+  st_transform(proj)
+
+# origin locations, projected
+Thresh.mod.data.or <- locs %>% st_as_sf(coords = c("deploy.longitude",
+                                                   "deploy.latitude"),
+                                        crs = 4326) %>%
+  st_transform(proj)
+
+# geolocator points 
+geo.br <- rbind(fall.breed, spring.breed[!(spring.breed$geo_id %in% fall.breed$geo_id),]) %>% arrange(geo_id)
+geo.br.sf <- st_as_sf(geo.br, coords = c("deploy.longitude", "deploy.latitude"), crs = crs(wrld_simpl))
+geo.br.sf <- st_transform(geo.br.sf, CRS(proj)) 
+
+
+# We calculate spatial bias as the mean distance from the geolocator deployment site while the bird was known to be at that location
+lon.errors <- rep(NA, nrow(geo.br.sf ))
+lat.errors <- rep(NA, nrow(geo.br.sf ))
+
+for (i in seq(1, length(geo.br.sf$geo_id))){
+  
+  mod.locs <- Thresh.mod.data.loc %>% filter(geo_id == geo.br.sf$geo_id[i])
+  or.locs <-  Thresh.mod.data.or %>% filter(geo_id == geo.br.sf$geo_id[i])
+  
+  lon.error <- mean(st_coordinates(mod.locs)[,1] - st_coordinates(or.locs)[,1])
+  lat.error <- mean(st_coordinates(mod.locs)[,2] - st_coordinates(or.locs)[,2])
+  
+  lon.errors[i] <- lon.error
+  lat.errors[i] <- lat.error
+}
+
+# Geolocator error and variance/covariance at origin sites
+mod <- lm(cbind(lon.errors, lat.errors) ~ 1)
+geo.bias <- coef(mod)
+geo.vcov <- vcov(mod)
+
+mean(lon.errors)
+sd(lon.errors)
+mean(lat.errors)
+sd(lat.errors)
 
 
 # Assesss the proportion of individuals using a node 
