@@ -1056,7 +1056,7 @@ fall.gplot.time.spent <- ggplot(st_as_sf(America))+
   geom_nodes(data = fall.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = time.spent), shape=21, size  = 3)+
   scale_fill_viridis_c(direction = -1, option = "magma", name = "Average time spent \n(days)", begin  = 0.3, 
                        guide = guide_colorbar(frame.colour = "black"), limits = c(min(0),  max(fall.ggnet$time.spent, spring.ggnet$timespent)))+
-  ggtitle("(a) Fall network") + 
+  ggtitle("(a) Post-breeding migratory network") + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         legend.box.background = element_rect(fill = "white", colour = "black", linewidth = 0.4),
@@ -1081,7 +1081,7 @@ spring.gplot.time.spent<- ggplot(st_as_sf(America))+
   geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = time.spent), shape=21, size  = 3)+
   scale_fill_viridis_c(direction = -1, option = "magma", name = "Time spent", begin  = 0.3,
                        guide = guide_colorbar(frame.colour = "black"), limits = c(min(0),  max(fall.ggnet$time.spent, spring.ggnet$time.spent)))+
-  ggtitle("(b) Spring network") + 
+  ggtitle("(b) Pre-breeding migratory network") + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         legend.position = "None", legend.key = element_blank(),
@@ -1295,14 +1295,14 @@ First.nbr.regions <- ggplot(st_as_sf(wrld_simpl))+
   geom_errorbar(data = fall.nbr.sf, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), col = "black", linewidth = 0.5)+
   geom_errorbar(data = fall.nbr.sf, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), col = "black", linewidth = 0.5)+
   geom_sf(data = fall.nbr.sf, aes(fill = Breeding_region_MC), shape = 21, cex = 3)+
-  geom_sf_text(data = fall.nbr.sf, aes(label = geo_id), shape = 21, cex = 3)+
+  #geom_sf_text(data = fall.nbr.sf, aes(label = geo_id), shape = 21, cex = 3)+
   scale_fill_manual(values = c("Northwestern Region" = "#F0E442",
                                "Central Region" = "#009E73",
                                "Eastern Region" = "#0072B2",
                                "Western Region"  = "#D55E00"), name = "Breeding origin") +
   coord_sf(xlim = c(-90, -35), ylim = c(-15, 20))+
   theme_bw()+
-  ggtitle("(a) Fall nonbreeding sites")+
+  ggtitle("(a) First nonbreeding sites")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         legend.box.background = element_rect(fill = "white", colour = "black", linewidth = 0.4),
         legend.position = c(0.8, 0.8),
@@ -1340,7 +1340,7 @@ second.nbr.regions <- ggplot(st_as_sf(wrld_simpl))+
                                "Western Region"  = "#D55E00"), name = "Breeding origin") +
   coord_sf(xlim = c(-90, -35), ylim = c(-15, 20))+
   theme_bw()+
-  ggtitle("(b) Spring nonbreeding sites")+
+  ggtitle("(b) Last nonbreeding sites")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         legend.box.background = element_rect(fill = "white", colour = "black", linewidth = 0.4),
         legend.position = "None",
@@ -1703,8 +1703,8 @@ ref_path <- "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/The
 
 # load threshold paths 
 tpaths <- findThresLocData()
-timings <- geo.all %>% group_by(geo_id) %>% summarize(fall.br.departure = as.Date(first(br.departure)), 
-                                                        spring.br.arrival = as.Date(first(br.arrival)),
+timings <- geo.all %>% group_by(geo_id) %>% summarize(fall.br.departure = as.Date(first(fall.br.departure)), 
+                                                        spring.br.arrival = as.Date(first(spring.br.arrival)),
                                                         nbr.departure = as.Date(first(nbr.departure)),
                                                         nbr.arrival = as.Date(first(nbr.arrival)))
 
@@ -1717,6 +1717,7 @@ for (i in unique(tpaths$geo_id)){
   
   #individual data
   ind.data <- tpaths[tpaths$geo_id == i,]
+  ind.data$Twilight <- anytime(ind.data$Twilight)
   
   #individual timing
   i.timing <- data.frame(event = c("br.departure", "br.arrival", "nbr.departure", "nbr.arrival"),
@@ -1724,6 +1725,11 @@ for (i in unique(tpaths$geo_id)){
                                      timings[timings$geo_id == i,]$spring.br.arrival,
                                      timings[timings$geo_id == i,]$nbr.departure,
                                      timings[timings$geo_id == i,]$nbr.arrival))))
+  
+  #fix time if necessary
+  if(i %in% c("V8757_055", "V8757_096", "V8757_134")){
+    year(ind.data$Twilight) <- year(ind.data$Twilight) + (year(timings[timings$geo_id == i,]$fall.br.departure) - year(ind.data$Twilight)[1])
+  }
   
   dates.ind.lon[[i]] <- ggplot(data = ind.data, aes(y = lon, x = as.numeric(as.Date(Twilight)), group = 1))+
     geom_line()+

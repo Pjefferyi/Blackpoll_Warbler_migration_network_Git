@@ -697,16 +697,19 @@ points(sm.fall.stat$Lon.50., sm.fall.stat$Lat.50., pch = 16, cex = 1.5, col = "f
 save(sm.fall.edit , file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary_fall_edit.csv"))
 
 # estimate timing of departure and arrival from the breeding and nonbreeding grounds ############################################################
-dep.br <- NA # Cannot reliably estimate departure due to equinox 
+dep.br <- "2013-09-10" 
 arr.br <- "2014-05-14"
 
 par(mfrow=c(2,1))
 plot(twl$Twilight, type  = "l", x0_ad[,1])
-abline(v = anytime(arr.br ))
+abline(v = anytime(dep.br))
+abline(v = anytime(arr.br))
+abline(h = lon.calib)
+abline(h = lon.calib + 2)
 plot(twl$Twilight, type  = "l", x0_ad[,2])
-abline(v = anytime(arr.br ))
+abline(v = anytime(dep.br))
+abline(v = anytime(arr.br))
 par(mfrow=c(1,1))
-
 
 # Record details for the geolocator analysis ###################################
 geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
@@ -758,7 +761,7 @@ z.proposal <- mvnorm(S = diag(c(0.005, 0.005)), n = nrow(z0))
 #Tuning ########################################################################
 
 # fit.s a first chain for tuning
-fit.s <- estelleMetropolis(model, x.proposal, z.proposal, iters = 300, thin = 20)
+fit.s <- estelleMetropolis(model, x.proposal, z.proposal, iters = 500, thin = 20)
 
 # fit.s additional chains for tuning
 for (k in 1:2) {
@@ -794,7 +797,7 @@ x.proposal <- mvnorm(chainCov(fit.s$x), s = 0.3)
 z.proposal <- mvnorm(chainCov(fit.s$z), s = 0.3)
 
 fit.s <- estelleMetropolis(model, x.proposal, z.proposal, x0 = x.med,
-                           z0 = z.med , iters = 1000, thin = 20, chain = 1)
+                           z0 = z.med , iters = 3000, thin = 20, chain = 1)
 
 # Summarize and plot the results ########################################################
 sm.s <- locationSummary(fit.s$z, time=fit.s$model$time)

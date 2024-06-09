@@ -188,8 +188,8 @@ range(spring.node.times$mean.stat.dur)
 ### Duration of migration  ----
 
 # Calculate the difference between the length of the fall and spring migration for every tracked individual 
-migration_times <- geo.all %>% group_by(geo_id) %>% filter(StartTime == first(StartTime)) %>% summarize(fall.mig.duration = as.Date(nbr.arrival) - as.Date(br.departure),
-                                                                                                        spring.mig.duration = as.Date(br.arrival) - as.Date(nbr.departure)) %>%
+migration_times <- geo.all %>% group_by(geo_id) %>% filter(StartTime == first(StartTime)) %>% summarize(fall.mig.duration = as.Date(nbr.arrival) - as.Date(fall.br.departure),
+                                                                                                        spring.mig.duration = as.Date(spring.br.arrival) - as.Date(nbr.departure)) %>%
   mutate(timing.difference = fall.mig.duration - spring.mig.duration) %>%
   filter(!is.na(timing.difference))
 
@@ -612,12 +612,17 @@ analysis_ref_carib <- analysis_ref %>% mutate(fall.carib.stop = ifelse(geo.id %i
 x <- analysis_ref_carib %>% group_by(Breeding_region_MC, fall.carib.stop) %>% summarize(unique(geo.id)) 
 
 
-# Estimate geolocator error and bias
+# Estimate geolocator error and bias ----
 
 # the projection used for location data 
 proj <- '+proj=aeqd +lat_0=0 +lon_0=-74'
 
-# modelled locations, projected
+
+# Get locations obtained by runnign the threshold group model without grouping, projected
+locs <- findThresModData() 
+locs <- locs %>% group_by(geo_id) %>% filter(Time1 > IH.calib.start & Time1  < IH.calib.end)
+
+
 Thresh.mod.data.loc <- locs %>% st_as_sf(coords = c("Lon.mean",
                                                     "Lat.mean"),
                                          crs = 4326) %>%
@@ -634,25 +639,40 @@ geo.br <- rbind(fall.breed, spring.breed[!(spring.breed$geo_id %in% fall.breed$g
 geo.br.sf <- st_as_sf(geo.br, coords = c("deploy.longitude", "deploy.latitude"), crs = crs(wrld_simpl))
 geo.br.sf <- st_transform(geo.br.sf, CRS(proj)) 
 
-
 # We calculate spatial bias as the mean distance from the geolocator deployment site while the bird was known to be at that location
-lon.errors <- rep(NA, nrow(geo.br.sf ))
-lat.errors <- rep(NA, nrow(geo.br.sf ))
+lon.errors <- c()
+lat.errors <- c()
+lon.biass <- rep(NA, nrow(geo.br.sf ))
+lat.biass <- rep(NA, nrow(geo.br.sf ))
+lon.sds <- rep(NA, nrow(geo.br.sf ))
+lat.sds <- rep(NA, nrow(geo.br.sf ))
 
 for (i in seq(1, length(geo.br.sf$geo_id))){
   
   mod.locs <- Thresh.mod.data.loc %>% filter(geo_id == geo.br.sf$geo_id[i])
   or.locs <-  Thresh.mod.data.or %>% filter(geo_id == geo.br.sf$geo_id[i])
   
-  lon.error <- mean(st_coordinates(mod.locs)[,1] - st_coordinates(or.locs)[,1])
-  lat.error <- mean(st_coordinates(mod.locs)[,2] - st_coordinates(or.locs)[,2])
+  lon.bias <- mean(st_coordinates(mod.locs)[,1] - st_coordinates(or.locs)[,1])
+  lat.bias <- mean(st_coordinates(mod.locs)[,2] - st_coordinates(or.locs)[,2])
+  lon.error <- abs(st_coordinates(mod.locs)[,1] - st_coordinates(or.locs)[,1])
+  lat.error <- abs(st_coordinates(mod.locs)[,2] - st_coordinates(or.locs)[,2])
   
-  lon.errors[i] <- lon.error
-  lat.errors[i] <- lat.error
+  lon.sd <- sd(st_coordinates(mod.locs)[,1])
+  lat.sd <- sd(st_coordinates(mod.locs)[,2])
+  
+  lon.biass[i] <- lon.bias
+  lat.biass[i] <- lat.bias
+  lon.errors <- append(lon.errors, lon.error)
+  lat.errors <- append(lat.errors, lat.error)
+  lon.sds[i] <- lon.sd
+  lat.sds[i] <- lat.sd
+  lon.sds[i] <- lon.sd
+  lat.sds[i] <- lat.sd
+  
 }
 
 # Geolocator error and variance/covariance at origin sites
-mod <- lm(cbind(lon.errors, lat.errors) ~ 1)
+mod <- lm(cbind(lon.biass, lat.biass) ~ 1)
 geo.bias <- coef(mod)
 geo.vcov <- vcov(mod)
 
@@ -660,7 +680,6 @@ mean(lon.errors)
 sd(lon.errors)
 mean(lat.errors)
 sd(lat.errors)
-
 
 # Assesss the proportion of individuals using a node 
 
