@@ -10,6 +10,7 @@ library(tidyr)
 library(remotes)
 library(anytime)
 library(lubridate)
+library(MASS)
 
 #load spatial packages 
 library(ggmap)
@@ -215,7 +216,7 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-q <- 0.9
+q <- 0.82
 cL <- changeLight(twl=geo_twl, quantile=q, summary = F, days = 2, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.
@@ -290,14 +291,12 @@ ylim <- range(x0[,2])+c(-5,5)
 
 index <- ifelse(stationary, 1, 2)
 mask <- earthseaMask(xlim, ylim, n = 10, index=index)
-#mask <- earthseaMask3(xlim, ylim, res = "lr", index=index, span = 4, twl = twl)
 
 # We will give locations on land a higher prior 
 ## Define the log prior for x and z
 logp <- function(p) {
   f <- mask(p)
   ifelse(is.na(f), -1000, log(2))
-  #teitelbauifelse(is.na(f), -1000, 100*f)
 }
 
 
@@ -484,14 +483,16 @@ save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 #load the adjusted threshold path path x0_ad
 load(file = paste0(dir,"/", geo.id, "_initial_path.csv"))
 
-dep.br <- NA # geolocator stopped recoridng before departure 
+dep.br <- NA # geolocator stopped recording before departure 
 arr.br <- "2020-06-18"
 
 par(mfrow=c(2,1))
 plot(twl$Twilight, type  = "l", x0[,1])
 abline(v = anytime(arr.br))
+abline(v = anytime(dep.nbr.sgat))
 plot(twl$Twilight, type  = "l", x0[,2])
 abline(v = anytime(arr.br))
+abline(v = anytime(dep.nbr.sgat))
 par(mfrow=c(1,1))
 
 # Record details for the geolocator analysis ###################################

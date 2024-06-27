@@ -640,9 +640,13 @@ par(mfrow=c(2,1))
 plot(twl$Twilight, type  = "l", x0_ad[,1])
 abline(v = anytime(dep.br))
 abline(v = anytime(arr.br))
+abline(v = anytime(dep.nbr.sgat))
+abline(v = anytime(arr.nbr.sgat))
 plot(twl$Twilight, type  = "l", x0_ad[,2])
 abline(v = anytime(dep.br))
 abline(v = anytime(arr.br))
+abline(v = anytime(dep.nbr.sgat))
+abline(v = anytime(arr.nbr.sgat))
 par(mfrow=c(1,1))
 
 # Record details for the geolocator analysis ###################################

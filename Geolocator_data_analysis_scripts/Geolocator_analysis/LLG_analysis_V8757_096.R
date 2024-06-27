@@ -206,29 +206,21 @@ alpha <- calib[3:4]
 #convert to geolight format
 geo_twl <- export2GeoLight(twl)
 
-# # this is just to find places where birds have been for a long time, would not use these parameters for stopover identification, detailed can be found in grouped model section
-# cL <- changeLight(twl=geo_twl, quantile=0.9, summary = F, days = 10, plot = T)
-# # merge site helps to put sites together that are separated by single outliers.
-# mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 1000)
-# 
-# #specify which site is the stationary one
-# site           <- mS$site[mS$site>0] # get rid of movement periods
-# stationarySite <- which(table(site) == max(table(site))) # find the site where bird is the longest
-# 
-# #find the dates that the bird arrives and leaves this stationary site
-# start <- min(which(mS$site == stationarySite))
-# end   <- max(which(mS$site == stationarySite))
-# 
-# (zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
+# this is just to find places where birds have been for a long time, would not use these parameters for stopover identification, detailed can be found in grouped model section
+cL <- changeLight(twl=geo_twl, quantile=0.9, summary = F, days = 10, plot = T)
+# merge site helps to put sites together that are separated by single outliers.
+mS <- mergeSites(twl = geo_twl, site = cL$site, degElevation = 90-zenith0, distThreshold = 1000)
 
-startDate <- "2012-11-20"
-endDate   <- "2013-05-23"
+#specify which site is the stationary one
+site           <- mS$site[mS$site>0] # get rid of movement periods
+stationarySite <- which(table(site) == max(table(site))) # find the site where bird is the longest
 
-start = min(which(as.Date(twl$Twilight) == startDate))
-end = max(which(as.Date(twl$Twilight) == endDate))
+#find the dates that the bird arrives and leaves this stationary site
+start <- min(which(mS$site == stationarySite))
+end   <- max(which(mS$site == stationarySite))
 
 (zenith_sd <- findHEZenith(twl, tol=0.01, range=c(start,end)))
-
+ 
 # the Hill-Ekstrom zenith and in-habitat zenith angles differ by more than 0.5 degrees
 
 # adjust the zenith angles calculated from the breeding sites for the non-breeding sites
@@ -714,9 +706,13 @@ par(mfrow=c(2,1))
 plot(twl$Twilight, type  = "l", x0_ad[,1])
 abline(v = anytime(dep.br))
 abline(v = anytime(arr.br))
+abline(v = anytime(dep.nbr.sgat))
+abline(v = anytime(arr.nbr.sgat))
 plot(twl$Twilight, type  = "l", x0_ad[,2])
 abline(v = anytime(dep.br))
 abline(v = anytime(arr.br))
+abline(v = anytime(dep.nbr.sgat))
+abline(v = anytime(arr.nbr.sgat))
 par(mfrow=c(1,1))
 
 # Record details for the geolocator analysis ###################################
@@ -751,6 +747,7 @@ matplot(0:100, dgamma(0:100, beta[1], beta[2]),
 
 # Perform threshold model without stationary location ###########################
 twl_adjusted$index <- seq(1, length(twl_adjusted$group))
+path <- thresholdPath(twl_adjusted$Twilight, twl_adjusted$Rise, zenith = zeniths_med, tol=0.12)
 x0 <- path$x
 z0 <- trackMidpts(x0)
 
@@ -762,7 +759,7 @@ model <- groupedThresholdModel(twl_adjusted$Twilight,
                                beta =  beta,
                                x0 = x0, # median point for each group (defined by twl$group)
                                z0 = z0, # middle points between the x0 points
-                               zenith = zeniths0,
+                               zenith = zenith,
                                logp.x = logp,# land sea mask
                                fixedx = fixedx)
 
@@ -852,3 +849,4 @@ dev.off()
 # Save the threshold model estimate ############################################
 save(sm.s, file = paste0(dir,"/", geo.id,"_SGAT_Threshold_summary.csv"))
 save(fit.s, file = paste0(dir,"/", geo.id,"_SGAT_Threshold_fit.s.R"))
+

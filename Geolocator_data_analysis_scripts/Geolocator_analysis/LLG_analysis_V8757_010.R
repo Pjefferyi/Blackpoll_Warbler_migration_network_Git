@@ -242,7 +242,7 @@ z0 <- trackMidpts(x0_r)
 save(x0_r, file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
 
 # Check the following times of arrival and departure using a plot 
-arr.nbr <- "2019-11-03"
+arr.nbr <- "2019-10-30"
 dep.nbr <- "2020-04-20"
 
 # open jpeg
@@ -266,7 +266,7 @@ dev.off()
 zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith0,
                             Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad+1,
-                            Date > anytime(dep.nbr) ~ zenith0_ad)+1)
+                            Date > anytime(dep.nbr) ~ zenith0_ad+1))
 
 zeniths0 <- zenith_twl_zero$zenith
 

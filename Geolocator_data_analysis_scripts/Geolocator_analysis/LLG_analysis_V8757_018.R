@@ -279,7 +279,7 @@ zenith_twl_med <- data.frame(Date = twl$Twilight) %>%
 zeniths_med <- zenith_twl_med$zenith
 
 # plot longitudes and latitudes with the new zenith angles 
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol= 0.05)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol= 0)
 
 x0_ad <- path$x
 z0 <- trackMidpts(x0_ad)
@@ -614,20 +614,22 @@ f2.start <- "2019-10-02"
 f2.end <- "2019-10-03"
 
 # Plot lat, lon and light transitions  
-jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition.png"), width = 1024 , height = 990, quality = 100, res = 200)
+jpeg(paste0(dir, "/", geo.id,"_fall_ocean_light_transition.png"),  width = 2124 , height = 1090, quality = 100, res = 300)
 
-par(cex.lab=1.4)
-par(cex.axis=1.4)
-par(mfrow=c(3,1), mar = c(5,5,0.1,5))
+par(cex.lab=1, cex.axis=1, mfrow=c(3,1), 
+    mar = c(1,5,0.1,5), ps = 12)
+
 plot(lig$Date[lig$Date > start & lig$Date < end], lig$Light[lig$Date > start & lig$Date < end], type = "o",
-     ylab = "Light level", xlab = "Time")
+     ylab = "Light level", xlab = "Time", xaxt='n')
 rect(anytime(f1.start), min(lig$Light)-2, anytime(f1.end), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
 rect(anytime(f2.start), min(lig$Light)-2, anytime(f2.end), max(lig$Light)+2, col = alpha("yellow", 0.2), lty=0)
 
 plot(twl$Twilight[twl$Twilight> start & twl$Twilight < end], x0_ad[,1][twl$Twilight > start & twl$Twilight < end],
-     ylab = "Longitude", xlab = "Time")
+     ylab = "Longitude", xlab = "Time", xaxt='n')
 rect(anytime(f1.start), min(x0_ad[,1])-2, anytime(f1.end), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
 rect(anytime(f2.start), min(x0_ad[,1])-2, anytime(f2.end), max(x0_ad[,1])+2, col = alpha("yellow", 0.2), lty=0)
+
+par(mar = c(5,5,0.1,5))
 
 plot(twl$Twilight[twl$Twilight > start & twl$Twilight < end], x0_ad[,2][twl$Twilight > start & twl$Twilight < end],
      ylab = "Latitude", xlab = "Time")
@@ -664,6 +666,12 @@ points(sm.fall.stat$Lon.50., sm.fall.stat$Lat.50., pch = 16, cex = 1.5, col = "f
 #Save the final location summary
 save(sm.fall.edit , file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary_fall_edit.csv"))
 
+# re-estimate the time of establishment and departure from the nonbreeding grounds 
+arr.nbr.sgat <- sm.fall.edit %>% filter(Lat.50. < 12 & sitenum > 0 & duration > stat.nbr.lim) %>% 
+  first(.$StartTime) %>% .$StartTime
+dep.nbr.sgat <- sm.fall.edit %>% filter(Lat.50. < 12 & sitenum > 0 & duration > stat.nbr.lim) %>%
+  last(.$EndTime)%>% .$EndTime
+
 # Estimate timing of departure and arrival from the breeding and nonbreeding grounds ############################################################
 dep.br <- "2019-09-14"
 arr.br <- "2020-05-22"
@@ -672,9 +680,13 @@ par(mfrow=c(2,1))
 plot(twl$Twilight, type  = "l", x0_ad[,1])
 abline(v = anytime(dep.br))
 abline(v = anytime(arr.br))
+abline(v = anytime(dep.nbr.sgat))
+abline(v = anytime(arr.nbr.sgat))
 plot(twl$Twilight, type  = "l", x0_ad[,2])
 abline(v = anytime(dep.br))
 abline(v = anytime(arr.br))
+abline(v = anytime(dep.nbr.sgat))
+abline(v = anytime(arr.nbr.sgat))
 par(mfrow=c(1,1))
 
 # Record details for the geolocator analysis ###################################

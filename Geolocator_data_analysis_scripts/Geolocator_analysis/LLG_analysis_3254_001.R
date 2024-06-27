@@ -293,7 +293,7 @@ abline(v = spring.equi, col = "orange")
 dev.off()
 
 # Initial Path #################################################################
-tol_ini <- 0.13
+tol_ini <- 0.12
 path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol = tol_ini)
 
 x0 <- path$x
@@ -632,10 +632,10 @@ dep.br <- "2016-08-22"
 arr.br <- "2017-05-29"
 
 par(mfrow=c(2,1))
-plot(twl.full$Twilight, type  = "l", x0.full[,1])
+plot(twl$Twilight, x0_r[,1], type = "l")
 abline(v = anytime(dep.br))
 abline(v = anytime(arr.br))
-plot(twl.full$Twilight, type  = "l", x0.full[,2])
+plot(twl$Twilight, x0_r[,2], type = "l")
 abline(v = anytime(dep.br))
 abline(v = anytime(arr.br))
 par(mfrow=c(1,1))

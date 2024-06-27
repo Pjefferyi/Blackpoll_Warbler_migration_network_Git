@@ -193,11 +193,15 @@ ref_data <- read.csv(ref_path)
 # geo.all$nbr.departure <- as.Date(as.numeric(geo.all$nbr.departure), optional = T)
 # geo.all$br.arrival <- as.Date(as.numeric(geo.all$br.arrival), optional = T)
 # geo.all$br.departure <- as.Date(as.numeric(geo.all$br.departure), optional = T)
+# geo.all$spring.br.arrival <- as.Date(geo.all$spring.br.arrival)
+# geo.all$fall.br.departure <- as.Date(geo.all$fall.br.departure)
 # 
 # year(geo.all$nbr.arrival) <-  year(geo.all$nbr.arrival) + geo.all$year.difference
 # year(geo.all$nbr.departure) <- year(geo.all$nbr.departure) + geo.all$year.difference
 # year(geo.all$br.arrival) <- year(geo.all$br.arrival) + geo.all$year.difference
 # year(geo.all$br.departure) <- year(geo.all$br.departure) + geo.all$year.difference
+# year(geo.all$fall.br.departure) <- year(geo.all$fall.br.departure) + geo.all$year.difference
+# year(geo.all$spring.br.arrival) <- year(geo.all$spring.br.arrival) + geo.all$year.difference
 # 
 # # # Save the data edited here  ###################################################
 # 
@@ -207,7 +211,12 @@ ref_data <- read.csv(ref_path)
 # #save the processed geolocatorlocations 
 # write.csv(geo.all, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/All.locations.csv",row.names=FALSE)
 
-geo.all <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/All.locations.csv")
+#geo.all <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/All.locations.csv")
+geo.all <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/All_locations_ocean_cross_cor.csv")
+
+# re-calcualte arrival date
+nbr.arrival.times <- geo.all %>% group_by(geo_id) %>% filter(NB_count == 1) %>% dplyr::select(-nbr.arrival) %>% rename(nbr.arrival = StartTime )
+geo.all <- geo.all %>% dplyr::select(-nbr.arrival) %>% merge(nbr.arrival.times[,c("geo_id", "nbr.arrival")], by = "geo_id", all = T)
 
 ################################################################################
 # Fall migration network #######################################################
@@ -242,7 +251,6 @@ fall.stat <- fall.stat %>% group_by(geo_id) %>% filter(StartTime <= NB.first.sit
   mutate(site_type = ifelse(site_type == "Breeding", "Stopover", site_type),
          period = ifelse(period == "Breeding", "Post-breeding migration", period))
 
-  
 # Create clusters in two steps to account for the equinox 
 
 # load equinox polygon 
@@ -315,11 +323,11 @@ ggplot(st_as_sf(wrld_simpl))+
    coord_sf(xlim = c(-170, -30),ylim = c(-15, 70)) +
   geom_errorbar(data = fall.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
   geom_errorbar(data = fall.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, alpha = 0.3, color = "black") +
-  #geom_path(data = fall.stat[fall.stat$geo_id == "A",], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5) +
-  #geom_point(data = fall.stat[fall.stat$geo_id == "A",], mapping = aes(x = Lon.50., y = Lat.50.), alpha = 0.5) +
+  geom_path(data = fall.stat[fall.stat$geo_id == "V8757_018",], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5) +
+  geom_point(data = fall.stat[fall.stat$geo_id == "V8757_018",], mapping = aes(x = Lon.50., y = Lat.50.), alpha = 0.5) +
   #geom_text(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., label = geo_id))+
-  geom_path(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5, linewidth = 0.1) +
-  geom_point(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, colour = as.factor(cluster)), cex = 2) +
+  #geom_path(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5, linewidth = 0.1) +
+  #geom_point(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, colour = as.factor(cluster)), cex = 2) +
   labs(colour = "Cluster") +
   theme_bw() +
   theme(text = element_text(size = 16), legend.position = "None")
@@ -502,7 +510,7 @@ spring.stat$cluster <- cluster.data$clusters
 # spring.stat <- merge(spring.stat, spring.manual.cluster[,c("geo_id", "sitenum", "cluster", "cluster.region")], by = c("geo_id", "sitenum"))
 
 # Add breeding sites with separate clusters
-spring.breed.n <- geo.all  %>% group_by(geo_id) %>% filter(geo_id %in% unique(spring.stat$geo_id), StartTime == first(StartTime)) %>% 
+spring.breed.n <- geo.all  %>% group_by(geo_id) %>% filter(geo_id %in% unique(spring.stat$geo_id), StartTime == first(StartTime)) %>%
   group_by(study.site) %>% summarize(geo_per_site = n())
 
 spring.breed <- geo.all %>% group_by(geo_id) %>% filter(geo_id %in% unique(spring.stat$geo_id), site_type == "Breeding",
@@ -1155,7 +1163,7 @@ plot(spring.graph.weighed.ab, vertex.size = 500, vertex.size2 = 200,
 
 plot(spring.graph.weighed.ab, vertex.size = 500, vertex.size2 = 200,
      vertex.shape = meta.spring.ab$shape_multiple, vertex.pie = meta.spring.ab$num.reg.ab.vector,
-     vertex.pie.color = reg.ab.palette,edge.width = 0,edge.arrow.size = 0, edge.arrow.width = 0,
+     vertex.pie.color = reg.ab.palette, edge.width = 0, edge.arrow.size = 0, edge.arrow.width = 0,
      layout = spring.location, rescale = F, asp = 0, xlim = c(-170, -30),
      ylim = c(-15, 70), vertex.label = NA, vertex.label.dist = 30, add = T)
 

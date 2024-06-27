@@ -118,14 +118,22 @@ spring.dist.succ <- spring.stat %>% group_by(geo_id) %>% mutate(Lon.50.next = le
 
 ## Number of nodes used ----
 
-# Load fall and spring intra node movement datasets
+# Load fall and spring inter node movement datasets
 fall.edge.df.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.intra.cluster.movements.csv")
 spring.edge.df.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.intra.cluster.movements.csv")
 
-# add node type info 
+# load node data
 meta.fall.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.node.metadata.csv")
 meta.spring.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.node.metadata.csv")
 
+# # remove supplementary edges in inter node movements (edges used in community analysis)
+# mig.clusts.fall <- meta.fall.ab %>% dplyr::filter(node.type %in% c("Stopover", "Nonbreeding"))
+# fall.edge.df.ab  <- fall.edge.df.ab %>% filter(next.cluster < max(mig.clusts.fall$vertex))
+# 
+# mig.clusts.spring <- meta.spring.ab %>% dplyr::filter(node.type %in% c("Stopover", "Nonbreeding"))
+# spring.edge.df.ab  <- spring.edge.df.ab %>% filter(next.cluster < max(mig.clusts.spring$vertex))
+
+# merge internode movements and node data to gert classification for each node used 
 fall.edge.df.ab <- merge(fall.edge.df.ab, meta.fall.ab[,c("vertex","node.type")], by.x = "cluster", by.y = "vertex")
 spring.edge.df.ab <- merge(spring.edge.df.ab, meta.spring.ab[,c("vertex","node.type")], by.x = "cluster", by.y = "vertex")
 
@@ -146,6 +154,13 @@ analysis_ref <- merge(analysis_ref, spring.node.used.df, by.x = "geo.id", by.y =
 
 ## Statistics of node usage ----
 
+## function to calculate mode
+Mode <- function(x) {
+  ux <- unique(x) 
+  ux <- ux[!(is.na(ux))]
+  ux[which.max(tabulate(match(x, ux)))]
+}
+
 ## number of nodes of each type 
 meta.fall.ab  %>% group_by(node.type) %>% summarize(n())
 meta.spring.ab  %>% group_by(node.type) %>% summarize(n())
@@ -155,12 +170,14 @@ range(analysis_ref$fall.nodes.occupied, na.rm =  T)
 mean(analysis_ref$fall.nodes.occupied, na.rm =  T)
 se <- sd(analysis_ref$fall.nodes.occupied, na.rm =  T)/sqrt(length(analysis_ref$fall.nodes.occupied[!is.na(analysis_ref$fall.nodes.occupied)]))
 se
+Mode(analysis_ref$fall.nodes.occupied)
 
 ### Average number of nodes used in the spring network  ----
 range(analysis_ref$spring.nodes.occupied, na.rm =  T)
 mean(analysis_ref$spring.nodes.occupied, na.rm =  T)
 se <- sd(analysis_ref$spring.nodes.occupied, na.rm =  T)/sqrt(length(analysis_ref$spring.nodes.occupied[!is.na(analysis_ref$spring.nodes.occupied)]))
 se
+Mode(analysis_ref$spring.nodes.occupied)
 
 ### Average time spent stationary in each node ----
 fall.node.times <- fall.stat %>% filter(!(is.na(duration))) %>% group_by(geo_id) %>%
@@ -207,10 +224,12 @@ sd(migration_times$timing.difference)/sqrt(length(migration_times$timing.differe
 
 #number of stopover nodes used by range region 
 mean.stp.use.fall <- analysis_ref %>% group_by(Range_region) %>%
-  summarize(mean.stp.used = mean(fall.stopover.nodes.occupied, na.rm = T), se.stp.used = mean.stp.used /sqrt(length(fall.stopover.nodes.occupied)))
+  summarize(mean.stp.used = mean(fall.stopover.nodes.occupied, na.rm = T), se.stp.used = mean.stp.used /sqrt(length(fall.stopover.nodes.occupied)),
+            mode = Mode(fall.stopover.nodes.occupied))
 
 mean.stp.use.spring <- analysis_ref %>% group_by(Range_region)%>%
-  summarize(mean.stp.used = mean(spring.stopover.nodes.occupied, na.rm = T), se.stp.used = mean.stp.used /sqrt(length(spring.stopover.nodes.occupied)))
+  summarize(mean.stp.used = mean(spring.stopover.nodes.occupied, na.rm = T), se.stp.used = mean.stp.used /sqrt(length(spring.stopover.nodes.occupied)),
+            mode = Mode(spring.stopover.nodes.occupied))
 
 with(analysis_ref, table(fall.stopover.nodes.occupied, Range_region))
 with(analysis_ref, table(spring.stopover.nodes.occupied, Range_region))
@@ -238,10 +257,12 @@ testDispersion(simulationOutput)
 
 #number of nonbreeding nodes used by range region 
 mean.nbr.use.fall <- analysis_ref %>% group_by(Range_region) %>%
-  summarize(mean.nbr.used = mean(fall.nbr.nodes.occupied, na.rm = T), se.nbr.used = mean.nbr.used /sqrt(length(fall.nbr.nodes.occupied)))
+  summarize(mean.nbr.used = mean(fall.nbr.nodes.occupied, na.rm = T), se.nbr.used = mean.nbr.used /sqrt(length(fall.nbr.nodes.occupied)),
+            mode = Mode(fall.nbr.nodes.occupied))
 
 mean.nbr.use.spring <- analysis_ref %>% group_by(Range_region)%>%
-  summarize(mean.nbr.used = mean(spring.nbr.nodes.occupied, na.rm = T), se.nbr.used = mean.nbr.used /sqrt(length(spring.nbr.nodes.occupied)))
+  summarize(mean.nbr.used = mean(spring.nbr.nodes.occupied, na.rm = T), se.nbr.used = mean.nbr.used /sqrt(length(spring.nbr.nodes.occupied)),
+            mode = Mode(spring.nbr.nodes.occupied))
 
 with(analysis_ref, table(fall.nbr.nodes.occupied, Range_region))
 with(analysis_ref, table(spring.nbr.nodes.occupied, Range_region))

@@ -605,22 +605,20 @@ dev.off()
 # It then flew to South America between October 12 and 14th 
 
 # Estimate timing of departure and arrival from the breeding and nonbreeding grounds ############################################################
-#Detect twilight times over the whole period during which the geolocator was functioning
-twl.full <- findTwilights(lig,include = lig$Date, threshold = 1.5, dark.min = 60)
-path.full <- thresholdPath(twl.full$Twilight, twl.full$Rise, zenith = zenith, tol = tol_ini)
-
-x0.full <- path.full$x
-
 dep.br <- "2016-08-25"
-arr.br <-"2017-05-29"
+arr.br <- NA # "2017-05-29", can't be estimated accurately due to incomplete darkness at nighttime 
 
 par(mfrow=c(2,1))
-plot(twl.full$Twilight, type  = "l", x0.full[,1])
+plot(twl$Twilight, type  = "l", x0_ad[,1])
 abline(v = anytime(dep.br))
-abline(v = anytime(arr.br))
-plot(twl.full$Twilight, type  = "l", x0.full[,2])
+#abline(v = anytime(arr.br))
+abline(v = anytime(dep.nbr.sgat))
+abline(v = anytime(arr.nbr.sgat))
+plot(twl$Twilight, type  = "l", x0_ad[,2])
 abline(v = anytime(dep.br))
-abline(v = anytime(arr.br))
+#abline(v = anytime(arr.br))
+abline(v = anytime(dep.nbr.sgat))
+abline(v = anytime(arr.nbr.sgat))
 par(mfrow=c(1,1))
 
 # Record details for the geolocator analysis ###################################

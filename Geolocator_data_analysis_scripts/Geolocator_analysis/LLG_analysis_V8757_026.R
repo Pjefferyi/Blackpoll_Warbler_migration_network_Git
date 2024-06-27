@@ -651,9 +651,15 @@ arr.br <- "2020-05-26 0:45"
 
 par(mfrow=c(2,1))
 plot(twl$Twilight, type  = "l", x0_ad[,1])
+abline(h = mean(x0_ad[,1][5:30]))
+abline(h = mean(x0_ad[,1][5:30])-2)
 abline(v = anytime(arr.br))
+abline(v = anytime(arr.nbr.sgat))
+abline(v = anytime(dep.nbr.sgat))
 plot(twl$Twilight, type  = "l", x0_ad[,2])
 abline(v = anytime(arr.br))
+abline(v = anytime(arr.nbr.sgat))
+abline(v = anytime(dep.nbr.sgat))
 par(mfrow=c(1,1))
 
 # Record details for the geolocator analysis ###################################

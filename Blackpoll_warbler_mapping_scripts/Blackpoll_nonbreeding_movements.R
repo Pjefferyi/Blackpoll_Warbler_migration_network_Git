@@ -51,7 +51,11 @@ NB.stat <- NB.stat %>% group_by(geo_id) %>% mutate(move.start = lag(EndTime),
                                                    start.lon = lag(Lon.50.),
                                                    start.lat = lag(Lat.50.),
                                                    end.lon = Lon.50.,
-                                                   end.lat = Lat.50.)%>%
+                                                   end.lat = Lat.50.,
+                                                   start.lon.2.5 = lag(Lon.2.5.),
+                                                   start.lat.2.5 = lag(Lat.2.5.),
+                                                   start.lon.97.5 = lag(Lon.97.5.),
+                                                   start.lat.97.5 = lag(Lat.97.5.))%>%
   rowwise() %>%
   mutate(dist = distHaversine(c(Lon.50.,Lat.50.), c(start.lon, start.lat)),.after = geo_id) %>%
   filter(dist >= 250000)
@@ -70,8 +74,8 @@ NB.stat.mean <-  geo.all %>% dplyr::filter(sitenum > 0, site_type %in% c("Nonbre
                                              Recorded_North_South_mig %in% c("Both", "South and partial North") | geo_id == "WRMA04173") %>%
   filter(!(geo_id %in% NB.stat$geo_id)) %>% group_by(geo_id) %>%
   summarize(mean.lon = mean(Lon.50.), mean.lat = mean(Lat.50.),
-            mean.lon2.5 = mean(Lon.2.5.), mean.lat2.5  = mean(Lat.97.5.),
-            mean.lon97.5 = mean(Lon.2.5.), mean.lat97.5 = mean(Lat.97.5.),)
+            mean.lon2.5 = mean(Lon.2.5.), mean.lat2.5  = mean(Lat.2.5.),
+            mean.lon97.5 = mean(Lon.97.5.), mean.lat97.5 = mean(Lat.97.5.))
 
 # Save nonbreeding movement data ###############################################
 write.csv(NB.stat, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/nonbreeding.movements.csv")

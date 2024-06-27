@@ -590,8 +590,6 @@ save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 #load(file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary.csv"))
 #load(file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 
-# Examine twilights ############################################################
-
 # Estimate timing of departure and arrival from the breeding and nonbreeding grounds ############################################################
 dep.br <- "2019-09-01 13:16"
 arr.br <- "2020-06-06 5:36"
@@ -600,9 +598,13 @@ par(mfrow=c(2,1))
 plot(twl$Twilight, type  = "l", x0_ad[,1])
 abline(v = anytime(dep.br))
 abline(v = anytime(arr.br))
+abline(v = anytime(dep.nbr.sgat))
+abline(v = anytime(arr.nbr.sgat))
 plot(twl$Twilight, type  = "l", x0_ad[,2])
 abline(v = anytime(dep.br))
 abline(v = anytime(arr.br))
+abline(v = anytime(dep.nbr.sgat))
+abline(v = anytime(arr.nbr.sgat))
 par(mfrow=c(1,1))
 
 # Record details for the geolocator analysis ###################################
