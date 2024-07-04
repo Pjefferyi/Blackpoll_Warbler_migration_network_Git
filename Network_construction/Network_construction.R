@@ -211,12 +211,12 @@ ref_data <- read.csv(ref_path)
 # #save the processed geolocatorlocations 
 # write.csv(geo.all, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/All.locations.csv",row.names=FALSE)
 
-#geo.all <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/All.locations.csv")
-geo.all <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/All_locations_ocean_cross_cor.csv")
+geo.all <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/All.locations.csv")
+#geo.all <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/All_locations_ocean_cross_cor.csv")
 
-# re-calcualte arrival date
-nbr.arrival.times <- geo.all %>% group_by(geo_id) %>% filter(NB_count == 1) %>% dplyr::select(-nbr.arrival) %>% rename(nbr.arrival = StartTime )
-geo.all <- geo.all %>% dplyr::select(-nbr.arrival) %>% merge(nbr.arrival.times[,c("geo_id", "nbr.arrival")], by = "geo_id", all = T)
+# # re-calcualte arrival date
+# nbr.arrival.times <- geo.all %>% group_by(geo_id) %>% filter(NB_count == 1) %>% dplyr::select(-nbr.arrival) %>% rename(nbr.arrival = StartTime )
+# geo.all <- geo.all %>% dplyr::select(-nbr.arrival) %>% merge(nbr.arrival.times[,c("geo_id", "nbr.arrival")], by = "geo_id", all = T)
 
 ################################################################################
 # Fall migration network #######################################################

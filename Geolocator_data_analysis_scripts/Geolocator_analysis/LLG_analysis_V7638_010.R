@@ -544,7 +544,7 @@ par(mfrow=c(2,1))
 plot(sm$StartTime, sm$"Lon.50.", ylab = "Longitude", xlab = "", yaxt = "n", type = "n", ylim = c(min(sm$Lon.50.) - 10, max(sm$Lon.50.) + 10))
 axis(2, las = 2)
 polygon(x=c(sm$StartTime,rev(sm$StartTime)), y=c(sm$`Lon.2.5.`,rev(sm$`Lon.97.5.`)), border="gray", col="gray")
-lines(sm$StartTim,sm$"Lon.50.", lwd = 2)
+lines(sm$StartTime,sm$"Lon.50.", lwd = 2)
 abline(v = fall.equi, lwd = 2, lty = 2, col = "orange")
 abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
 
@@ -558,7 +558,7 @@ text(sm$StartTime, sm$"Lon.50.", ifelse(sitenum>0, as.integer(((sm$EndTime - sm$
 plot(sm$StartTime, sm$"Lat.50.", ylab = "Latitude", xlab = "", yaxt = "n", type = "n", ylim = c(min(sm$Lat.50.) - 10, max(sm$Lat.50.) + 10))
 axis(2, las = 2)
 polygon(x=c(sm$StartTime,rev(sm$StartTime)), y=c(sm$`Lat.2.5.`,rev(sm$`Lat.97.5.`)), border="gray", col="gray")
-lines(sm$StartTim,sm$"Lat.50.", lwd = 2)
+lines(sm$StartTime,sm$"Lat.50.", lwd = 2)
 abline(v = fall.equi, lwd = 2, lty = 2, col = "orange")
 abline(v = spring.equi, lwd = 2, lty = 2, col = "orange")
 
