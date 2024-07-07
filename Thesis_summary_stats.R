@@ -334,7 +334,9 @@ simulationOutput <- simulateResiduals(fittedModel =  mod1, plot = F, quantreg = 
 plot(simulationOutput)
 plotResiduals(simulationOutput)
 # 
-# effect_plot(mod1, pred = deploy.longitude, interval = TRUE, plot.points = TRUE)
+effect_plot(mod1, pred = deploy.longitude, interval = TRUE, plot.points = TRUE, 
+            x.label = "Breeding longitude",
+            y.label = "nonbreeding longitude")
 
 # spearman's rank correlation
 cor.test(mod1.data$nbr1.lon, mod1.data$deploy.longitude, method = "spearman", exact = F)
@@ -368,7 +370,9 @@ mod2 <- glmmTMB(nbr2.lon ~ deploy.longitude + (1|study.site), data = mod2.data, 
 simulationOutput <- simulateResiduals(fittedModel =  mod2, plot = F)
 plot(simulationOutput)
 
-# effect_plot(mod2, pred = deploy.longitude, interval = TRUE, plot.points = TRUE)
+effect_plot(mod2, pred = deploy.longitude, interval = TRUE, plot.points = TRUE, 
+            x.label = "Breeding longitude",
+            y.label = "nonbreeding longitude")
 
 # spearman's rank correlation
 cor.test(mod2.data$nbr2.lon, mod2.data$deploy.longitude, method = "spearman", exact = F)
@@ -392,7 +396,10 @@ summary(mod3)
 simulationOutput <- simulateResiduals(fittedModel =  mod3, plot = F)
 plot(simulationOutput)
 
-effect_plot(mod3, pred = deploy.latitude, interval = TRUE, plot.points = TRUE)
+effect_plot(mod3, pred = deploy.latitude, interval = TRUE, plot.points = TRUE, 
+            x.label = "Breeding latitude",
+            y.label = "Nonbreeding latitude")
+            
 # 
 # ## Plot the second nonbreeding latitude against the breeding latitude ----
 # lat.plot2 <- ggplot(data = analysis_ref, aes(x = deploy.latitude, y = nbr2.lat)) + 
@@ -417,7 +424,9 @@ summary(mod4)
 simulationOutput <- simulateResiduals(fittedModel =  mod4, plot = F)
 plot(simulationOutput)
 
-effect_plot(mod4, pred = deploy.latitude, interval = TRUE, plot.points = TRUE)
+effect_plot(mod4, pred = deploy.latitude, interval = TRUE, plot.points = TRUE, 
+            x.label = "Breeding latitude",
+            y.label = "Nonbreeding latitude")
 # 
 # x <- analysis_ref$nbr2.lon[!is.na(analysis_ref$nbr2.lon)]
 # y <- analysis_ref$deploy.longitude[!is.na(analysis_ref$nbr2.lon)]

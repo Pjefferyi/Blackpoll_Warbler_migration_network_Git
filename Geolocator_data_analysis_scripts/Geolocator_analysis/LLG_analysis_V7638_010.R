@@ -657,8 +657,12 @@ arr.br <- NA# couldn't estimate return date due to short day length
 par(mfrow=c(2,1))
 plot(twl$Twilight, type  = "l", x0_ad[,1])
 abline(v = anytime(dep.br))
+abline(v = anytime(arr.nbr.sgat))
+abline(v = anytime(dep.nbr.sgat))
 plot(twl$Twilight, type  = "l", x0_ad[,2])
 abline(v = anytime(dep.br ))
+abline(v = anytime(arr.nbr.sgat))
+abline(v = anytime(dep.nbr.sgat))
 par(mfrow=c(1,1))
 
 # Record details for the geolocator analysis ###################################
