@@ -1027,7 +1027,7 @@ metrics.fig <- (fall.gplot.betw | spring.gplot.betw)/ (fall.gplot.metric2| sprin
 ggsave(plot = metrics.fig, filename = "nodes.metrics.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
        units = "cm", width = 24*1.2, height = 10*1.2, dpi = "print", bg = "white")
 
-# Figure 4.2: average time spent at each node 
+# Figure 4.2: average time spent at each node ----
 
 # Time spent in the fall network 
 fall.gplot.time.spent <- ggplot(st_as_sf(America))+

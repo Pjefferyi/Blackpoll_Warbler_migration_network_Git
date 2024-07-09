@@ -996,22 +996,21 @@ fall.gplot.betw <- ggplot(st_as_sf(America))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
   #geom_text(data = fall.ggnet, mapping = aes(x = x, y = y, label = weight), nudge_x = 4)+
   scale_color_manual(values=c(adjustcolor("black", alpha = 0.5), adjustcolor("blue", alpha = 0)), guide = "none")+
-  geom_nodes(data = fall.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = betweenness.TO), shape=21, size  = 3)+
+  geom_nodes(data = fall.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = betweenness.TO), shape=21, size  = 5)+
   scale_fill_viridis_c(direction = -1, option = "magma", name = "Betweenness \ncentrality", begin  = 0.3,
                        guide = guide_colorbar(frame.colour = "black"), limits = c(min(0),  max(fall.ggnet$betweenness.TO, spring.ggnet$betweenness.TO)))+
   ggtitle("Fall network") + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
-        legend.position = c(-0.18, 0.5), legend.key = element_blank(),
-        legend.title=element_text(size=10),
-        legend.text=element_text(size=10),
-        plot.title = element_text(size=10),
+        legend.position = c(0.2, 0.5), legend.key = element_blank(),
+        legend.title=element_text(size=13),
+        legend.text=element_text(size=13),
+        plot.title = element_text(size=16),
         axis.title =element_blank(),
         axis.text =element_blank(),
         axis.ticks =element_blank(),
         axis.ticks.length = unit(0, "pt"),
-        plot.margin = unit(c(6,6,6,6), "pt"))+
-  annotate("text", label = "(a)", x = -165, y = 48)
+        plot.margin = unit(c(6,6,6,6), "pt"))
 
 ## Betweenness centrality in spring network ----
 spring.gplot.betw <- ggplot(st_as_sf(America))+
@@ -1024,22 +1023,82 @@ spring.gplot.betw <- ggplot(st_as_sf(America))+
   #geom_nodelabel(data = spring.ggnet, aes(label = cluster.num, x = x, y = y), nudge_x =  2, nudge_y =  2)+
   scale_color_manual(values=c(adjustcolor("blue", alpha = 0), adjustcolor("black", alpha = 0.5)), guide = "none")+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
-  geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = betweenness.TO), shape=21, size  = 3)+
+  geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = betweenness.TO), shape=21, size  = 5)+
   scale_fill_viridis_c(direction = -1, option = "magma", name = "Betweenness \ncentrality", begin   = 0.3,
                        guide = guide_colorbar(frame.colour = "black"), limits = c(min(0),  max(fall.ggnet$betweenness.TO, spring.ggnet$betweenness.TO)))+
   ggtitle("Spring network") + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         legend.position = "None", legend.key = element_blank(),
-        legend.title=element_text(size=10),
-        legend.text=element_text(size=10),
-        plot.title = element_text(size=10),
+        legend.title=element_text(size=13),
+        legend.text=element_text(size=13),
+        plot.title = element_text(size=16),
         axis.title =element_blank(),
         axis.text =element_blank(),
         axis.ticks =element_blank(),
         axis.ticks.length = unit(0, "pt"),
-        plot.margin = unit(c(6,6,6,6), "pt"))+
-  annotate("text", label = "(b)", x = -165, y = 48)
+        plot.margin = unit(c(6,6,6,6), "pt"))
+
+betw.fig <- (fall.gplot.betw | spring.gplot.betw)
+
+ggsave(plot = betw.fig, filename = "nodes.betweenness.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_defense/Presentation_figures", 
+       units = "cm", width = 24*1.2, height = 10*1.2, dpi = "print", bg = "white")
+
+## Fall time-adjusted node weight ----
+fall.gplot.metric2 <- ggplot(st_as_sf(America))+
+  geom_sf(colour = "black", fill = "#F7F7F7") +
+  geom_sf(data = Lakes, fill = "lightblue", lwd = 0.2, alpha = 1) +
+  coord_sf(xlim = c(-170, -50),ylim = c(-3, 68)) +
+  geom_edges(data = fall.ggnet, mapping = aes(x = x, y = y, xend = xend, yend = yend, col = edge.type, lwd = weight),
+             arrow = arrow(length = unit(9, "pt"), type = "closed", angle = 10))+
+  scale_linewidth(range = c(0.1, 2), guide = "none")+
+  scale_color_manual(values=c(adjustcolor("black", alpha = 0.5), adjustcolor("blue", alpha = 0)), guide = "none")+
+  geom_nodes(data = fall.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = time.spent.ab), shape=21, size  = 5)+
+  scale_fill_viridis_c(direction = -1, option = "magma", name = "Time-adjusted \nnode weight", begin  = 0.3,
+                       guide = guide_colorbar(frame.colour = "black"), limits = c(min(0), max(fall.ggnet$time.spent.ab, spring.ggnet$time.spent.ab)))+
+  ggtitle("Fall network") + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
+        legend.position = c(0.2, 0.5), legend.key = element_blank(),
+        legend.title=element_text(size=13),
+        legend.text=element_text(size=13),
+        plot.title = element_text(size=16),
+        axis.title =element_blank(),
+        axis.text =element_blank(),
+        axis.ticks =element_blank(),
+        axis.ticks.length = unit(0, "pt"),
+        plot.margin = unit(c(6,6,6,6), "pt"))
+
+## Spring time-adjusted node weight ----
+spring.gplot.metric2 <- ggplot(st_as_sf(America))+
+  geom_sf(colour = "black", fill = "#F7F7F7") +
+  geom_sf(data = Lakes, fill = "lightblue", lwd = 0.2, alpha = 1) +
+  coord_sf(xlim = c(-170, -50),ylim = c(-3, 68)) +
+  geom_edges(data = spring.ggnet, mapping = aes(x = x, y = y, xend = xend, yend = yend, col = edge.type, lwd = weight),
+             arrow = arrow(length = unit(9, "pt"), type = "closed", angle = 10))+
+  scale_linewidth(range = c(0.1, 2), guide = "none")+
+  geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = time.spent.ab), shape=21, size  = 5)+
+  scale_color_manual(values=c(adjustcolor("blue", alpha = 0), adjustcolor("black", alpha = 0.5)), guide = "none")+
+  scale_fill_viridis_c(direction = -1, option = "magma", name = "Time-adjusted \nnode weight", begin  = 0.3,
+                       guide = guide_colorbar(frame.colour = "black"), limits = c(min(0), max(fall.gdata$time.spent.ab, fall.gdata$time.spent.ab)))+
+  ggtitle("Spring network") + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
+        legend.position = "None", legend.key = element_blank(),
+        legend.title=element_text(size=13),
+        legend.text=element_text(size=13),
+        plot.title = element_text(size=16),
+        axis.title =element_blank(),
+        axis.text =element_blank(),
+        axis.ticks =element_blank(),
+        axis.ticks.length = unit(0, "pt"),
+        plot.margin = unit(c(6,6,6,6), "pt"))
+
+## create panel ----
+ats.fig <- (fall.gplot.metric2| spring.gplot.metric2)
+
+ggsave(plot = ats.fig, filename = "nodes.adjtimsp.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_defense/Presentation_figures", 
+       units = "cm", width = 24*1.2, height = 10*1.2, dpi = "print", bg = "white")
 
 
 # Sample plot of longitude and latitude for a bird with the equinox highlighted 
@@ -1062,3 +1121,138 @@ points(equi.t$Twilight, lat.equi, col = "red")
 # abline(v = anytime(dep.nbr))
 abline(v = fall.equi, col = "orange")
 abline(v = spring.equi, col = "orange")
+
+
+# Figure 7 stopovers in the nonbreeding range ----
+
+# Fall stopovers in the nonbreeding range
+fall.nbr.stp <- fall.stat %>% filter(Lat.50. < 13) %>% group_by(geo_id) %>%
+  filter(length(geo_id) > 1)
+
+fall.nbr.stp.plot <- ggplot(st_as_sf(America))+
+  geom_sf(colour = "black", fill = "white") +
+  coord_sf(xlim = c(-80, -45),ylim = c(-5, 15)) +
+  #geom_errorbar(data = fall.nbr.stp , aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, width = 0, alpha = 0.2, color = "black") +
+  #geom_errorbar(data = fall.nbr.stp , aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, width = 0, alpha = 0.2, color = "black") +
+  geom_path(data = fall.nbr.stp , mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, col = geo_id), col = adjustcolor("black", 0.5)) +
+  geom_point(data =  fall.nbr.stp , mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = period), cex = 2.5, pch= 21)+
+  #geom_text(data =  fall.nbr.stp , mapping = aes(x = Lon.50., y = Lat.50., label = round(duration)), cex = 2.5)+
+  scale_fill_manual(values = c("#009E73", "yellow"), labels = c("wintering site", "stopover"), name = "")+
+  ggtitle("South American stopovers in the fall") +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
+        plot.title=element_text(size=14, vjust=-1),
+        legend.text=element_text(size=12),
+        legend.position = c(0.75, 0.75),
+        axis.title =element_blank(),
+        axis.text =element_blank(),
+        axis.ticks =element_blank(),
+        axis.ticks.length = unit(0, "pt"),
+        legend.spacing = unit(-5, "pt"),
+        plot.margin = unit(c(6,6,6,6), "pt"),
+        legend.key = element_rect(colour = "transparent", fill = "white"))
+
+
+# spring stopovers in the nonbreeding range
+spring.nbr.stp <- spring.stat %>% filter(Lat.50. < 13) %>% group_by(geo_id) %>%
+  filter(length(geo_id) > 1)
+
+
+# addition of non-breeding movements with a predominent northward direction 
+source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Blackpoll_warbler_mapping_scripts/Blackpoll_nonbreeding_movements.R")
+
+NB.move <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/nonbreeding.movements.csv")
+NB.move.stp <- NB.move %>% filter(month(move.start) %in% c(3, 4))
+
+spring.nbr.stp.plot <- ggplot(st_as_sf(America))+
+  geom_sf(colour = "black", fill = "white") +
+  coord_sf(xlim = c(-80, -45),ylim = c(-5, 15)) +
+  #geom_errorbar(data = spring.nbr.stp , aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, width = 0, alpha = 0.2, color = "black") +
+  #geom_errorbar(data = spring.nbr.stp , aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, width = 0, alpha = 0.2, color = "black") +
+  geom_path(data = spring.nbr.stp , mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, col = geo_id), col = adjustcolor("black", 0.5)) +
+  geom_point(data =  spring.nbr.stp , mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = period), cex = 2.5, pch= 21)+
+  #geom_text(data =  spring.nbr.stp , mapping = aes(x = Lon.50., y = Lat.50., label = round(duration)), cex = 2.5)+
+  scale_fill_manual(values = c("#009E73", "yellow"), labels = c("Wintering site", "Stopover"), name = "")+
+  geom_segment(data = NB.move.stp, mapping = aes(x = start.lon, y = start.lat, xend = end.lon, yend = end.lat), col = adjustcolor("black", 0.5)) +
+  new_scale_fill()+
+  geom_point(data = NB.move.stp, mapping = aes(x = start.lon, y = start.lat), col = "black", fill = "#009E73", cex = 2.5, pch= 21) +
+  geom_point(data = NB.move.stp, mapping = aes(x = end.lon, y= end.lat, fill = "orange"),  col = "black", cex = 2.5, pch= 21) +
+  scale_fill_manual(values = c("orange"), labels = c("Extended stopover"), name = "")+
+  ggtitle("South American stopovers in the spring") +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
+        plot.title=element_text(size=14, vjust=-1),
+        legend.text=element_text(size=12),
+        legend.position = c(0.8, 0.8),
+        legend.background = element_blank(),
+        axis.title =element_blank(),
+        axis.text =element_blank(),
+        axis.ticks =element_blank(),
+        axis.ticks.length = unit(0, "pt"),
+        legend.spacing = unit(-30, "pt"),
+        plot.margin = unit(c(6,6,6,6), "pt"),
+        legend.key = element_rect(colour = "transparent", fill = "white"))
+
+## create panel ----
+nbr.stops <- (fall.nbr.stp.plot | spring.nbr.stp.plot) 
+ggsave(plot = nbr.stops, filename = "Nonbreeding.stopovers.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_defense/Presentation_figures", 
+       units = "cm", width = 24*1.2, height = 10*1.2, dpi = "print", bg = "white")
+
+# Figure 8 individual migratory tracks for full year  ----
+
+#Load locations processed during the netwrok construction
+geo.all <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/All.locations.csv") %>% arrange(geo_id, StartTime) %>%
+  group_by(geo_id) %>%
+  mutate(period = ifelse(sitenum == 1 & geo_id != "WRMA04173", "Breeding", period),
+         period = ifelse(sitenum == max(sitenum) & geo_id != "WRMA04173" & Recorded_North_South_mig == "South and partial North", "Failure", period),
+         period = ifelse(sitenum == max(sitenum) & geo_id == "WRMA04173", "Breeding", period))
+
+i <- "V8296_004"
+
+# get location data for inddividual i
+ind.data <- geo.all[geo.all$geo_id == i,] %>% filter(!is.na(StartTime))
+ind.data.stat <- geo.all[geo.all$geo_id == i & geo.all$sitenum !=0,]
+
+# get probability raster for individual i
+load(paste0("/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geolocator_data/", i ,"/", i,"_SGAT_GroupedThreshold_fit.R"))
+
+xlim <- c(-170, -40) 
+ylim <- c(-40, 75)
+
+r <- rast(nrows = 2 * diff(ylim), ncols = 2 * diff(xlim), xmin = xlim[1],
+          xmax = xlim[2], ymin = ylim[1], ymax = ylim[2], crs = proj4string(wrld_simpl))
+s <- slices(type = "intermediate", breaks = NULL, mcmc = fit, grid = r)
+sk <- slice(s, sliceIndices(s))
+sk.df <- as.data.frame(sk, xy = T, na.rm = T) %>% filter(lyr.1 > quantile(sk$lyr.1, probs = 0.95))
+
+individual.track <- ggplot(st_as_sf(America))+
+    scale_fill_gradient(low = adjustcolor("lightblue", alpha = 0.4), high = "#04364B", name = "Probability")+ 
+    geom_tile(data = sk.df, aes(x = x, y = y, fill = lyr.1))+
+    new_scale_fill()+
+    geom_sf(colour = "black", fill = NA) +
+    coord_sf(xlim = c(-100, -45),ylim = c(-5, 50)) +
+    #coord_sf(xlim = c(min(ind.stat$Lon.50.)-15, max(ind.stat$Lon.50.)+15),ylim = c(min(ind.stat$Lat.50.)-15, max(ind.stat$Lat.50.)+15)) +
+    geom_errorbar(data = ind.data.stat[ind.data.stat$duration >=2,], aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, width = 1, alpha = 0.8, color = "black") +
+    geom_errorbar(data = ind.data.stat[ind.data.stat$duration >=2,], aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, width = 1, alpha = 0.8, color = "black") +
+    geom_path(data = ind.data, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, col = period), alpha = 0.9, col = "firebrick", linewidth = 1.5) +
+    geom_point(data =  ind.data.stat[ind.data.stat$duration >=2,], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = period, pch = period, col = period), cex = 5)+
+    scale_shape_manual(values=c("Post-breeding migration" = 21 , "Non-breeding period"  = 22, "Pre-breeding migration" = 21, "Breeding"  = 24, "Failure" = 4)) +
+    scale_colour_manual(values=c("Post-breeding migration" = "black" , "Non-breeding period"  = "white", "Pre-breeding migration" = "black", "Breeding"  = "white", "Failure" = "black")) +
+    scale_fill_manual(values=c("Post-breeding migration" = "#FDE725FF" , "Non-breeding period"  = "black", "Pre-breeding migration" = "#21908CFF", "Breeding"  = "black"))+
+    #scale_fill_continuous(low = "yellow", high = "purple")+
+    #ggtitle(first(geo.all[geo.all$geo_id == i,]$Standard.geo.id)) +
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+          panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
+          plot.title=element_text(size=8, vjust=-1),
+         legend.position = "None",
+          axis.title =element_blank(),
+          axis.text =element_blank(),
+          axis.ticks =element_blank(),
+          axis.ticks.length = unit(0, "pt"),
+          legend.spacing = unit(-5, "pt"),
+          plot.margin = unit(c(6,6,6,6), "pt"),
+          legend.key = element_rect(colour = "transparent", fill = "white")) +
+    if (i == "V8757_096"){theme(panel.border = element_rect(colour = "firebrick", fill=NA, size=1))}
+  #if (i == first(unique(geo.all$geo_id))){theme(legend.position = c(0.5, 0.2))} else {theme(legend.position = "None")}
+
+
