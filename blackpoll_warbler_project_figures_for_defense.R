@@ -179,7 +179,7 @@ modularity(spring.graph, spring.infomap$membership)
 modularity(spring.graph, spring.walktrap$membership, directed = T)
 
 V(spring.graph)$label.prop.comm <- spring.label.prop$`community structure`$membership
-V(spring.graph)$infomap.comm <- spring.infomap$membership
+V(spring.graph)$info.map.comm <- spring.infomap$membership
 V(spring.graph)$walktrap.comm <- spring.walktrap$membership
 
 # Fall and spring betweenness centrality 
@@ -1101,7 +1101,14 @@ ggsave(plot = ats.fig, filename = "nodes.adjtimsp.png" ,  path = "C:/Users/Jelan
        units = "cm", width = 24*1.2, height = 10*1.2, dpi = "print", bg = "white")
 
 
-# Sample plot of longitude and latitude for a bird with the equinox highlighted 
+# Figure 7: Sample plot of longitude and latitude for a bird with the equinox highlighted ----
+
+i <- "V8296_006"
+
+twl <- read.csv(paste0("/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geolocator_data/", i ,"/", i,"_twl_times.csv"))
+load(file = paste0("/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geolocator_data/", i ,"/", i,"adjusted_initial_path_raw.csv"))
+
+twl$Twilight <- anytime(twl)  
 
 # Get time during the equinox 
 equi.t <- twl[twl$Twilight > "2019-09-09" & twl$Twilight < "2019-10-06" | twl$Twilight > "2020-03-09" & twl$Twilight < "2020-04-06",]
@@ -1109,19 +1116,18 @@ lat.equi <- x0_ad[,2][which(twl$Twilight > "2019-09-09" & twl$Twilight < "2019-1
 
 # plot of longitude and latitude 
 par(mfrow = c(2,1), mar = c(1, 4, 3, 3))
-plot(twl$Twilight, x0_ad[,1], ylab = "longitude", xlab = NA, type = "o")
+plot(anytime(twl$Twilight), x0_ad[,1], ylab = "longitude", xlab = NA, type = "o")
 # abline(v = anytime(arr.nbr))
 # abline(v = anytime(dep.nbr))
-abline(v = fall.equi, col = "orange")
-abline(v = spring.equi, col = "orange")
+#abline(v = fall.equi, col = "orange")
+#abline(v = spring.equi, col = "orange")
 par(mar = c(3, 4, 3, 3))
-plot(twl$Twilight, x0_ad[,2], ylab = "latitude", xlab = NA, type = "o")
-points(equi.t$Twilight, lat.equi, col = "red")
+plot(anytime(twl$Twilight), x0_ad[,2], ylab = "latitude", xlab = NA, type = "o")
+points(anytime(equi.t$Twilight), lat.equi, col = "red")
 # abline(v = anytime(arr.nbr))
 # abline(v = anytime(dep.nbr))
-abline(v = fall.equi, col = "orange")
-abline(v = spring.equi, col = "orange")
-
+#abline(v = fall.equi, col = "orange")
+#abline(v = spring.equi, col = "orange")
 
 # Figure 7 stopovers in the nonbreeding range ----
 
@@ -1207,7 +1213,7 @@ geo.all <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Gu
          period = ifelse(sitenum == max(sitenum) & geo_id != "WRMA04173" & Recorded_North_South_mig == "South and partial North", "Failure", period),
          period = ifelse(sitenum == max(sitenum) & geo_id == "WRMA04173", "Breeding", period))
 
-i <- "V8296_004"
+i <- "V8757_096"
 
 # get location data for inddividual i
 ind.data <- geo.all[geo.all$geo_id == i,] %>% filter(!is.na(StartTime))
@@ -1251,8 +1257,14 @@ individual.track <- ggplot(st_as_sf(America))+
           axis.ticks.length = unit(0, "pt"),
           legend.spacing = unit(-5, "pt"),
           plot.margin = unit(c(6,6,6,6), "pt"),
-          legend.key = element_rect(colour = "transparent", fill = "white")) +
-    if (i == "V8757_096"){theme(panel.border = element_rect(colour = "firebrick", fill=NA, size=1))}
+          legend.key = element_rect(colour = "transparent", fill = "white"))# +
+    #if (i == "V8757_096"){theme(panel.border = element_rect(colour = "firebrick", fill=NA, size=1))}
   #if (i == first(unique(geo.all$geo_id))){theme(legend.position = c(0.5, 0.2))} else {theme(legend.position = "None")}
 
+
+# Figure 9 plot of important fall and spring nodes across the blackpoll warbler's range
+
+fall.dat.loc <- merge(fall.data, meta.fall.ab[, c("vertex", "Lon.50.", "Lat.50.")]) %>% mutate(network = "fall")
+spring.dat.loc <- merge(spring.data, meta.spring.ab[, c("vertex", "Lon.50.", "Lat.50.")]) %>% mutate(network = "spring")
+node.dat.loc <- rbind(fall.dat.loc, spring.dat.loc)  
 

@@ -21,9 +21,11 @@ library(FLightR)
 library(TwGeos)
 # install_github("SWotherspoon/SGAT")
 library(SGAT)
+# install_github("MTHallworth/LLmig")
+library(LLmig)
 # install_github("SLisovski/GeoLocTools")
 library(GeoLocTools)
-#setupGeolocation()
+setupGeolocation()
 
 # clear object from workspace
 rm(list=ls())
@@ -381,7 +383,7 @@ twl_adjusted$Twilight <- twl$Twilight + (diff.sec.change * timestep)
 twl_adjusted$Twilight0 <- twl$Twilight + (diff.sec.change * timestep)
 
 # Initial Path with Clock Drift Adjustment  ####################################
-path <- thresholdPath(twl_adjusted$Twilight, twl_adjusted$Rise, zenith = zeniths_med, tol= tol_ini)
+path <- thresholdPath(twl_adjusted$Twilight, twl_adjusted$Rise, zenith = zeniths_med, tol=0.12)
 
 x0 <- path$x
 z0 <- trackMidpts(x0)
@@ -679,7 +681,7 @@ save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 load(file = paste0(dir,"/", geo.id, "adjusted_initial_path_raw.csv"))
 
 #Fall transoceanic flight
-start <- "2013-10-01"
+start <- "2013-09-01"
 end <- "2013-11-01"
 
 #first flight
@@ -738,18 +740,6 @@ data(wrld_simpl)
 plot(wrld_simpl, xlim=xlim, ylim=ylim, col = "grey95")
 points(sm.fall.edit$Lon.50., sm.fall.edit$Lat.50., pch = 16, cex = 0, col = "firebrick", type = "o")
 points(sm.fall.stat$Lon.50., sm.fall.stat$Lat.50., pch = 16, cex = 1.5, col = "firebrick")
-
-# re-estimate time of establishment and departure from the nonbreeding grounds 
-arr.nbr.sgat <- sm.fall.edit %>% filter(Lat.50. < 12 & sitenum > 0 & duration > stat.nbr.lim) %>% 
-  first(.$StartTime) %>% .$StartTime
-dep.nbr.sgat <- sm.fall.edit %>% filter(Lat.50. < 12 & sitenum > 0 & duration > stat.nbr.lim) %>%
-  last(.$EndTime)%>% .$EndTime
-
-#add a column that categorizes the locations (based on the groupthreshold model output)
-sm.fall.edit <-sm.fall.edit %>% rowwise() %>% mutate(period= case_when(StartTime < anytime(arr.nbr.sgat, asUTC = T, tz = "GMT")  ~ "Post-breeding migration",
-                                                    StartTime >= anytime(arr.nbr.sgat, asUTC = T, tz = "GMT") & StartTime < anytime(dep.nbr.sgat, asUTC = T, tz = "GMT") ~ "Non-breeding period",
-                                                    StartTime > anytime(dep.nbr.sgat , asUTC = T, tz = "GMT") ~ "Pre-breeding migration"))
-
 
 #Save the final location summary
 save(sm.fall.edit , file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_summary_fall_edit.csv"))

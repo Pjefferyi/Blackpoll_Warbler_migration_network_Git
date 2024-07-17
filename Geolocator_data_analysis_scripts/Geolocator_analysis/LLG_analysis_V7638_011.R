@@ -447,7 +447,7 @@ r <- raster(nrows = 2 * diff(ylim), ncols = 2 * diff(xlim), xmn = xlim[1]-5,
             xmx = xlim[2]+5, ymn = ylim[1]-5, ymx = ylim[2]+5, crs = proj4string(wrld_simpl))
 
 s <- slices(type = "intermediate", breaks = "week", mcmc = fit, grid = r)
-sk <- slice(s, sliceIndices(s))
+sk <- SGAT::slice(s, sliceIndices(s))
 
 plot(sk, useRaster = F,col = c("transparent", rev(viridis::viridis(50))))
 plot(wrld_simpl, xlim=xlim, ylim=ylim,add = T, bg = adjustcolor("black",alpha=0.1))
