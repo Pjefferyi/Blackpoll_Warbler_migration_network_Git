@@ -313,6 +313,10 @@ analysis_ref <- loc_list %>% purrr::reduce(full_join, by='geo_id') %>%
 ## Plot the first nonbreeding longitude against the breeding longitude ----
 long.plot1 <- ggplot(data = analysis_ref, aes(x = deploy.longitude, y = nbr1.lon)) + 
   geom_point(aes(col = Breeding_region_MC)) +
+  scale_colour_manual(values = c("Northwestern Region" = "#F0E442",
+                               "Central Region" = "#009E73",
+                               "Eastern Region" = "#0072B2",
+                               "Western Region"  = "#D55E00"), name = "Breeding region") +
   geom_smooth(method = "lm", se = F, colour="black", size=0.5, linetype = "dashed") + 
   theme_bw() +
   theme(text = element_text(size = 14)) +
@@ -322,7 +326,7 @@ long.plot1 <- ggplot(data = analysis_ref, aes(x = deploy.longitude, y = nbr1.lon
 
 # run a regression model
 mod1.data <- analysis_ref %>% filter_at(vars(deploy.longitude, deploy.latitude, nbr1.lon),all_vars(!is.na(.)))
-mod1 <- glmmTMB(nbr1.lon ~ deploy.longitude + I(deploy.longitude^2) +(1|study.site), data = mod1.data, na.action = "na.fail")
+mod1 <- glmmTMB(nbr1.lon ~ deploy.longitude +(1|study.site), data = mod1.data, na.action = "na.fail")
 # # mod1 <- plsr(nbr1.lon ~ deploy.latitude + deploy.longitude, data = mod1.data, scale = T, validation = "CV",
 # #              ncomp = 1, method = "oscorespls")
 # mod1 <- glmmTMB(nbr1.lon ~ poly(deploy.longitude, degree = 2) + (1|study.site), data = mod1.data, na.action = "na.fail")
@@ -344,6 +348,10 @@ cor.test(mod1.data$nbr1.lon, mod1.data$deploy.longitude, method = "spearman", ex
 ## Plot the second nonbreeding longitude against the breeding longitude ----
 long.plot2 <- ggplot(data = analysis_ref, aes(x = deploy.longitude, y = nbr2.lon)) + 
   geom_point(aes(col = Breeding_region_MC)) +
+  scale_colour_manual(values = c("Northwestern Region" = "#F0E442",
+                                 "Central Region" = "#009E73",
+                                 "Eastern Region" = "#0072B2",
+                                 "Western Region"  = "#D55E00"), name = "Breeding region") +
   geom_smooth(method = "lm", se = F, colour="black", size=0.5, linetype = "dashed") + 
   theme(text = element_text(size=14)) +
   theme_bw() +
@@ -355,7 +363,7 @@ long.plot2 <- ggplot(data = analysis_ref, aes(x = deploy.longitude, y = nbr2.lon
 mod2.data <- analysis_ref %>% filter_at(vars(deploy.longitude, deploy.latitude, nbr2.lon),all_vars(!is.na(.)))
 mod2 <- glmmTMB(nbr2.lon ~ deploy.longitude + (1|study.site), data = mod2.data, na.action = "na.fail")
 # mod2 <- lm(nbr2.lon ~ deploy.longitude, data = mod2.data, na.action = "na.fail")
-# summary(mod2)
+summary(mod2)
 # check_model(mod2)
 # 
 # # mod1.data.reg1 <- mod1.data %>% filter(Breeding_region_MC == "Eastern Region")
@@ -380,6 +388,10 @@ cor.test(mod2.data$nbr2.lon, mod2.data$deploy.longitude, method = "spearman", ex
 ## Plot the first nonbreeding latitude against the breeding latitude ----
 lat.plot1 <- ggplot(data = analysis_ref, aes(x = deploy.latitude, y = nbr1.lat)) + 
   geom_point(aes(col = Breeding_region_MC)) + 
+  scale_colour_manual(values = c("Northwestern Region" = "#F0E442",
+                                 "Central Region" = "#009E73",
+                                 "Eastern Region" = "#0072B2",
+                                 "Western Region"  = "#D55E00"), name = "Breeding region") +
   geom_smooth(method = "lm", se = F, colour="black", size=0.5, linetype = "dashed") + 
   theme_bw() +
   theme(text = element_text(size = 14)) +
@@ -388,7 +400,7 @@ lat.plot1 <- ggplot(data = analysis_ref, aes(x = deploy.latitude, y = nbr1.lat))
 
 # run a regression model
 mod3.data <- analysis_ref %>% filter_at(vars(deploy.latitude, nbr1.lat),all_vars(!is.na(.)))
-mod3 <- glmmTMB(nbr1.lat ~ deploy.latitude + I(deploy.latitude^2) + (1|study.site), data = mod3.data )
+mod3 <- glmmTMB(nbr1.lat ~ deploy.latitude + (1|study.site), data = mod3.data )
 # plot(nbr1.lat ~ deploy.latitude, data = mod3.data )
 summary(mod3)
 # check_model(mod3)
@@ -401,14 +413,19 @@ effect_plot(mod3, pred = deploy.latitude, interval = TRUE, plot.points = TRUE,
             y.label = "Nonbreeding latitude")
             
 # 
-# ## Plot the second nonbreeding latitude against the breeding latitude ----
-# lat.plot2 <- ggplot(data = analysis_ref, aes(x = deploy.latitude, y = nbr2.lat)) + 
-#   geom_point(aes(col = Breeding_region_MC)) + 
-#   geom_smooth(method = "lm", se = F, colour="black", size=0.5, linetype = "dashed") + 
-#   theme_bw() +
-#   theme(text = element_text(size = 14)) +
-#   labs(x = "Breeding latitude",
-#        y = "Second nonbreeding site latitude")
+## Plot the second nonbreeding latitude against the breeding latitude ----
+lat.plot2 <- ggplot(data = analysis_ref, aes(x = deploy.latitude, y = nbr2.lat)) +
+  geom_point(aes(col = Breeding_region_MC)) +
+  scale_colour_manual(values = c("Northwestern Region" = "#F0E442",
+                                 "Central Region" = "#009E73",
+                                 "Eastern Region" = "#0072B2",
+                                 "Western Region"  = "#D55E00"), name = "Breeding region") +
+
+  geom_smooth(method = "lm", se = F, colour="black", size=0.5, linetype = "dashed") +
+  theme_bw() +
+  theme(text = element_text(size = 14)) +
+  labs(x = "Breeding latitude",
+       y = "Second nonbreeding site latitude")
 
 # spearman's rank correlation
 cor.test(mod3.data$nbr1.lat, mod3.data$deploy.latitude, method = "spearman", exact = F)

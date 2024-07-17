@@ -1138,8 +1138,8 @@ fall.nbr.stp <- fall.stat %>% filter(Lat.50. < 13) %>% group_by(geo_id) %>%
 fall.nbr.stp.plot <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "white") +
   coord_sf(xlim = c(-80, -45),ylim = c(-5, 15)) +
-  #geom_errorbar(data = fall.nbr.stp , aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, width = 0, alpha = 0.2, color = "black") +
-  #geom_errorbar(data = fall.nbr.stp , aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, width = 0, alpha = 0.2, color = "black") +
+  geom_errorbar(data = fall.nbr.stp[fall.nbr.stp$period == "Post-breeding migration",] , aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, width = 0, alpha = 0.6, color = "firebrick") +
+  geom_errorbar(data = fall.nbr.stp[fall.nbr.stp$period == "Post-breeding migration",]  , aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, width = 0, alpha = 0.6, color = "firebrick") +
   geom_path(data = fall.nbr.stp , mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, col = geo_id), col = adjustcolor("black", 0.5)) +
   geom_point(data =  fall.nbr.stp , mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = period), cex = 2.5, pch= 21)+
   #geom_text(data =  fall.nbr.stp , mapping = aes(x = Lon.50., y = Lat.50., label = round(duration)), cex = 2.5)+
@@ -1157,7 +1157,6 @@ fall.nbr.stp.plot <- ggplot(st_as_sf(America))+
         legend.spacing = unit(-5, "pt"),
         plot.margin = unit(c(6,6,6,6), "pt"),
         legend.key = element_rect(colour = "transparent", fill = "white"))
-
 
 # spring stopovers in the nonbreeding range
 spring.nbr.stp <- spring.stat %>% filter(Lat.50. < 13) %>% group_by(geo_id) %>%
@@ -1264,7 +1263,94 @@ individual.track <- ggplot(st_as_sf(America))+
 
 # Figure 9 plot of important fall and spring nodes across the blackpoll warbler's range
 
-fall.dat.loc <- merge(fall.data, meta.fall.ab[, c("vertex", "Lon.50.", "Lat.50.")]) %>% mutate(network = "fall")
-spring.dat.loc <- merge(spring.data, meta.spring.ab[, c("vertex", "Lon.50.", "Lat.50.")]) %>% mutate(network = "spring")
+fall.dat.loc.betw.top <- merge(fall.data, meta.fall.ab[, c("vertex", "Lon.50.", "Lat.50.")], by.x = "cluster.num", by.y = "vertex") %>% mutate(network = "fall") %>%
+  arrange(desc(betweenness.TO)) %>% dplyr::slice(1:5)
+
+spring.dat.loc.betw.top <- merge(spring.data, meta.spring.ab[, c("vertex", "Lon.50.", "Lat.50.")], by.x = "cluster.num", by.y = "vertex") %>% mutate(network = "spring") %>%
+  arrange(desc(betweenness.TO)) %>% dplyr::slice(1:5)
+
+fall.dat.loc.aw.top <- merge(fall.data, meta.fall.ab[, c("vertex", "Lon.50.", "Lat.50.")], by.x = "cluster.num", by.y = "vertex") %>% mutate(network = "fall") %>%
+  arrange(desc(time.spent.ab)) %>% dplyr::slice(1:5)
+
+spring.dat.loc.aw.top <- merge(spring.data, meta.spring.ab[, c("vertex", "Lon.50.", "Lat.50.")], by.x = "cluster.num", by.y = "vertex") %>% mutate(network = "spring") %>%
+  arrange(desc(time.spent.ab)) %>% dplyr::slice(1:5)
+
 node.dat.loc <- rbind(fall.dat.loc, spring.dat.loc)  
 
+top_ranked_nodes <- ggplot(st_as_sf(America))+
+  geom_sf(colour = "black", fill = "#F7F7F7") +
+  geom_sf(data = Lakes, fill = "lightblue", lwd = 0.2, alpha = 1) +
+  coord_sf(xlim = c(-170, -48),ylim = c(-5, 70))+
+  geom_point(data = fall.dat.loc.betw.top, aes(x = Lon.50., y = Lat.50., fill = network), col = "black", cex = 4, pch= 21)+
+  geom_point(data = spring.dat.loc.betw.top, aes(x = Lon.50., y = Lat.50., fill = network), col = "black", cex = 4, pch= 21)+
+  geom_point(data = fall.dat.loc.aw.top, aes(x = Lon.50., y = Lat.50., fill = network), col = "black", cex = 4, pch= 21)+
+  geom_point(data = spring.dat.loc.aw.top, aes(x = Lon.50., y = Lat.50., fill = network), col = "black",  cex = 4, pch= 21)+
+  scale_fill_manual(values = c("fall" = "red", "spring" = "lightblue"), labels= c("Fall", "Spring"))+
+  labs(fill = "Top ranked \nnodes")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
+        plot.title=element_text(size=12, vjust=-1),
+        legend.text = element_text(size = 12),
+        legend.position = c(0.15, 0.48),
+        axis.title =element_blank(),
+        axis.text =element_blank(),
+        axis.ticks =element_blank(),
+        axis.ticks.length = unit(0, "pt"),
+        legend.spacing = unit(-5, "pt"),
+        plot.margin = unit(c(6,6,6,6), "pt"),
+        legend.key = element_rect(colour = "transparent", fill = "white"))
+
+## create panel ----
+ggsave(plot = top_ranked_nodes, filename = "top.ranked.nodes.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_defense/Presentation_figures", 
+       units = "cm", width = 24*1.2, height = 10*1.2, dpi = "print", bg = "white")
+
+# Figure 10 blank map of north america
+
+ggplot(st_as_sf(America))+
+  geom_sf(colour = "black", fill = "#F7F7F7") +
+  geom_sf(data = Lakes, fill = "lightblue", lwd = 0.2, alpha = 1) +
+  coord_sf(xlim = c(-170, -48),ylim = c(-5, 70))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
+        plot.title=element_text(size=12, vjust=-1),
+        legend.text = element_text(size = 12),
+        legend.position = c(0.15, 0.48),
+        axis.title =element_blank(),
+        axis.text =element_blank(),
+        axis.ticks =element_blank(),
+        axis.ticks.length = unit(0, "pt"),
+        legend.spacing = unit(-5, "pt"),
+        plot.margin = unit(c(6,6,6,6), "pt"),
+        legend.key = element_rect(colour = "transparent", fill = "white"))
+
+
+# Fall error bars 
+fall.error.bars <- ggplot(st_as_sf(America))+
+  geom_sf(colour = "black", fill = "#F7F7F7") +
+  geom_sf(data = Lakes, fill = "lightblue", lwd = 0.2, alpha = 1) +
+  geom_sf(data = equi.region, fill = "#D9D5B2", lwd = 0.2, alpha = 0.5) +
+  coord_sf(xlim = c(-100, -50),ylim = c(-2, 60)) +
+  geom_errorbar(data = fall.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, alpha = 0.6, color = "firebrick") +
+  geom_errorbar(data = fall.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, alpha = 0.6, color = "firebrick") +
+  #geom_path(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5) +
+  geom_point(data = fall.stat[(fall.stat$site_type!= "Breeding"),], mapping = aes(x = Lon.50., y = Lat.50.), fill = "black", cex = 1, shape = 21, col = "white", stroke = 0.1) +
+  #geom_text(data = meta.fall.ab[meta.fall.ab$node.type != "Breeding",], mapping = aes(x = Lon.50., y = Lat.50., label = vertex), cex = 3, fontface = "bold")+
+  #geom_shadowtext(data = meta.fall.ab[meta.fall.ab$node.type != "Breeding",], mapping = aes(x = Lon.50., y = Lat.50., label = vertex), cex = 3, fontface = "bold", col = "black", bg.colour = "white")+
+  #labs(colour = "Cluster") +
+  theme_bw() +
+  #ggtitle("(c) Fall stationary location clusters") + 
+  theme(text = element_text(size = 12), legend.position = "None",
+        axis.line=element_blank(),
+        axis.text =element_blank(),
+        axis.ticks=element_blank(),
+        axis.title =element_blank(),
+        title = element_text(size = 8),
+        axis.ticks.length = unit(0, "pt"),
+        panel.grid.major=element_blank(),
+        panel.grid.minor=element_blank(),
+        #panel.border = element_rect(colour = "black", fill=NA, size=0.5),
+        plot.margin= unit(c(2,0,0,0), "pt"))
+
+## create panel ----
+ggsave(plot = fall.error.bars, filename = "fall_error_bars.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_defense/Presentation_figures", 
+       units = "cm", width = 24*1.2, height = 10*1.2, dpi = "print", bg = "white")
