@@ -215,8 +215,8 @@ dev.off()
 # Using approximate timings of arrival and departure from the breeding grounds
 zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith0,
-                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad + 3.5,
-                            Date > anytime(dep.nbr) ~ zenith0_ad + 3.5))
+                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad + 4,
+                            Date > anytime(dep.nbr) ~ zenith0_ad + 4))
 
 zeniths0 <- zenith_twl_zero$zenith
 

@@ -22,10 +22,10 @@ library(TwGeos)
 # install_github("SWotherspoon/SGAT")
 library(SGAT)
 # install_github("MTHallworth/LLmig")
-library(LLmig)
+#library(LLmig)
 # install_github("SLisovski/GeoLocTools")
 library(GeoLocTools)
-setupGeolocation()
+#setupGeolocation()
 
 # clear object from workspace
 rm(list=ls())

@@ -418,15 +418,17 @@ dep.sites <- ggplot(st_as_sf(America))+
   scale_fill_discrete(labels = c("Breeding range", "Nonbreeding range"), name = "", guide = guide_legend(order = 3)) +
   new_scale_fill() +
   # all breeding sites included in the fall network
-  geom_point(data =  fall.stat[fall.stat$sitenum == 1,], aes(fill = "black", x = Lon.50., y = Lat.50.), col = "white", shape = 21, cex = 3)+
+  #geom_point(data =  fall.stat[fall.stat$sitenum == 1,], aes(fill = "black", x = Lon.50., y = Lat.50.), col = "white", shape = 21, cex = 3)+
+  #geom_point(data =  fall.stat[fall.stat$sitenum == 1 & year(fall.stat$deploy.on.date) > 2017,], aes(fill = "black", x = Lon.50., y = Lat.50.), col = "white", shape = 21, cex = 3)+
+  geom_point(data =  fall.stat[fall.stat$sitenum == 1 & year(fall.stat$deploy.on.date) < 2017,], aes(fill = "black", x = Lon.50., y = Lat.50.), col = "white", shape = 21, cex = 3)+
   scale_fill_manual(values = c("black"), labels = c("Geolocator deployment sites"), name = "", guide = guide_legend(order = 1))+
   # Deployment location for WRMA04173
-  geom_point(data =  ref.data[ref.data$geo.id == "WRMA04173",], aes(fill = "black", x = mod.deploy.lon, y = mod.deploy.lat), col = "white", shape = 21, cex = 3)+
+  #geom_point(data =  ref.data[ref.data$geo.id == "WRMA04173",], aes(fill = "black", x = mod.deploy.lon, y = mod.deploy.lat), col = "white", shape = 21, cex = 3)+
   scale_fill_manual(values = c("black"), labels = c("Geolocator deployment sites"), name = "", guide = guide_legend(order = 1))+
   coord_sf(xlim = c(-170, -40),ylim = c(-5, 70))+
   # estimated breeding location for WRMA04173
-  geom_point(data = spring.stat[spring.stat$geo_id == "WRMA04173" & spring.stat$sitenum == 5,],
-             aes(x = Lon.50., y = Lat.50.), shape = 4, cex = 3)+
+  # geom_point(data = spring.stat[spring.stat$geo_id == "WRMA04173" & spring.stat$sitenum == 5,],
+  #            aes(x = Lon.50., y = Lat.50.), shape = 4, cex = 3)+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = NA, fill = NA),
         axis.title =element_blank(),
@@ -595,7 +597,7 @@ plot(c(0,2),c(-0.01,1),type = 'n', axes = F,xlab = '', ylab = '')
 text(x= 1.25, y = seq(0,1,l=5), labels = round(seq(0,max(sg),l=5), digits = 1), cex = 1)
 rasterImage(legend_image, 0.75, 0, 1,1)
 
-# Figure 5: ample of light level data during a flight over the carribean ----
+# Figure 5: sample of light level data during a flight over the carribean ----
 geo.id <- "V8296_004"
 
 # data directory
