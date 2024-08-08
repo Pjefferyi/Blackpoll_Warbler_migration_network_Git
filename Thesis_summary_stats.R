@@ -329,16 +329,19 @@ mod1.data <- analysis_ref %>% filter_at(vars(deploy.longitude, deploy.latitude, 
 mod1 <- glmmTMB(nbr1.lon ~ deploy.longitude +(1|study.site), data = mod1.data, na.action = "na.fail")
 # # mod1 <- plsr(nbr1.lon ~ deploy.latitude + deploy.longitude, data = mod1.data, scale = T, validation = "CV",
 # #              ncomp = 1, method = "oscorespls")
-# mod1 <- glmmTMB(nbr1.lon ~ poly(deploy.longitude, degree = 2) + (1|study.site), data = mod1.data, na.action = "na.fail")
-summary(mod1)
+mod1_2 <- glmmTMB(nbr1.lon ~ poly(deploy.longitude, degree = 2) + (1|study.site), data = mod1.data, na.action = "na.fail")
+summary(mod1_2)
 # check_model(mod1)
 # #with(mod1.data, table(study.site))
 # 
-simulationOutput <- simulateResiduals(fittedModel =  mod1, plot = F, quantreg = T)
+simulationOutput <- simulateResiduals(fittedModel =  mod1_2, plot = F, quantreg = T)
 plot(simulationOutput)
 plotResiduals(simulationOutput)
+testDispersion(simulationOutput)
+testZeroInflation(simulationOutput)
+
 # 
-effect_plot(mod1, pred = deploy.longitude, interval = TRUE, plot.points = TRUE, 
+effect_plot(mod1, pred = deploy.longitude, interval = TRUE, plot.points = TRUE,
             x.label = "Breeding longitude",
             y.label = "nonbreeding longitude")
 
@@ -401,8 +404,9 @@ lat.plot1 <- ggplot(data = analysis_ref, aes(x = deploy.latitude, y = nbr1.lat))
 # run a regression model
 mod3.data <- analysis_ref %>% filter_at(vars(deploy.latitude, nbr1.lat),all_vars(!is.na(.)))
 mod3 <- glmmTMB(nbr1.lat ~ deploy.latitude + (1|study.site), data = mod3.data )
+mod3_2 <- glmmTMB(nbr1.lat ~ poly(deploy.latitude, degree = 2) + (1|study.site), data = mod3.data, na.action = "na.fail")
 # plot(nbr1.lat ~ deploy.latitude, data = mod3.data )
-summary(mod3)
+summary(mod3_2)
 # check_model(mod3)
 # 
 simulationOutput <- simulateResiduals(fittedModel =  mod3, plot = F)
@@ -412,7 +416,6 @@ effect_plot(mod3, pred = deploy.latitude, interval = TRUE, plot.points = TRUE,
             x.label = "Breeding latitude",
             y.label = "Nonbreeding latitude")
             
-# 
 ## Plot the second nonbreeding latitude against the breeding latitude ----
 lat.plot2 <- ggplot(data = analysis_ref, aes(x = deploy.latitude, y = nbr2.lat)) +
   geom_point(aes(col = Breeding_region_MC)) +

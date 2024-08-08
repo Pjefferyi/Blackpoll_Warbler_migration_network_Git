@@ -383,18 +383,7 @@ fall.node.lon <- fall.stat %>% group_by(cluster) %>%
 fall.node.lat <- fall.stat %>% group_by(cluster) %>% 
   summarize(node.lat = median(Lat.50.))
 
-# We also assess which use was the more common for a node (breeding, nonbreeding, or stopover)
-# The most common use will be the one assigned to the node
-# fall.node.type <- fall.stat %>% group_by(cluster, site_type) %>%
-#   summarize(use = n()) %>% filter(use == max(use)) %>% 
-#   mutate(site_type = factor(site_type, levels = c("Breeding", "Nonbreeding", "Stopover")))%>%
-#   arrange(site_type) %>%
-#   mutate(site_type_num = case_when(
-#     site_type == "Breeding" ~ 1,
-#     site_type == "Nonbreeding" ~ 2,
-#     site_type == "Stopover" ~ 3
-#   )) %>% distinct(cluster, .keep_all = TRUE) %>% arrange(cluster) #must verify whether sites have equal maxima of uses
-
+# We classify nodes based on their use (breeding, nonbreeding, or stopover)
 fall.node.type <- fall.stat %>% group_by(cluster) %>%
   summarize(count.breeding = length(site_type[site_type == "Breeding"]),
             count.stopover = length(site_type[site_type == "Stopover"]),
@@ -409,15 +398,14 @@ fall.node.type <- fall.stat %>% group_by(cluster) %>%
     site_type_num == 3 ~ "Nonbreeding")) %>%
   mutate(site_type = factor(site_type, levels = c("Breeding", "Nonbreeding", "Stopover")))
 
-# Create a layout with node locations 
+# Create a layout with each node's geographical location 
 meta.fall <- data.frame("vertex" = fall.node.type$cluster, 
-                        #data.frame("vertex" = seq(min(fall.edge.df$cluster), max(fall.edge.df$cluster)), 
                         "Lon.50." = fall.node.lon$node.lon,
                         "Lat.50." = fall.node.lat$node.lat,
                         "node.type" = fall.node.type$site_type,
                         "node.type.num" = fall.node.type$site_type_num)
 
-# For fall nodes where latitudinal accuracy is low, set location close to the coast
+# For fall nodes above the coast, where latitudinal accuracy is low, set location close to the coast
 meta.fall[c(7, 6, 5),]$Lat.50. <- c(35.3, 41.45, 44.77)
 
 # create node location matrix 
@@ -451,6 +439,7 @@ fall.con <- fall.edge.df %>% group_by(cluster, next.cluster) %>%
 fall.graph.weighed <- graph_from_data_frame(fall.con, directed = T, vertices = meta.fall)
 is_weighted(fall.graph.weighed)
 
+# plot the network with weighed edges 
 plot(wrld_simpl, xlim = c(-170, -30), ylim = c(-15, 70))
 plot(fall.graph.weighed, vertex.size = 200, vertex.size2 = 200,
      edge.width = fall.con$weight/1.5, edge.arrow.size = 0, edge.arrow.width = 0,  
