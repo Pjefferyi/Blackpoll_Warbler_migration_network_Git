@@ -927,7 +927,7 @@ fall.nbr.regions <- st_read("C:/Users/Jelan/OneDrive/Desktop/University/Universi
 fall.nbr.sf$Breeding_region_MC <- factor(fall.nbr.sf$Breeding_region_MC , levels = c("Eastern Region", "Central Region", "Western Region", "Northwestern Region"))
 First.nbr.regions <- ggplot(st_as_sf(wrld_simpl))+
   geom_sf(colour = "black", fill = "#F7F7F7")+
-  geom_sf(data = fall.nbr.regions, col = "black",fill = "lightgray", alpha = 0.9)+
+  #geom_sf(data = fall.nbr.regions, col = "black",fill = "lightgray", alpha = 0.9)+
   geom_errorbar(data = fall.nbr.sf, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), col = "black", linewidth = 0.5)+
   geom_errorbar(data = fall.nbr.sf, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), col = "black", linewidth = 0.5)+
   geom_sf(data = fall.nbr.sf, aes(fill = Breeding_region_MC), shape = 21, cex = 3)+
