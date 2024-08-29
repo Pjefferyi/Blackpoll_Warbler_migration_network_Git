@@ -533,7 +533,7 @@ clust.fig <- (fall.clustplot |spring.clustplot)
 ggsave(plot = clust.fig, filename = "cluster.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_defense/Presentation_figures",
        units = "cm", width = 24*1.2, height = 12*1.2, dpi = "print", bg = "white")
 
-# Plot of blackpoll warbler abundance 
+# Figure 5: Plot of blackpoll warbler abundance in breeding range ----
 
 # Load blackpoll warbler abundance raster
 bpw.ab <- load_raster(path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_imports",
@@ -558,27 +558,28 @@ ab.fig <- ggplot(st_as_sf(America))+
   geom_sf(data = br.regions, aes(col = "Abundance propagation regions"), fill = NA, linewidth = 0.5) +
    # all breeding sites included in the fall network
   new_scale_fill()+
-  geom_point(data =  fall.stat[fall.stat$sitenum == 1,], aes(fill = "black", x = Lon.50., y = Lat.50.), col = "white", shape = 21, cex = 3)+
-  scale_fill_manual(values = c("black"), labels = c("Geolocator deployment sites"), name = "", guide = guide_legend(order = 1))+
+  #geom_point(data =  fall.stat[fall.stat$sitenum == 1,], aes(fill = "black", x = Lon.50., y = Lat.50.), col = "white", shape = 21, cex = 3)+
+  #scale_fill_manual(values = c("black"), labels = c("Geolocator deployment sites"), name = "", guide = guide_legend(order = 1))+
   # Deployment location for WRMA04173
-  geom_point(data =  ref.data[ref.data$geo.id == "WRMA04173",], aes(fill = "black", x = mod.deploy.lon, y = mod.deploy.lat), col = "white", shape = 21, cex = 3)+
-  scale_fill_manual(values = c("black"), labels = c("Geolocator deployment sites"), name = "", guide = guide_legend(order = 1))+
-  coord_sf(xlim = c(-170, -40),ylim = c(-5, 70))+
+  #geom_point(data =  ref.data[ref.data$geo.id == "WRMA04173",], aes(fill = "black", x = mod.deploy.lon, y = mod.deploy.lat), col = "white", shape = 21, cex = 3)+
+  #scale_fill_manual(values = c("black"), labels = c("Geolocator deployment sites"), name = "", guide = guide_legend(order = 1))+
+  #coord_sf(xlim = c(-170, -40),ylim = c(-5, 70))+
   # estimated breeding location for WRMA04173
-  geom_point(data = spring.stat[spring.stat$geo_id == "WRMA04173" & spring.stat$sitenum == 5,],
-             aes(x = Lon.50., y = Lat.50.), shape = 4, cex = 3)+
+  # geom_point(data = spring.stat[spring.stat$geo_id == "WRMA04173" & spring.stat$sitenum == 5,],
+  #            aes(x = Lon.50., y = Lat.50.), shape = 4, cex = 3)+
+  geom_nodes(data = fall.ggnet[fall.ggnet$node.type == "Breeding",], mapping = aes(x = x, y = y, cex = node.weight), fill = "#440154FF", shape=21)+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
-        axis.title =element_blank(),
-        axis.text =element_blank(),
-        axis.ticks =element_blank(),
-        legend.title=element_text(size=11),
-        legend.text=element_text(size=11),
-        legend.background = element_blank(),
-        legend.box.background = element_rect(fill = "white", colour = "black"),
-        axis.ticks.length = unit(0, "pt"),
-        legend.spacing = unit(-18, "pt"),
-        legend.position = "None", #c(0.22, 0.3),
+        # axis.title =element_blank(),
+        # axis.text =element_blank(),
+        # axis.ticks =element_blank(),
+        # legend.title=element_text(size=11),
+        # legend.text=element_text(size=11),
+        # legend.background = element_blank(),
+        # legend.box.background = element_rect(fill = "white", colour = "black"),
+        # axis.ticks.length = unit(0, "pt"),
+        # legend.spacing = unit(-18, "pt"),
+        # legend.position = "None", #c(0.22, 0.3),
         legend.margin=margin(c(-5,5,9,5)),
         legend.key = element_rect(colour = "transparent", fill = "white"))
 
@@ -606,7 +607,7 @@ plot(c(0,2),c(-0.01,1),type = 'n', axes = F,xlab = '', ylab = '')
 text(x= 1.25, y = seq(0,1,l=5), labels = round(seq(0,max(sg),l=5), digits = 1), cex = 1)
 rasterImage(legend_image, 0.75, 0, 1,1)
 
-# Figure 5: sample of light level data during a flight over the carribean ----
+# Figure 7: sample of light level data during a flight over the carribean ----
 geo.id <- "V8296_004"
 
 # data directory
@@ -659,7 +660,7 @@ par(cex.axis= 1)
 
 #dev.off()
 
-# Figure 6: the fall and spring networks  ----
+# Figure 8: the fall and spring networks  ----
 
 ## fall node types ---- 
 fall.ggnet <- ggnetwork(fall.graph, layout = as.matrix(meta.fall.ab[, c("Lon.50.", "Lat.50.")]), scale = F)
@@ -851,7 +852,7 @@ png("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thes
 node.comp.insert
 dev.off()
 
-# Figure 4: Fall and spring migratory network communities ----
+# Figure 9: Fall and spring migratory network communities ----
 
 ## Fall network communities ----
 fall.com.plot <- ggplot(st_as_sf(America))+
@@ -1095,7 +1096,7 @@ spring.gplot.metric2 <- ggplot(st_as_sf(America))+
   ggtitle("Spring network") + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
-        legend.position = "None", legend.key = element_blank(),
+        legend.position = c(0.2, 0.5), legend.key = element_blank(),
         legend.title=element_text(size=13),
         legend.text=element_text(size=13),
         plot.title = element_text(size=16),
@@ -1112,7 +1113,7 @@ ggsave(plot = ats.fig, filename = "nodes.adjtimsp.png" ,  path = "C:/Users/Jelan
        units = "cm", width = 24*1.2, height = 10*1.2, dpi = "print", bg = "white")
 
 
-# Figure 7: Sample plot of longitude and latitude for a bird with the equinox highlighted ----
+# Figure 8: Sample plot of longitude and latitude for a bird with the equinox highlighted ----
 
 i <- "V8296_006"
 
@@ -1140,7 +1141,7 @@ points(anytime(equi.t$Twilight), lat.equi, col = "red")
 #abline(v = fall.equi, col = "orange")
 #abline(v = spring.equi, col = "orange")
 
-# Figure 7 stopovers in the nonbreeding range ----
+# Figure 9 stopovers in the nonbreeding range ----
 
 # Fall stopovers in the nonbreeding range
 fall.nbr.stp <- fall.stat %>% filter(Lat.50. < 13, Breeding_region_MC %in%c("Northwestern Region", "Central Region", "Western Region")) %>% group_by(geo_id) %>%
@@ -1215,7 +1216,7 @@ nbr.stops <- (fall.nbr.stp.plot | spring.nbr.stp.plot)
 ggsave(plot = nbr.stops, filename = "Nonbreeding.stopovers.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_defense/Presentation_figures", 
        units = "cm", width = 24*1.2, height = 10*1.2, dpi = "print", bg = "white")
 
-# Figure 8 individual migratory tracks for full year  ----
+# Figure 10 individual migratory tracks for full year  ----
 
 #Load locations processed during the netwrok construction
 geo.all <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/All.locations.csv") %>% arrange(geo_id, StartTime) %>%
@@ -1273,31 +1274,65 @@ individual.track <- ggplot(st_as_sf(America))+
   #if (i == first(unique(geo.all$geo_id))){theme(legend.position = c(0.5, 0.2))} else {theme(legend.position = "None")}
 
 
-# Figure 9 plot of important fall and spring nodes across the blackpoll warbler's range ----
+# Figure 11 plot of important fall and spring nodes across the blackpoll warbler's range ----
 
 fall.dat.loc.betw.top <- merge(fall.data, meta.fall.ab[, c("vertex", "Lon.50.", "Lat.50.")], by.x = "cluster.num", by.y = "vertex") %>% mutate(network = "fall") %>%
-  arrange(desc(betweenness.TO)) %>% dplyr::slice(1:5)
+  arrange(desc(betweenness.TO)) %>% filter(node.type == "Stopover") %>% dplyr::slice(1:3)
 
 spring.dat.loc.betw.top <- merge(spring.data, meta.spring.ab[, c("vertex", "Lon.50.", "Lat.50.")], by.x = "cluster.num", by.y = "vertex") %>% mutate(network = "spring") %>%
-  arrange(desc(betweenness.TO)) %>% dplyr::slice(1:5)
+  arrange(desc(betweenness.TO)) %>% filter(node.type == "Stopover") %>% dplyr::slice(1:3)
 
 fall.dat.loc.aw.top <- merge(fall.data, meta.fall.ab[, c("vertex", "Lon.50.", "Lat.50.")], by.x = "cluster.num", by.y = "vertex") %>% mutate(network = "fall") %>%
-  arrange(desc(time.spent.ab)) %>% dplyr::slice(1:5)
+  arrange(desc(time.spent.ab)) %>% filter(node.type == "Nonbreeding") %>% dplyr::slice(1:3)
 
 spring.dat.loc.aw.top <- merge(spring.data, meta.spring.ab[, c("vertex", "Lon.50.", "Lat.50.")], by.x = "cluster.num", by.y = "vertex") %>% mutate(network = "spring") %>%
-  arrange(desc(time.spent.ab)) %>% dplyr::slice(1:5)
+  arrange(desc(time.spent.ab)) %>%filter(node.type == "Nonbreeding") %>% dplyr::slice(1:3)
 
-node.dat.loc <- rbind(fall.dat.loc, spring.dat.loc)  
+fall.dat.loc.betw.top2 <- merge(fall.data, meta.fall.ab[, c("vertex", "Lon.50.", "Lat.50.")], by.x = "cluster.num", by.y = "vertex") %>% mutate(network = "fall") %>%
+  arrange(desc(betweenness.TO)) %>% filter(node.type == "Nonbreeding") %>% dplyr::slice(1)
 
-top_ranked_nodes <- ggplot(st_as_sf(America))+
+spring.dat.loc.betw.top2 <- merge(spring.data, meta.spring.ab[, c("vertex", "Lon.50.", "Lat.50.")], by.x = "cluster.num", by.y = "vertex") %>% mutate(network = "spring") %>%
+  arrange(desc(betweenness.TO)) %>% filter(node.type == "Nonbreeding") %>% dplyr::slice(1)
+
+fall.dat.loc.aw.top2 <- merge(fall.data, meta.fall.ab[, c("vertex", "Lon.50.", "Lat.50.")], by.x = "cluster.num", by.y = "vertex") %>% mutate(network = "fall") %>%
+  arrange(desc(time.spent.ab)) %>% filter(node.type == "Nonbreeding") %>% dplyr::slice(1)
+
+spring.dat.loc.aw.top2 <- merge(spring.data, meta.spring.ab[, c("vertex", "Lon.50.", "Lat.50.")], by.x = "cluster.num", by.y = "vertex") %>% mutate(network = "spring") %>%
+  arrange(desc(time.spent.ab)) %>%filter(node.type == "Nonbreeding") %>% dplyr::slice(1)
+
+node.dat.loc <- rbind(fall.dat.loc.betw.top, spring.dat.loc.betw.top)  
+
+ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
   geom_sf(data = Lakes, fill = "lightblue", lwd = 0.2, alpha = 1) +
   coord_sf(xlim = c(-170, -48),ylim = c(-5, 70))+
-  #geom_point(data = fall.dat.loc.betw.top, aes(x = Lon.50., y = Lat.50., fill = network), col = "black", cex = 4, pch= 21)+
-  geom_point(data = spring.dat.loc.betw.top, aes(x = Lon.50., y = Lat.50., fill = network), col = "black", cex = 4, pch= 21)+
-  #geom_point(data = fall.dat.loc.aw.top, aes(x = Lon.50., y = Lat.50., fill = network), col = "black", cex = 4, pch= 21)+
-  geom_point(data = spring.dat.loc.aw.top, aes(x = Lon.50., y = Lat.50., fill = network), col = "black",  cex = 4, pch= 21)+
-  scale_fill_manual(values = c("fall" = "red", "spring" = "lightblue"), labels= c("Fall", "Spring"))+
+  geom_point(data = spring.dat.loc.betw.top, aes(x = Lon.50., y = Lat.50., fill = node.type), col = "black", cex = 4, pch= 21)+
+  geom_point(data = spring.dat.loc.aw.top2, aes(x = Lon.50., y = Lat.50., fill = node.type), col = "black",  cex = 4, pch= 21)+
+  geom_point(data = spring.dat.loc.aw.top, aes(x = Lon.50., y = Lat.50., fill = node.type), col = "black",  cex = 4, pch= 21)+
+  geom_point(data = spring.dat.loc.aw.top2, aes(x = Lon.50., y = Lat.50., fill = node.type), col = "black",  cex = 4, pch= 21)+
+  scale_fill_manual(values = c("Stopover" = "#FDE725FF", "Nonbreeding" = "#21908CFF"), labels= c("Stopover", "Nonbreeding"))+  labs(fill = "Top ranked \nnodes")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
+        plot.title=element_text(size=12, vjust=-1),
+        legend.text = element_text(size = 12),
+        legend.position = c(0.15, 0.48),
+        axis.title =element_blank(),
+        axis.text =element_blank(),
+        axis.ticks =element_blank(),
+        axis.ticks.length = unit(0, "pt"),
+        legend.spacing = unit(-5, "pt"),
+        plot.margin = unit(c(6,6,6,6), "pt"),
+        legend.key = element_rect(colour = "transparent", fill = "white"))
+
+ggplot(st_as_sf(America))+
+  geom_sf(colour = "black", fill = "#F7F7F7") +
+  geom_sf(data = Lakes, fill = "lightblue", lwd = 0.2, alpha = 1) +
+  coord_sf(xlim = c(-170, -48),ylim = c(-5, 70))+
+  geom_point(data = fall.dat.loc.betw.top, aes(x = Lon.50., y = Lat.50., fill = node.type), col = "black", cex = 4, pch= 21)+
+  geom_point(data = fall.dat.loc.aw.top2, aes(x = Lon.50., y = Lat.50., fill = node.type), col = "black",  cex = 4, pch= 21)+
+  geom_point(data = fall.dat.loc.aw.top, aes(x = Lon.50., y = Lat.50., fill = node.type), col = "black",  cex = 4, pch= 21)+
+  geom_point(data = fall.dat.loc.aw.top2, aes(x = Lon.50., y = Lat.50., fill = node.type), col = "black",  cex = 4, pch= 21)+
+  scale_fill_manual(values = c("Stopover" = "#FDE725FF", "Nonbreeding" = "#21908CFF"), labels= c("Stopover", "Nonbreeding"))+
   labs(fill = "Top ranked \nnodes")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
@@ -1313,8 +1348,8 @@ top_ranked_nodes <- ggplot(st_as_sf(America))+
         legend.key = element_rect(colour = "transparent", fill = "white"))
 
 ## create panel ----
-ggsave(plot = top_ranked_nodes, filename = "top.ranked.nodes.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_defense/Presentation_figures", 
-       units = "cm", width = 24*1.2, height = 10*1.2, dpi = "print", bg = "white")
+# ggsave(plot = top_ranked_nodes, filename = "top.ranked.nodes.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_defense/Presentation_figures", 
+#        units = "cm", width = 24*1.2, height = 10*1.2, dpi = "print", bg = "white")
 
 # Figure 10 blank map of north america
 

@@ -164,7 +164,7 @@ twl$Twilight <- as.POSIXct(twl$Twilight, tz = "UTC")
 # Automatically adjust or mark false twilights
 twl <- twilightEdit(twilights = twl,
                     window = 4,
-                    outlier.mins = 15,
+                    outlier.mins = 15,#here we set a lower threshold to exclude outliers as otherwise we the mergesites function does not work. 
                     stationary.mins = 25,
                     plot = TRUE)
 

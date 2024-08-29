@@ -21,57 +21,57 @@ source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/B
 # path to reference data file
 ref_path <- "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv"
 ref_data <- read.csv(ref_path)
-# 
-# # location data 
-# geo.all <- findLocData(geo.ids = c("V8757_010",
-#                                    "V8296_004",
-#                                    "V8296_005",
-#                                    "V8296_006",
-#                                    "V8757_055",
-#                                    "V8757_018",
-#                                    "V8296_015",
-#                                    "V8296_017",
-#                                    "V8296_021",
-#                                    "V8296_026",
-#                                    "V8296_025",
-#                                    "V8296_007",
-#                                    "V8296_008",
-#                                    "V8757_019",
-#                                    "V8757_096",
-#                                    "V8757_134",
-#                                    "V8757_029",
-#                                    "V8757_078",
-#                                    "V7638_001",
-#                                    "V7638_005",
-#                                    "V7638_009",
-#                                    "V7638_010",
-#                                    "V7638_011",
-#                                    "blpw09",
-#                                    "blpw12",
-#                                    "3254_001",
-#                                    "4068_014",
-#                                    "blpw14",
-#                                    "3254_003",
-#                                    "3254_008",
-#                                    "3254_011",
-#                                    "3254_057",
-#                                    "blpw15",
-#                                    "blpw25",
-#                                    "4105_008",
-#                                    "4105_009",
-#                                    "4105_016",
-#                                    "4105_017",
-#                                    "4210_002",
-#                                    "4210_004",
-#                                    "4210_006",
-#                                    "4210_010",
-#                                    "WRMA04173",
-#                                    "A",
-#                                    "B",
-#                                    "C",
-#                                    "E",
-#                                    "D"), check_col_length = F)
-# 
+
+# location data
+geo.all <- findLocData(geo.ids = c("V8757_010",
+                                   "V8296_004",
+                                   "V8296_005",
+                                   "V8296_006",
+                                   "V8757_055",
+                                   "V8757_018",
+                                   "V8296_015",
+                                   "V8296_017",
+                                   "V8296_021",
+                                   "V8296_026",
+                                   "V8296_025",
+                                   "V8296_007",
+                                   "V8296_008",
+                                   "V8757_019",
+                                   "V8757_096",
+                                   "V8757_134",
+                                   "V8757_029",
+                                   "V8757_078",
+                                   "V7638_001",
+                                   "V7638_005",
+                                   "V7638_009",
+                                   "V7638_010",
+                                   "V7638_011",
+                                   "blpw09",
+                                   "blpw12",
+                                   "3254_001",
+                                   "4068_014",
+                                   "blpw14",
+                                   "3254_003",
+                                   "3254_008",
+                                   "3254_011",
+                                   "3254_057",
+                                   "blpw15",
+                                   "blpw25",
+                                   "4105_008",
+                                   "4105_009",
+                                   "4105_016",
+                                   "4105_017",
+                                   "4210_002",
+                                   "4210_004",
+                                   "4210_006",
+                                   "4210_010",
+                                   "WRMA04173",
+                                   "A",
+                                   "B",
+                                   "C",
+                                   "E",
+                                   "D"), check_col_length = F)
+
 # # Define stationary periods as breeding, stopover, or non-breeding #############
 # geo.all <- geo.all %>% group_by(geo_id) %>% mutate(site_type = case_when(
 #   (sitenum == 1 | sitenum == max(sitenum)) & Recorded_North_South_mig == "Both" ~ "Breeding",
@@ -202,7 +202,7 @@ ref_data <- read.csv(ref_path)
 # year(geo.all$br.departure) <- year(geo.all$br.departure) + geo.all$year.difference
 # year(geo.all$fall.br.departure) <- year(geo.all$fall.br.departure) + geo.all$year.difference
 # year(geo.all$spring.br.arrival) <- year(geo.all$spring.br.arrival) + geo.all$year.difference
-# 
+
 # # # Save the data edited here  ###################################################
 # 
 # #Save the new columns in the reference data
@@ -211,12 +211,15 @@ ref_data <- read.csv(ref_path)
 # #save the processed geolocatorlocations 
 # write.csv(geo.all, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/All.locations.csv",row.names=FALSE)
 
+#Load data not corrected for oceanic crossings
 geo.all <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/All.locations.csv")
-#geo.all <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/All_locations_ocean_cross_cor.csv")
 
-# # re-calcualte arrival date
-# nbr.arrival.times <- geo.all %>% group_by(geo_id) %>% filter(NB_count == 1) %>% dplyr::select(-nbr.arrival) %>% rename(nbr.arrival = StartTime )
-# geo.all <- geo.all %>% dplyr::select(-nbr.arrival) %>% merge(nbr.arrival.times[,c("geo_id", "nbr.arrival")], by = "geo_id", all = T)
+##Load data corrected for oceanic crossings 
+##geo.all <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/All_locations_ocean_cross_cor.csv")
+##
+### re-calculate arrival dates if  working with corrected oceanic crossings 
+##nbr.arrival.times <- geo.all %>% group_by(geo_id) %>% filter(NB_count == 1) %>% dplyr::select(-nbr.arrival) %>% rename(nbr.arrival = StartTime )
+##geo.all <- geo.all %>% dplyr::select(-nbr.arrival) %>% merge(nbr.arrival.times[,c("geo_id", "nbr.arrival")], by = "geo_id", all = T)
 
 ################################################################################
 # Fall migration network #######################################################
