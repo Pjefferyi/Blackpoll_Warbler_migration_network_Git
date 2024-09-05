@@ -660,8 +660,7 @@ fall.com.plot <- ggplot(st_as_sf(America))+
         legend.box.background = element_rect(fill = "white", colour = "black", linewidth = 0.2),
         legend.position = "none", legend.key = element_rect(fill = "white", colour = NA),
         legend.background = element_rect(fill = NA),
-        legend.title=element_text(size=17),
-        legend.text=element_text(size=17),
+        title = element_text(size = 12),
         axis.title =element_blank(),
         axis.text =element_blank(),
         axis.ticks =element_blank(),
@@ -687,8 +686,7 @@ spring.com.plot <- ggplot(st_as_sf(America))+
         legend.box.background = element_rect(fill = "white", colour = "black", linewidth = 0.2),
         legend.position = "none", legend.key = element_rect(fill = "white", colour = NA),
         legend.background = element_rect(fill = NA),
-        legend.title=element_text(size=17),
-        legend.text=element_text(size=17),
+        title = element_text(size = 12),
         axis.title =element_blank(),
         axis.text =element_blank(),
         axis.ticks =element_blank(),
@@ -1003,10 +1001,10 @@ fall.gplot.time.spent <- ggplot(st_as_sf(America))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         legend.box.background = element_rect(fill = "white", colour = "black", linewidth = 0.4),
-        legend.position = c(0.18, 0.4), legend.key = element_blank(),
-        legend.title=element_text(size=10),
-        legend.text=element_text(size=10),
-        plot.title = element_text(size=10),
+        legend.position = c(0.2, 0.4), legend.key = element_blank(),
+        legend.title=element_text(size=12),
+        legend.text=element_text(size=12),
+        plot.title = element_text(size=12),
         axis.title =element_blank(),
         axis.text =element_blank(),
         axis.ticks =element_blank(),
@@ -1028,9 +1026,9 @@ spring.gplot.time.spent<- ggplot(st_as_sf(America))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         legend.position = "None", legend.key = element_blank(),
-        legend.title=element_text(size=10),
-        legend.text=element_text(size=10),
-        plot.title = element_text(size=10),
+        legend.title=element_text(size=12),
+        legend.text=element_text(size=12),
+        plot.title = element_text(size=12),
         axis.title =element_blank(),
         axis.text =element_blank(),
         axis.ticks =element_blank(),
@@ -1895,7 +1893,7 @@ ggsave(plot = nbr.move.plot, filename = "nbr.movements.png" ,  path = "C:/Users/
        units = "cm", width = 24*1.2, height = 10*1.2, dpi = 680, bg = "white")
 
 
-# Flight by individuals with ID V8757-096 -----
+# Figure 16:  Flight by individuals with ID V8757-096 -----
 
 geo.id <- "V8757_096"
 
@@ -1951,3 +1949,54 @@ rect(anytime(f1.start), min(x0_ad[,2])-2, anytime(f1.end), max(x0_ad[,2])+2, col
 par(cex.lab= 1, cex.axis= 1)
 
 dev.off()
+
+# Figure 17: timing of migratory events ----
+
+## Fall departure from North America (last node used in NA)
+fall.dep.nodes <- c(8, 7, 6, 5, 4)
+
+fall.NA.dep <- fall.stat %>% filter(cluster %in% fall.dep.nodes) %>%
+  group_by(geo_id) %>% reframe(timing = last(EndTime), region = first(Breeding_region_MC), study.site = first(study.site)) %>%
+  mutate(timing_doy = strftime(timing, format = "%j"))
+
+fall.NA.dep.plot <- ggplot(data = fall.NA.dep, aes(y =  as.numeric(timing_doy), x = study.site,
+                                                    colour = region)) +
+  geom_boxplot()+
+  coord_flip()
+  
+## Fall arrival from Arrival in nonbreeding grounds (first Node used in SA)
+fall.arr.nodes <- c(11, 14, 13, 12, 15)
+
+fall.SA.arr <- fall.stat %>% filter(cluster %in% fall.arr.nodes ) %>%
+  group_by(geo_id) %>% reframe(timing = first(StartTime), region = first(Breeding_region_MC), study.site = first(study.site)) %>%
+  mutate(timing_doy = strftime(timing, format = "%j"))
+
+fall.SA.arr.plot <- ggplot(data = fall.SA.arr, aes(y =  as.numeric(timing_doy), x = study.site,
+                                                    colour = region)) +
+  geom_boxplot()+
+  coord_flip()
+
+## Spring Departure from nonbreeding Grounds (last node used in SA)
+spring.dep.nodes <-c(13, 11, 12, 14, 10)
+
+spring.SA.dep <- spring.stat %>% filter(cluster %in% spring.dep.nodes) %>%
+  group_by(geo_id) %>% reframe(timing = last(EndTime), region = first(Breeding_region_MC), study.site = first(study.site)) %>%
+  mutate(timing_doy = strftime(timing, format = "%j"))
+
+spring.SA.dep.plot <- ggplot(data = spring.SA.dep, aes(y =  as.numeric(timing_doy), x = study.site,
+                                                   colour = region)) +
+  geom_boxplot()+
+  coord_flip()
+
+
+## Spring Arrival at North American stopover  (first node used in NA)
+spring.arr.nodes <-c(2, 3,4, 5, 6, 7,8)
+
+spring.NA.arr <- spring.stat %>% filter(cluster %in% spring.arr.nodes) %>%
+  group_by(geo_id) %>% reframe(timing = last(EndTime), region = first(Breeding_region_MC), study.site = first(study.site)) %>%
+  mutate(timing_doy = strftime(timing, format = "%j"))
+
+spring.NA.arr.plot <- ggplot(data = spring.NA.arr, aes(y =  as.numeric(timing_doy), x = study.site,
+                                                       colour = region)) +
+  geom_boxplot()+
+  coord_flip()
