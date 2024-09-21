@@ -137,7 +137,7 @@ lightImage( tagdata = lig,
 tsimageDeploymentLines(twl$Twilight, lon.calib, lat.calib, offset, lwd = 2, col = "orange", zenith = 92)
 
 #calibration period before the migration 
-tm.calib <- as.POSIXct(c("2016-08-01", "2016-08-20"), tz = "UTC")
+tm.calib <- as.POSIXct(c("2016-07-15", "2016-08-20"), tz = "UTC")
 
 abline(v = tm.calib, lwd = 2, lty = 2, col = "orange")
 
@@ -153,9 +153,8 @@ zenith0 <- calib[2]
 
 alpha <- calib[3:4]
 
-# # Calibration V2 ###############################################################
+# Calibration V2 ###############################################################
 # 
-
 # # Calculate solar times and declination from calibration period
 # sun <- solar(d_calib [,1])
 # 
@@ -171,7 +170,7 @@ alpha <- calib[3:4]
 #            lon = lon.calib,
 #            lat = lat.calib,
 #            rise = d_calib$Rise,
-#            zenith = median(zenith.calib ))
+#            zenith = median(zenith.calib))
 # 
 # # Determine difference in minutes from known and observed sunrise times
 # twl.calib.deviation <-
@@ -188,8 +187,19 @@ alpha <- calib[3:4]
 # 
 # alpha <- twl.calib.dist$estimate
 # 
-
-# hist(abs(twl.calib.deviation), breaks = 30)
+# #Extract error dens estimates
+# x <- seq(0, max(twl.calib.deviation))
+# dens <- dgamma(x,twl.calib.dist$estimate[1], twl.calib.dist$estimate[2])
+# dens <- data.frame(gamma_density = dens, deviation = x)
+# 
+# # Create a plot 
+# library(ggplot2)
+# 
+# plot.data <- data.frame(deviation = abs(twl.calib.deviation))
+# 
+# ggplot(data = plot.data, aes(x = deviation)) + 
+#   geom_histogram(aes(y = after_stat(count / sum(count)))) + 
+#   geom_line(data = dens, aes(x = deviation, y = gamma_density))
 
 # Alternative calibration #######################################################
 
@@ -259,8 +269,8 @@ dev.off()
 # Using approximate timings of arrival and departure from the breeding grounds
 zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith0,
-                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad+2.5,
-                            Date > anytime(dep.nbr) ~ zenith0_ad+2.5))
+                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad + 2.5,
+                            Date > anytime(dep.nbr) ~ zenith0_ad +2.5))
 
 zeniths0 <- zenith_twl_zero$zenith
 

@@ -204,7 +204,7 @@ spring.graph.disc <- spring.graph - edge(spring.e)
 
 #betweenness calculation 
 V(spring.graph)$betweenness <- betweenness(spring.graph.disc, directed =T, weights = 1/E(spring.graph.disc)$weight) 
-V(spring.graph)$betweenness.unweighted <- 1/betweenness(spring.graph.disc, directed = T, weights = NULL) 
+V(spring.graph)$betweenness.unweighted <- betweenness(spring.graph.disc, directed = T, weights = NULL) 
 
 #betweenness calculation (Opshal et al.)
 spring.edge.list <- cbind(get.edgelist(spring.graph.disc), E(spring.graph.disc)$weight)
@@ -215,13 +215,13 @@ V(spring.graph)$betweenness.TO <- betweenness_w(spring.edge.list, directed = T, 
 # Fall and spring modified betweenness metric 
 fall.data.temp <- as_data_frame(fall.graph.disc, what = "vertices")
 
+# loop that finds the shortest path between network nodes and records the nodes on the path 
 fall.paths <- data.frame(nodes = fall.data.temp$cluster.num)
-
 for (i in fall.data.temp[fall.data.temp$node.type == "Breeding",]$cluster.num){
   
   fall.paths.i <- shortest_paths(fall.graph.disc, from = i,
                                  to = fall.data.temp[fall.data.temp$node.type == "Nonbreeding",]$cluster.num,
-                                 weights = (1/E(fall.graph.disc)$weight^5),
+                                 weights = (1/E(fall.graph.disc)$weight),
                                  mode = "out")
   
   for(l in seq(1:length(fall.paths.i$vpath))){
@@ -235,7 +235,40 @@ for (i in fall.data.temp[fall.data.temp$node.type == "Breeding",]$cluster.num){
   fall.paths <- merge(fall.paths, path.df, by = "nodes", all = T)
 }
 
+#sum the number of time each node is on a shortest path 
 fall.mod.flow <- rowSums(fall.paths[,2:ncol(fall.paths)], na.rm = T)
+
+#add results to graph data 
+V(fall.graph)$mod.betweenness <-fall.mod.flow
+
+# Same process for the spring 
+spring.data.temp <- as_data_frame(spring.graph.disc, what = "vertices")
+
+# we run the loop again 
+spring.paths <- data.frame(nodes = spring.data.temp$cluster.num)
+for (i in spring.data.temp[spring.data.temp$node.type == "Nonbreeding",]$cluster.num){
+  
+  spring.paths.i <- shortest_paths(spring.graph.disc, from = i,
+                                 to = spring.data.temp[spring.data.temp$node.type == "Breeding",]$cluster.num,
+                                 weights = (1/E(spring.graph.disc)$weight),
+                                 mode = "out")
+  
+  for(l in seq(1:length(spring.paths.i$vpath))){
+    path.length <- length(spring.paths.i$vpath[[l]])-1
+    spring.paths.i$vpath[[l]] <- spring.paths.i$vpath[[l]][2:path.length] 
+  }
+  
+  path.data <- table(unlist(spring.paths.i$vpath)) 
+  path.df <- as.data.frame(path.data)
+  colnames(path.df) <- c("nodes", i)
+  spring.paths <- merge(spring.paths, path.df, by = "nodes", all = T)
+}
+
+#sum the number of time each node is on a shortest path 
+spring.mod.flow <- rowSums(spring.paths[,2:ncol(spring.paths)], na.rm = T)
+
+#add results to graph data 
+V(spring.graph)$mod.betweenness <- spring.mod.flow
 
 # fall and spring eigenvector centrality coefficient
 V(fall.graph)$eigen <- eigen_centrality(as.undirected(fall.graph.disc))$vector
@@ -876,9 +909,9 @@ fall.gplot.betw <- ggplot(st_as_sf(America))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
   #geom_text(data = fall.ggnet, mapping = aes(x = x, y = y, label = weight), nudge_x = 4)+
   scale_color_manual(values=c(adjustcolor("black", alpha = 0.5), adjustcolor("blue", alpha = 0)), guide = "none")+
-  geom_nodes(data = fall.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = betweenness.TO), shape=21, size  = 3)+
+  geom_nodes(data = fall.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = betweenness), shape=21, size  = 3)+
   scale_fill_viridis_c(direction = -1, option = "magma", name = "Betweenness \ncentrality", begin  = 0.3,
-                       guide = guide_colorbar(frame.colour = "black"), limits = c(min(0),  max(fall.ggnet$betweenness.TO, spring.ggnet$betweenness.TO)))+
+                       guide = guide_colorbar(frame.colour = "black"), limits = c(min(0),   max(fall.ggnet$betweenness, spring.ggnet$betweenness)))+
   ggtitle("Post-breeding migration network") + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
@@ -906,7 +939,7 @@ spring.gplot.betw <- ggplot(st_as_sf(America))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
   geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = betweenness.TO), shape=21, size  = 3)+
   scale_fill_viridis_c(direction = -1, option = "magma", name = "Betweenness \ncentrality", begin   = 0.3,
-                       guide = guide_colorbar(frame.colour = "black"), limits = c(min(0),  max(fall.ggnet$betweenness.TO, spring.ggnet$betweenness.TO)))+
+                       guide = guide_colorbar(frame.colour = "black"), limits = c(min(0), max(fall.ggnet$betweenness.TO, spring.ggnet$betweenness.TO)))+ 
   ggtitle("Pre-breeding network") + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
@@ -920,7 +953,6 @@ spring.gplot.betw <- ggplot(st_as_sf(America))+
         axis.ticks.length = unit(0, "pt"),
         plot.margin = unit(c(0,0,0,0), "pt"))+
   annotate("text", label = "(b)", x = -165, y = 48)
-
 
 ## Time-adjusted node weight ----
 fall.gplot.metric2 <- ggplot(st_as_sf(America))+
@@ -1300,7 +1332,7 @@ ggsave(plot = MC.nbr.regions.fig, filename = "MC.nbr.regions.png" ,  path = "C:/
 # Figure 7: Abundance propagation regions ---- 
 
 #load reference data
-ref.data <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv")
+ref.data <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/Geolocator_reference_data_consolidated.csv")
 
 # Load abundance propagation region polygons 
 br.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Relative_abundance_propagation/bpw_abundance_regions_adjusted.shp") %>%
@@ -1610,7 +1642,7 @@ west.fall.mig.routes <- ggplot(st_as_sf(America))+
         legend.key = element_rect(colour = "transparent", fill = "white"))
 
 ## Migratory track for western breeders in the spring ----
-west.spring.data <- geo.all %>% filter(Breeding_region_MC %in% c("Central Region")) %>%
+west.spring.data <- geo.all %>% filter(Breeding_region_MC %in% c("Northwestern Region", "Central Region", "Western Region", "Eastern Region")) %>%
   group_by(geo_id) %>%
   filter(StartTime >= StartTime[which(NB_count == max(NB_count, na.rm = T))])
 
@@ -1638,7 +1670,7 @@ west.spring.mig.routes <- ggplot(st_as_sf(America))+
 
 # Figure 12 threshold data and phenology dates ----
 geo.all <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/All.locations.csv") %>% arrange(geo_id, StartTime)
-ref_path <- "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv"
+ref_path <- "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/Geolocator_reference_data_consolidated.csv"
 
 # load threshold paths 
 tpaths <- findThresLocData()
@@ -1792,6 +1824,9 @@ year(NB.move$avg.nbr.arrival) <- ifelse(NB.move$geo_id != "WRMA04173" , year(NB.
 NB.move <- NB.move%>% mutate(nbr.stage.common = as.numeric(difftime(anytime(move.start), anytime(avg.nbr.arrival), units = "days"))/
                                as.numeric(difftime(anytime(nbr.departure), anytime(avg.nbr.arrival), units = "days"))) 
 
+## Alternatively we'll add a column that gives the day of the year #############
+NB.move <- NB.move %>% group_by(geo_id) %>% mutate(move_start_day_of_yr = yday(move.start))
+
 ## Calculate the mean confidence interval for nonbreeding stationary sites of individuals that did not move 
 # NB.locs.stat <- geo.all %>% dplyr::filter(sitenum > 0, site_type %in% c("Nonbreeding"),
 #                                      period %in% c("Non-breeding period"),
@@ -1851,30 +1886,104 @@ m.ex.pt$mean.east.lim <- destPoint(c(m.ex.pt$Lon.50., m.ex.pt$Lat.50.), b = 90, 
 m.ex.pt$mean.west.lim <- destPoint(c(m.ex.pt$Lon.50., m.ex.pt$Lat.50.), b = 270, d = m.west.unc)[1]
 
 
-## Nonbreeding movement directions ----
+# Nonbreeding movement directions ----
+
+# nbr.move.plot <- ggplot(st_as_sf(wrld_simpl))+
+#   geom_sf(colour = "black", fill = "#F7F7F7", lwd = 0.3) +
+#   coord_sf(xlim = c(-95, -48),ylim = c(-8, 15)) +
+#   geom_errorbar(data = ex.pt, aes(x = mean.lon, ymin= mean.south.lim , ymax= mean.north.lim ), linewidth = 0.4, width= 0.5, alpha = 0.8, color = "black") +
+#   geom_errorbar(data = ex.pt, aes(y = mean.lat, xmin= mean.west.lim, xmax=  mean.east.lim), linewidth = 0.4, width = 0.5, alpha = 0.8, color = "black") +
+#   geom_errorbar(data = m.ex.pt, aes(x = Lon.50., ymin= mean.south.lim , ymax= mean.north.lim ), linewidth = 0.4, width= 0.5, alpha = 0.8, color = "black") +
+#   geom_errorbar(data = m.ex.pt, aes(y = Lat.50., xmin= mean.west.lim, xmax=  mean.east.lim), linewidth = 0.4, width = 0.5, alpha = 0.8, color = "black") +
+#   #geom_errorbar(data = NB.move, aes(x = Lon.50., ymin= Lat.2.5. , ymax= Lat.97.5. ), linewidth = 0.4, width= 0.5, alpha = 1, color = "black") +
+#   #geom_errorbar(data =NB.move, aes(y = Lat.50., xmin= Lon.2.5., xmax=  Lon.97.5.), linewidth = 0.4, width = 0.5, alpha = 1, color = "black") +
+#   geom_point(data = NB.stat.mean, mapping = aes(x =  mean.lon, y =  mean.lat,fill = "darkgray"), colour = "black", cex = 2.7, shape = 21, stroke = 0.5) +
+#   scale_fill_manual(values = c("darkgray"),label = c("Stationary individuals"), name = "") +
+#   new_scale_fill()+
+#   geom_arrowsegment(data = NB.move, mapping = aes(x = start.lon, y = start.lat, xend = end.lon, yend = end.lat,
+#                                                   col = nbr.stage.common , 
+#                                                   fill = nbr.stage.common,
+#                                                   linetype = equinox.nbr.move),
+#                     arrows = arrow(end = "last", type = "closed", length = unit(0.1, "inches")), arrow_positions = 1, lwd = 0.6)+
+#   scale_fill_viridis( begin = 0, end = 0.9, breaks = c("Early" = 0.25, "Middle" = 0.50, "Late" = 0.75),
+#                       name = "Timing")+
+#   scale_color_viridis( begin = 0, end = 0.9, guide = "none")+
+#   scale_linetype_manual(values = c("dashed", "solid"), guide = "none")+
+#   #geom_text(data = NB.stat, mapping = aes(x = Lon.50., y = Lat.50., label = geo_id), cex = 2.5)+
+#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+#         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
+#         text = element_text(size = 14),
+#         plot.title=element_text(size=8, vjust=-1),
+#         legend.position = c(0.14, 0.4),
+#         axis.title =element_blank(),
+#         #axis.text =element_blank(),
+#         #axis.ticks =element_blank(),
+#         #axis.ticks.length = unit(0, "pt"),
+#         legend.spacing = unit(-5, "pt"),
+#         #plot.margin = unit(c(0,0,0,0), "pt"),
+#         legend.key = element_rect(colour = "transparent", fill = "white"))+
+#   guides(fill = guide_colourbar(order=1))
+
+
+# For the next plot, we will need to combine the data on nonbreeding movements. 
+mover_point_last <- NB.move %>% dplyr::select(geo_id, Lon.50., Lat.50., Lat.2.5., Lon.2.5., Lat.97.5., Lon.97.5.) %>%
+  mutate(type = "mover_last")
+mover_points_first <- NB.move %>% dplyr::select(geo_id, start.lon, start.lon.2.5, start.lon.97.5, start.lat, start.lat.2.5, start.lat.97.5) %>%
+  rename(Lon.50. = start.lon,
+          Lon.2.5. = start.lon.2.5, 
+          Lon.97.5.= start.lon.97.5 ,
+          Lat.50. = start.lat, 
+          Lat.2.5.= start.lat.2.5,
+          Lat.97.5.= start.lat.97.5) %>% 
+          mutate(type = "mover_first")
+nonmover_points <- NB.stat.mean %>% dplyr::select(geo_id, mean.lon, mean.lon2.5, mean.lon97.5, mean.lat, mean.lat2.5, mean.lat97.5)%>%
+  rename(Lon.50. = mean.lon,
+         Lon.2.5. = mean.lon2.5, 
+         Lon.97.5. = mean.lon97.5,
+         Lat.50. = mean.lat, 
+         Lat.2.5. = mean.lat2.5,
+         Lat.97.5. = mean.lat97.5)%>% 
+         mutate(type = "non_mover") 
+
+comb_nb_locs <- rbind(mover_point_last, mover_points_first, nonmover_points)
+
+
+#Plot of nonbreeding locations ----
+nbr.locations.plot <- ggplot(st_as_sf(wrld_simpl))+
+  geom_sf(colour = "black", fill = "#F7F7F7", lwd = 0.3) +
+  coord_sf(xlim = c(-95, -48),ylim = c(-8, 15)) +
+  geom_errorbar(data = comb_nb_locs, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5., colour = type), linewidth = 0.4, width= 0, alpha = 0.8) +
+  geom_errorbar(data = comb_nb_locs, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5., colour = type), linewidth = 0.4, width = 0, alpha = 0.8) +
+  geom_point(data = comb_nb_locs, mapping = aes(x = Lon.50., y =  Lat.50., fill = type), colour = "black", cex = 2.7, shape = 21, stroke = 0.5) +
+  scale_fill_manual(name = "Locations", labels = c("Relocations",  "Initial", "Static"), values = c("firebrick", "orange", "gray"))+
+  scale_colour_manual(values = c("firebrick", "orange", "gray"), guide = F)+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
+        text = element_text(size = 14),
+        plot.title=element_text(size=8, vjust=-1),
+        legend.position = c(0.14, 0.4),
+        axis.title =element_blank(),
+        #axis.text =element_blank(),
+        #axis.ticks =element_blank(),
+        #axis.ticks.length = unit(0, "pt"),
+        legend.spacing = unit(-5, "pt"),
+        #plot.margin = unit(c(0,0,0,0), "pt"),
+        legend.key = element_rect(colour = "transparent", fill = "white"))
+
+# Plot showing movements and movement timings during the nonbreeding season ----
 nbr.move.plot <- ggplot(st_as_sf(wrld_simpl))+
   geom_sf(colour = "black", fill = "#F7F7F7", lwd = 0.3) +
   coord_sf(xlim = c(-95, -48),ylim = c(-8, 15)) +
-  geom_errorbar(data = ex.pt, aes(x = mean.lon, ymin= mean.south.lim , ymax= mean.north.lim ), linewidth = 0.4, width= 0.5, alpha = 0.8, color = "black") +
-  geom_errorbar(data = ex.pt, aes(y = mean.lat, xmin= mean.west.lim, xmax=  mean.east.lim), linewidth = 0.4, width = 0.5, alpha = 0.8, color = "black") +
-  geom_errorbar(data = m.ex.pt, aes(x = Lon.50., ymin= mean.south.lim , ymax= mean.north.lim ), linewidth = 0.4, width= 0.5, alpha = 0.8, color = "black") +
-  geom_errorbar(data = m.ex.pt, aes(y = Lat.50., xmin= mean.west.lim, xmax=  mean.east.lim), linewidth = 0.4, width = 0.5, alpha = 0.8, color = "black") +
-  #geom_errorbar(data = NB.move, aes(x = Lon.50., ymin= Lat.2.5. , ymax= Lat.97.5. ), linewidth = 0.4, width= 0.5, alpha = 1, color = "black") +
-  #geom_errorbar(data =NB.move, aes(y = Lat.50., xmin= Lon.2.5., xmax=  Lon.97.5.), linewidth = 0.4, width = 0.5, alpha = 1, color = "black") +
-  geom_point(data = NB.stat.mean, mapping = aes(x =  mean.lon, y =  mean.lat,fill = "darkgray"), colour = "black", cex = 2.7, shape = 21, stroke = 0.5) +
-  scale_fill_manual(values = c("darkgray"),label = c("Stationary individuals"), name = "") +
-  new_scale_fill()+
   geom_arrowsegment(data = NB.move, mapping = aes(x = start.lon, y = start.lat, xend = end.lon, yend = end.lat,
-                                                  col = nbr.stage.common , 
-                                                  fill = nbr.stage.common,
+                                                  col = move_start_day_of_yr ,
+                                                  fill = move_start_day_of_yr,
                                                   linetype = equinox.nbr.move),
                     arrows = arrow(end = "last", type = "closed", length = unit(0.1, "inches")), arrow_positions = 1, lwd = 0.6)+
-  scale_fill_viridis( begin = 0, end = 0.9, breaks = c("Early" = 0.25, "Middle" = 0.50, "Late" = 0.75),
+  scale_fill_viridis( begin = 1, end = 365, breaks = c("Early" = 0.25, "Middle" = 0.50, "Late" = 0.75),
                       name = "Timing")+
   scale_color_viridis( begin = 0, end = 0.9, guide = "none")+
   scale_linetype_manual(values = c("dashed", "solid"), guide = "none")+
-  #geom_text(data = NB.stat, mapping = aes(x = Lon.50., y = Lat.50., label = geo_id), cex = 2.5)+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         text = element_text(size = 14),
         plot.title=element_text(size=8, vjust=-1),

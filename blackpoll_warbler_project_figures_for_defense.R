@@ -739,9 +739,9 @@ fall.gplot.comp <- ggplot(st_as_sf(America))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
   scale_color_manual(values=c(adjustcolor("black", alpha = 0.5), adjustcolor("blue", alpha = 0)), guide = "none")+
   geom_pie_glyph(slices= c( "Northwest", "West", "Central", "East"), colour = "black", data = fall.data[fall.data$node.comp < 3,], mapping = aes(x = long, y = lat, radius = node.weight)) +
-  scale_radius(range = c(0.6, 3), unit = "mm", guide = "none")+
+  scale_radius(range = c(0.78, 3.9), unit = "mm", guide = "none")+
   geom_point(data = fall.data[fall.data$node.comp == 3,], mapping = aes(x = long, y = lat, fill = single.reg, size = node.weight), shape= 21, colour = "black",  show.legend = F)+
-  scale_size(range = c(1.2, 6), guide = "none")+
+  scale_size(range = c(1.56, 7.8), guide = "none")+
   scale_fill_manual(values = c("West" = "#D55E00", "Central" = "#009E73", "East" = "#0072B2", "Northwest" = "#F0E442"), name = "Breeding origin") +
   ggtitle("(a) Fall node use")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
@@ -766,10 +766,10 @@ spring.gplot.comp <- ggplot(st_as_sf(America))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
   scale_color_manual(values=c(adjustcolor("blue", alpha = 0), adjustcolor("black", alpha = 0.5)), guide = "none")+
   geom_pie_glyph(slices= c("West", "Central", "East", "Northwest"), colour = "black", data = spring.data, mapping = aes(x = long, y = lat, radius = node.weight)) +
-  scale_radius(range = c(0.6, 3), unit = "mm", guide = "none")+
+  scale_radius(range = c(0.78, 3.9), unit = "mm", guide = "none")+
   geom_point(data = spring.data[spring.data$node.comp == 3,], mapping = aes(x = long, y = lat, fill = single.reg, size = node.weight), shape= 21, colour = "black")+
   geom_point(data = spring.data, mapping = aes(x = long, y = lat, fill = single.reg, size = node.weight), colour = NA, shape= 21)+
-  scale_size(range = c(1.2, 7), breaks = c(0.1, 0.2, 0.3), name = "Node weight")+
+  scale_size(range = c(1.56, 7.8), breaks = c(0.1, 0.2, 0.3), name = "Node weight")+
   scale_fill_manual(values = c("West" = "#D55E00", "Central" = "#009E73", "East" = "#0072B2", "Northwest" = "#F0E442"), guide = "none") +
   ggtitle("(b) Spring node use")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
@@ -1144,7 +1144,7 @@ points(anytime(equi.t$Twilight), lat.equi, col = "red")
 # Figure 9 stopovers in the nonbreeding range ----
 
 # Fall stopovers in the nonbreeding range
-fall.nbr.stp <- fall.stat %>% filter(Lat.50. < 13, Breeding_region_MC %in%c("Northwestern Region", "Central Region", "Western Region")) %>% group_by(geo_id) %>%
+fall.nbr.stp <- fall.stat %>% filter(Lat.50. < 13, Breeding_region_MC %in%c("Northwestern Region", "Central Region", "Western Region", "Eastern Region")) %>% group_by(geo_id) %>%
   filter(length(geo_id) > 1)
 
 fall.nbr.stp.plot <- ggplot(st_as_sf(America))+
@@ -1174,7 +1174,6 @@ fall.nbr.stp.plot <- ggplot(st_as_sf(America))+
 # spring stopovers in the nonbreeding range
 spring.nbr.stp <- spring.stat %>% filter(Lat.50. < 13) %>% group_by(geo_id) %>%
   filter(length(geo_id) > 1)
-
 
 # addition of non-breeding movements with a predominent northward direction 
 source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Blackpoll_warbler_mapping_scripts/Blackpoll_nonbreeding_movements.R")

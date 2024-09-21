@@ -190,7 +190,7 @@ x0_r<- path$x
 z0 <- trackMidpts(x0_r)
 
 # Check the following times of arrival and departure using a plot 
-arr.nbr <- "2018-10-20" 
+arr.nbr <- "2018-10-28" 
 dep.nbr <- "2019-04-22" 
 
 # open jpeg
@@ -213,8 +213,8 @@ dev.off()
 # Using approximate timings of arrival and departure from the breeding grounds
 zenith_twl_zero <- data.frame(Date = twl$Twilight) %>%
   mutate(zenith = case_when(Date < anytime(arr.nbr) ~ zenith0,
-                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad+4,
-                            Date > anytime(dep.nbr) ~ zenith0_ad+4))
+                            Date > anytime(arr.nbr) & Date < anytime(dep.nbr) ~ zenith0_ad + 4,
+                            Date > anytime(dep.nbr) ~ zenith0_ad + 4))
 
 zeniths0 <- zenith_twl_zero$zenith 
 
@@ -256,7 +256,7 @@ save(x0_r, file = paste0(dir,"/", geo.id, "_initial_path_raw.csv"))
 
 # Initial Path #################################################################
 tol_ini <- 0.16
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol = tol_ini)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zeniths_med, tol = tol_ini)
 
 x0 <- path$x
 z0 <- trackMidpts(x0)

@@ -17,61 +17,61 @@ library(scatterpie)
 source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis_helper_functions.R")
 
 # # Import data ##################################################################
+#  
+# # path to reference data file
+# ref_path <- "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv"
+# ref_data <- read.csv(ref_path)
 # 
-# path to reference data file
-ref_path <- "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv"
-ref_data <- read.csv(ref_path)
-
-# location data
-geo.all <- findLocData(geo.ids = c("V8757_010",
-                                   "V8296_004",
-                                   "V8296_005",
-                                   "V8296_006",
-                                   "V8757_055",
-                                   "V8757_018",
-                                   "V8296_015",
-                                   "V8296_017",
-                                   "V8296_021",
-                                   "V8296_026",
-                                   "V8296_025",
-                                   "V8296_007",
-                                   "V8296_008",
-                                   "V8757_019",
-                                   "V8757_096",
-                                   "V8757_134",
-                                   "V8757_029",
-                                   "V8757_078",
-                                   "V7638_001",
-                                   "V7638_005",
-                                   "V7638_009",
-                                   "V7638_010",
-                                   "V7638_011",
-                                   "blpw09",
-                                   "blpw12",
-                                   "3254_001",
-                                   "4068_014",
-                                   "blpw14",
-                                   "3254_003",
-                                   "3254_008",
-                                   "3254_011",
-                                   "3254_057",
-                                   "blpw15",
-                                   "blpw25",
-                                   "4105_008",
-                                   "4105_009",
-                                   "4105_016",
-                                   "4105_017",
-                                   "4210_002",
-                                   "4210_004",
-                                   "4210_006",
-                                   "4210_010",
-                                   "WRMA04173",
-                                   "A",
-                                   "B",
-                                   "C",
-                                   "E",
-                                   "D"), check_col_length = F)
-
+# # # location data
+# geo.all <- findLocData(geo.ids = c("V8757_010",
+#                                    "V8296_004",
+#                                    "V8296_005",
+#                                    "V8296_006",
+#                                    "V8757_055",
+#                                    "V8757_018",
+#                                    "V8296_015",
+#                                    "V8296_017",
+#                                    "V8296_021",
+#                                    "V8296_026",
+#                                    "V8296_025",
+#                                    "V8296_007",
+#                                    "V8296_008",
+#                                    "V8757_019",
+#                                    "V8757_096",
+#                                    "V8757_134",
+#                                    "V8757_029",
+#                                    "V8757_078",
+#                                    "V7638_001",
+#                                    "V7638_005",
+#                                    "V7638_009",
+#                                    "V7638_010",
+#                                    "V7638_011",
+#                                    "blpw09",
+#                                    "blpw12",
+#                                    "3254_001",
+#                                    "4068_014",
+#                                    "blpw14",
+#                                    "3254_003",
+#                                    "3254_008",
+#                                    "3254_011",
+#                                    "3254_057",
+#                                    "blpw15",
+#                                    "blpw25",
+#                                    "4105_008",
+#                                    "4105_009",
+#                                    "4105_016",
+#                                    "4105_017",
+#                                    "4210_002",
+#                                    "4210_004",
+#                                    "4210_006",
+#                                    "4210_010",
+#                                    "WRMA04173",
+#                                    "A",
+#                                    "B",
+#                                    "C",
+#                                    "E",
+#                                    "D"), check_col_length = F)
+# 
 # # Define stationary periods as breeding, stopover, or non-breeding #############
 # geo.all <- geo.all %>% group_by(geo_id) %>% mutate(site_type = case_when(
 #   (sitenum == 1 | sitenum == max(sitenum)) & Recorded_North_South_mig == "Both" ~ "Breeding",
@@ -202,13 +202,13 @@ geo.all <- findLocData(geo.ids = c("V8757_010",
 # year(geo.all$br.departure) <- year(geo.all$br.departure) + geo.all$year.difference
 # year(geo.all$fall.br.departure) <- year(geo.all$fall.br.departure) + geo.all$year.difference
 # year(geo.all$spring.br.arrival) <- year(geo.all$spring.br.arrival) + geo.all$year.difference
-
+# 
 # # # Save the data edited here  ###################################################
 # 
 # #Save the new columns in the reference data
 # write.csv(ref_data,"C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE)
 # 
-# #save the processed geolocatorlocations 
+# #save the processed geolocatorlocations
 # write.csv(geo.all, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/All.locations.csv",row.names=FALSE)
 
 #Load data not corrected for oceanic crossings
@@ -268,8 +268,8 @@ fall.stat.norm <- st_difference(fall.stat.sf, equipol)
 fall.stat.norm <- st_drop_geometry(fall.stat.norm)
 
 # cluster points in each group separately, then merge the cluster info 
-cluster.data1 <- clusterLocs(locs = fall.stat.equi, maxdiam = 992, lon.only = T) #743
-cluster.data2 <- clusterLocs(locs = fall.stat.norm, maxdiam = 700) #700
+cluster.data1 <- clusterLocs(locs = fall.stat.equi, maxdiam = 743, lon.only = T) #743
+cluster.data2 <- clusterLocs(locs = fall.stat.norm, maxdiam = 711) #700
 
 cluster.data2$clusters <- cluster.data2$clusters + max(cluster.data1$clusters)
 
@@ -409,7 +409,7 @@ meta.fall <- data.frame("vertex" = fall.node.type$cluster,
                         "node.type.num" = fall.node.type$site_type_num)
 
 # For fall nodes above the coast, where latitudinal accuracy is low, set location close to the coast
-meta.fall[c(7, 6, 5),]$Lat.50. <- c(35.3, 41.45, 44.77)
+#meta.fall[c(7, 6, 5),]$Lat.50. <- c(35.3, 41.45, 44.77)
 
 # create node location matrix 
 fall.location <- as.matrix(meta.fall[, c("Lon.50.", "Lat.50.")])
@@ -484,7 +484,7 @@ spring.stat <- spring.stat %>% group_by(geo_id) %>% filter(StartTime >= NB.last.
          period = ifelse(period == "Breeding", "Post-breeding migration", period))
 
 # Uncomment this code to generate clusters using the pam function
-cluster.data <- clusterLocs(locs = spring.stat, maxdiam = 738)
+cluster.data <- clusterLocs(locs = spring.stat, maxdiam = 792)
 spring.stat$cluster <- cluster.data$clusters
 
 # # export spring stat sites for manual clustering
