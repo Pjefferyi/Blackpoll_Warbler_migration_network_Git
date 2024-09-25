@@ -1804,7 +1804,7 @@ spring.nbr.stp.plot <- ggplot(st_as_sf(America))+
         legend.key = element_rect(colour = "transparent", fill = "white"))
 
 
-# Figure 15 time spent at nonbreeding sites  ----
+# Figure 15 Nonbreeding movements  ----
 
 # Run the script for nonbreeding movements 
 source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Blackpoll_warbler_mapping_scripts/Blackpoll_nonbreeding_movements.R")
@@ -1824,8 +1824,19 @@ year(NB.move$avg.nbr.arrival) <- ifelse(NB.move$geo_id != "WRMA04173" , year(NB.
 NB.move <- NB.move%>% mutate(nbr.stage.common = as.numeric(difftime(anytime(move.start), anytime(avg.nbr.arrival), units = "days"))/
                                as.numeric(difftime(anytime(nbr.departure), anytime(avg.nbr.arrival), units = "days"))) 
 
-## Alternatively we'll add a column that gives the day of the year #############
-NB.move <- NB.move %>% group_by(geo_id) %>% mutate(move_start_day_of_yr = yday(move.start))
+## Alternatively we'll add a column that gives number of days since October 1st ----
+NB.move <- NB.move %>% rowwise() %>% mutate(october_first = as.Date(paste0(year(deploy.on.date), "-10-01"), format = "%b-%d-%y"))
+
+NB.move <- NB.move %>% rowwise() %>% mutate(october_first = ifelse(geo_id != "WRMA04173", paste0(year(deploy.on.date), "-10-01"),
+                                                                   paste0(year(deploy.on.date) - 1, "-10-01")),
+                                            october_first = as.Date(october_first),
+                                            time_since_oct = anytime(StartTime) - anytime(october_first))
+
+## Column for the month of the year ----
+NB.move <- NB.move %>% mutate(month = case_when(month(StartTime) %in% c(10, 12) ~ "October-December",
+                                                month(StartTime) %in% c(1,2,3) ~ "January - March",
+                                                month(StartTime)%in% c(4, 5) ~ "April - May"),                       
+                              month = factor(month, levels = c("October-December", "January - March", "April - May")))
 
 ## Calculate the mean confidence interval for nonbreeding stationary sites of individuals that did not move 
 # NB.locs.stat <- geo.all %>% dplyr::filter(sitenum > 0, site_type %in% c("Nonbreeding"),
@@ -1947,7 +1958,6 @@ nonmover_points <- NB.stat.mean %>% dplyr::select(geo_id, mean.lon, mean.lon2.5,
 
 comb_nb_locs <- rbind(mover_point_last, mover_points_first, nonmover_points)
 
-
 #Plot of nonbreeding locations ----
 nbr.locations.plot <- ggplot(st_as_sf(wrld_simpl))+
   geom_sf(colour = "black", fill = "#F7F7F7", lwd = 0.3) +
@@ -1955,52 +1965,64 @@ nbr.locations.plot <- ggplot(st_as_sf(wrld_simpl))+
   geom_errorbar(data = comb_nb_locs, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5., colour = type), linewidth = 0.4, width= 0, alpha = 0.8) +
   geom_errorbar(data = comb_nb_locs, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5., colour = type), linewidth = 0.4, width = 0, alpha = 0.8) +
   geom_point(data = comb_nb_locs, mapping = aes(x = Lon.50., y =  Lat.50., fill = type), colour = "black", cex = 2.7, shape = 21, stroke = 0.5) +
-  scale_fill_manual(name = "Locations", labels = c("Relocations",  "Initial", "Static"), values = c("firebrick", "orange", "gray"))+
-  scale_colour_manual(values = c("firebrick", "orange", "gray"), guide = F)+
+  scale_fill_manual(name = "Locations", labels = c("Initial locations",  "Final locations", "Static"), values = c("orange", "firebrick", "gray"))+
+  scale_colour_manual(values = c("orange","firebrick", "gray"), guide = F)+
+  ggtitle("(a) Initial and final wintering locations") + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         text = element_text(size = 14),
-        plot.title=element_text(size=8, vjust=-1),
-        legend.position = c(0.14, 0.4),
+        plot.title =element_text(size=14, vjust=-1),
+        legend.position = c(0.16, 0.4),
+        legend.background = element_rect(fill = "white", colour =  "black", linewidth =  0.3),
         axis.title =element_blank(),
-        #axis.text =element_blank(),
-        #axis.ticks =element_blank(),
-        #axis.ticks.length = unit(0, "pt"),
+        axis.text =element_blank(),
+        axis.ticks =element_blank(),
+        axis.ticks.length = unit(0, "pt"),
         legend.spacing = unit(-5, "pt"),
-        #plot.margin = unit(c(0,0,0,0), "pt"),
+        plot.margin = unit(c(0,0,0,0), "pt"),
         legend.key = element_rect(colour = "transparent", fill = "white"))
 
 # Plot showing movements and movement timings during the nonbreeding season ----
-nbr.move.plot <- ggplot(st_as_sf(wrld_simpl))+
+nbr.movements.plot <- ggplot(st_as_sf(wrld_simpl))+
   geom_sf(colour = "black", fill = "#F7F7F7", lwd = 0.3) +
   coord_sf(xlim = c(-95, -48),ylim = c(-8, 15)) +
   geom_arrowsegment(data = NB.move, mapping = aes(x = start.lon, y = start.lat, xend = end.lon, yend = end.lat,
-                                                  col = move_start_day_of_yr ,
-                                                  fill = move_start_day_of_yr,
+                                                  col = month,
+                                                  fill = month,
                                                   linetype = equinox.nbr.move),
                     arrows = arrow(end = "last", type = "closed", length = unit(0.1, "inches")), arrow_positions = 1, lwd = 0.6)+
-  scale_fill_viridis( begin = 1, end = 365, breaks = c("Early" = 0.25, "Middle" = 0.50, "Late" = 0.75),
-                      name = "Timing")+
-  scale_color_viridis( begin = 0, end = 0.9, guide = "none")+
-  scale_linetype_manual(values = c("dashed", "solid"), guide = "none")+
+   scale_fill_manual(values = c("#E69F00", "#56B4E9", "#009E73"),
+                     labels = c("October-December", "January - March", "April - May"), name = "Month")+
+   scale_colour_manual(values = c("#E69F00", "#56B4E9", "#009E73"),
+                    labels = c("October-December", "January - March", "April - May"), name = "Month")+
+  # scale_colour_gradient(low = "#ffdbbb", high = "firebrick", guide = "none")+
+  # scale_fill_viridis( begin = 0, end = 1, breaks = c("Early" = 0.25, "Middle" = 0.50, "Late" = 0.75),
+  #                      name = "Timing")+
+  # scale_color_viridis(begin = 0, end = 0.9, guide = "none")+
+   scale_linetype_manual(values = c("dashed", "solid"), guide = "none")+
+  ggtitle("(b) Movement directions and timing") + 
    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         text = element_text(size = 14),
-        plot.title=element_text(size=8, vjust=-1),
-        legend.position = c(0.14, 0.4),
+        plot.title=element_text(size=14, vjust=-1),
+        legend.position = c(0.18, 0.4),
+        legend.background = element_rect(fill = "white", colour =  "black", linewidth =  0.3),
         axis.title =element_blank(),
-        #axis.text =element_blank(),
-        #axis.ticks =element_blank(),
-        #axis.ticks.length = unit(0, "pt"),
+        axis.text =element_blank(),
+        axis.ticks =element_blank(),
+        axis.ticks.length = unit(0, "pt"),
         legend.spacing = unit(-5, "pt"),
-        #plot.margin = unit(c(0,0,0,0), "pt"),
-        legend.key = element_rect(colour = "transparent", fill = "white"))+
-  guides(fill = guide_colourbar(order=1))
+        plot.margin = unit(c(0,0,0,0), "pt"),
+        legend.key = element_rect(colour = "transparent", fill = "white"))
 
 ## Save the plot ----
-ggsave(plot = nbr.move.plot, filename = "nbr.movements.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
-       units = "cm", width = 24*1.2, height = 10*1.2, dpi = 680, bg = "white")
+# ggsave(plot = nbr.move.plot, filename = "nbr.movements.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
+#        units = "cm", width = 24*1.2, height = 10*1.2, dpi = 680, bg = "white")
 
+nbr.move.plot <- (nbr.locations.plot| nbr.movements.plot)
+
+ggsave(plot = nbr.move.plot , filename = "nbr.movements.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
+       units = "cm", width = 24*1.2, height = 10*1.2, dpi = 680, bg = "white")
 
 # Figure 16:  Flight by individuals with ID V8757-096 -----
 
