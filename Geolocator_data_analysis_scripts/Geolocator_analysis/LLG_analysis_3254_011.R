@@ -29,8 +29,7 @@ library(GeoLocTools)
 rm(list=ls())
 
 # Load helper functions 
-source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis/Geolocator_analysis_helper_functions.R")
-
+source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis_helper_functions.R")
 geo.id <- "3254_011"
 
 # data directory
@@ -126,6 +125,9 @@ twl <- twilightEdit(twilights = twl,
                     outlier.mins = 35,
                     stationary.mins = 25,
                     plot = TRUE)
+
+# Save edited twilights 
+write.csv(twl, paste0(dir,"/",geo.id , "_twl_times_edited.csv"))
 
 # Calibration ##################################################################
 

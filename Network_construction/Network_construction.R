@@ -19,7 +19,7 @@ source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/B
 # # Import data ##################################################################
 #  
 # # path to reference data file
-# ref_path <- "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv"
+# ref_path <- "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/Geolocator_reference_data_consolidated.csv"
 # ref_data <- read.csv(ref_path)
 # 
 # # # location data
@@ -206,7 +206,7 @@ source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/B
 # # # Save the data edited here  ###################################################
 # 
 # #Save the new columns in the reference data
-# write.csv(ref_data,"C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE)
+# write.csv(ref_data,"C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/Geolocator_reference_data_consolidated.csv", row.names=FALSE)
 # 
 # #save the processed geolocatorlocations
 # write.csv(geo.all, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/All.locations.csv",row.names=FALSE)
@@ -838,7 +838,7 @@ ref_data <- ref_data %>% dplyr::select(-Breeding_region_MC)
 ref_data <- merge(ref_data, data.frame(abundance.regions)[,c("region", "geo_id")], by.x = "geo.id", by.y = "geo_id" ) %>%
   rename(Breeding_region_MC = region)
 
-write.csv(ref_data,"C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE)
+write.csv(ref_data,"C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/Geolocator_reference_data_consolidated.csv", row.names=FALSE)
 
 # import breeding season abundance data
 bpw.fall.ab <- load_raster(path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_imports",

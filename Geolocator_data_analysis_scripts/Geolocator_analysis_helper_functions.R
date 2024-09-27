@@ -1360,3 +1360,5 @@ concensusClusterLouvain <- function(graph, thresh = 0.5, algiter = 100){
               "iterations" = iter,
               "iteration matrix" = comb))
 }
+
+

@@ -16,12 +16,12 @@ library(networktools)
 library(qgraph)
 
 # analyses of network communities 
-library(clustAnalytics)
-library(robin)
+# library(clustAnalytics)
+# library(robin)
 
 #source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Network_construction.R")
 
-# NOTE: THIS SCRIPT IS OPTIMIZED FOR DATA FROM THE FILE: Geolocator_analysis_V3_BI_mask
+# NOTE: THIS SCRIPT IS OPTIMIZED FOR DATA FROM THE Folder:: Geolocator_analysis_V3_BI_mask
 
 # Prepare for fall network analysis ############################################
 

@@ -77,17 +77,17 @@ lightImage( tagdata = lig,
 tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
                        offset = offset, lwd = 3, col = adjustcolor("orange", alpha.f = 0.5))
 
-# we will do an initial twilight annotation to find identify the time interval
-# by which we need to shift time
-# There should be not need to edit, delete or insert twilights for this
+# # we will do an initial twilight annotation to find identify the time interval
+# # by which we need to shift time
+# # There should be not need to edit, delete or insert twilights for this
 # twl_in <- preprocessLight(lig,
 #                           threshold = threshold,
 #                           offset = offset,
 #                           lmax = 64,         # max. light value
 #                           gr.Device = "x11", # MacOS version (and windows)
 #                           dark.min = 60)
-
-#write.csv(twl_in, paste0(dir,"/", geo.id,"_twl_times_initial.csv"))
+# 
+# write.csv(twl_in, paste0(dir,"/", geo.id,"_twl_times_initial.csv"))
 twl_in <- read.csv(paste0(dir,"/", geo.id,"_twl_times_initial.csv"))
 twl_in$Twilight <- as.POSIXct(twl_in$Twilight, tz = "UTC")
 
@@ -115,8 +115,8 @@ shift <- shiftSpan(twl = twl_in, lig = lig, period = period, est.zenith = 92,
 shift
 
 #adjust  the based on the time shift detected 
-lig$Date <- lig$Date - (shift$shift)
-#lig$Date <- lig$Date + 1*60*60
+#lig$Date <- lig$Date - (shift$shift)
+lig$Date <- lig$Date + (shift$shift)
 
 #TWILIGHT ANNOTATION ##########################################################
 
@@ -141,20 +141,13 @@ dev.off()
 # 
 # # Adjust sunset times by 120 second sampling interval
 # twl <- twilightAdjust(twilights = twl, interval = 120)
-# 
-# #Automatically adjust or mark false twilights
-# twl <- twilightEdit(twilights = twl,
-#                     window = 4,
-#                     outlier.mins = 35,
-#                     stationary.mins = 25,
-#                     plot = TRUE)
-# 
+
 # # Visualize light and twilight time-series
 # lightImage(lig, offset = 19)
 # tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
 #               col = ifelse(twl$Rise, "dodgerblue", "firebrick"))
-
-# Save the twilight times 
+# 
+# #Save the twilight times
 # write.csv(twl, paste0(dir,"/",geo.id , "_twl_times.csv"))
 
 ###############################################################################
@@ -162,7 +155,7 @@ dev.off()
 ###############################################################################
 
 # load some parameters for the analysis 
-geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
+geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/Geolocator_reference_data_consolidated.csv") 
 days <- geo.ref[(geo.ref$geo.id == geo.id),]$changeLight.days
 dist <- geo.ref[(geo.ref$geo.id == geo.id),]$mergesites.distance
 stat.nbr.lim <- geo.ref[(geo.ref$geo.id == geo.id),]$stat.nbr.limit 
@@ -170,6 +163,22 @@ stat.nbr.lim <- geo.ref[(geo.ref$geo.id == geo.id),]$stat.nbr.limit
 # Import file with twilight times  
 twl <- read.csv(paste0(dir,"/", geo.id, "_twl_times.csv"))
 twl$Twilight <- as.POSIXct(twl$Twilight, tz = "UTC")
+
+#Automatically adjust or mark false twilights
+twl <- twilightEdit(twilights = twl,
+                    window = 4,
+                    outlier.mins = 35,
+                    stationary.mins = 25,
+                    plot = TRUE)
+
+# Visualize light and twilight time-series
+lightImage(lig, offset = 19)
+tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
+              col = ifelse(twl$Rise, "dodgerblue", "firebrick"))
+
+
+# Save edited twilights 
+write.csv(twl, paste0(dir,"/",geo.id , "_twl_times_edited.csv"))
 
 # Calibration ##################################################################
 
@@ -654,7 +663,7 @@ plot(twl$Twilight, type  = "l", x0_ad[,2])
 par(mfrow=c(1,1))
 
 # Record details for the geolocator analysis ###################################
-geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv") 
+geo.ref <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/Geolocator_reference_data_consolidated.csv") 
 geo.ref[(geo.ref$geo.id == geo.id),]$In_habitat_median_zenith_angle <- zenith
 geo.ref[(geo.ref$geo.id == geo.id),]$Hill_Ekstrom_median_angle <- zenith_sd 
 geo.ref[(geo.ref$geo.id == geo.id),]$Fall_carrib_edits <- TRUE
@@ -668,7 +677,7 @@ geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- NA
 geo.ref[(geo.ref$geo.id == geo.id),]$br.departure <- as.Date(dep.br)
 geo.ref[(geo.ref$geo.id == geo.id),]$br.arrival <- as.Date(arr.br)
 geo.ref[(geo.ref$geo.id == geo.id),]$changelight.quantile <- q
-write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE) 
+write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/Geolocator_reference_data_consolidated.csv", row.names=FALSE) 
 
 #################################################################################
 # Simple thresold estimate
