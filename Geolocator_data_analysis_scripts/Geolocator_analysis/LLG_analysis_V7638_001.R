@@ -101,13 +101,6 @@ dev.off()
 # # Adjust sunset times by 120 second sampling interval
 # twl <- twilightAdjust(twilights = twl, interval = 120)
 # 
-# # Automatically adjust or mark false twilights
-# twl <- twilightEdit(twilights = twl,
-#                     window = 4,
-#                     outlier.mins = 35,
-#                     stationary.mins = 25,
-#                     plot = TRUE)
-# 
 # # Visualize light and twilight time-series
 # lightImage(lig, offset = 19)
 # tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
@@ -130,6 +123,21 @@ stat.nbr.lim <- geo.ref[(geo.ref$geo.id == geo.id),]$stat.nbr.limit
 # Import file with twilight times  
 twl <- read.csv(paste0(dir,"/", geo.id, "_twl_times.csv"))
 twl$Twilight <- as.POSIXct(twl$Twilight, tz = "UTC")
+
+# Automatically adjust or mark false twilights
+twl <- twilightEdit(twilights = twl,
+                    window = 4,
+                    outlier.mins = 35,
+                    stationary.mins = 25,
+                    plot = TRUE)
+
+# Visualize light and twilight time-series
+lightImage(lig, offset = 19)
+tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
+              col = ifelse(twl$Rise, "dodgerblue", "firebrick"))
+
+# Save edited twilights 
+write.csv(twl, paste0(dir,"/",geo.id , "_twl_times_edited.csv"))
 
 # Calibration ##################################################################
 

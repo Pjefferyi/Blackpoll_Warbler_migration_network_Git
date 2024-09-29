@@ -1,4 +1,4 @@
-#source: Deluca et al. 2019
+# source: Deluca et al. 2019
 # tag number: 4105-016
 # site: Churchill, Manitoba
 
@@ -126,6 +126,14 @@ twl <- twilightEdit(twilights = twl,
                     outlier.mins = 35,
                     stationary.mins = 25,
                     plot = TRUE)
+
+# Visualize light and twilight time-series
+lightImage(lig, offset = 19)
+tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
+              col = ifelse(twl$Rise, "dodgerblue", "firebrick"))
+
+# Save edited twilights 
+write.csv(twl, paste0(dir,"/",geo.id , "_twl_times_edited.csv"))
 
 # Calibration ##################################################################
 

@@ -141,15 +141,15 @@ dev.off()
 # 
 # # Adjust sunset times by 120 second sampling interval
 # twl <- twilightAdjust(twilights = twl, interval = 120)
-
-
+# 
+# 
 # # Visualize light and twilight time-series
 # lightImage(lig, offset = 19)
 # tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
 #               col = ifelse(twl$Rise, "dodgerblue", "firebrick"))
-
-# Save the twilight times
-#write.csv(twl, paste0(dir,"/",geo.id , "_twl_times.csv"))
+# 
+# #Save the twilight times
+# write.csv(twl, paste0(dir,"/",geo.id , "_twl_times.csv"))
 
 ###############################################################################
 # SGAT ANALYSIS ###############################################################
@@ -171,6 +171,14 @@ twl <- twilightEdit(twilights = twl,
                     outlier.mins = 35,
                     stationary.mins = 25,
                     plot = TRUE)
+
+# Visualize light and twilight time-series
+lightImage(lig, offset = 19)
+tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
+              col = ifelse(twl$Rise, "dodgerblue", "firebrick"))
+
+# Save edited twilights 
+write.csv(twl, paste0(dir,"/",geo.id , "_twl_times_edited.csv"))
 
 # Calibration ##################################################################
 

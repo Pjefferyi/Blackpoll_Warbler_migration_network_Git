@@ -126,6 +126,14 @@ twl <- twilightEdit(twilights = twl,
                     stationary.mins = 25,
                     plot = TRUE)
 
+# Visualize light and twilight time-series
+lightImage(lig, offset = 19)
+tsimagePoints(twl$Twilight, offset = 19, pch = 16, cex = 0.5,
+              col = ifelse(twl$Rise, "dodgerblue", "firebrick"))
+
+# Save edited twilights 
+write.csv(twl, paste0(dir,"/",geo.id , "_twl_times_edited.csv"))
+
 # Calibration ##################################################################
 
 # We start with calibration based on the stationary periods before and after the migration
