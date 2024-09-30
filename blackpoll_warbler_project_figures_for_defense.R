@@ -877,7 +877,7 @@ fall.com.plot <- ggplot(st_as_sf(America))+
         axis.ticks =element_blank(),
         axis.ticks.length = unit(0, "pt"),
         plot.margin = unit(c(6,6,6,6), "pt"))+ 
-  guides(fill=guide_legend(title="Fall communities"))
+  guides(fill=guide_legend(title="Communities"))
 
 ## Spring network communities -----
 spring.com.plot <- ggplot(st_as_sf(America))+

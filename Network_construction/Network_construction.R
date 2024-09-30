@@ -16,12 +16,12 @@ library(scatterpie)
 
 source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis_helper_functions.R")
 
-# # Import data ##################################################################
-#  
-# # path to reference data file
-# ref_path <- "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/Geolocator_reference_data_consolidated.csv"
-# ref_data <- read.csv(ref_path)
-# 
+# Import data ##################################################################
+
+# path to reference data file
+ref_path <- "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/Geolocator_reference_data_consolidated.csv"
+ref_data <- read.csv(ref_path)
+
 # # # location data
 # geo.all <- findLocData(geo.ids = c("V8757_010",
 #                                    "V8296_004",
