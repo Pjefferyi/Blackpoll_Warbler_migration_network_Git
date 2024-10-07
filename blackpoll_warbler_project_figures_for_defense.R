@@ -1272,7 +1272,6 @@ individual.track <- ggplot(st_as_sf(America))+
     #if (i == "V8757_096"){theme(panel.border = element_rect(colour = "firebrick", fill=NA, size=1))}
   #if (i == first(unique(geo.all$geo_id))){theme(legend.position = c(0.5, 0.2))} else {theme(legend.position = "None")}
 
-
 # Figure 11 plot of important fall and spring nodes across the blackpoll warbler's range ----
 
 fall.dat.loc.betw.top <- merge(fall.data, meta.fall.ab[, c("vertex", "Lon.50.", "Lat.50.")], by.x = "cluster.num", by.y = "vertex") %>% mutate(network = "fall") %>%

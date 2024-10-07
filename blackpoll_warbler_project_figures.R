@@ -446,32 +446,43 @@ fall.gplot <- ggplot(st_as_sf(America))+
         plot.margin= unit(c(0,0,1,0), "pt"))+
   guides(fill = guide_legend(override.aes = list(size = 5)), )
 
+ref_data <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/Geolocator_reference_data_consolidated.csv")
+fall.stat <- fall.stat %>% merge(ref_data[,c("geo.id", "fall.equinox.date")], by.x = "geo_id", by.y = "geo.id") %>% mutate(equi_prox = difftime(StartTime, fall.equinox.date, units = "days"))
+fall.stat <- fall.stat %>% rowwise() %>% mutate(equi_prox = ifelse(abs(equi_prox) <= 14, "within_equi", "out_equi"))
+
 ## fall stationary location clusters 
 fall.clustplot<- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
   geom_sf(data = equi.region, fill = "#D9D5B2", lwd = 0.2, alpha = 1) +
   geom_sf(data = Lakes, fill = "lightblue", lwd = 0.2, alpha = 1) +
   coord_sf(xlim = c(-165, -50),ylim = c(-5, 70)) +
-  geom_errorbar(data = fall.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.1, alpha = 0.3, color = "black") +
-  geom_errorbar(data = fall.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.1, alpha = 0.3, color = "black") +
+  geom_errorbar(data = fall.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.1, alpha = 0.9, color = "black") +
+  geom_errorbar(data = fall.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.1, alpha = 0.9, color = "black") +
   #geom_path(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5) +
-  geom_point(data = fall.stat[(fall.stat$site_type!= "Breeding"),], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = as.factor(cluster)), cex = 1, shape = 21, col = "white", stroke = 0.1) +
+  geom_point(data = fall.stat[(fall.stat$site_type!= "Breeding"),], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = as.factor(cluster), col = equi_prox), cex = 1.5, shape = 21, stroke = 0.5) +
+  scale_colour_manual(values = c(out_equi = "white", within_equi = "black"), breaks = ("within_equi"),
+                      labels = c("Locations estimated within \ntwo weeks of the equinoxes" ))+
   #geom_text(data = meta.fall.ab[meta.fall.ab$node.type != "Breeding",], mapping = aes(x = Lon.50., y = Lat.50., label = vertex), cex = 3, fontface = "bold")+
   geom_shadowtext(data = meta.fall.ab[meta.fall.ab$node.type != "Breeding",], mapping = aes(x = Lon.50., y = Lat.50., label = vertex), cex = 2.7, fontface = "bold", col = "black", bg.colour = "white")+
   labs(colour = "Cluster") +
   theme_bw() +
   ggtitle("(c) Post-breeding migration location clusters") + 
-  theme(text = element_text(size = 6), legend.position = "None",
+  theme(legend.position = c(0.3, 0.15),
+        legend.box.background = element_rect(fill = "white", colour = "black", linewidth = 0.2),
+        legend.key = element_blank(),
         axis.line=element_blank(),
         axis.text =element_blank(),
         axis.ticks=element_blank(),
         axis.title =element_blank(),
         title = element_text(size = 8),
+        legend.title = element_blank(),
+        legend.text=element_text(size=8),
         axis.ticks.length = unit(0, "pt"),
         panel.grid.major=element_blank(),
         panel.grid.minor=element_blank(),
         #panel.border = element_rect(colour = "black", fill=NA, size=0.5),
-        plot.margin= unit(c(2,0,0,0), "pt"))
+        plot.margin= unit(c(2,0,0,0), "pt")) + 
+  guides(fill = "none")
 
 ## Spring node types ----
 spring.ggnet <- ggnetwork(spring.graph, layout = as.matrix(meta.spring.ab[, c("Lon.50.", "Lat.50.")]), scale = F)
@@ -503,15 +514,19 @@ spring.gplot <- ggplot(st_as_sf(America))+
         axis.ticks.length = unit(0, "pt"),
         plot.margin= unit(c(0,0,1,0), "pt"))
 
+spring.stat <- spring.stat %>% mutate(spring_equi_prox = difftime(StartTime, spring.equinox.date, units = "days"))
+spring.stat <- spring.stat %>% rowwise() %>% mutate(spring_equi_prox = ifelse(abs(spring_equi_prox) <= 14, "within_equi", "out_equi"))
+
 ## spring stationary location clusters 
 spring.clustplot<- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
   geom_sf(data = Lakes, fill = "lightblue", lwd = 0.2, alpha = 1) +
   coord_sf(xlim = c(-165, -50),ylim = c(-5, 70)) +
-  geom_errorbar(data = spring.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.1, alpha = 0.3, color = "black") +
-  geom_errorbar(data = spring.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.1, alpha = 0.3, color = "black") +
+  geom_errorbar(data = spring.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.1, alpha = 0.9, color = "black") +
+  geom_errorbar(data = spring.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.1, alpha = 0.9, color = "black") +
   #geom_path(data = spring.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5) +
-  geom_point(data = spring.stat[(spring.stat$site_type!= "Breeding"),], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = as.factor(cluster)), cex = 1, shape = 21, col = "white", stroke = 0.1) +
+  geom_point(data = spring.stat[(spring.stat$site_type!= "Breeding"),], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = as.factor(cluster), col = spring_equi_prox), cex = 1.5, shape = 21, stroke = 0.5) +
+  scale_colour_manual(values = c(out_equi = "white", within_equi = "black"))+
   #geom_text(data = meta.spring.ab[meta.spring.ab$node.type != "Breeding",], mapping = aes(x = Lon.50., y = Lat.50., label = vertex), cex = 3, fontface = "bold")+
   geom_shadowtext(data = meta.spring.ab[meta.spring.ab$node.type != "Breeding",], mapping = aes(x = Lon.50., y = Lat.50., label = vertex), cex = 3, fontface = "bold", col = "black", bg.colour = "white")+
   labs(colour = "Cluster") +
@@ -1346,6 +1361,9 @@ bpw.range <- load_ranges(path = "C:/Users/Jelan/OneDrive/Desktop/University/Univ
                          smoothed = T) %>%
   dplyr::filter(season %in% c("breeding", "nonbreeding")) %>% st_transform(crs(wrld_simpl))
 
+# Load blackpoll warbler polygons from BirdLife international 
+bpw.range.BLI <- st_read("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Birdlife_international_species_distribution/SppDataRequest.shp")
+
 # polygon for america 
 sf_use_s2(FALSE)
 bpw.range <- st_intersection(st_as_sf(America) , bpw.range)
@@ -1353,8 +1371,9 @@ bpw.range <- st_intersection(st_as_sf(America) , bpw.range)
 # Plot 
 ab.prop.regions.fig <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
-  geom_sf(data = bpw.range, aes(fill = season),col = NA, alpha = 0.7) +
-  scale_fill_discrete(labels = c("Breeding range", "Nonbreeding range"), name = "", guide = guide_legend(order = 3)) +
+  geom_sf(data = Lakes, fill = "lightblue", lwd = 0.2, alpha = 1) +
+  geom_sf(data = bpw.range.BLI, aes(fill = as.factor(seasonal)),col = NA, alpha = 0.7) +
+  scale_fill_discrete(labels = c("Breeding range", "Passage range", "Nonbreeding range"), name = "", guide = guide_legend(order = 3)) +
   geom_sf(data = br.regions, aes(col = "Abundance propagation regions"), fill = NA, linewidth = 0.5) +
   scale_colour_manual(values = c("Abundance propagation regions" = "black"), name = "")+
   geom_sf_label(data = br.regions, aes(label = region), nudge_y = c(-10, -8,-13 ,-13), nudge_x = c(10, 10, -4,0), cex =4)+
@@ -1511,9 +1530,28 @@ for (i in unique(geo.all$geo_id)){
   ind.data <- geo.all[geo.all$geo_id == i,] %>% filter(!is.na(StartTime))
   ind.data.stat <- geo.all[geo.all$geo_id == i & geo.all$sitenum !=0,]
   
+  # get probability raster for individual i
+  load(paste0("/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geolocator_data/", i ,"/", i,"_SGAT_GroupedThreshold_fit.R"))
+  
+  xlim <- c(-190, -30) 
+  ylim <- c(-15, 90)
+  
+  r <- rast(nrows = 2 * diff(ylim), ncols = 2 * diff(xlim), xmin = xlim[1],
+            xmax = xlim[2], ymin = ylim[1], ymax = ylim[2], crs = proj4string(wrld_simpl))
+  s <- slices(type = "intermediate", breaks = NULL, mcmc = fit, grid = r)
+  sk <- slice(s, sliceIndices(s))
+  sk.df <- as.data.frame(sk, xy = T, na.rm = T) #%>% filter(lyr.1 > quantile(sk$lyr.1, probs = 0.5))#%>%
+   # mutate(lyr.1 = 1)
+  
+  
   loc.ind[[i]] <- ggplot(st_as_sf(America))+
     geom_sf(colour = "black", fill = "white") +
     coord_sf(xlim = c(-170, -30),ylim = c(-15, 70)) +
+    #scale_fill_gradient(low = adjustcolor("lightblue", alpha = 0), high = "#04364B", name = "Probability", limits = c(0, 125))+ 
+    #scale_fill_viridis( n = 10, alpha = 0.8,direction = -1, name = "Probability", limits = c(0,125))+ 
+    scale_fill_gradientn(colours = c(adjustcolor("grey", alpha = 0.2), viridis(50, direction = -1)), name = "Posterior \ndistribution")+ 
+    geom_tile(data = sk.df, aes(x = x, y = y, fill = lyr.1))+
+    new_scale_fill()+
     #coord_sf(xlim = c(min(ind.stat$Lon.50.)-15, max(ind.stat$Lon.50.)+15),ylim = c(min(ind.stat$Lat.50.)-15, max(ind.stat$Lat.50.)+15)) +
     geom_errorbar(data = ind.data.stat[ind.data.stat$duration >=2,], aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, width = 1, alpha = 0.8, color = "black") +
     geom_errorbar(data = ind.data.stat[ind.data.stat$duration >=2,], aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, width = 1, alpha = 0.8, color = "black") +
@@ -1527,16 +1565,19 @@ for (i in unique(geo.all$geo_id)){
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
           panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
           plot.title=element_text(size=8, vjust=-1),
-          legend.position = "None",
+          text = element_text(size = 8),
           axis.title =element_blank(),
           axis.text =element_blank(),
           axis.ticks =element_blank(),
+          legend.text = element_blank(),
           axis.ticks.length = unit(0, "pt"),
           legend.spacing = unit(-5, "pt"),
           plot.margin = unit(c(0,0,0,0), "pt"),
-          legend.key = element_rect(colour = "transparent", fill = "white")) +
+          legend.key = element_rect(colour = "transparent", fill = "white"))+
+    guides(shape="none", colour = "none", fill = "none")+
+    if (i == "3254_001"){theme(legend.position = c(0.1, 0.35))} else {theme(legend.position = "None")}+
     if (i == "V8757_096"){theme(panel.border = element_rect(colour = "firebrick", fill=NA, size=1))}
-  #if (i == first(unique(geo.all$geo_id))){theme(legend.position = c(0.5, 0.2))} else {theme(legend.position = "None")}
+  
 }
 
 # Create a panel of plots
@@ -1547,14 +1588,22 @@ plot_a_list <- function(plots, nrows, ncols) {
                         nrow = nrows, ncol = ncols)
 }
 
-loc.ind.panel1 <- plot_a_list(loc.ind[1:24], 6, 4)
-loc.ind.panel2 <- plot_a_list(loc.ind[25:47], 6, 4)
+loc.ind.panel1 <- plot_a_list(loc.ind[1:12], 4, 3)
+loc.ind.panel2 <- plot_a_list(loc.ind[13:24], 4, 3)
+loc.ind.panel3 <- plot_a_list(loc.ind[25:36], 4, 3)
+loc.ind.panel4 <- plot_a_list(loc.ind[37:47], 4, 3)
 
 ## Save the plots ----
 ggsave(plot = loc.ind.panel1, filename = "individual.movements1.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures",
        units = "cm", width = 24*1.2, height = 30*1.2, dpi = "print", bg = "white")
 
 ggsave(plot = loc.ind.panel2, filename = "individual.movements2.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures",
+       units = "cm", width = 24*1.2, height = 30*1.2, dpi = "print", bg = "white")
+
+ggsave(plot = loc.ind.panel3, filename = "individual.movements3.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures",
+       units = "cm", width = 24*1.2, height = 30*1.2, dpi = "print", bg = "white")
+
+ggsave(plot = loc.ind.panel4, filename = "individual.movements4.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures",
        units = "cm", width = 24*1.2, height = 30*1.2, dpi = "print", bg = "white")
 
 # Figure 11 group migratory tracks for full year  ----
@@ -2131,3 +2180,38 @@ spring.NA.arr.plot <- ggplot(data = spring.NA.arr, aes(y =  as.numeric(timing_do
                                                        colour = region)) +
   geom_boxplot()+
   coord_flip()
+
+#Figure 18: Stopovers in the carribean ---- 
+
+# filter out stopovers in the carribean 
+fall.carib.stops <- fall.stat %>% group_by(geo_id) %>% filter(cluster %in% c(8, 9, 10))
+
+# create the plot 
+fall.carib.stops.plot <- ggplot(st_as_sf(America))+
+  geom_sf(colour = "black", fill = "white") +
+  geom_sf(data = Lakes, fill = "lightblue", lwd = 0.2, alpha = 1) +
+  coord_sf(xlim = c(-90, -50),ylim = c(10, 30)) +
+  geom_errorbar(data = fall.carib.stops, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.1, alpha = 0.8, color = "black") +
+  geom_errorbar(data = fall.carib.stops, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.1, alpha = 0.8, color = "black") +
+  #geom_path(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5) +
+  geom_point(data = fall.carib.stops, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = as.factor(cluster), shape = Fall_carrib_edits), cex = 2.5, stroke = 0.5)+
+  scale_shape_manual(values  = c(21, 22), name = "Estimation method", labels = c('"Regular" geolocator analysis', "Review of light level transitions"))+
+  #geom_text(data = fall.carib.stops, mapping = aes(x = Lon.50., y = Lat.50., label = geo_id))
+  geom_shadowtext(data = meta.fall.ab[meta.fall.ab$vertex %in% c(8, 9 ,10),], mapping = aes(x = Lon.50., y = Lat.50., label = vertex), cex = 4, fontface = "bold", col = "black", bg.colour = "white", nudge_x = 1, nudge_y =  1)+
+  theme(text = element_text(size = 14), legend.position = c(0.82, 0.6),
+        panel.background = element_rect(fill = "white", colour = "black", linewidth = 0.2),
+        legend.background = element_rect(fill = "white", colour = "black", linewidth = 0.2),
+        axis.line=element_blank(),
+        axis.text =element_blank(),
+        axis.ticks=element_blank(),
+        axis.title =element_blank(),
+        axis.ticks.length = unit(0, "pt"),
+        panel.grid.major=element_blank(),
+        panel.grid.minor=element_blank(),
+        panel.border = element_rect(colour = "black", fill=NA, size=0.5),
+        plot.margin= unit(c(2,0,0,0), "pt"),
+        legend.key = element_rect(colour = "transparent", fill = "white")) + 
+  guides(fill="none")
+
+ggsave(plot = fall.carib.stops.plot , filename = "fall.carib.locs.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
+       units = "cm", width = 24*1.2, height = 10*1.2, dpi = 680, bg = "white")

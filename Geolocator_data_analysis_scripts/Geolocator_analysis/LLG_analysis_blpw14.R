@@ -259,6 +259,22 @@ abline(v = anytime(dep.nbr))
 abline(v = fall.equi, col = "orange")
 abline(v = spring.equi, col = "orange")
 
+# Plot to show overlap with Florida during the fall
+
+# par(mfrow = c(2,1), mar = c(5,5,2,5))
+# plot(twl$Twilight, x0_ad[,1], ylab = "longitude", xlab = "Time")
+# #abline(v = anytime(arr.nbr))
+# #abline(v = anytime(dep.nbr))
+# #abline(v = fall.equi, col = "orange")
+# #abline(v = spring.equi, col = "orange")
+# abline(h = -80, col = "blue") 
+# plot(twl$Twilight, x0_ad[,2], ylab = "latitude", xlab = "Time")
+# #abline(v = anytime(arr.nbr))
+# #abline(v = anytime(dep.nbr))
+# #abline(v = fall.equi, col = "orange")
+# #abline(v = spring.equi, col = "orange")
+# abline(h = 26, col = "blue")
+
 dev.off()
 
 # Initial Path #################################################################
@@ -358,7 +374,7 @@ box()
 # Movement model ###############################################################
 
 # Here the model only reflects speed during active flight 
-beta  <- c(2.2, 0.08)
+beta  <- c(0.7, 0.08)
 matplot(0:100, dgamma(0:100, beta[1], beta[2]),
         type = "l", col = "orange",lty = 1,lwd = 2,ylab = "Density", xlab = "km/h")
 

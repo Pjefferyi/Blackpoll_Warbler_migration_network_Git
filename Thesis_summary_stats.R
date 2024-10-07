@@ -40,13 +40,13 @@ He_zenith <- mean(analysis_ref$Hill_Ekstrom_median_angle, na.rm = T)
 zenith_diff <- mean(analysis_ref$In_habitat_median_zenith_angle - analysis_ref$Hill_Ekstrom_median_angle, na.rm = T)
 hist(analysis_ref$In_habitat_median_zenith_angle - analysis_ref$Hill_Ekstrom_median_angle, breaks = 20)
 
-# Linear interpolation period for latitude in preliminary location estimates 
+# Linear interpolation period for latitude in preliminary location estimates  ----
 
 # Get the solar declination angle for all days in a year 
 doy <- seq(anytime("2023-06-01"), anytime("2023-12-31"), by = "day")
 solar.angle  <- solar(doy)$sinSolarDec
 
-# Calculate  the number of days censored prior to and after the equinox based on the value of the tol parameter 
+# Calculate  the number of days censored prior to and after the equinox based on the value of the tol parameter
 tol_values <- seq(0, 0.26, by = 0.001) 
 fall_equi <- anytime("2023-09-22")
 cens_data <- data.frame(tol_values)
@@ -65,6 +65,69 @@ range(analysis_ref$tol_days)
 # Mean and SD
 mean(analysis_ref$tol_days)
 sd(analysis_ref$tol_days)
+
+# Histogram of censored time periods
+hist(analysis_ref$tol_days, breaks = 15, main = "Histogram of interpolation periods",
+     xlab = "Days before/after equinox")
+
+
+# calculate the range of node diameters ----
+
+# function to Calculate the geodesic distance between points and creates a distance matrix
+geo.dist = function(df) {
+  require(geosphere)
+  d <- function(i,z){         # z[1:2] contain long, lat
+    dist <- rep(0,nrow(z))
+    dist[i:nrow(z)] <- distHaversine(z[i:nrow(z),1:2],z[i,1:2])
+    return(dist/1000)
+  }
+  dm <- do.call(cbind,lapply(1:nrow(df),d,df))
+  return(as.dist(dm))
+}
+
+# load fall migration data 
+fall.stat <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.stationary.data.csv")
+meta.fall.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.node.metadata.csv")
+
+fall.stat <- merge(fall.stat, meta.fall.ab[,c("vertex", "node.type")], by.x = "cluster", by.y = "vertex")
+fall.stat <- fall.stat %>% filter(node.type != "Breeding") 
+
+diameters <- c()
+
+for (i in unique(fall.stat$cluster)){
+  
+  points <- fall.stat %>% filter(cluster == i, period != "Breeding" ) %>% dplyr::select(Lon.50., Lat.50.)
+  dist.matrix <- geo.dist(points)
+  
+  diameter <- max(dist.matrix)
+  diameters <- append(diameters, diameter)
+}
+
+# range of diameters for the fall
+range(diameters)
+median(diameters)
+
+# load spring migration data 
+spring.stat <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/spring.stationary.data.csv")
+meta.spring.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/spring.node.metadata.csv")
+
+spring.stat <- merge(spring.stat, meta.spring.ab[,c("vertex", "node.type")], by.x = "cluster", by.y = "vertex")
+spring.stat <- spring.stat %>% filter(node.type != "Breeding") 
+
+diameters <- c()
+
+for (i in unique(spring.stat$cluster)){
+  
+  points <- spring.stat %>% filter(cluster == i, period != "Breeding" ) %>% dplyr::select(Lon.50., Lat.50.)
+  dist.matrix <- geo.dist(points)
+  
+  diameter <- max(dist.matrix)
+  diameters <- append(diameters, diameter)
+}
+
+# range of diameters for the spring
+range(diameters)
+median(diameters)
 
 # Results #####################################################################
 

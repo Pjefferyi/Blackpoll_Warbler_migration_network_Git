@@ -82,12 +82,12 @@ tsimageDeploymentLines(lig$Date, lon = lon.calib, lat = lat.calib,
 # we will do an initial twilight annotation to find identify the time interval
 # by which we need to shift time
 # There should be not need to edit, delete or insert twilights for this
-twl_in <- preprocessLight(lig,
-                          threshold = threshold,
-                          offset = offset,
-                          lmax = 64,         # max. light value
-                          gr.Device = "x11", # MacOS version (and windows)
-                          dark.min = 60)
+# twl_in <- preprocessLight(lig,
+#                           threshold = threshold,
+#                           offset = offset,
+#                           lmax = 64,         # max. light value
+#                           gr.Device = "x11", # MacOS version (and windows)
+#                           dark.min = 60)
 
 #write.csv(twl_in, paste0(dir,"/", geo.id,"_twl_times_initial.csv"))
 twl_in <- read.csv(paste0(dir,"/", geo.id,"_twl_times_initial.csv"))
@@ -300,6 +300,22 @@ abline(v = anytime(arr.nbr))
 abline(v = anytime(dep.nbr))
 abline(v = fall.equi, col = "orange")
 abline(v = spring.equi, col = "orange")
+
+# Plot to show overlap with Florida during the fall
+
+# par(mfrow = c(2,1), mar = c(5,5,2,5))
+# plot(twl$Twilight, x0_ad[,1], ylab = "longitude", xlab = "Time")
+# #abline(v = anytime(arr.nbr))
+# #abline(v = anytime(dep.nbr))
+# #abline(v = fall.equi, col = "orange")
+# #abline(v = spring.equi, col = "orange")
+# abline(h = -80, col = "blue") 
+# plot(twl$Twilight, x0_ad[,2], ylab = "latitude", xlab = "Time")
+# #abline(v = anytime(arr.nbr))
+# #abline(v = anytime(dep.nbr))
+# #abline(v = fall.equi, col = "orange")
+# #abline(v = spring.equi, col = "orange")
+# abline(h = 26, col = "blue")
 
 dev.off()
 

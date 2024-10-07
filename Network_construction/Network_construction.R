@@ -409,7 +409,7 @@ meta.fall <- data.frame("vertex" = fall.node.type$cluster,
                         "node.type.num" = fall.node.type$site_type_num)
 
 # For fall nodes above the coast, where latitudinal accuracy is low, set location close to the coast
-#meta.fall[c(7, 6, 5),]$Lat.50. <- c(35.3, 41.45, 44.77)
+meta.fall[c(7, 6, 5),]$Lat.50. <- c(35.3, 41.45, 44.77)
 
 # create node location matrix 
 fall.location <- as.matrix(meta.fall[, c("Lon.50.", "Lat.50.")])

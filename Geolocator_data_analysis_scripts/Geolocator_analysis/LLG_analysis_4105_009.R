@@ -247,17 +247,35 @@ save(x0_ad, file = paste0(dir,"/", geo.id, "adjusted_initial_path_raw.csv"))
 # open jpeg
 jpeg(paste0(dir, "/", geo.id, "_LatLon_scatterplot_adjusted.png"), width = 1024, height = 990)
 
-par(mfrow = c(2,1))
-plot(twl$Twilight, x0_ad[,1], ylab = "longitude")
+par(mfrow = c(2,1), mar = c(5,5,2,5))
+plot(twl$Twilight, x0_ad[,1], ylab = "longitude", xlab = "Time")
 abline(v = anytime(arr.nbr))
 abline(v = anytime(dep.nbr))
 abline(v = fall.equi, col = "orange")
 abline(v = spring.equi, col = "orange")
-plot(twl$Twilight, x0_ad[,2], ylab = "latitude")
+plot(twl$Twilight, x0_ad[,2], ylab = "latitude", xlab = "Time")
 abline(v = anytime(arr.nbr))
 abline(v = anytime(dep.nbr))
 abline(v = fall.equi, col = "orange")
 abline(v = spring.equi, col = "orange")
+
+
+# Plot to show overlap with Florida during the fall
+
+# par(mfrow = c(2,1), mar = c(5,5,2,5))
+# plot(twl$Twilight, x0_ad[,1], ylab = "longitude", xlab = "Time")
+# #abline(v = anytime(arr.nbr))
+# #abline(v = anytime(dep.nbr))
+# #abline(v = fall.equi, col = "orange")
+# #abline(v = spring.equi, col = "orange")
+# abline(h = -80, col = "blue") 
+# plot(twl$Twilight, x0_ad[,2], ylab = "latitude", xlab = "Time")
+# #abline(v = anytime(arr.nbr))
+# #abline(v = anytime(dep.nbr))
+# #abline(v = fall.equi, col = "orange")
+# #abline(v = spring.equi, col = "orange")
+# abline(h = 26, col = "blue")
+
 
 dev.off()
 

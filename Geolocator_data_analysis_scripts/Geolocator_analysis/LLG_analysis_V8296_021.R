@@ -279,7 +279,7 @@ save(x0_ad, file = paste0(dir,"/", geo.id, "adjusted_initial_path_raw.csv"))
 # open jpeg
 jpeg(paste0(dir, "/", geo.id, "_LatLon_scatterplot_adjusted.png"), width = 1024, height = 990)
 
-par(mfrow = c(2,1))
+par(mfrow = c(2,1), mar = c(5,5,2,5))
 plot(twl$Twilight, x0_ad[,1], ylab = "longitude")
 abline(v = anytime(arr.nbr))
 abline(v = fall.equi, col = "orange")
