@@ -414,19 +414,29 @@ sf_use_s2(FALSE)
 equi.region <- st_intersection(st_as_sf(America), bpw.range) %>% st_intersection(equipol)
 bpw.range.full <- st_intersection(st_as_sf(America), st_union(bpw.range))
 
+# Load abundance propagation region from BirdLife international 
+bpw.range.BLI <- st_read("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Birdlife_international_species_distribution/SppDataRequest.shp") %>% 
+  mutate(seasonal = factor(seasonal, levels = c(2,4,3)))
+
 ## fall node types ---- 
-fall.ggnet <- ggnetwork(fall.graph, layout = as.matrix(meta.fall.ab[, c("Lon.50.", "Lat.50.")]), scale = F)
+fall.ggnet <- ggnetwork(fall.graph, layout = as.matrix(meta.fall.ab[, c("Lon.50.", "Lat.50.")]), scale = F) %>%
+  mutate(node.type = factor(node.type, levels= c("Breeding","Stopover", "Nonbreeding")))
 fall.gplot <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
   geom_sf(data = Lakes, fill = "lightblue", lwd = 0.2, alpha = 1) +
-  geom_sf(data = equi.region, fill = "#D9D5B2", lwd = 0.2, alpha = 1) +
+  geom_sf(data = bpw.range.BLI, aes(fill = as.factor(seasonal)),col = NA, alpha = 0.4) +
+  scale_fill_manual(values = c("#440154FF", "#FDE725FF", "#21908CFF"), labels = c("Breeding", "Migration", "Nonbreeding"), name = "Seasonal ranges", guide = "none") +
+  new_scale_fill()+
+  #geom_sf(data = equi.region, aes(fill = "#D9D5B2"), lwd = 0.2, alpha = 1) +
+  #scale_fill_manual(labels = c("Clustering restricted \nto longitude"), values = c("#D9D5B2"),guide = guide_legend(title = NULL))+
+  new_scale_fill()+
   coord_sf(xlim = c(-165, -50),ylim = c(-5, 70)) +
   geom_edges(data = fall.ggnet, mapping = aes(x = x, y = y, xend = xend, yend = yend, col = edge.type, lwd = weight),
              arrow = arrow(length = unit(6, "pt"), type = "closed", angle = 10))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
   scale_color_manual(values=c(adjustcolor("black", alpha = 0.3), adjustcolor("blue", alpha = 0)), guide = "none")+
   geom_nodes(data = fall.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = node.type), shape=21)+
-  scale_size(range = c(0.8, 4), guide = "none")+
+  scale_size(range = c(0.8, 4), breaks = c(0.05, 0.1, 0.5), name = "Node weight")+
   scale_fill_manual(values=c("Breeding"  = "#440154FF", "Stopover" = "#FDE725FF", "Nonbreeding" = "#21908CFF"), name = "Node type")+
   ggtitle("(a) Post-breeding migration network") + 
   geom_shadowtext(data = meta.fall.ab[meta.fall.ab$node.type != "Breeding",], mapping = aes(x = Lon.50., y = Lat.50., label = vertex), cex = 2.7, fontface = "bold", col = "black", bg.colour = "white", nudge_x = 1.5, nudge_y = -1.5)+
@@ -435,31 +445,35 @@ fall.gplot <- ggplot(st_as_sf(America))+
         legend.box.background = element_rect(fill = "white", colour = "black", linewidth = 0.2),
         legend.position = c(0.18, 0.4), legend.key = element_rect(fill = "white", colour = NA),
         legend.background = element_rect(fill = NA),
-        legend.title=element_text(size=8),
-        legend.text=element_text(size=8),
+        legend.title=element_text(size=7),
+        legend.text=element_text(size=6),
         title = element_text(size = 8),
         axis.title =element_blank(),
         axis.text =element_blank(),
         axis.ticks =element_blank(),
         axis.line=element_blank(),
         axis.ticks.length = unit(0, "pt"),
-        plot.margin= unit(c(0,0,1,0), "pt"))+
-  guides(fill = guide_legend(override.aes = list(size = 5)), )
+        plot.margin= unit(c(0,0,1,0), "pt"),
+        legend.spacing.y = unit(-0.1, 'cm'),
+        legend.key.spacing.y =  unit(-0.1, 'cm'))+
+  guides(fill = guide_legend(override.aes = list(size = 4)))
 
 ref_data <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/Geolocator_reference_data_consolidated.csv")
 fall.stat <- fall.stat %>% merge(ref_data[,c("geo.id", "fall.equinox.date")], by.x = "geo_id", by.y = "geo.id") %>% mutate(equi_prox = difftime(StartTime, fall.equinox.date, units = "days"))
 fall.stat <- fall.stat %>% rowwise() %>% mutate(equi_prox = ifelse(abs(equi_prox) <= 14, "within_equi", "out_equi"))
 
 ## fall stationary location clusters 
-fall.clustplot<- ggplot(st_as_sf(America))+
+fall.clustplot <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
-  geom_sf(data = equi.region, fill = "#D9D5B2", lwd = 0.2, alpha = 1) +
+  geom_sf(data = equi.region, aes(fill = "#D9D5B2"), lwd = 0.2, alpha = 1) +
+  scale_fill_manual(labels = c("Clustering restricted \nto latitude"), values = c("#D9D5B2"),guide = guide_legend(title = NULL))+
+  new_scale_fill()+
   geom_sf(data = Lakes, fill = "lightblue", lwd = 0.2, alpha = 1) +
   coord_sf(xlim = c(-165, -50),ylim = c(-5, 70)) +
   geom_errorbar(data = fall.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.1, alpha = 0.9, color = "black") +
   geom_errorbar(data = fall.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.1, alpha = 0.9, color = "black") +
   #geom_path(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5) +
-  geom_point(data = fall.stat[(fall.stat$site_type!= "Breeding"),], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = as.factor(cluster), col = equi_prox), cex = 1.5, shape = 21, stroke = 0.5) +
+  geom_point(data = fall.stat[(fall.stat$site_type!= "Breeding"),], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = as.factor(cluster), col = equi_prox), cex = 1.5, shape = 21, stroke = 0.5, , show.legend= c(fill = F))+
   scale_colour_manual(values = c(out_equi = "white", within_equi = "black"), breaks = ("within_equi"),
                       labels = c("Locations estimated within \ntwo weeks of the equinoxes" ))+
   #geom_text(data = meta.fall.ab[meta.fall.ab$node.type != "Breeding",], mapping = aes(x = Lon.50., y = Lat.50., label = vertex), cex = 3, fontface = "bold")+
@@ -467,7 +481,7 @@ fall.clustplot<- ggplot(st_as_sf(America))+
   labs(colour = "Cluster") +
   theme_bw() +
   ggtitle("(c) Post-breeding migration location clusters") + 
-  theme(legend.position = c(0.3, 0.15),
+  theme(legend.position = c(0.25, 0.2),
         legend.box.background = element_rect(fill = "white", colour = "black", linewidth = 0.2),
         legend.key = element_blank(),
         axis.line=element_blank(),
@@ -476,18 +490,22 @@ fall.clustplot<- ggplot(st_as_sf(America))+
         axis.title =element_blank(),
         title = element_text(size = 8),
         legend.title = element_blank(),
-        legend.text=element_text(size=8),
+        legend.text=element_text(size=6),
         axis.ticks.length = unit(0, "pt"),
         panel.grid.major=element_blank(),
         panel.grid.minor=element_blank(),
         #panel.border = element_rect(colour = "black", fill=NA, size=0.5),
-        plot.margin= unit(c(2,0,0,0), "pt")) + 
-  guides(fill = "none")
+        plot.margin= unit(c(2,0,0,0), "pt"),
+        legend.spacing.y = unit(-0.1, 'cm'),
+        legend.key.spacing.y =  unit(-0.1, 'cm')) 
 
 ## Spring node types ----
-spring.ggnet <- ggnetwork(spring.graph, layout = as.matrix(meta.spring.ab[, c("Lon.50.", "Lat.50.")]), scale = F)
+spring.ggnet <- ggnetwork(spring.graph, layout = as.matrix(meta.spring.ab[, c("Lon.50.", "Lat.50.")]), scale = F) 
 spring.gplot <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
+  geom_sf(data = bpw.range.BLI, aes(fill = as.factor(seasonal)),col = NA, alpha = 0.4) +
+  scale_fill_manual(values = c("#440154FF", "#FDE725FF", "#21908CFF"), labels = c("Breeding", "Migration", "Nonbreeding"), name = "Seasonal ranges", guide = guide_legend(order = 3)) +
+  new_scale_fill()+
   geom_sf(data = Lakes, fill = "lightblue", lwd = 0.2, alpha = 1) +
   coord_sf(xlim = c(-165, -50),ylim = c(-5, 70)) +
   geom_edges(data = spring.ggnet, mapping = aes(x = x, y = y, xend = xend, yend = yend, col = edge.type, lwd = weight),
@@ -495,16 +513,16 @@ spring.gplot <- ggplot(st_as_sf(America))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
   scale_color_manual(values=c(adjustcolor("blue", alpha = 0), adjustcolor("black", alpha = 0.3)), guide = "none")+
   geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = node.type), shape=21)+
-  scale_size(range = c(0.8, 4), breaks = c(0.1, 0.2, 0.3), name = "Node weight")+
+  scale_size(range = c(0.8, 4), breaks = c(0.1, 0.2, 0.3), name = "Node weight",guide = "none")+
   scale_fill_manual(values=c("Breeding"  = "#440154FF", "Stopover" = "#FDE725FF", "Nonbreeding" = "#21908CFF"), guide = "none")+
   ggtitle("(b) Pre-breeding migration network") + 
   geom_shadowtext(data = meta.spring.ab[meta.spring.ab$node.type != "Breeding",], mapping = aes(x = Lon.50., y = Lat.50., label = vertex), cex = 3, fontface = "bold", col = "black", bg.colour = "white", nudge_x = 1.5, nudge_y = -1.5)+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         legend.box.background = element_rect(fill = "white", colour = "black", linewidth = 0.2),
-        legend.position = c(0.15, 0.4), legend.key = element_rect(fill = "white", colour = NA),
-        legend.title=element_text(size=8),
-        legend.text=element_text(size=8),
+        legend.position = c(0.15, 0.4), legend.key = element_blank(),
+        legend.title=element_text(size=7),
+        legend.text=element_text(size=6),
         title = element_text(size = 8),
         legend.background = element_rect(fill = NA),
         axis.title =element_blank(),
@@ -512,8 +530,9 @@ spring.gplot <- ggplot(st_as_sf(America))+
         axis.ticks =element_blank(),
         axis.line=element_blank(),
         axis.ticks.length = unit(0, "pt"),
-        plot.margin= unit(c(0,0,1,0), "pt"))
-
+        plot.margin= unit(c(0,0,1,0), "pt"),
+        legend.spacing.y = unit(-0.01, 'cm'),
+        legend.key.spacing.y =  unit(0.0, 'cm'))
 spring.stat <- spring.stat %>% mutate(spring_equi_prox = difftime(StartTime, spring.equinox.date, units = "days"))
 spring.stat <- spring.stat %>% rowwise() %>% mutate(spring_equi_prox = ifelse(abs(spring_equi_prox) <= 14, "within_equi", "out_equi"))
 
@@ -532,7 +551,7 @@ spring.clustplot<- ggplot(st_as_sf(America))+
   labs(colour = "Cluster") +
   theme_bw() +
   ggtitle("(d) Pre-breeding migration stationary location clusters") + 
-  theme(text = element_text(size = 8), legend.position = "None",
+  theme(text = element_text(size = 6), legend.position = "None",
         axis.line=element_blank(),
         axis.text =element_blank(),
         axis.ticks=element_blank(),
@@ -542,7 +561,9 @@ spring.clustplot<- ggplot(st_as_sf(America))+
         panel.grid.minor=element_blank(),
         axis.ticks.length = unit(0, "pt"),
         #panel.border = element_rect(colour = "black", fill=NA, size=0.5),
-        plot.margin = unit(c(2,0,0,0), "pt"))
+        plot.margin = unit(c(2,0,0,0), "pt"),
+        legend.spacing.y = unit(-0.1, 'cm'),
+        legend.key.spacing.y =  unit(-0.1, 'cm'))
 
 ## Panel ----
 nodes.fig <- (fall.gplot | spring.gplot)/ (fall.clustplot |spring.clustplot) #+
@@ -551,7 +572,7 @@ nodes.fig <- (fall.gplot | spring.gplot)/ (fall.clustplot |spring.clustplot) #+
 # plot.tag = element_text(face = 'bold', size = 10))
 
 ggsave(plot = nodes.fig, filename = "nodes.figure.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures",
-       units = "cm", width = 25*1.2, height = 12*1.2, dpi = 680, bg = "white")
+       units = "cm", width = 26*1.2, height = 13*1.2, dpi = 680, bg = "white")
 
 # Figure 2: Node population composition ---- 
 
@@ -2014,9 +2035,9 @@ nbr.locations.plot <- ggplot(st_as_sf(wrld_simpl))+
   geom_errorbar(data = comb_nb_locs, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5., colour = type), linewidth = 0.4, width= 0, alpha = 0.8) +
   geom_errorbar(data = comb_nb_locs, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5., colour = type), linewidth = 0.4, width = 0, alpha = 0.8) +
   geom_point(data = comb_nb_locs, mapping = aes(x = Lon.50., y =  Lat.50., fill = type), colour = "black", cex = 2.7, shape = 21, stroke = 0.5) +
-  scale_fill_manual(name = "Locations", labels = c("Initial locations",  "Final locations", "Static"), values = c("orange", "firebrick", "gray"))+
+  scale_fill_manual(name = "Locations types", labels = c("Initial",  "Final", "Static"), values = c("orange", "firebrick", "gray"))+
   scale_colour_manual(values = c("orange","firebrick", "gray"), guide = F)+
-  ggtitle("(a) Initial and final wintering locations") + 
+  ggtitle("(a) Wintering locations") + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         text = element_text(size = 14),
@@ -2049,7 +2070,7 @@ nbr.movements.plot <- ggplot(st_as_sf(wrld_simpl))+
   #                      name = "Timing")+
   # scale_color_viridis(begin = 0, end = 0.9, guide = "none")+
    scale_linetype_manual(values = c("dashed", "solid"), guide = "none")+
-  ggtitle("(b) Movement directions and timing") + 
+  ggtitle("(b) Post-migratory nonbreeding movement timing") + 
    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         text = element_text(size = 14),
