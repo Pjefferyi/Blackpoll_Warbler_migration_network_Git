@@ -483,6 +483,8 @@ fall.clustplot <- ggplot(st_as_sf(America))+
   ggtitle("(c) Post-breeding migration location clusters") + 
   theme(legend.position = c(0.25, 0.2),
         legend.box.background = element_rect(fill = "white", colour = "black", linewidth = 0.2),
+        legend.background=element_blank(),
+        #legend.margin = margin(unit(c(6,6,6,6), "pt")),
         legend.key = element_blank(),
         axis.line=element_blank(),
         axis.text =element_blank(),
@@ -490,7 +492,7 @@ fall.clustplot <- ggplot(st_as_sf(America))+
         axis.title =element_blank(),
         title = element_text(size = 8),
         legend.title = element_blank(),
-        legend.text=element_text(size=6),
+        legend.text= element_text(size=6),
         axis.ticks.length = unit(0, "pt"),
         panel.grid.major=element_blank(),
         panel.grid.minor=element_blank(),
@@ -571,8 +573,8 @@ nodes.fig <- (fall.gplot | spring.gplot)/ (fall.clustplot |spring.clustplot) #+
 # theme(plot.tag.position = c(0.05, 0.95),
 # plot.tag = element_text(face = 'bold', size = 10))
 
-ggsave(plot = nodes.fig, filename = "nodes.figure.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures",
-       units = "cm", width = 26*1.2, height = 13*1.2, dpi = 680, bg = "white")
+ggsave(plot = nodes.fig, filename = "nodes.figure.jpg" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures",
+       units = "cm", width = 26*1.2, height = 13*1.2, dpi = "print", bg = "white")
 
 # Figure 2: Node population composition ---- 
 
@@ -594,9 +596,10 @@ fall.gplot.comp <- ggplot(st_as_sf(America))+
   ggtitle("(a) Post-breeding migration node use")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
-        legend.position = c(0.15, 0.58), text = element_text(size = 12), legend.key = element_blank(),
+        legend.position = c(0.15, 0.58), text = element_text(size = 10), legend.key = element_blank(),
         legend.box.background = element_rect(fill = "white", colour = "black", linewidth = 0.4),
-        legend.text = element_text(size = 12),
+        legend.text = element_text(size = 10),
+        title = element_text(size = 12),
         axis.title =element_blank(),
         axis.text =element_blank(),
         axis.ticks =element_blank(),
@@ -623,8 +626,9 @@ spring.gplot.comp <- ggplot(st_as_sf(America))+
   ggtitle("(b) Pre-breeding migration node use")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
-        legend.position = c(0.15, 0.55), text = element_text(size = 12), legend.key = element_blank(),
-        legend.text = element_text(size = 12),
+        legend.position = c(0.15, 0.55), text = element_text(size = 10), legend.key = element_blank(),
+        legend.text = element_text(size = 10),
+        title = element_text(size = 12),
         legend.box.background = element_rect(fill = "white", colour = "black", linewidth = 0.4),
         axis.title =element_blank(),
         axis.text =element_blank(),
@@ -653,7 +657,7 @@ fall.gplot.comp.nbr <- ggplot(st_as_sf(America))+
   ggtitle("(c) Edges in South America and \n final nonbreeding node use")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
-        legend.position = "None", text = element_text(size = 11), legend.key = element_blank(),
+        legend.position = "None", text = element_text(size = 10), legend.key = element_blank(),
         legend.box.background = element_rect(fill = "white", colour = "black", linewidth = 0.4),
         axis.title =element_blank(),
         axis.text =element_blank(),
@@ -681,7 +685,7 @@ spring.gplot.comp.nbr <- ggplot(st_as_sf(America))+
   ggtitle("(d) Edges in South America and \n initial nonbreeding node use")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
-        legend.position = "None", text = element_text(size = 11), legend.key = element_blank(),
+        legend.position = "None", text = element_text(size = 10), legend.key = element_blank(),
         legend.box.background = element_rect(fill = "white", colour = "black", linewidth = 0.4),
         axis.title =element_blank(),
         axis.text =element_blank(),
@@ -701,11 +705,11 @@ node.comp.insert <- (p1 | p2)
 #ggsave(plot = node.comp.fig, filename = "Node.comp.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
 #       units = "cm", width = 24*1.2, height = 10*1.2, dpi = "print", bg = "white")
 
-png("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures/Node.comp.png", units = "cm", width = 25*1.2, height = 8*1.2, res = 680)
+jpeg("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures/Node.comp.jpg", units = "cm", width = 25*1.2, height = 8*1.2, res = 300)
 node.comp.fig
 dev.off()
 
-png("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures/Node.comp.insert.png", units = "cm", width = 25*1.2, height = 12*1.2, res = 680)
+jpeg("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures/Node.comp.insert.jpg", units = "cm", width = 25*1.2, height = 12*1.2, res = 300)
 node.comp.insert
 dev.off()
 
@@ -766,14 +770,14 @@ spring.com.plot <- ggplot(st_as_sf(America))+
 ## Panel ----
 communities.fig <- (fall.com.plot | spring.com.plot)
 
-ggsave(plot = communities.fig, filename = "communities.figure.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
-       units = "cm", width = 24*1.2, height = 10*1.2, dpi = 680, bg = "white")
+ggsave(plot = communities.fig, filename = "communities.figure.jpg" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
+       units = "cm", width = 24*1.2, height = 10*1.2, dpi = "print", bg = "white")
 
 ## Create a Panel with the node composition by breeding region --- 
 Migration.struct <- node.comp.insert / (fall.com.plot | spring.com.plot) 
-ggsave(plot = Migration.struct, filename = "migratory.structure.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
-       units = "cm", width = 24*1.2, height = 10*1.2*2, dpi = 680, bg = "white")
-png("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures/Migratory.structure.png", units = "cm", width = 24*1.2, height = 10*1.2*2, res = 400)
+ggsave(plot = Migration.struct, filename = "migratory.structure.jpg" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
+       units = "cm", width = 24*1.2, height = 10*1.2*2, dpi = "print", bg = "white")
+jpeg("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures/Migratory.structure.jpg", units = "cm", width = 24*1.2, height = 10*1.2*2, res = 400)
 Migration.struct 
 dev.off()
 
@@ -1048,8 +1052,8 @@ metrics.fig <- (fall.gplot.betw | spring.gplot.betw)/ (fall.gplot.metric2| sprin
 # theme(plot.tag.position  = c(.10, .7)) & plot_annotation(tag_levels = list(c("(a)", "(b)", "(c)", "(d)")))&
 # theme(plot.tag = element_text(size= 10)) + theme(plot.margin = unit(c(0,0,0,0), "pt"))
 
-ggsave(plot = metrics.fig, filename = "nodes.metrics.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
-       units = "cm", width = 24*1.2, height = 10*1.2, dpi = 680, bg = "white")
+ggsave(plot = metrics.fig, filename = "nodes.metrics.jpg" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
+       units = "cm", width = 24*1.2, height = 10*1.2, dpi = "print", bg = "white")
 
 # Figure 4.2: average time spent at each node ----
 
@@ -1106,8 +1110,8 @@ spring.gplot.time.spent<- ggplot(st_as_sf(America))+
 ## create panel ----
 metrics.time.fig <- (fall.gplot.time.spent | spring.gplot.time.spent)
 
-ggsave(plot = metrics.time.fig, filename = "nodes.metrics.time.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
-       units = "cm", width = 20*1.2, height = 8*1.2, dpi = 680, bg = "white")
+ggsave(plot = metrics.time.fig, filename = "nodes.metrics.time.jpg" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
+       units = "cm", width = 20*1.2, height = 8*1.2, dpi = "print", bg = "white")
 
 # Table 2: Table of node characteristics ----
 
@@ -1362,8 +1366,8 @@ second.nbr.regions <- ggplot(st_as_sf(wrld_simpl))+
 
 ## create panel ----
 MC.nbr.regions.fig <- (First.nbr.regions  | second.nbr.regions) 
-ggsave(plot = MC.nbr.regions.fig, filename = "MC.nbr.regions.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
-       units = "cm", width = 24*1.2, height = 10*1.2, dpi = 680, bg = "white")
+ggsave(plot = MC.nbr.regions.fig, filename = "MC.nbr.regions.jpg" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
+       units = "cm", width = 24*1.2, height = 10*1.2, dpi = "print", bg = "white")
 
 # Figure 7: Abundance propagation regions ---- 
 
@@ -1383,7 +1387,8 @@ bpw.range <- load_ranges(path = "C:/Users/Jelan/OneDrive/Desktop/University/Univ
   dplyr::filter(season %in% c("breeding", "nonbreeding")) %>% st_transform(crs(wrld_simpl))
 
 # Load blackpoll warbler polygons from BirdLife international 
-bpw.range.BLI <- st_read("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Birdlife_international_species_distribution/SppDataRequest.shp")
+bpw.range.BLI <- st_read("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Birdlife_international_species_distribution/SppDataRequest.shp")  %>% 
+  mutate(seasonal = factor(seasonal, levels = c(2,4,3)))
 
 # polygon for america 
 sf_use_s2(FALSE)
@@ -1393,11 +1398,12 @@ bpw.range <- st_intersection(st_as_sf(America) , bpw.range)
 ab.prop.regions.fig <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
   geom_sf(data = Lakes, fill = "lightblue", lwd = 0.2, alpha = 1) +
-  geom_sf(data = bpw.range.BLI, aes(fill = as.factor(seasonal)),col = NA, alpha = 0.7) +
-  scale_fill_discrete(labels = c("Breeding range", "Passage range", "Nonbreeding range"), name = "", guide = guide_legend(order = 3)) +
+  geom_sf(data = bpw.range.BLI, aes(fill = seasonal),col = NA, alpha = 0.4) +
+  scale_fill_manual(values = c("#440154FF", "#FDE725FF", "#21908CFF"), labels = c("Breeding range", "Migration range", "Nonbreeding range"), name = "", guide = guide_legend(order = 3)) +
   geom_sf(data = br.regions, aes(col = "Abundance propagation regions"), fill = NA, linewidth = 0.5) +
-  scale_colour_manual(values = c("Abundance propagation regions" = "black"), name = "")+
+  scale_colour_manual(values = c("Abundance propagation regions" = "black"), name = "", labels = c("Breeding regions"))+
   geom_sf_label(data = br.regions, aes(label = region), nudge_y = c(-10, -8,-13 ,-13), nudge_x = c(10, 10, -4,0), cex =4)+
+  coord_sf(xlim = c(-170, -40),ylim = c(-5, 70))+
   new_scale_fill() +
   # all breeding sites included in the fall network
   geom_point(data =  fall.stat[fall.stat$sitenum == 1,], aes(fill = "black", x = Lon.50., y = Lat.50.), col = "white", shape = 21, cex = 3)+
@@ -1405,10 +1411,9 @@ ab.prop.regions.fig <- ggplot(st_as_sf(America))+
   # Deployment location for WRMA04173
   geom_point(data =  ref.data[ref.data$geo.id == "WRMA04173",], aes(fill = "black", x = mod.deploy.lon, y = mod.deploy.lat), col = "white", shape = 21, cex = 3)+
   scale_fill_manual(values = c("black"), labels = c("Geolocator deployment sites"), name = "", guide = guide_legend(order = 1))+
-  coord_sf(xlim = c(-170, -40),ylim = c(-5, 70))+
   # estimated breeding location for WRMA04173
-  geom_point(data = spring.stat[spring.stat$geo_id == "WRMA04173" & spring.stat$sitenum == 5,],
-             aes(x = Lon.50., y = Lat.50.), shape = 4, cex = 3)+
+   geom_point(data = spring.stat[spring.stat$geo_id == "WRMA04173" & spring.stat$sitenum == 5,],
+              aes(x = Lon.50., y = Lat.50.), fill = "black" , col = "white", shape = 24, cex = 3)+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         axis.title =element_blank(),
@@ -1425,7 +1430,7 @@ ab.prop.regions.fig <- ggplot(st_as_sf(America))+
         legend.key = element_rect(colour = "transparent", fill = "white"))
 
 ## Save the plot ----
-ggsave(plot = ab.prop.regions.fig, filename = "abundance.prop.regions.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
+ggsave(plot = ab.prop.regions.fig, filename = "abundance.prop.regions.jpg" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
        units = "cm", width = 24*1.2, height = 10*1.2, dpi = "print", bg = "white")
 
 # # Figure 8 individual migratory tracks for the fall migration  ----
@@ -1564,41 +1569,59 @@ for (i in unique(geo.all$geo_id)){
   sk.df <- as.data.frame(sk, xy = T, na.rm = T) #%>% filter(lyr.1 > quantile(sk$lyr.1, probs = 0.5))#%>%
    # mutate(lyr.1 = 1)
   
-  
+  # prepare ind.data to make it compatible with the  geom_segment() function 
+  ind.data <- ind.data %>% mutate(next.Lat.50. = lead(Lat.50.), 
+                                  next.Lon.50. = lead(Lon.50.))%>%
+    merge(ref_data[,c("geo.id", "fall.equinox.date")], by.x = "geo_id", by.y = "geo.id") %>% 
+    rowwise() %>%
+    mutate(equi_prox_start = difftime(StartTime, fall.equinox.date, units = "days"),
+           equi_prox_end = difftime(EndTime, fall.equinox.date, units = "days"),
+           two_weeks_equi_prox = ifelse(abs(equi_prox_start) <= 14 | abs(equi_prox_end) <= 14, "True", "False")) 
+                                  
   loc.ind[[i]] <- ggplot(st_as_sf(America))+
     geom_sf(colour = "black", fill = "white") +
     coord_sf(xlim = c(-170, -30),ylim = c(-15, 70)) +
     #scale_fill_gradient(low = adjustcolor("lightblue", alpha = 0), high = "#04364B", name = "Probability", limits = c(0, 125))+ 
     #scale_fill_viridis( n = 10, alpha = 0.8,direction = -1, name = "Probability", limits = c(0,125))+ 
-    scale_fill_gradientn(colours = c(adjustcolor("grey", alpha = 0.2), viridis(50, direction = -1)), name = "Posterior \ndistribution")+ 
+    scale_fill_gradientn(colours = c(adjustcolor("grey", alpha = 0.2), viridis(50, direction = -1)), name = "Posterior \ndistribution",
+                         guide = guide_colourbar(theme = theme(
+                           legend.text = element_blank())))+ 
     geom_tile(data = sk.df, aes(x = x, y = y, fill = lyr.1))+
+    (if(!(i %in% c("3254_001", "A", "V8296_005", "V8757_029"))){guides(fill = "none")})+
     new_scale_fill()+
     #coord_sf(xlim = c(min(ind.stat$Lon.50.)-15, max(ind.stat$Lon.50.)+15),ylim = c(min(ind.stat$Lat.50.)-15, max(ind.stat$Lat.50.)+15)) +
     geom_errorbar(data = ind.data.stat[ind.data.stat$duration >=2,], aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, width = 1, alpha = 0.8, color = "black") +
     geom_errorbar(data = ind.data.stat[ind.data.stat$duration >=2,], aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, width = 1, alpha = 0.8, color = "black") +
-    geom_path(data = ind.data, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, col = period), alpha = 0.9, col = "firebrick") +
+    #geom_path(data = ind.data, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, col = period), alpha = 0.9, col = "firebrick") +
+    geom_segment(data = ind.data, mapping = aes(x = Lon.50., y = Lat.50., xend = next.Lon.50., yend = next.Lat.50., linetype = two_weeks_equi_prox), col = "firebrick")+
+    scale_linetype_manual(values = c("True" = 3, "False" = 1), labels = c("Migration track", "Equinox period"), name = NULL)+
     geom_point(data =  ind.data.stat[ind.data.stat$duration >=2,], mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = period, pch = period, col = period), cex = 2.5)+
-    scale_shape_manual(values=c("Post-breeding migration" = 21 , "Non-breeding period"  = 22, "Pre-breeding migration" = 21, "Breeding"  = 24, "Failure" = 4)) +
-    scale_colour_manual(values=c("Post-breeding migration" = "black" , "Non-breeding period"  = "white", "Pre-breeding migration" = "black", "Breeding"  = "white", "Failure" = "black")) +
-    scale_fill_manual(values=c("Post-breeding migration" = "#FDE725FF" , "Non-breeding period"  = "black", "Pre-breeding migration" = "#21908CFF", "Breeding"  = "black"))+
+    scale_shape_manual(values=c("Post-breeding migration" = 21 , "Non-breeding period"  = 22, "Pre-breeding migration" = 21, "Breeding"  = 24, "Failure" = 4),
+                       labels = c("Breeding site", "Nonbreeding site", "Pre-breeding migration stopover", "post-breeding migration stopover"), name = NULL) +
+    scale_colour_manual(values=c("Post-breeding migration" = "black" , "Non-breeding period"  = "white", "Pre-breeding migration" = "black", "Breeding"  = "white", "Failure" = "black"),
+                        labels = c("Breeding site", "Nonbreeding site", "Pre-breeding migration stopover", "post-breeding migration stopover"), name = NULL) +
+    scale_fill_manual(values=c("Post-breeding migration" = "#FDE725FF" , "Non-breeding period"  = "black", "Pre-breeding migration" = "#21908CFF", "Breeding"  = "black"),
+                      labels = c("Breeding site", "Nonbreeding site", "Pre-breeding migration stopover", "post-breeding migration stopover"), name = NULL)+
     #scale_fill_continuous(low = "yellow", high = "purple")+
     ggtitle(first(geo.all[geo.all$geo_id == i,]$Standard.geo.id)) +
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
           panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
-          plot.title=element_text(size=8, vjust=-1),
-          text = element_text(size = 8),
+          plot.title=element_text(size=9, vjust=-1),
+          text = element_text(size = 11),
           axis.title =element_blank(),
           axis.text =element_blank(),
           axis.ticks =element_blank(),
-          legend.text = element_blank(),
+          #legend.text = element_blank(),
           axis.ticks.length = unit(0, "pt"),
           legend.spacing = unit(-5, "pt"),
+          #legend.text = element_text(size  = 11),
           plot.margin = unit(c(0,0,0,0), "pt"),
           legend.key = element_rect(colour = "transparent", fill = "white"))+
-    guides(shape="none", colour = "none", fill = "none")+
-    if (i == "3254_001"){theme(legend.position = c(0.1, 0.35))} else {theme(legend.position = "None")}+
+    (if(!(i %in% c("3254_001", "A", "V8296_005", "V8757_029"))){guides(shape="none", linetype = "none", colour = "none", fill = "none")} else
+      {guides(shape=guide_legend(nrow=2,byrow=TRUE), linetype = guide_legend(nrow=2,byrow=TRUE), colour = guide_legend(nrow=2,byrow=TRUE))})
+    #guides(shape="none", linetype = "none", colour = "none", fill = "none")+
+       #if (i == "3254_001"){theme(legend.position = c(0.1, 0.35))} else {theme(legend.position = "None")}+
     if (i == "V8757_096"){theme(panel.border = element_rect(colour = "firebrick", fill=NA, size=1))}
-  
 }
 
 # Create a panel of plots
@@ -1606,29 +1629,28 @@ for (i in unique(geo.all$geo_id)){
 plot_a_list <- function(plots, nrows, ncols) {
   
   patchwork::wrap_plots(plots,
-                        nrow = nrows, ncol = ncols)
+                        nrow = nrows, ncol = ncols, guides = "collect")
 }
 
-loc.ind.panel1 <- plot_a_list(loc.ind[1:12], 4, 3)
-loc.ind.panel2 <- plot_a_list(loc.ind[13:24], 4, 3)
-loc.ind.panel3 <- plot_a_list(loc.ind[25:36], 4, 3)
-loc.ind.panel4 <- plot_a_list(loc.ind[37:47], 4, 3)
+loc.ind.panel1 <- plot_a_list(loc.ind[1:12], 4, 3) + plot_layout(guides = "collect") & theme(legend.position = "bottom")
+loc.ind.panel2 <- plot_a_list(loc.ind[13:24], 4, 3) + plot_layout(guides = "collect") & theme(legend.position = "bottom")
+loc.ind.panel3 <- plot_a_list(loc.ind[25:36], 4, 3) + plot_layout(guides = "collect") & theme(legend.position = "bottom")
+loc.ind.panel4 <- plot_a_list(loc.ind[37:47], 4, 3) + plot_layout(guides = "collect") & theme(legend.position = "bottom")
 
 ## Save the plots ----
-ggsave(plot = loc.ind.panel1, filename = "individual.movements1.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures",
-       units = "cm", width = 24*1.2, height = 30*1.2, dpi = "print", bg = "white")
+ggsave(plot = loc.ind.panel1, filename = "individual.movements1.jpg" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures",
+       units = "cm", width = 24*1.2, height = 32*1.2, dpi = "print", bg = "white")
 
-ggsave(plot = loc.ind.panel2, filename = "individual.movements2.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures",
-       units = "cm", width = 24*1.2, height = 30*1.2, dpi = "print", bg = "white")
+ggsave(plot = loc.ind.panel2, filename = "individual.movements2.jpg" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures",
+       units = "cm", width = 24*1.2, height = 32*1.2, dpi = "print", bg = "white")
 
-ggsave(plot = loc.ind.panel3, filename = "individual.movements3.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures",
-       units = "cm", width = 24*1.2, height = 30*1.2, dpi = "print", bg = "white")
+ggsave(plot = loc.ind.panel3, filename = "individual.movements3.jpg" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures",
+       units = "cm", width = 24*1.2, height = 32*1.2, dpi = "print", bg = "white")
 
-ggsave(plot = loc.ind.panel4, filename = "individual.movements4.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures",
-       units = "cm", width = 24*1.2, height = 30*1.2, dpi = "print", bg = "white")
+ggsave(plot = loc.ind.panel4, filename = "individual.movements4.jpg" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures",
+       units = "cm", width = 24*1.2, height = 32*1.2, dpi = "print", bg = "white")
 
 # Figure 11 group migratory tracks for full year  ----
-
 
 ## Migratory track for eastern breeders in the fall ----
 east.fall.data <- geo.all %>% filter(Breeding_region_MC == "Eastern Region") %>%
@@ -1815,10 +1837,10 @@ loc.ind.panel3 <- plot_a_list(dates.ind.lat[1:24], 6, 4)
 loc.ind.panel4 <- plot_a_list(dates.ind.lat[25:47], 6, 4)
 
 ## Save the plots ----
-ggsave(plot = loc.ind.panel1, filename = "Movement.timings.longitude1.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures",
+ggsave(plot = loc.ind.panel1, filename = "Movement.timings.longitude1.jpg" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures",
        units = "cm", width = 24*1.2, height = 30*1.2, dpi = "print", bg = "white")
 
-ggsave(plot = loc.ind.panel2, filename = "Movement.timings.longitude2.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures",
+ggsave(plot = loc.ind.panel2, filename = "Movement.timings.longitude2.jpg" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures",
        units = "cm", width = 24*1.2, height = 30*1.2, dpi = "print", bg = "white")
 
 #Figure 14 stopovers in the nonbreeding range ----
@@ -2041,7 +2063,7 @@ nbr.locations.plot <- ggplot(st_as_sf(wrld_simpl))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         text = element_text(size = 14),
-        plot.title =element_text(size=14, vjust=-1),
+        plot.title =element_text(size=14, vjust=0),
         legend.position = c(0.16, 0.4),
         legend.background = element_rect(fill = "white", colour =  "black", linewidth =  0.3),
         axis.title =element_blank(),
@@ -2049,7 +2071,7 @@ nbr.locations.plot <- ggplot(st_as_sf(wrld_simpl))+
         axis.ticks =element_blank(),
         axis.ticks.length = unit(0, "pt"),
         legend.spacing = unit(-5, "pt"),
-        plot.margin = unit(c(0,0,0,0), "pt"),
+        plot.margin = unit(c(0,0,1,0), "pt"),
         legend.key = element_rect(colour = "transparent", fill = "white"))
 
 # Plot showing movements and movement timings during the nonbreeding season ----
@@ -2070,11 +2092,11 @@ nbr.movements.plot <- ggplot(st_as_sf(wrld_simpl))+
   #                      name = "Timing")+
   # scale_color_viridis(begin = 0, end = 0.9, guide = "none")+
    scale_linetype_manual(values = c("dashed", "solid"), guide = "none")+
-  ggtitle("(b) Post-migratory nonbreeding movement timing") + 
+  ggtitle("(b) Post-migratory nonbreeding movements") + 
    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
         text = element_text(size = 14),
-        plot.title=element_text(size=14, vjust=-1),
+        plot.title=element_text(size=14, vjust=0),
         legend.position = c(0.18, 0.4),
         legend.background = element_rect(fill = "white", colour =  "black", linewidth =  0.3),
         axis.title =element_blank(),
@@ -2082,17 +2104,17 @@ nbr.movements.plot <- ggplot(st_as_sf(wrld_simpl))+
         axis.ticks =element_blank(),
         axis.ticks.length = unit(0, "pt"),
         legend.spacing = unit(-5, "pt"),
-        plot.margin = unit(c(0,0,0,0), "pt"),
+        plot.margin = unit(c(2,0,0,0), "pt"),
         legend.key = element_rect(colour = "transparent", fill = "white"))
 
 ## Save the plot ----
-# ggsave(plot = nbr.move.plot, filename = "nbr.movements.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
+# ggsave(plot = nbr.move.plot, filename = "nbr.movements.jpg" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
 #        units = "cm", width = 24*1.2, height = 10*1.2, dpi = 680, bg = "white")
 
-nbr.move.plot <- (nbr.locations.plot| nbr.movements.plot)
+nbr.move.plot <- (nbr.locations.plot/nbr.movements.plot)
 
-ggsave(plot = nbr.move.plot , filename = "nbr.movements.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
-       units = "cm", width = 24*1.2, height = 10*1.2, dpi = 680, bg = "white")
+ggsave(plot = nbr.move.plot , filename = "nbr.movements.jpg" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
+       units = "cm", width = 14*1.2, height = 20*1.2, dpi = "print", bg = "white")
 
 # Figure 16:  Flight by individuals with ID V8757-096 -----
 
@@ -2127,7 +2149,7 @@ f1.end <- "2012-11-05"
 #            alpha = .1,fill = "yellow")
 
 # Plot lat, lon and light transitions  
-jpeg("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures/light_transitions_V8757_096.png",
+jpeg("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures/light_transitions_V8757_096.jpg",
      width = 2124 , height = 1090, quality = 100, res = 300)
 
 par(cex.lab=1, cex.axis=1, mfrow=c(3,1), 
@@ -2216,7 +2238,7 @@ fall.carib.stops.plot <- ggplot(st_as_sf(America))+
   geom_errorbar(data = fall.carib.stops, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.1, alpha = 0.8, color = "black") +
   #geom_path(data = fall.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5) +
   geom_point(data = fall.carib.stops, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = as.factor(cluster), shape = Fall_carrib_edits), cex = 2.5, stroke = 0.5)+
-  scale_shape_manual(values  = c(21, 22), name = "Estimation method", labels = c('"Regular" geolocator analysis', "Review of light level transitions"))+
+  scale_shape_manual(values  = c(21, 22), name = "Estimation method", labels = c('"Regular" geolocator analysis', "Review of light level transitions \nand raw location estimates"))+
   #geom_text(data = fall.carib.stops, mapping = aes(x = Lon.50., y = Lat.50., label = geo_id))
   geom_shadowtext(data = meta.fall.ab[meta.fall.ab$vertex %in% c(8, 9 ,10),], mapping = aes(x = Lon.50., y = Lat.50., label = vertex), cex = 4, fontface = "bold", col = "black", bg.colour = "white", nudge_x = 1, nudge_y =  1)+
   theme(text = element_text(size = 14), legend.position = c(0.82, 0.6),
@@ -2229,10 +2251,11 @@ fall.carib.stops.plot <- ggplot(st_as_sf(America))+
         axis.ticks.length = unit(0, "pt"),
         panel.grid.major=element_blank(),
         panel.grid.minor=element_blank(),
+        legend.key.spacing.y =  unit(0.1, 'cm'),
         panel.border = element_rect(colour = "black", fill=NA, size=0.5),
         plot.margin= unit(c(2,0,0,0), "pt"),
         legend.key = element_rect(colour = "transparent", fill = "white")) + 
   guides(fill="none")
 
-ggsave(plot = fall.carib.stops.plot , filename = "fall.carib.locs.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
-       units = "cm", width = 24*1.2, height = 10*1.2, dpi = 680, bg = "white")
+ggsave(plot = fall.carib.stops.plot , filename = "fall.carib.locs.jpg" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
+       units = "cm", width = 24*1.2, height = 10*1.2, dpi = "print", bg = "white")

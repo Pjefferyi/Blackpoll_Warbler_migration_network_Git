@@ -120,7 +120,7 @@ twl$Twilight <- as.POSIXct(twl$Twilight, tz = "UTC")
 # Automatically adjust or mark false twilights
 twl <- twilightEdit(twilights = twl,
                     window = 4,
-                    outlier.mins = 35,
+                    outlier.mins = 25,
                     stationary.mins = 25,
                     plot = TRUE)
 
@@ -327,7 +327,7 @@ geo_twl <- export2GeoLight(twl)
 # Often it is necessary to play around with quantile and days
 # quantile defines how many stopovers there are. the higher, the fewer there are
 # days indicates the duration of the stopovers 
-q <- 0.7
+q <- 0.75
 cL <- changeLight(twl=geo_twl, quantile= q, summary = F, days = days, plot = T)
 
 # merge site helps to put sites together that are separated by single outliers.

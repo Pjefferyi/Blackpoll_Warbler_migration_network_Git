@@ -266,7 +266,7 @@ data(wrld_simpl)
 plot(x0, type = "n", xlab = "", ylab = "")
 plot(wrld_simpl, col = "grey95", add = T)
 
-points(path$x[], pch=19, col="cornflowerblue", type = "o")
+points(path$x, pch=19, col="cornflowerblue", type = "o")
 points(lon.calib, lat.calib, pch = 16, cex = 2.5, col = "firebrick")
 box()
 
@@ -612,7 +612,7 @@ geo.ref[(geo.ref$geo.id == geo.id),]$nbr.departure <- NA
 geo.ref[(geo.ref$geo.id == geo.id),]$br.departure <- as.Date(dep.br)
 geo.ref[(geo.ref$geo.id == geo.id),]$br.arrival <- as.Date(arr.br)
 geo.ref[(geo.ref$geo.id == geo.id),]$changelight.quantile <- q
-write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE) 
+write.csv(geo.ref, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/Geolocator_reference_data_consolidated.csv", row.names=FALSE) 
 
 #################################################################################
 # Simple thresold estimate
