@@ -9,7 +9,7 @@ library(ggplot2)
 library(geosphere)
 library(terra)
 library(sf)
-#library(maptools)
+library(rnaturalearth)
 library(ebirdst)
 library(scatterpie)
 library(ggnewscale)
@@ -396,9 +396,11 @@ spring.gdata <- igraph::as_data_frame(spring.graph, what = "vertices") %>% mutat
 # write.csv(spring.gdata, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/spring.graph.data.csv")
 
 # Figures 1 and 2: Fall and spring migratory network node types and stationary location clusters ----
-America <- wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),]
+#America <- wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),]
+world_countries <- ne_countries(type = "countries", scale = "large")
+America <- world_countries[((world_countries$continent %in%  c("North America", "South America") | world_countries$admin == "France") & world_countries$admin != "Greenland"),]
 Lakes <- st_read("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/World_map/ne_110m_lakes/ne_110m_lakes.shp")%>%
-  st_transform(crs = crs(wrld_simpl))
+  st_transform(crs = crs(world_countries))
 
 # Create the equinox region for the fall network 
 
@@ -407,7 +409,7 @@ equipol <- st_read("C:/Users/Jelan/OneDrive/Desktop/University/University of Gue
 
 # load blackpoll warbler range polygon
 bpw.range <- st_read("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Birdlife_international_species_distribution/SppDataRequest.shp") %>%
-  dplyr::filter(seasonal %in% c(2,3,4)) %>% st_union() %>% st_transform(crs(wrld_simpl))
+  dplyr::filter(seasonal %in% c(2,3,4)) %>% st_union() %>% st_transform(crs(world_countries))
 
 # Find its intersection with the Blackpoll warbler's breeding range 
 sf_use_s2(FALSE)
@@ -1296,13 +1298,13 @@ fall.nbr <- fall.stat %>% group_by(geo_id) %>%
   arrange(geo_id) 
 
 fall.nbr.sf <- st_as_sf(fall.nbr, coords = c("Lon.50.", "Lat.50."), crs = st_crs(wrld_simpl), remove = F)
-fall.nbr.sf <- st_transform(fall.nbr.sf, st_crs(wrld_simpl)) 
+fall.nbr.sf <- st_transform(fall.nbr.sf, st_crs(world_countries)) 
 
 fall.nbr.regions <- st_read("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/fall.nbr.regions.shp") 
 
 ## Fall nonbreeding regions plot ----
 fall.nbr.sf$Breeding_region_MC <- factor(fall.nbr.sf$Breeding_region_MC , levels = c("Eastern Region", "Central Region", "Western Region", "Northwestern Region"))
-First.nbr.regions <- ggplot(st_as_sf(wrld_simpl))+
+First.nbr.regions <- ggplot(st_as_sf(world_countries))+
   geom_sf(colour = "black", fill = "#F7F7F7")+
   geom_sf(data = fall.nbr.regions, col = "black",fill = "lightgray", alpha = 0.9)+
   geom_errorbar(data = fall.nbr.sf, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), col = "black", linewidth = 0.5)+
@@ -1330,17 +1332,17 @@ First.nbr.regions <- ggplot(st_as_sf(wrld_simpl))+
 spring.nbr <- spring.stat %>% group_by(geo_id) %>% 
   filter(period == "Non-breeding period") %>% filter(sitenum == min(sitenum))
 
-spring.nbr.sf <- st_as_sf(spring.nbr, coords = c("Lon.50.", "Lat.50."), crs = st_crs(wrld_simpl), remove = F)
+spring.nbr.sf <- st_as_sf(spring.nbr, coords = c("Lon.50.", "Lat.50."), crs = st_crs(world_countries), remove = F)
 spring.nbr.sf <- st_transform(spring.nbr.sf, st_crs(proj)) 
 
-spring.nbr.sf <- st_as_sf(spring.nbr, coords = c("Lon.50.", "Lat.50."), crs = st_crs(wrld_simpl), remove = F)
+spring.nbr.sf <- st_as_sf(spring.nbr, coords = c("Lon.50.", "Lat.50."), crs = st_crs(world_countries), remove = F)
 spring.nbr.sf <- st_transform(spring.nbr.sf, st_crs(proj)) 
 
 spring.nbr.regions <- st_read("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/spring.nbr.regions.shp") 
 
 ## spring nonbreeding regions plot ----
 spring.nbr.sf$Breeding_region_MC <- factor(spring.nbr.sf$Breeding_region_MC , levels = c("Eastern Region", "Central Region", "Western Region", "Northwestern Region"))
-second.nbr.regions <- ggplot(st_as_sf(wrld_simpl))+
+second.nbr.regions <- ggplot(st_as_sf(world_countries))+
   geom_sf(colour = "black", fill = "#F7F7F7")+
   geom_sf(data = spring.nbr.regions, col = "black", fill = "lightgray", alpha = 0.9)+
   geom_errorbar(data = spring.nbr.sf, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), col = "black", linewidth = 0.5)+
@@ -1376,7 +1378,7 @@ ref.data <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of G
 
 # Load abundance propagation region polygons 
 br.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Relative_abundance_propagation/bpw_abundance_regions_adjusted.shp") %>%
-  st_transform(crs(wrld_simpl)) %>%
+  st_transform(crs(world_countries)) %>%
   st_cast("MULTIPOLYGON")
 
 # load blackpoll warbler range polygons
@@ -1384,7 +1386,7 @@ bpw.range <- load_ranges(path = "C:/Users/Jelan/OneDrive/Desktop/University/Univ
                          species = "bkpwar",
                          resolution = "27km",
                          smoothed = T) %>%
-  dplyr::filter(season %in% c("breeding", "nonbreeding")) %>% st_transform(crs(wrld_simpl))
+  dplyr::filter(season %in% c("breeding", "nonbreeding")) %>% st_transform(crs(world_countries))
 
 # Load blackpoll warbler polygons from BirdLife international 
 bpw.range.BLI <- st_read("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Birdlife_international_species_distribution/SppDataRequest.shp")  %>% 
@@ -1563,7 +1565,7 @@ for (i in unique(geo.all$geo_id)){
   ylim <- c(-15, 90)
   
   r <- rast(nrows = 2 * diff(ylim), ncols = 2 * diff(xlim), xmin = xlim[1],
-            xmax = xlim[2], ymin = ylim[1], ymax = ylim[2], crs = proj4string(wrld_simpl))
+            xmax = xlim[2], ymin = ylim[1], ymax = ylim[2], crs = crs(world_countries))
   s <- slices(type = "intermediate", breaks = NULL, mcmc = fit, grid = r)
   sk <- slice(s, sliceIndices(s))
   sk.df <- as.data.frame(sk, xy = T, na.rm = T) #%>% filter(lyr.1 > quantile(sk$lyr.1, probs = 0.5))#%>%
@@ -2051,7 +2053,7 @@ nonmover_points <- NB.stat.mean %>% dplyr::select(geo_id, mean.lon, mean.lon2.5,
 comb_nb_locs <- rbind(mover_point_last, mover_points_first, nonmover_points)
 
 #Plot of nonbreeding locations ----
-nbr.locations.plot <- ggplot(st_as_sf(wrld_simpl))+
+nbr.locations.plot <- ggplot(st_as_sf(world_countries))+
   geom_sf(colour = "black", fill = "#F7F7F7", lwd = 0.3) +
   coord_sf(xlim = c(-95, -48),ylim = c(-8, 15)) +
   geom_errorbar(data = comb_nb_locs, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5., colour = type), linewidth = 0.4, width= 0, alpha = 0.8) +
@@ -2075,7 +2077,7 @@ nbr.locations.plot <- ggplot(st_as_sf(wrld_simpl))+
         legend.key = element_rect(colour = "transparent", fill = "white"))
 
 # Plot showing movements and movement timings during the nonbreeding season ----
-nbr.movements.plot <- ggplot(st_as_sf(wrld_simpl))+
+nbr.movements.plot <- ggplot(st_as_sf(world_countries))+
   geom_sf(colour = "black", fill = "#F7F7F7", lwd = 0.3) +
   coord_sf(xlim = c(-95, -48),ylim = c(-8, 15)) +
   geom_arrowsegment(data = NB.move, mapping = aes(x = start.lon, y = start.lat, xend = end.lon, yend = end.lat,
