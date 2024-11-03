@@ -670,8 +670,8 @@ save(fit, file = paste0(dir,"/", geo.id,"_SGAT_GroupedThreshold_fit.R"))
 load(file = paste0(dir,"/", geo.id, "adjusted_initial_path_raw.csv"))
 
 #Fall transoceanic flight
-start <- "2013-04-25"
-end <- "2013-06-15"
+start <- "2012-10-25"
+end <- "2012-11-25"
 
 #first flight
 f1.start <- "2012-11-01"
