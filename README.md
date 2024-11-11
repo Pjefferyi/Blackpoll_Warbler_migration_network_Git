@@ -28,11 +28,17 @@ Other sources of data used in this analysis include:
 
 ## Index of folders and files containing the code used for different parts of the analysis: 
 
-### Geolocator analysis: 
+### Geolocator analysis: https://github.com/Pjefferyi/Blackpoll_Warbler_migration_network_Git/tree/main/Geolocator_data_analysis_scripts
 
-### Network construction: 
+Contains the scripts used to extract location data from each geolocator using the TwGes and SGAT packages.
 
-### Assessment of migratory connectivity: 
+The script "Geolocator_analysis_helper_functions.R" is also located in the folder and contains functions used during the geolocator analysis as well as in other operations (notably to retriveve location data) 
+
+### Network construction: https://github.com/Pjefferyi/Blackpoll_Warbler_migration_network_Git/tree/main/Network_construction
+
+Contains the script that combines the location data derived from the geolocators to build the post- and pre-breeding migration network 
+
+### Network  
 
 ### Main manuscript and supplementary figures:   
 
