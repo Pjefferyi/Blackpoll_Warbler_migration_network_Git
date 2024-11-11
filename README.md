@@ -32,21 +32,21 @@ Other sources of data used in this analysis include:
 
 See this folder for related scripts: https://github.com/Pjefferyi/Blackpoll_Warbler_migration_network_Git/tree/main/Geolocator_data_analysis_scripts
 
-The folder contains the scripts used to extract location data from each geolocator using the TwGeos and SGAT packages.
+The folder contains the scripts used to extract location data from each geolocator using the TwGeos and SGAT packages. There is one trope per script per bird.
 
 The script "Geolocator_analysis_helper_functions.R" is also located in the folder and contains functions used during the geolocator analysis as well as in other operations (notably to retriveve location data) 
 
 ### Network construction 
 
-See this folder for related scripts: https://github.com/Pjefferyi/Blackpoll_Warbler_migration_network_Git/tree/main/Network_construction
+See this folder for related scripts (Network_construction.R): https://github.com/Pjefferyi/Blackpoll_Warbler_migration_network_Git/tree/main/Network_construction
 
 The folder Contains the script that combines the location data derived from the geolocators to build the post- and pre-breeding migration network (Network_construction.R)
 
 ### Strenght of migratory connectivity metric 
 
-The strength of migratory connectivity was calculated in this script: 
+The strength of migratory connectivity was calculated in this script (Strength_of_migratory_connectivity.R): https://github.com/Pjefferyi/Blackpoll_Warbler_migration_network_Git/blob/main/Strength_of_migratory_connectivity.R
 
 ### Figures, network metric calculation (betweenness centrality, time-adjusted weight, Community analysis)
 
-This script was used to generate the paper's figure and to calculated network metrics: 
+This script was used to generate the paper's figure and to calculated network metrics (blackpoll_warbler_project_figures.R): https://github.com/Pjefferyi/Blackpoll_Warbler_migration_network_Git/blob/main/blackpoll_warbler_project_figures.R 
 
