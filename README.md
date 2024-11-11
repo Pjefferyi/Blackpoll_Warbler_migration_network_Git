@@ -42,7 +42,11 @@ See this folder for related scripts: https://github.com/Pjefferyi/Blackpoll_Warb
 
 The folder Contains the script that combines the location data derived from the geolocators to build the post- and pre-breeding migration network (Network_construction.R)
 
-### Network  
+### Strenght of migratory connectivity metric 
 
-### Main manuscript and supplementary figures:   
+The strength of migratory connectivity was calculated in this script: 
+
+### Figures, network metric calculation (betweenness centrality, time-adjusted weight, Community analysis)
+
+This script was used to generate the paper's figure and to calculated network metrics: 
 
