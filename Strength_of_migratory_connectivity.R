@@ -18,11 +18,10 @@ library(sf)
 library(ebirdst)
 library(geosphere)
 
-
 # Data preparation for MC between Breedign site and first nonbreeding site ######
 
 # run the network preparation script
-#source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Network_construction.R")
+# source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Network_construction.R")
 
 # projection for the analysis: Azimuthal Equidistant projection 
 proj <- '+proj=aeqd +lat_0=0 +lon_0=-74'
