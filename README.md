@@ -1,6 +1,6 @@
 # Blackpoll warbler migration network project
 
-This repository contains code that used as part of the analysis described in the following manuscript: 
+This repository contains code  used as part of the analysis described in the following manuscript: 
 
 Duali J., Deluca, W. V. Mackenzie, S. A., Tremblay, J. A., Drolet, B., Haché, S., Roberto-Charron, A., Ruiz, M. A., Boardman, R., Cooke, H. A., Rimmer, C. C., McFarland, K. P., Marra, P. P., Taylor, P. D., and Norris, D. R. Range-wide post- and pre-breeding migratory networks of a declining Neotropical-Nearctic migratory bird, the blackpoll warbler. In review.
 
@@ -9,7 +9,7 @@ Using this code requires light-level measurements from geolocators deployed on b
 
 - 126313959 (https://www.movebank.org/cms/webapp?gwt_fragment=page=studies,path=study126313959)
 	
-	Includes data collected as part of this study: DeLuca WV, Woodworth BK, Rimmer CC, Marra PP, Taylor PD, McFarland KP, Mackenzie SA, Norris DR. 2016. Data from: Transoceanic migration 	by a 12 g songbird. Movebank Data Repository. https://www.doi.org/10.5441/001/1.jb182ng4
+	Includes data collected as part of this study: DeLuca WV, Woodworth BK, Rimmer CC, Marra PP, Taylor PD, McFarland KP, Mackenzie SA, Norris DR. 2016. Data from: Transoceanic migration 	by a 12 g songbird. Movebank Data Repository. https://www-doi-org.subzero.lib.uoguelph.ca/10.5441/001/1.jb182ng4
 
 - 959756713 (https://www.movebank.org/cms/webapp?gwt_fragment=page=studies,path=study959756713)
 
@@ -30,7 +30,7 @@ Other sources of data used in this analysis include:
 
 ### Geolocator analysis 
 
-See this folder for related scripts: https://github.com/Pjefferyi/Blackpoll_Warbler_migration_network_Git/tree/main/Geolocator_data_analysis_scripts
+See this folder for related scripts: https://github-com.subzero.lib.uoguelph.ca/Pjefferyi/Blackpoll_Warbler_migration_network_Git/tree/main/Geolocator_data_analysis_scripts
 
 The folder contains the scripts used to extract location data from each geolocator using the TwGeos and SGAT packages. There is one trope per script per bird.
 
@@ -38,15 +38,15 @@ The script "Geolocator_analysis_helper_functions.R" is also located in the folde
 
 ### Network construction 
 
-See this folder for related scripts (Network_construction.R): https://github.com/Pjefferyi/Blackpoll_Warbler_migration_network_Git/tree/main/Network_construction
+See this folder for related scripts (Network_construction.R): https://github-com.subzero.lib.uoguelph.ca/Pjefferyi/Blackpoll_Warbler_migration_network_Git/tree/main/Network_construction
 
 The folder Contains the script that combines the location data derived from the geolocators to build the post- and pre-breeding migration network (Network_construction.R)
 
 ### Strenght of migratory connectivity metric 
 
-The strength of migratory connectivity was calculated in this script (Strength_of_migratory_connectivity.R): https://github.com/Pjefferyi/Blackpoll_Warbler_migration_network_Git/blob/main/Strength_of_migratory_connectivity.R
+The strength of migratory connectivity was calculated in this script (Strength_of_migratory_connectivity.R): https://github-com.subzero.lib.uoguelph.ca/Pjefferyi/Blackpoll_Warbler_migration_network_Git/blob/main/Strength_of_migratory_connectivity.R
 
 ### Figures, network metric calculation (betweenness centrality, time-adjusted weight, Community analysis)
 
-This script was used to generate the paper's figure and to calculated network metrics (blackpoll_warbler_project_figures.R): https://github.com/Pjefferyi/Blackpoll_Warbler_migration_network_Git/blob/main/blackpoll_warbler_project_figures.R 
+This script was used to generate the paper's figure and to calculated network metrics (blackpoll_warbler_project_figures.R): https://github-com.subzero.lib.uoguelph.ca/Pjefferyi/Blackpoll_Warbler_migration_network_Git/blob/main/blackpoll_warbler_project_figures.R 
 
