@@ -42,7 +42,7 @@ See this folder for related scripts (Network_construction.R): https://github-com
 
 The folder Contains the script that combines the location data derived from the geolocators to build the post- and pre-breeding migration network (Network_construction.R)
 
-The data generated during the construction procress is also stored in the Network Construction folder. It includes edgeliests for the networks constructed for the post- and pre-breeding migrations and estimates of relative abundance used to weight each nodes.   
+The data generated during the construction procress is also stored in the Network Construction folder. This includes edge lists for the networks constructed for the post- and pre-breeding migrations and estimates of relative abundance used to weight each nodes.   
 
 ### Strenght of migratory connectivity metric 
 
