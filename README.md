@@ -9,11 +9,11 @@ Using this code requires light-level measurements from geolocators deployed on b
 
 - 126313959 (https://www.movebank.org/cms/webapp?gwt_fragment=page=studies,path=study126313959)
 	
-	Includes data collected as part of this study: DeLuca WV, Woodworth BK, Rimmer CC, Marra PP, Taylor PD, McFarland KP, Mackenzie SA, Norris DR. 2016. Data from: Transoceanic migration 	by a 12 g songbird. Movebank Data Repository. https://royalsocietypublishing.org/doi/10.1098/rsbl.2014.1045
+	Includes data collected as part of this study: DeLuca WV, Woodworth BK, Rimmer CC, Marra PP, Taylor PD, McFarland KP, Mackenzie SA, Norris DR. 2016. Data from: Transoceanic migration 	by a 12 g songbird. Movebank Data Repository. https://royalsocietypublishing-org.subzero.lib.uoguelph.ca/doi/10.1098/rsbl.2014.1045
 
 - 959756713 (https://www.movebank.org/cms/webapp?gwt_fragment=page=studies,path=study959756713)
 
-	Includes data collected as part of this study: DeLuca, WV, BK Woodworth, SA Mackenzie, AEM Newman, HA Cooke, LM Phillips, NE Freeman, AO Sutton, L Tauzer, C McIntyre, IJ Stenhouse, S 	Weidensaul, PD Taylor, DR Norris. 2019. A boreal songbirds's 20,00 km migration across North America and the Atlantic Ocean. https://esajournals.onlinelibrary.wiley.com/doi/10.1002/ecy.2651
+	Includes data collected as part of this study: DeLuca, WV, BK Woodworth, SA Mackenzie, AEM Newman, HA Cooke, LM Phillips, NE Freeman, AO Sutton, L Tauzer, C McIntyre, IJ Stenhouse, S 	Weidensaul, PD Taylor, DR Norris. 2019. A boreal songbirds's 20,00 km migration across North America and the Atlantic Ocean. https://esajournals-onlinelibrary-wiley-com.subzero.lib.uoguelph.ca/doi/10.1002/ecy.2651
 
 - 4715484202 (https://www.movebank.org/cms/webapp?gwt_fragment=page=studies,path=study4715484202)
 	
@@ -23,7 +23,7 @@ Other sources of data used in this analysis include:
 
 - Distribution polygons for the blackpoll warbler, used for plotting and for the spatial mask of the geolocator analysis. These were obtained via request to BirdLife International 	(https://datazone.birdlife.org/species/factsheet/blackpoll-warbler-setophaga-striata/distribution). This polygons can be substituted by range polygons from the eBird Status and 	Trends dataset, which are also available upon request with the raster data describe below. 
 
-- Raster's of the blackpoll warbler's abundance across its breeding and nonbreeding range, which were obtained from the eBird Status and Trends database and are publicly available upon 	request (https://science.ebird.org/en/status-and-trends/species/bkpwar/downloads?week=1)
+- Raster's of the blackpoll warbler's abundance across its breeding and nonbreeding range, which were obtained from the eBird Status and Trends database and are publicly available from ebird upon request (https://science.ebird.org/en/status-and-trends/species/bkpwar/downloads?week=1)
 
 
 ## Index of folders and files containing the code used for different parts of the analysis: 
