@@ -1,7 +1,4 @@
-# clear objects from workspace
-#rm(list=ls())
-
-#Load libraries
+# Load libraries
 library(tidyverse)
 library(igraph)
 library(lubridate)
@@ -10,10 +7,10 @@ library(ggplot2)
 library(geosphere)
 library(terra)
 library(sf)
-#library(maptools)
 library(ebirdst)
 library(scatterpie)
 
+#Load helpfunctions
 source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis_helper_functions.R")
 
 # Import data ##################################################################
