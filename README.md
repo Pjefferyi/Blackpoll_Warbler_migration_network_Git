@@ -25,7 +25,6 @@ Other sources of data used in this analysis include:
 
 - Raster's of the blackpoll warbler's abundance across its breeding and nonbreeding range, which were obtained from the eBird Status and Trends database and are publicly available from ebird upon request (https://science.ebird.org/en/status-and-trends/species/bkpwar/downloads?week=1)
 
-
 ## Index of folders and files containing the code used for different parts of the analysis: 
 
 ### Geolocator analysis 
@@ -36,13 +35,12 @@ The folder contains the scripts used to extract location data from each geolocat
 
 The script "Geolocator_analysis_helper_functions.R" is also located in the folder and contains functions used during the geolocator analysis as well as in other operations (notably to retriveve location data) 
 
+
 ### Network construction 
 
 See this folder for related scripts (Network_construction.R): https://github-com.subzero.lib.uoguelph.ca/Pjefferyi/Blackpoll_Warbler_migration_network_Git/tree/main/Network_construction
 
 The folder Contains the script that combines the location data derived from the geolocators to build the post- and pre-breeding migration network (Network_construction.R)
-
-The data generated during the construction procress is also stored in the Network Construction folder. This includes edge lists for the networks constructed for the post- and pre-breeding migrations and estimates of relative abundance used to weight each nodes.   
 
 ### Strenght of migratory connectivity metric 
 

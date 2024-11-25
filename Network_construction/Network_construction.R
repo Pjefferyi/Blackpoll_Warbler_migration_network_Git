@@ -9,14 +9,15 @@ library(terra)
 library(sf)
 library(ebirdst)
 library(scatterpie)
+library(rnaturalearth)
 
 #Load helpfunctions
-source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis_helper_functions.R")
+source("Geolocator_data_analysis_scripts/Geolocator_analysis_helper_functions.R")
 
 # Import data ##################################################################
 
 # path to reference data file
-ref_path <- "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/Geolocator_reference_data_consolidated.csv"
+ref_path <- "Analysis_output_data/Geolocator_reference_data_consolidated.csv"
 ref_data <- read.csv(ref_path)
 
 # # # location data
@@ -203,16 +204,16 @@ ref_data <- read.csv(ref_path)
 # # # Save the data edited here  ###################################################
 # 
 # #Save the new columns in the reference data
-# write.csv(ref_data,"C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/Geolocator_reference_data_consolidated.csv", row.names=FALSE)
+# write.csv(ref_data,"Analysis_output_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE)
 # 
 # #save the processed geolocatorlocations
-# write.csv(geo.all, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/All.locations.csv",row.names=FALSE)
+# write.csv(geo.all, "Network_construction/All.locations.csv",row.names=FALSE)
 
 #Load data not corrected for oceanic crossings
-geo.all <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/All.locations.csv")
+geo.all <- read.csv("Network_construction/All.locations.csv")
 
 ##Load data corrected for oceanic crossings 
-##geo.all <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/All_locations_ocean_cross_cor.csv")
+##geo.all <- read.csv("Network_construction/All_locations_ocean_cross_cor.csv")
 ##
 ### re-calculate arrival dates if  working with corrected oceanic crossings 
 ##nbr.arrival.times <- geo.all %>% group_by(geo_id) %>% filter(NB_count == 1) %>% dplyr::select(-nbr.arrival) %>% rename(nbr.arrival = StartTime )
@@ -254,7 +255,7 @@ fall.stat <- fall.stat %>% group_by(geo_id) %>% filter(StartTime <= NB.first.sit
 # Create clusters in two steps to account for the equinox 
 
 # load equinox polygon 
-equipol <- st_read("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/Layers/equipol.shp", crs = st_crs(wrld_simpl))
+equipol <- st_read("Blackpoll_Warbler_migration_network_Git/Analysis_input_data/Equinox_area_polygon/equipol.shp", crs = st_crs(wrld_simpl))
 fall.stat.sf <- st_as_sf(fall.stat, coords = c("Lon.50.", "Lat.50."), crs = st_crs(wrld_simpl), remove = F)
 
 # separate points affected by the equinox and those that are not 
@@ -282,10 +283,10 @@ fall.stat <- rbind(fall.stat.equi, fall.stat.norm)
 # # Export fall stopovers for manual clustering in QGIS
 # fall.stat.sites <- st_as_sf(data.frame(fall.stat[,c(1:12, which(colnames(fall.stat) == "cluster"))]), coords = c("Lon.50.", "Lat.50."))
 # st_crs(fall.stat.sites) <- st_crs(wrld_simpl)
-# st_write(fall.stat.sites, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/layers/fall_stat_sites6.shp", append=FALSE)
+# st_write(fall.stat.sites, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Analysis_output_data/geo_spatial_Analysis_output_data/Manual_stat_site_clustering/layers/fall_stat_sites6.shp", append=FALSE)
 
 # # Import clusters created manually
-# fall.manual.cluster <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/Tables/Fall_manual_clusters_conservativeV6.csv") %>%
+# fall.manual.cluster <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Analysis_output_data/geo_spatial_Analysis_output_data/Manual_stat_site_clustering/Tables/Fall_manual_clusters_conservativeV6.csv") %>%
 #   rename(cluster = Cluster, cluster.region = ClusterReg) %>%
 #   mutate(cluster.region= as.factor(cluster.region)) %>%
 #   mutate(cluster = as.numeric(cluster.region))
@@ -315,7 +316,7 @@ ggplot(st_as_sf(wrld_simpl))+
   theme(text = element_text(size = 16))
 
 # plot the fall clusters 
-reg.bounds <- st_read("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Relative_abundance_propagation/Spatial_data_downloads/ne_50m_admin_1_states_provinces/ne_50m_admin_1_states_provinces.shp")
+reg.bounds <- ne_countries(type = "countries", scale = "large")
 
 ggplot(st_as_sf(wrld_simpl))+
   geom_sf(colour = NA, fill = "lightgray") +
@@ -487,10 +488,10 @@ spring.stat$cluster <- cluster.data$clusters
 # # export spring stat sites for manual clustering
 # spring.stat.sites <- st_as_sf(spring.stat[,c(1:12, which(colnames(spring.stat) == "cluster"))], coords = c("Lon.50.", "Lat.50."))
 # st_crs(spring.stat.sites) <- st_crs(wrld_simpl)
-# st_write(spring.stat.sites, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/Layers/spring_stat_sitesV3.shp", append = F)
+# st_write(spring.stat.sites, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Analysis_output_data/geo_spatial_Analysis_output_data/Manual_stat_site_clustering/Layers/spring_stat_sitesV3.shp", append = F)
 
 # # Import clusters created manually
-# spring.manual.cluster <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/Tables/Spring_manual_clusters_V2.csv")
+# spring.manual.cluster <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Analysis_output_data/geo_spatial_Analysis_output_data/Manual_stat_site_clustering/Tables/Spring_manual_clusters_V2.csv")
 # spring.manual.cluster <- spring.manual.cluster %>% rename(cluster = Cluster, cluster.region = ClusterReg) %>%
 #   mutate(cluster.region= as.factor(cluster.region)) %>%
 #   mutate(cluster = as.numeric(cluster.region))
@@ -823,11 +824,8 @@ breed.sites <- st_as_sf(geo.breed, coords = c("Lon.50.", "Lat.50."))
 # set crs of breeding.sites sf object
 st_crs(breed.sites) <- st_crs(wrld_simpl)
 
-# export breeding sites for to draw breeding region polygons.  
-# st_write(breed.sites, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Relative_abundance_propagation/bpw_breeding_sites.shp")
-
 # import breeding regions polygon and join attributes with breeding site data 
-abundance.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Relative_abundance_propagation/bpw_abundance_regions_adjusted.shp")
+abundance.regions <- read_sf("Analysis_input_data/Breeding_regions/bpw_abundance_regions.shp")
 abundance.regions <- st_join(abundance.regions, breed.sites)
 
 # Add the abundance region of each individual to the reference dataset. These will be the same regions used to calculate migratory connectivity 
@@ -835,10 +833,10 @@ ref_data <- ref_data %>% dplyr::select(-Breeding_region_MC)
 ref_data <- merge(ref_data, data.frame(abundance.regions)[,c("region", "geo_id")], by.x = "geo.id", by.y = "geo_id" ) %>%
   rename(Breeding_region_MC = region)
 
-write.csv(ref_data,"C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/Geolocator_reference_data_consolidated.csv", row.names=FALSE)
+write.csv(ref_data,"Analysis_output_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE)
 
-# import breeding season abundance data
-bpw.fall.ab <- load_raster(path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_imports",
+# import breeding season abundance data from the eBird status and trends dataset
+bpw.fall.ab <- load_raster(path = "Analysis_input_data/eBird_imports",
                            species = "bkpwar",
                            product = "abundance",
                            period = "seasonal",
@@ -859,14 +857,6 @@ points(geo.breed$Lon.50., geo.breed$Lat.50., cex = 1, col = "black", pch = 19)
 ab.extract <- terra::extract(bpw.fall.ab$breeding, abundance.regions, fun = sum, na.rm=TRUE)
 ab.extract$ID <- abundance.regions$geo_id
 ab.extract$breedregionname <- abundance.regions$region
-
-# # # # # abundance extraction from the BAM Modeled density estimates (note: these are for Canada only)
-# x <- rast("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/BAM/pred-BLPW-CAN-Mean.tif")
-# plot(x)
-# x <- terra::project(x, crs(abundance.regions))
-# y <- terra::extract(x, abundance.regions, fun = sum, na.rm=TRUE)
-# y$ID <- abundance.regions$geo_id
-# y$breedregionname <- abundance.regions$region
 
 # Create a dataframe with the relative abundance per region
 ab.per.region <- merge(as.data.frame(abundance.regions), ab.extract, by.x = "geo_id", by.y = "ID") %>%
@@ -1278,30 +1268,30 @@ ggplot(st_as_sf(wrld_simpl))+
 ################################################################################
 
 # Save elements necessary to build Fall network
-write_csv(fall.stat, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.stationary.locations.csv")
-write_csv(fall.move, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.all.locations.csv")
-write_graph(fall.graph.weighed.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.graph.edge.list.txt",
+write_csv(fall.stat, "Network_construction/Fall.stationary.locations.csv")
+write_csv(fall.move, "Network_construction/Fall.all.locations.csv")
+write_graph(fall.graph.weighed.ab, "Network_construction/Fall.graph.edge.list.txt",
             format = c("edgelist"))
-write.csv(dplyr::select(meta.fall.ab, !num.reg.ab.vector), "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.node.metadata.csv")
-write.csv(fall.con.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.edge.weights.csv")
-write.csv(fall.stat, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.stationary.data.csv")
-write.csv(fall.edge.df.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.intra.cluster.movements.csv")
-write.csv(fall.nbr.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.nbr.node.composition.csv")
-write.csv(fall.stp.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.stp.node.composition.csv")
-write.csv(fall.breed.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.abundance.per.bird.csv")
+write.csv(dplyr::select(meta.fall.ab, !num.reg.ab.vector), "Network_construction/Fall.node.metadata.csv")
+write.csv(fall.con.ab, "Network_construction/Fall.edge.weights.csv")
+write.csv(fall.stat, "Network_construction/Fall.stationary.data.csv")
+write.csv(fall.edge.df.ab, "Network_construction/Fall.intra.cluster.movements.csv")
+write.csv(fall.nbr.ab, "Network_construction/Fall.nbr.node.composition.csv")
+write.csv(fall.stp.ab, "Network_construction/Fall.stp.node.composition.csv")
+write.csv(fall.breed.ab, "Network_construction/Fall.abundance.per.bird.csv")
 
 # Save elements necessary to build spring network
-write_csv(spring.stat, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.stationary.locations.csv")
-write_csv(spring.move, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.all.locations.csv")
-write_graph(spring.graph.weighed.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.graph.edge.list.txt",
+write_csv(spring.stat, "Network_construction/Spring.stationary.locations.csv")
+write_csv(spring.move, "Network_construction/Spring.all.locations.csv")
+write_graph(spring.graph.weighed.ab, "Network_construction/Spring.graph.edge.list.txt",
             format = c("edgelist"))
-write.csv(dplyr::select(meta.spring.ab, !num.reg.ab.vector), "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.node.metadata.csv")
-write.csv(spring.con.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.edge.weights.csv")
-write.csv(spring.stat, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.stationary.data.csv")
-write.csv(spring.edge.df.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.intra.cluster.movements.csv")
-write.csv(spring.nbr.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.nbr.node.composition.csv")
-write.csv(spring.stp.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.stp.node.composition.csv")
-write.csv(spring.breed.ab, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.abundance.per.bird.csv")
+write.csv(dplyr::select(meta.spring.ab, !num.reg.ab.vector), "Network_construction/Spring.node.metadata.csv")
+write.csv(spring.con.ab, "Network_construction/Spring.edge.weights.csv")
+write.csv(spring.stat, "Network_construction/Spring.stationary.data.csv")
+write.csv(spring.edge.df.ab, "Network_construction/Spring.intra.cluster.movements.csv")
+write.csv(spring.nbr.ab, "Network_construction/Spring.nbr.node.composition.csv")
+write.csv(spring.stp.ab, "Network_construction/Spring.stp.node.composition.csv")
+write.csv(spring.breed.ab, "Network_construction/Spring.abundance.per.bird.csv")
 
 ##################################################################################
 #  Nonbreeding range sub network for the  fall migration 
@@ -1386,8 +1376,8 @@ meta.fall.ab.sub <- merge(meta.fall.sub, fall.ab.by.origin.sub,  by.x = "vertex"
 # Create weighed subgraph 
 fall.graph.sub.weighed <- graph_from_data_frame(fall.con.ab.sub, directed = T, vertices = meta.fall.ab.sub)
 
-save(fall.graph.sub.weighed, file = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.sub.graph.R")
-write.csv(meta.fall.ab.sub, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.node.metadata.sub.csv")
+save(fall.graph.sub.weighed, file = "Network_construction/Fall.sub.graph.R")
+write.csv(meta.fall.ab.sub, "Network_construction/Fall.node.metadata.sub.csv")
 
 ##################################################################################
 #  Nonbreeding range sub network for the  spring migration 
@@ -1468,5 +1458,5 @@ meta.spring.ab.sub <- merge(meta.spring.sub, spring.ab.by.origin.sub,  by.x = "v
 # Create weighed subgraph 
 spring.graph.sub.weighed <- graph_from_data_frame(spring.con.ab.sub, directed = T, vertices = meta.spring.ab.sub)
 
-save(spring.graph.sub.weighed, file = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.sub.graph.R")
-write.csv(meta.spring.ab.sub, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.node.metadata.sub.csv")
+save(spring.graph.sub.weighed, file = "Network_construction/Spring.sub.graph.R")
+write.csv(meta.spring.ab.sub, "Network_construction/Spring.node.metadata.sub.csv")

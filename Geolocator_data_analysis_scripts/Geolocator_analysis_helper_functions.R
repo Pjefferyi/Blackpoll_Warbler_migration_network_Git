@@ -32,10 +32,8 @@ library(GeoLocTools)
 #install_github("slisovski/invMovement")
 
 
-#setupGeolocation()
-
 # Set eBirdst key 
-#set_ebirdst_access_key("mk5l4atjq2bg", overwrite = TRUE)
+# set_ebirdst_access_key("mk5l4atjq2bg", overwrite = TRUE)
 
 # thresholdOverLight############################################################
 
@@ -125,7 +123,6 @@ shiftSpan <- function(twl, lig, period, est.zenith, dep.lon, dep.lat){
               mean_observed_meridian_time = mean(ob_twl_sub$Twilight),
               mean_expected_meridian_time = mean(exp_twl_sub$twilight)))
 }
-
 
 # findLocData ##################################################################
 

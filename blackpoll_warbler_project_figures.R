@@ -40,24 +40,24 @@ library(ebirdst)
 # set_ebirdst_access_key("bmedjn18aoku")
 
 # Will need to run the network analysis and construction scripts ----
-#source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_analysis/Network_Analysis.R")
-source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis_helper_functions.R")
+source("Geolocator_data_analysis_scripts/Geolocator_analysis_helper_functions.R")
 
 # Load required data for the fall
-fall.graph <- read_graph("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.graph.edge.list.txt", directed = TRUE)
-meta.fall.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.node.metadata.csv")
-fall.con.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.edge.weights.csv")
-#equinox_region <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Mapping_components/Data/Fall_Equinox_affected_regionV6.shp")
+fall.graph <- read_graph("Network_construction/Fall.graph.edge.list.txt", directed = TRUE)
+meta.fall.ab <- read.csv("Network_construction/Fall.node.metadata.csv")
+fall.con.ab <- read.csv("Network_construction/Fall.edge.weights.csv")
+fall.stat <- read.csv("Network_construction/Fall.stationary.data.csv")
+fall.move <- read.csv("Network_construction/Fall.all.locations.csv")
+
+# bprw range polygon: need to be requested from BirdLife international (not in the repository)
 bpw_range <-  read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Birdlife_international_species_distribution/SppDataRequest.shp")
-fall.stat <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.stationary.data.csv")
-fall.move <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.all.locations.csv")
 
 # Load required data for the spring 
-spring.graph <- read_graph("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.graph.edge.list.txt", directed = TRUE)
-meta.spring.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.node.metadata.csv")
-spring.con.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.edge.weights.csv")
-spring.stat <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.stationary.data.csv")
-spring.move <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.all.locations.csv")
+spring.graph <- read_graph("Network_construction/Spring.graph.edge.list.txt", directed = TRUE)
+meta.spring.ab <- read.csv("Network_construction/Spring.node.metadata.csv")
+spring.con.ab <- read.csv("Network_construction/Spring.edge.weights.csv")
+spring.stat <- read.csv("Network_construction/Spring.stationary.data.csv")
+spring.move <- read.csv("Network_construction/Spring.all.locations.csv")
 
 # add cluster numbers tp fall and spring graph node attributes--- 
 V(fall.graph)$cluster.num <- meta.fall.ab$X
@@ -154,15 +154,15 @@ V(spring.graph)$single.reg <- spring.comp$single.reg
 undirected.fall.graph <- as.undirected(fall.graph, mode = "collapse",
                                        edge.attr.comb = list(weight = "sum", edge.type = "ignore"))
 
-fall.label.prop <- concensusCluster(graph = undirected.fall.graph, thresh = 0.5, algiter = 1000)
+fall.label.prop <- cluster_label_prop(graph = undirected.fall.graph)
 fall.infomap <- cluster_infomap(fall.graph)
 fall.walktrap <- cluster_walktrap(fall.graph, steps = 7) #cluster_walktrap(fall.graph.disc, steps =6)
 
-modularity(fall.graph, fall.label.prop$`community structure`$membership)
+modularity(fall.graph, fall.label.prop$membership)
 modularity(fall.graph, fall.infomap$membership)
 modularity(fall.graph, fall.walktrap$membership)
 
-V(fall.graph)$label.prop.comm <- fall.label.prop$`community structure`$membership
+V(fall.graph)$label.prop.comm <- fall.label.prop$membership
 V(fall.graph)$info.map.comm <- fall.infomap$membership
 V(fall.graph)$walktrap.comm  <- fall.walktrap$membership
 
@@ -170,15 +170,15 @@ V(fall.graph)$walktrap.comm  <- fall.walktrap$membership
 undirected.spring.graph <- as.undirected(spring.graph, mode = "collapse",
                                          edge.attr.comb = list(weight = "sum", edge.type = "ignore"))
 
-spring.label.prop <- concensusCluster(graph = undirected.spring.graph, thresh = 0.5, algiter = 1000)
+spring.label.prop <- cluster_label_prop(graph = undirected.spring.graph)
 spring.infomap <- cluster_infomap(spring.graph)
 spring.walktrap <- cluster_walktrap(spring.graph, steps = 4)
 
-modularity(spring.graph, spring.label.prop$`community structure`$membership)
+modularity(spring.graph, spring.label.prop$membership)
 modularity(spring.graph, spring.infomap$membership)
 modularity(spring.graph, spring.walktrap$membership, directed = T)
 
-V(spring.graph)$label.prop.comm <- spring.label.prop$`community structure`$membership
+V(spring.graph)$label.prop.comm <- spring.label.prop$membership
 V(spring.graph)$infomap.comm <- spring.infomap$membership
 V(spring.graph)$walktrap.comm <- spring.walktrap$membership
 
@@ -288,7 +288,7 @@ V(spring.graph)$out.degree <- degree(spring.graph.disc, mode = "out")
 # fall and spring use by time 
 
 # Extract abundance and time spent data for the fall
-fall.breed.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.abundance.per.bird.csv")
+fall.breed.ab <- read.csv("Network_construction/Fall.abundance.per.bird.csv")
 fall.stat.ab <- merge(fall.stat, fall.breed.ab[,c("ab.unit", "geo_id")], by = "geo_id")
 
 # Summed time spent in each node for the fall
@@ -316,7 +316,7 @@ V(fall.graph)$time.spent <- fall.use.time$time.per.node
 V(fall.graph)$time.spent.ab <- fall.use.timeab$time.per.ab/(max(fall.use.timeab$time.per.ab))
 
 # Extract abundance and time spent data for the spring
-spring.breed.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.abundance.per.bird.csv")
+spring.breed.ab <- read.csv("Network_construction/Spring.abundance.per.bird.csv")
 spring.stat.ab <- merge(spring.stat, spring.breed.ab[,c("ab.unit", "geo_id")], by = "geo_id")
 
 # Summed time spent in each node for the spring
@@ -342,9 +342,6 @@ V(spring.graph)$time.spent.ab <- spring.use.timeab$time.per.ab/max(spring.use.ti
 # fall and spring bridge centrality
 fall.graph.brd <- fall.graph.disc 
 spring.graph.brd <- spring.graph.disc 
-
-#E(fall.graph.brd)$weight  <- 1/E(fall.graph.disc)$weight
-#E(spring.graph.brd)$weight <- 1/E(spring.graph.disc)$weight
 
 V(fall.graph)$bridge.strength <- bridge(fall.graph.brd,  nodes =as.character(V(fall.graph.brd)), communities = V(fall.graph)$walktrap.comm , directed = T)$`Bridge Strength`
 V(spring.graph)$bridge.strength <- bridge(spring.graph.brd, nodes =as.character(V(spring.graph.brd)), communities = V(spring.graph)$wakltrap.comm, directed = T)$`Bridge Strength`
@@ -392,33 +389,28 @@ V(spring.graph)$participation.coef <-  p.spring
 fall.gdata <- igraph::as_data_frame(fall.graph, what = "vertices") %>% mutate(cluster = seq(1:vcount(fall.graph)))
 spring.gdata <- igraph::as_data_frame(spring.graph, what = "vertices") %>% mutate(cluster = seq(1:vcount(spring.graph)))
 
-# write.csv(fall.gdata, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/fall.graph.data.csv")
-# write.csv(spring.gdata, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/spring.graph.data.csv")
+# write.csv(fall.gdata, "Blackpoll_Warbler_migration_network_Git/Analysis_output_data/Network/fall.graph.data.csv")
+# write.csv(spring.gdata, "Blackpoll_Warbler_migration_network_Git/Analysis_output_data/Network/spring.graph.data.csv")
 
 # Figures 1 and 2: Fall and spring migratory network node types and stationary location clusters ----
-#America <- wrld_simpl[(wrld_simpl$REGION == 19 & wrld_simpl$NAME != "Greenland"),]
 world_countries <- ne_countries(type = "countries", scale = "large")
 America <- world_countries[((world_countries$continent %in%  c("North America", "South America") | world_countries$admin == "France") & world_countries$admin != "Greenland"),]
-Lakes <- st_read("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/World_map/ne_110m_lakes/ne_110m_lakes.shp")%>%
+Lakes <- ne_download(scale = 110, type = "lakes", category = "physical")%>%
   st_transform(crs = crs(world_countries))
 
 # Create the equinox region for the fall network 
 
 # load the equinox polygon
-equipol <- st_read("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Manual_stat_site_clustering/Layers/equipol.shp")
-
-# load blackpoll warbler range polygon
-bpw.range <- st_read("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Birdlife_international_species_distribution/SppDataRequest.shp") %>%
-  dplyr::filter(seasonal %in% c(2,3,4)) %>% st_union() %>% st_transform(crs(world_countries))
-
-# Find its intersection with the Blackpoll warbler's breeding range 
-sf_use_s2(FALSE)
-equi.region <- st_intersection(st_as_sf(America), bpw.range) %>% st_intersection(equipol)
-bpw.range.full <- st_intersection(st_as_sf(America), st_union(bpw.range))
+equipol <- st_read("Analysis_input_data/Equinox_area_polygon/equipol.shp")
 
 # Load abundance propagation region from BirdLife international 
 bpw.range.BLI <- st_read("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Birdlife_international_species_distribution/SppDataRequest.shp") %>% 
   mutate(seasonal = factor(seasonal, levels = c(2,4,3)))
+
+# Find its intersection with the Blackpoll warbler's breeding range 
+sf_use_s2(FALSE)
+equi.region <- st_intersection(st_as_sf(America), bpw.range.BLI ) %>% st_intersection(equipol)
+bpw.range.full <- st_intersection(st_as_sf(America), st_union(bpw.range.BLI ))
 
 ## fall node types ---- 
 fall.ggnet <- ggnetwork(fall.graph, layout = as.matrix(meta.fall.ab[, c("Lon.50.", "Lat.50.")]), scale = F) %>%
@@ -640,9 +632,9 @@ spring.gplot.comp <- ggplot(st_as_sf(America))+
         plot.margin= unit(c(0,0,0,0), "pt"))
 
 ## Zoom-in onto movements in the nonbreeding range 
-load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.sub.graph.R")
-fall.nbr.node.comp <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.nbr.node.composition.csv") 
-meta.fall.sub <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.node.metadata.sub.csv")
+load("Network_construction/Fall.sub.graph.R")
+fall.nbr.node.comp <- read.csv("Network_construction/Fall.nbr.node.composition.csv") 
+meta.fall.sub <- read.csv("Network_construction/Fall.node.metadata.sub.csv")
 fall.sub.ggnet <- ggnetwork(fall.graph.sub.weighed, layout = as.matrix(meta.fall.sub[, c("Lon.50.", "Lat.50.")]),  scale = F)
 fall.gplot.comp.nbr <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
@@ -669,8 +661,8 @@ fall.gplot.comp.nbr <- ggplot(st_as_sf(America))+
   guides(fill = guide_legend(override.aes = list(size = 5)), )
 
 ## Zoom-in onto movements in the nonbreeding range 
-load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.sub.graph.R")
-spring.nbr.node.comp <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/spring.nbr.node.composition.csv") 
+load("Network_construction/Spring.sub.graph.R")
+spring.nbr.node.comp <- read.csv("Network_construction/spring.nbr.node.composition.csv") 
 spring.ggnet.nbr <- spring.ggnet%>% filter(yend < 13, y < 13)
 spring.gplot.comp.nbr <- ggplot(st_as_sf(America))+
   geom_sf(colour = "black", fill = "#F7F7F7") +
@@ -1546,7 +1538,7 @@ ggsave(plot = ab.prop.regions.fig, filename = "abundance.prop.regions.jpg" ,  pa
 loc.ind <- list()
 
 #Load locations processed during the netwrok construction
-geo.all <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/All.locations.csv") %>% arrange(geo_id, StartTime) %>%
+geo.all <- read.csv("Network_construction/All.locations.csv") %>% arrange(geo_id, StartTime) %>%
   group_by(geo_id) %>%
   mutate(period = ifelse(sitenum == 1 & geo_id != "WRMA04173", "Breeding", period),
          period = ifelse(sitenum == max(sitenum) & geo_id != "WRMA04173" & Recorded_North_South_mig == "South and partial North", "Failure", period),
@@ -1763,7 +1755,7 @@ west.spring.mig.routes <- ggplot(st_as_sf(America))+
         legend.key = element_rect(colour = "transparent", fill = "white"))
 
 # Figure 12 threshold data and phenology dates ----
-geo.all <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/All.locations.csv") %>% arrange(geo_id, StartTime)
+geo.all <- read.csv("Network_construction/All.locations.csv") %>% arrange(geo_id, StartTime)
 ref_path <- "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/Geolocator_reference_data_consolidated.csv"
 
 # load threshold paths 
