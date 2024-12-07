@@ -20,7 +20,7 @@ Using this code requires light-level measurements from geolocators deployed on b
 
 Other sources of data used in this analysis include:
 
-- Distribution polygons for the blackpoll warbler, used for plotting and for the spatial mask of the geolocator analysis. These were obtained via request to BirdLife International 	(https://datazone.birdlife.org/species/factsheet/blackpoll-warbler-setophaga-striata/distribution). This polygons can be substituted by range polygons from the eBird Status and 	Trends dataset, which are also available upon request with the raster data describe below. 
+- Distribution polygons for the blackpoll warbler, used for plotting and for the spatial mask of the geolocator analysis. These were obtained via request to BirdLife International 	(https://datazone.birdlife.org/species/factsheet/blackpoll-warbler-setophaga-striata/distribution). This polygons can be substituted by range polygons from the eBird Status and 	Trends dataset, which are available upon request with the raster data describe below. 
 
 - Raster's of the blackpoll warbler's abundance across its breeding and nonbreeding range, which were obtained from the eBird Status and Trends database and are publicly available from ebird upon request (https://science.ebird.org/en/status-and-trends/species/bkpwar/downloads?week=1)
 
