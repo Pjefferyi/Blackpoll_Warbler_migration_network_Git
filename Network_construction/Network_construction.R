@@ -1,3 +1,5 @@
+# Construction of the networks
+
 # Load libraries
 library(tidyverse)
 library(igraph)
@@ -11,115 +13,116 @@ library(ebirdst)
 library(scatterpie)
 library(rnaturalearth)
 
-#Load helpfunctions
+# Load helper functions
 source("Geolocator_data_analysis_scripts/Geolocator_analysis_helper_functions.R")
 
-# Import data ##################################################################
+# Import geolocator data ##################################################################
 
 # path to reference data file
 ref_path <- "Analysis_output_data/Geolocator_reference_data_consolidated.csv"
 ref_data <- read.csv(ref_path)
 
-# # # location data
-# geo.all <- findLocData(geo.ids = c("V8757_010",
-#                                    "V8296_004",
-#                                    "V8296_005",
-#                                    "V8296_006",
-#                                    "V8757_055",
-#                                    "V8757_018",
-#                                    "V8296_015",
-#                                    "V8296_017",
-#                                    "V8296_021",
-#                                    "V8296_026",
-#                                    "V8296_025",
-#                                    "V8296_007",
-#                                    "V8296_008",
-#                                    "V8757_019",
-#                                    "V8757_096",
-#                                    "V8757_134",
-#                                    "V8757_029",
-#                                    "V8757_078",
-#                                    "V7638_001",
-#                                    "V7638_005",
-#                                    "V7638_009",
-#                                    "V7638_010",
-#                                    "V7638_011",
-#                                    "blpw09",
-#                                    "blpw12",
-#                                    "3254_001",
-#                                    "4068_014",
-#                                    "blpw14",
-#                                    "3254_003",
-#                                    "3254_008",
-#                                    "3254_011",
-#                                    "3254_057",
-#                                    "blpw15",
-#                                    "blpw25",
-#                                    "4105_008",
-#                                    "4105_009",
-#                                    "4105_016",
-#                                    "4105_017",
-#                                    "4210_002",
-#                                    "4210_004",
-#                                    "4210_006",
-#                                    "4210_010",
-#                                    "WRMA04173",
-#                                    "A",
-#                                    "B",
-#                                    "C",
-#                                    "E",
-#                                    "D"), check_col_length = F)
+# Load the location data for all geolocator used in the analysis
+geo.all <- findLocData(geo.ids = c("V8757_010",
+                                   "V8296_004",
+                                   "V8296_005",
+                                   "V8296_006",
+                                   "V8757_055",
+                                   "V8757_018",
+                                   "V8296_015",
+                                   "V8296_017",
+                                   "V8296_021",
+                                   "V8296_026",
+                                   "V8296_025",
+                                   "V8296_007",
+                                   "V8296_008",
+                                   "V8757_019",
+                                   "V8757_096",
+                                   "V8757_134",
+                                   "V8757_029",
+                                   "V8757_078",
+                                   "V7638_001",
+                                   "V7638_005",
+                                   "V7638_009",
+                                   "V7638_010",
+                                   "V7638_011",
+                                   "blpw09",
+                                   "blpw12",
+                                   "3254_001",
+                                   "4068_014",
+                                   "blpw14",
+                                   "3254_003",
+                                   "3254_008",
+                                   "3254_011",
+                                   "3254_057",
+                                   "blpw15",
+                                   "blpw25",
+                                   "4105_008",
+                                   "4105_009",
+                                   "4105_016",
+                                   "4105_017",
+                                   "4210_002",
+                                   "4210_004",
+                                   "4210_006",
+                                   "4210_010",
+                                   "WRMA04173",
+                                   "A",
+                                   "B",
+                                   "C",
+                                   "E",
+                                   "D"), check_col_length = F)
+
+
+# Prior to the network construction, determine timings of arrival/departure and migration periods for all individuals ######
+
+## Define stationary periods as breeding, stopover, or non-breeding #############
+geo.all <- geo.all %>% group_by(geo_id) %>% mutate(site_type = case_when(
+  (sitenum == 1 | sitenum == max(sitenum)) & Recorded_North_South_mig == "Both" ~ "Breeding",
+  sitenum == 1 & Recorded_North_South_mig %in% c("South and partial North", "South" ) ~ "Breeding",
+  (sitenum == max(sitenum)) & Recorded_North_South_mig == "North" ~ "Breeding",
+  (sitenum == max(sitenum)) & Recorded_North_South_mig == "South and partial North" & path.elongated == T ~ "Breeding",
+  period == "Non-breeding period" & (duration >= 14 | sitenum == 1 | sitenum == max(sitenum)) ~ "Nonbreeding",
+  .default = "Stopover"))
+
+## Calculate IQR between 97.5 and 2.5 quantiles in meters for each location recorded #########
+geo.all <- geo.all %>% mutate(IQR.lon.dist = distHaversine(cbind(Lon.97.5.,Lat.50.), cbind(Lon.2.5., Lat.50.)),
+                              IQR.lat.dist = distHaversine(cbind(Lon.50.,Lat.97.5.), cbind(Lon.50.,Lat.2.5.)))
+
+## Find the time of departure from the breeding grounds #########################
+# Individuals move over 250 km from the geolocator deployment site 
+geo.all.br.departure <- geo.all %>% filter(period %in% c("Post-breeding migration","Non-breeding period"),
+                                           Recorded_North_South_mig %in% c("Both", "South and partial North", "South")) %>%
+  group_by(geo_id) %>% mutate(proximity = distHaversine(cbind(Lon.50., Lat.50.), cbind(deploy.longitude, deploy.latitude))) %>%
+  filter(proximity <= 250000) %>% summarize(fall.br.departure = max(EndTime))
+
+## Find the time of return to the breeding grounds ##############################
+## Individuals move within 250 km of the geolocator deployment site 
+geo.all.br.arrival <- geo.all %>%  filter(period %in% c("Pre-breeding migration","Non-breeding period"),
+                                          Recorded_North_South_mig %in% c("Both","North"),
+                                          path.elongated == F,
+                                          !(geo_id %in% c("V8296_007", "V8296_008"))) %>%
+  group_by(geo_id) %>% mutate(proximity = ifelse(geo_id != "WRMA04173", distHaversine(cbind(Lon.50., Lat.50.), cbind(deploy.longitude, deploy.latitude)),
+                                                  distHaversine(cbind(Lon.50., Lat.50.), cbind(last(Lon.50.), last(Lat.50.))))) %>%
+  filter(proximity <= 250000) %>% summarize(spring.br.arrival = min(StartTime ))
+
+## Merge breeding grounds arrival & departure times with location data ##########
+## We also adjust the periods of the annual cycle linked to the location data to match the timing of arrival and departure 
+geo.all <- geo.all %>% dplyr::select(!c(fall.br.departure, spring.br.arrival)) %>% merge(geo.all.br.departure, by = "geo_id", all = T) %>%
+  merge(geo.all.br.arrival, by = "geo_id", all = T) %>% group_by(geo_id) %>%
+  arrange(geo_id, StartTime) %>%
+  group_by(geo_id) %>%
+  mutate(period = ifelse((EndTime <= fall.br.departure | StartTime >= spring.br.arrival) & Recorded_North_South_mig == "Both" & path.elongated == F, "Breeding", period),
+         site_type = ifelse((EndTime  <= fall.br.departure | StartTime >= spring.br.arrival) & Recorded_North_South_mig == "Both"& path.elongated == F, "Breeding", site_type),
+         period = ifelse(EndTime <= fall.br.departure & (Recorded_North_South_mig %in% c("South and partial North", "South") | path.elongated == T), "Breeding", period),
+         site_type = ifelse(EndTime <= fall.br.departure & (Recorded_North_South_mig %in% c("South and partial North", "South") | path.elongated == T), "Breeding", site_type),
+         period = ifelse(StartTime >= spring.br.arrival & Recorded_North_South_mig == "North", "Breeding", period),
+         site_type = ifelse(StartTime >= spring.br.arrival & Recorded_North_South_mig == "North", "Breeding", site_type))
+
+## # For geolocators that were deployed in very close proximity, assign one location to the geolocator deployment site column ########
+# # Here this location will be the median of all geolocator deployment locations for that site
+# # This is for plotting maps only 
 # 
-# # Define stationary periods as breeding, stopover, or non-breeding #############
-# geo.all <- geo.all %>% group_by(geo_id) %>% mutate(site_type = case_when(
-#   (sitenum == 1 | sitenum == max(sitenum)) & Recorded_North_South_mig == "Both" ~ "Breeding",
-#   sitenum == 1 & Recorded_North_South_mig %in% c("South and partial North", "South" ) ~ "Breeding",
-#   (sitenum == max(sitenum)) & Recorded_North_South_mig == "North" ~ "Breeding",
-#   (sitenum == max(sitenum)) & Recorded_North_South_mig == "South and partial North" & path.elongated == T ~ "Breeding",
-#   period == "Non-breeding period" & (duration >= 14 | sitenum == 1 | sitenum == max(sitenum)) ~ "Nonbreeding",
-#   .default = "Stopover"))
-# 
-# # Calculate IQR between 97.5 and 2.5 quantiles
-# geo.all <- geo.all %>% mutate(IQR.lon.dist = distHaversine(cbind(Lon.97.5.,Lat.50.), cbind(Lon.2.5., Lat.50.)),
-#                               IQR.lat.dist = distHaversine(cbind(Lon.50.,Lat.97.5.), cbind(Lon.50.,Lat.2.5.)))
-# 
-# # Find the time of departure from the breeding grounds #############
-# geo.all.br.departure <- geo.all %>% filter(period %in% c("Post-breeding migration","Non-breeding period"),
-#                                            Recorded_North_South_mig %in% c("Both", "South and partial North", "South")) %>%
-#   group_by(geo_id) %>% mutate(proximity = distHaversine(cbind(Lon.50., Lat.50.), cbind(deploy.longitude, deploy.latitude))) %>%
-#   filter(proximity <= 250000) %>% summarize(fall.br.departure = max(EndTime))
-#   #mutate(lon.proximity = deploy.longitude - Lon.50., lat.proximity = deploy.latitude - Lat.50.) %>%
-#   #filter(abs(lon.proximity) <= 2 & abs(lat.proximity) <= 4) %>% summarize(fall.br.departure = max(EndTime))
-#   #filter(ifelse(study.site %in% c("Quebec", "Mount Mansfield, Vermont, USA", "Nova Scotia, Canada"), (abs(lon.proximity) < 0.1 & abs(lat.proximity) < 0.1), (abs(lon.proximity) <= 2 & abs(lat.proximity) <= 4))) %>% summarize(fall.br.departure = max(EndTime ))
-# 
-# # Find the time of return to the breeding grounds #############
-# geo.all.br.arrival <- geo.all %>%  filter(period %in% c("Pre-breeding migration","Non-breeding period"),
-#                                           Recorded_North_South_mig %in% c("Both","North"),
-#                                           path.elongated == F,
-#                                           !(geo_id %in% c("V8296_007", "V8296_008"))) %>%
-#   group_by(geo_id) %>% mutate(proximity = ifelse(geo_id != "WRMA04173", distHaversine(cbind(Lon.50., Lat.50.), cbind(deploy.longitude, deploy.latitude)),
-#                                                   distHaversine(cbind(Lon.50., Lat.50.), cbind(last(Lon.50.), last(Lat.50.))))) %>%
-#   filter(proximity <= 250000) %>% summarize(spring.br.arrival = min(StartTime ))
-#   #mutate(lon.proximity = ifelse(geo_id != "WRMA04173", deploy.longitude - Lon.50., last(Lon.50.) - Lon.50.),
-#   #       lat.proximity =ifelse(geo_id != "WRMA04173", deploy.latitude - Lat.50., last(Lat.50.) - Lat.50.)) %>%
-#   #filter(abs(lon.proximity) <= 2 & abs(lat.proximity) <= 4) %>% summarize(spring.br.arrival = min(StartTime))
-# 
-# # Merge breeding grounds arrival & departure times with location data #######
-# geo.all <- geo.all %>% dplyr::select(!c(fall.br.departure, spring.br.arrival)) %>% merge(geo.all.br.departure, by = "geo_id", all = T) %>%
-#   merge(geo.all.br.arrival, by = "geo_id", all = T) %>% group_by(geo_id) %>%
-#   arrange(geo_id, StartTime) %>%
-#   group_by(geo_id) %>%
-#   mutate(period = ifelse((EndTime <= fall.br.departure | StartTime >= spring.br.arrival) & Recorded_North_South_mig == "Both" & path.elongated == F, "Breeding", period),
-#          site_type = ifelse((EndTime  <= fall.br.departure | StartTime >= spring.br.arrival) & Recorded_North_South_mig == "Both"& path.elongated == F, "Breeding", site_type),
-#          period = ifelse(EndTime <= fall.br.departure & (Recorded_North_South_mig %in% c("South and partial North", "South") | path.elongated == T), "Breeding", period),
-#          site_type = ifelse(EndTime <= fall.br.departure & (Recorded_North_South_mig %in% c("South and partial North", "South") | path.elongated == T), "Breeding", site_type),
-#          period = ifelse(StartTime >= spring.br.arrival & Recorded_North_South_mig == "North", "Breeding", period),
-#          site_type = ifelse(StartTime >= spring.br.arrival & Recorded_North_South_mig == "North", "Breeding", site_type))
-# 
-# # For geolocators that were deployed in close proximity, assign one location to the geolocator deployment site
-# # Here this location will be the median of all geolocator deployment locations for that site.
-# 
-# # we first add new columns with the median deployment locations in our reference dataset (metadata for each geolcator)
+# # We first add new columns with the median deployment locations in our reference dataset (metadata for each geolcator)
 # ref_data <- ref_data %>% group_by(study.site) %>%
 #   mutate(mod.deploy.lon = median(deploy.longitude))%>%
 #   mutate(mod.deploy.lat = median(deploy.latitude))
@@ -127,8 +130,9 @@ ref_data <- read.csv(ref_path)
 # #View(ref_data %>% group_by(study.site, geo.id) %>% summarise(disp = mean(deploy.longitude)))
 # 
 # # Now we can modify our location dataset
-# #geo.all <- merge(geo.all, ref_data[,c("geo.id", "mod.deploy.lon", "mod.deploy.lat")], by.x = "geo_id", by.y = "geo.id")
+# geo.all <- merge(geo.all, ref_data[,c("geo.id", "mod.deploy.lon", "mod.deploy.lat")], by.x = "geo_id", by.y = "geo.id")
 # 
+# # We fix this initial location to the first and final location of individuals, unless their geolocator stopped working  
 # geo.all <- geo.all %>% group_by(geo_id) %>% mutate(Lon.50. = case_when(
 #   (sitenum == 1 | sitenum == max(sitenum)) & Recorded_North_South_mig == "Both" ~ mod.deploy.lon,
 #   sitenum == 1 & Recorded_North_South_mig %in% c("South and partial North", "South" ) ~ mod.deploy.lon,
@@ -139,85 +143,78 @@ ref_data <- read.csv(ref_path)
 #     sitenum == 1 & Recorded_North_South_mig %in% c("South and partial North", "South" ) ~ mod.deploy.lat,
 #     # (sitenum == max(sitenum)) & Recorded_North_South_mig == "North" ~ mod.deploy.lat,
 #     .default = Lat.50.))
-# 
-# # Check the location of breeding and nonbreeding sites
-# #View(geo.all[,c("geo_id", "Lon.50.", "Lat.50.", "mod.deploy.lon", "mod.deploy.lat")])
-# 
-# # plot locations of deployment sites (there should be 10)
-# dep.sites <- geo.all[(geo.all$sitenum == 1),]
-# plot(wrld_simpl, col = "lightgray", xlim = c(-170, -30), ylim = c(-20, 70))
-# points(dep.sites$Lon.50., dep.sites$Lat.50., col = "darkred")
-# 
-# # plot locations of all stationary sites
-# stat.sites <- geo.all[(geo.all$sitenum > 0),]
-# plot(wrld_simpl, col = "lightgray", xlim = c(-170, -30), ylim = c(-20, 70))
-# points(stat.sites$Lon.50., stat.sites$Lat.50., col = "darkred")
-# 
-# # Count stationary sites by season for each geolocator #########################
-# geo.all <- geo.all %>% arrange(geo_id, StartTime)
-# num <- 1
-# geo.all$NB_count <- NA
-# geo.id.ind <- geo.all$geo_id[1]
-# 
-# for (i in seq(1, nrow(geo.all))){
-# 
-#   if (geo.all$site_type[i] == "Nonbreeding" & geo.all$geo_id[i] == geo.id.ind){
-#     geo.all$NB_count[i] <- num
-#     num <- num + 1
-#   }
-# 
-#   if (geo.all$site_type[i] == "Nonbreeding" & geo.all$geo_id[i] != geo.id.ind){
-#     geo.id.ind <- geo.all$geo_id[i]
-#     num <-1
-#     geo.all$NB_count[i] <- num
-#     num <- num + 1
-#   }
-# }
-# 
-# # fix dates for geolocators that recorded with the wrong date ##################
-# geo.all <- geo.all %>% arrange(geo_id, StartTime) %>%
-#   group_by(geo_id) %>% mutate(year.difference = year(deploy.on.date) - year(first(StartTime)))
-# 
-# year(geo.all$StartTime) <- year(geo.all$StartTime) + geo.all$year.difference
-# year(geo.all$EndTime) <- year(geo.all$EndTime) + geo.all$year.difference
-# 
-# geo.all$IH.calib.start <- anytime(geo.all$IH.calib.start)
-# geo.all$IH.calib.end <- anytime(geo.all$IH.calib.end)
-# 
-# year(geo.all$IH.calib.start) <- year(geo.all$IH.calib.start) + geo.all$year.difference
-# year(geo.all$IH.calib.end) <- year(geo.all$IH.calib.end) + geo.all$year.difference
-# 
-# geo.all$nbr.arrival <-  as.Date(as.numeric(geo.all$nbr.arrival), optional = T)
-# geo.all$nbr.departure <- as.Date(as.numeric(geo.all$nbr.departure), optional = T)
-# geo.all$br.arrival <- as.Date(as.numeric(geo.all$br.arrival), optional = T)
-# geo.all$br.departure <- as.Date(as.numeric(geo.all$br.departure), optional = T)
-# geo.all$spring.br.arrival <- as.Date(geo.all$spring.br.arrival)
-# geo.all$fall.br.departure <- as.Date(geo.all$fall.br.departure)
-# 
-# year(geo.all$nbr.arrival) <-  year(geo.all$nbr.arrival) + geo.all$year.difference
-# year(geo.all$nbr.departure) <- year(geo.all$nbr.departure) + geo.all$year.difference
-# year(geo.all$br.arrival) <- year(geo.all$br.arrival) + geo.all$year.difference
-# year(geo.all$br.departure) <- year(geo.all$br.departure) + geo.all$year.difference
-# year(geo.all$fall.br.departure) <- year(geo.all$fall.br.departure) + geo.all$year.difference
-# year(geo.all$spring.br.arrival) <- year(geo.all$spring.br.arrival) + geo.all$year.difference
-# 
-# # # Save the data edited here  ###################################################
-# 
+
+## Check the location of breeding and nonbreeding sites
+View(geo.all[,c("geo_id", "Lon.50.", "Lat.50.", "mod.deploy.lon", "mod.deploy.lat")])
+
+## plot locations of deployment sites (there should be 10)
+dep.sites <- geo.all[(geo.all$sitenum == 1),]
+plot(wrld_simpl, col = "lightgray", xlim = c(-170, -30), ylim = c(-20, 70))
+points(dep.sites$Lon.50., dep.sites$Lat.50., col = "darkred")
+
+## plot locations of all stationary sites
+stat.sites <- geo.all[(geo.all$sitenum > 0),]
+plot(wrld_simpl, col = "lightgray", xlim = c(-170, -30), ylim = c(-20, 70))
+points(stat.sites$Lon.50., stat.sites$Lat.50., col = "darkred")
+
+## Count the number of stationary nonbreeding sites used by each bird  #########################
+geo.all <- geo.all %>% arrange(geo_id, StartTime)
+num <- 1
+geo.all$NB_count <- NA
+geo.id.ind <- geo.all$geo_id[1]
+
+for (i in seq(1, nrow(geo.all))){
+
+  if (geo.all$site_type[i] == "Nonbreeding" & geo.all$geo_id[i] == geo.id.ind){
+    geo.all$NB_count[i] <- num
+    num <- num + 1
+  }
+
+  if (geo.all$site_type[i] == "Nonbreeding" & geo.all$geo_id[i] != geo.id.ind){
+    geo.id.ind <- geo.all$geo_id[i]
+    num <-1
+    geo.all$NB_count[i] <- num
+    num <- num + 1
+  }
+}
+
+## adjust dates for locators that recorded dates with years that do not correspond to the year of deployment #########################
+geo.all <- geo.all %>% arrange(geo_id, StartTime) %>%
+  group_by(geo_id) %>% mutate(year.difference = year(deploy.on.date) - year(first(StartTime)))
+
+year(geo.all$StartTime) <- year(geo.all$StartTime) + geo.all$year.difference
+year(geo.all$EndTime) <- year(geo.all$EndTime) + geo.all$year.difference
+
+geo.all$IH.calib.start <- anytime(geo.all$IH.calib.start)
+geo.all$IH.calib.end <- anytime(geo.all$IH.calib.end)
+
+year(geo.all$IH.calib.start) <- year(geo.all$IH.calib.start) + geo.all$year.difference
+year(geo.all$IH.calib.end) <- year(geo.all$IH.calib.end) + geo.all$year.difference
+
+geo.all$nbr.arrival <-  as.Date(as.numeric(geo.all$nbr.arrival), optional = T)
+geo.all$nbr.departure <- as.Date(as.numeric(geo.all$nbr.departure), optional = T)
+geo.all$br.arrival <- as.Date(as.numeric(geo.all$br.arrival), optional = T)
+geo.all$br.departure <- as.Date(as.numeric(geo.all$br.departure), optional = T)
+geo.all$spring.br.arrival <- as.Date(geo.all$spring.br.arrival)
+geo.all$fall.br.departure <- as.Date(geo.all$fall.br.departure)
+
+year(geo.all$nbr.arrival) <-  year(geo.all$nbr.arrival) + geo.all$year.difference
+year(geo.all$nbr.departure) <- year(geo.all$nbr.departure) + geo.all$year.difference
+year(geo.all$br.arrival) <- year(geo.all$br.arrival) + geo.all$year.difference
+year(geo.all$br.departure) <- year(geo.all$br.departure) + geo.all$year.difference
+year(geo.all$fall.br.departure) <- year(geo.all$fall.br.departure) + geo.all$year.difference
+year(geo.all$spring.br.arrival) <- year(geo.all$spring.br.arrival) + geo.all$year.difference
+
+# Save the data location data compiled here for use in plotting maps and other figure ####################################
+
 # #Save the new columns in the reference data
 # write.csv(ref_data,"Analysis_output_data/Geolocator_reference_data_consolidated.csv", row.names=FALSE)
 # 
 # #save the processed geolocatorlocations
 # write.csv(geo.all, "Network_construction/All.locations.csv",row.names=FALSE)
 
-#Load data not corrected for oceanic crossings
-geo.all <- read.csv("Network_construction/All.locations.csv")
-
-##Load data corrected for oceanic crossings 
-##geo.all <- read.csv("Network_construction/All_locations_ocean_cross_cor.csv")
-##
-### re-calculate arrival dates if  working with corrected oceanic crossings 
-##nbr.arrival.times <- geo.all %>% group_by(geo_id) %>% filter(NB_count == 1) %>% dplyr::select(-nbr.arrival) %>% rename(nbr.arrival = StartTime )
-##geo.all <- geo.all %>% dplyr::select(-nbr.arrival) %>% merge(nbr.arrival.times[,c("geo_id", "nbr.arrival")], by = "geo_id", all = T)
+# If the data has already been compiled and prepped, it can also be loaded at this stage in the script 
+# geo.all <- read.csv("Network_construction/All.locations.csv")
 
 ################################################################################
 # Fall migration network #######################################################
@@ -255,7 +252,7 @@ fall.stat <- fall.stat %>% group_by(geo_id) %>% filter(StartTime <= NB.first.sit
 # Create clusters in two steps to account for the equinox 
 
 # load equinox polygon 
-equipol <- st_read("Blackpoll_Warbler_migration_network_Git/Analysis_input_data/Equinox_area_polygon/equipol.shp", crs = st_crs(wrld_simpl))
+equipol <- st_read("Analysis_input_data/Equinox_area_polygon/equipol.shp", crs = st_crs(wrld_simpl))
 fall.stat.sf <- st_as_sf(fall.stat, coords = c("Lon.50.", "Lat.50."), crs = st_crs(wrld_simpl), remove = F)
 
 # separate points affected by the equinox and those that are not 
@@ -674,6 +671,9 @@ legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
        col = type.palette[unique(meta.spring$node.type.num)],
        pch = 16)
 
+
+# The code below is for a nonbreeding movement network, but this network was not used in our analysis 
+
 # ################################################################################
 # # Nonbreeding movements network ################################################
 # ################################################################################
@@ -682,7 +682,7 @@ legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
 # 
 # # Either import a file with manual clusters, or create cluster in R
 # 
-# # Create clusters for nonbreeding sites in R 
+# # Create clusters for nonbreeding sites in R
 # NB.stat <- geo.all %>% filter(sitenum > 0, site_type %in% c("Nonbreeding"),
 #                                   period %in% c("Non-breeding period"),
 #                                   Recorded_North_South_mig %in% c("Both", "South and partial North"))
@@ -690,7 +690,7 @@ legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
 # # #get the timing of the first nonbreeding area
 # # NB.start.time <- geo.all %>% filter(NB_count == 1) %>% dplyr::select(NB.first.site.arrival = StartTime)
 # # NB.stat <- merge(NB.stat, NB.start.time, by = "geo_id")
-# # 
+# #
 # # #get the timing of the lastnonbreeding area
 # # NB.end.time <- geo.all %>% group_by(geo_id) %>% filter(NB_count == max(NB_count, na.rm = T)) %>% dplyr::select(NB.last.site.arrival = StartTime)
 # # NB.stat <- merge(NB.stat.stat, NB.end.time.nb, by = "geo_id")
@@ -713,15 +713,15 @@ legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
 # plot(NB.clust)
 # NB.stat$cluster  <- cutree(NB.clust, k = 5)
 # 
-# # plot stopover and nonbreeding nodes 
+# # plot stopover and nonbreeding nodes
 # 
 # ggplot(st_as_sf(wrld_simpl))+
 #   geom_sf(colour = NA, fill = "lightgray") +
 #   coord_sf(xlim = c(-90, -30),ylim = c(-15, 20))+
-#   geom_errorbar(data = NB.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), color = "red", width=1, alpha = 0.2) + 
+#   geom_errorbar(data = NB.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), color = "red", width=1, alpha = 0.2) +
 #   geom_point(data = NB.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, colour = site_type)) +
 #   geom_path(data = NB.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5,
-#             arrow = arrow(end = "last", type = "open", length = unit(0.10, "inches"))) 
+#             arrow = arrow(end = "last", type = "open", length = unit(0.10, "inches")))
 # 
 # ggplot(st_as_sf(wrld_simpl))+
 #   geom_sf(colour = NA, fill = "lightgray") +
@@ -737,16 +737,16 @@ legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
 #   coord_sf(xlim = c(-90, -30),ylim = c(-15, 20)) +
 #   geom_point(data = NB.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, colour = Range_region)) +
 #   geom_path(data = NB.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5,
-#             arrow = arrow(end = "last", type = "open", length = unit(0.10, "inches"))) 
+#             arrow = arrow(end = "last", type = "open", length = unit(0.10, "inches")))
 # 
 # # Generate the network from our location data and clusters #####################
 # 
 # # Add a column with inter-cluster connections to our location dataset
 # NB.stat  <- NB.stat %>% mutate(next.cluster = case_when(
 #   lead(cluster) != cluster & lead(geo_id) == geo_id ~ lead(cluster),
-#   .default = NA)) 
+#   .default = NA))
 # 
-# # Create a dataframe with the edge info 
+# # Create a dataframe with the edge info
 # NB.edge.df <- NB.stat %>% dplyr::select(cluster, next.cluster, geo_id, StartTime,
 #                                                 Lon.50., Lon.2.5., Lon.97.5., Lat.50.,
 #                                                 Lat.2.5., Lat.97.5., EndTime,
@@ -755,12 +755,12 @@ legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
 #                                                 site_type) %>%
 #   filter(!is.na(next.cluster))
 # 
-# # calculate node locations as the median locations of the points included within 
-# # Note, we use the 50% quantile of the posterior distribution 
-# NB.node.lon <- NB.stat %>% group_by(cluster) %>% 
+# # calculate node locations as the median locations of the points included within
+# # Note, we use the 50% quantile of the posterior distribution
+# NB.node.lon <- NB.stat %>% group_by(cluster) %>%
 #   summarize(node.lon = median(Lon.50.))
 # 
-# NB.node.lat <- NB.stat %>% group_by(cluster) %>% 
+# NB.node.lat <- NB.stat %>% group_by(cluster) %>%
 #   summarize(node.lat = median(Lat.50.))
 # 
 # # We also assess which use was the more common for a node (breeding, nonbreeding, or stopover)
@@ -771,8 +771,8 @@ legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
 #     site_type == "Stopover" ~ 2
 #   ))
 # 
-# # Create a layout with node locations 
-# meta.NB <- data.frame("vertex" = seq(min(NB.stat$cluster), max(NB.stat$cluster)), 
+# # Create a layout with node locations
+# meta.NB <- data.frame("vertex" = seq(min(NB.stat$cluster), max(NB.stat$cluster)),
 #                    "Lon.50." = NB.node.lon$node.lon,
 #                    "Lat.50." = NB.node.lat$node.lat,
 #                    "node.type.num" = NB.node.type$site_type_num,
@@ -784,11 +784,11 @@ legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
 # NB.graph <- graph_from_data_frame(NB.edge.df, directed = T, vertices = meta.NB)
 # 
 # # Colour palette for site type
-# type.palette <- rainbow(3)  
+# type.palette <- rainbow(3)
 # 
 # # plot the fall network over North and South America
 # plot(NB.graph, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
-#      edge.width = 1, edge.arrow.size = 0.5, edge.arrow.width = 0.5,  
+#      edge.width = 1, edge.arrow.size = 0.5, edge.arrow.width = 0.5,
 #      layout = NB.location, rescale = F, asp = 0, xlim = c(-90, -30),
 #      ylim = c(-15, 20), vertex.color = type.palette[meta.NB $node.type.num])
 # plot(wrld_simpl, add = T)
@@ -798,21 +798,21 @@ legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
 # # We start with edges based on the number of individuals moving between nodes
 # 
 # # list of connections and the number of times they occur
-# NB.con <- NB.edge.df %>% group_by(cluster, next.cluster) %>% 
-#   summarize(weight = n()) 
+# NB.con <- NB.edge.df %>% group_by(cluster, next.cluster) %>%
+#   summarize(weight = n())
 # 
-# # Create a  network for nonbreeding movements 
+# # Create a  network for nonbreeding movements
 # NB.graph.weighed <- graph_from_data_frame(NB.con, directed = T, vertices = meta.NB )
 # is_weighted(NB.graph.weighed)
 # 
 # plot(wrld_simpl, xlim = c(-90, -30), ylim = c(-15, 20))
 # plot(NB.graph.weighed, vertex.label = NA, vertex.size = 200, vertex.size2 = 200,
-#      edge.width = NB.con$weight, edge.arrow.size = 0.10, edge.arrow.width = 1,  
+#      edge.width = NB.con$weight, edge.arrow.size = 0.10, edge.arrow.width = 1,
 #      layout = NB.location, rescale = F, asp = 0, edge.curved = rep(c(-0.3, 0.3), nrow(NB.con)),
 #      vertex.color = type.palette[meta.NB $node.type.num], add = T)
 
 ################################################################################
-# Assess and propagate the relative abundance of blackpoll warblers from eBird
+# Assess and propagate the relative abundance of blackpoll warblers from eBird #####
 ################################################################################
 
 # create and export geolocator deployment sites
@@ -865,7 +865,7 @@ ab.per.region <- merge(as.data.frame(abundance.regions), ab.extract, by.x = "geo
   mutate(br.region.prop.total.population = br.region.r.abundance/ sum(unique(br.region.r.abundance)))
 
 ################################################################################
-# relative abundance propagation on in the fall season 
+# relative abundance propagation for the fall season ###########################
 ################################################################################
 
 # calculate the relative abundance for each breeding node (relative abundance of region/number of breeding nodes in region)
@@ -910,7 +910,7 @@ legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
        pch = 16)
 
 ################################################################################
-# relative abundance propagation on in the spring season 
+# relative abundance propagation for the spring season #########################
 ################################################################################
 
 # calculate the relative abundance for each breeding node (relative abundance of region/number of breeding nodes in region)
@@ -955,7 +955,7 @@ legend("bottomleft", legend = c("Stopover", "Nonbreeding", "Breeding"),
        pch = 16)
 
 ################################################################################
-# Population proportion by site during the fall season 
+# Population proportion by site during the fall season #########################
 ################################################################################
 
 # Create a dataframe with the abundance units of individuals from each section of the blackpoll warbler's range in each node
@@ -1053,7 +1053,7 @@ plot(fall.graph.weighed.ab, vertex.size = 500, vertex.size2 = 200,
 #        pch = 15, cex = 1, box.lwd = 0)
 
 ################################################################################
-# Population proportion by site during the spring season 
+# Population proportion by site during the spring season #######################
 ################################################################################
 
 # Create a dataframe with the proportion of individuals from each section of the blackpoll warbler's range in each node
@@ -1148,8 +1148,8 @@ plot(spring.graph.weighed.ab, vertex.size = 500, vertex.size2 = 200,
 
 
 ################################################################################
-# In the fall: calculate the proportion of individual using a node as a stopover
-# Or as a a nonbreeding node
+# In the fall: calculate the proportion of individual using a node as ##########
+# a stopover or as a a nonbreeding node ########################################
 ################################################################################
 
 # calculate the ab.units of birds using nodes as breeding, nonbreeding and stopover areas
@@ -1172,8 +1172,8 @@ meta.fall.ab <- merge(meta.fall.ab, fall.use.per.node , by.x = "vertex", by.y = 
 #meta.fall.ab <- transform(meta.fall.ab, use.ab.vector = asplit(cbind(use.breeding.ab,  use.stopover.ab, use.nonbreeding.ab), 1))
 
 ################################################################################
-# In the spring: calculate the proportion of individual using a node as a stopover
-# Or as a a nonbreeding node
+# In the spring: calculate the proportion of individual using a node as ########
+# a stopover Or as a a nonbreeding node ########################################
 ################################################################################
 
 # calculate the ab.units of birds using nodes as breeding, nonbreeding and stopover areas
@@ -1195,9 +1195,9 @@ meta.spring.ab <- merge(meta.spring.ab, spring.use.per.node , by.x = "vertex", b
 #create a column that can be converted to a numeric vector
 #meta.spring.ab <- transform(meta.spring.ab, use.ab.vector = asplit(cbind(use.breeding.ab,  use.stopover.ab, use.nonbreeding.ab), 1))
 
-################################################################################
-### In the fall migration, stopover and nonbreeding specific node compositions 
-################################################################################
+#######################################################################################
+### In the fall migration, stopover and nonbreeding specific node compositions ########
+#######################################################################################
 
 # Composition of nonbreeding nodes at the end of the migration 
 fall.nbr.ab <- fall.stat.ab %>% group_by(geo_id) %>% filter(sitenum == last(sitenum)) %>%
@@ -1229,9 +1229,9 @@ ggplot(st_as_sf(wrld_simpl))+
   coord_sf(xlim = c(-100, -40),ylim = c(-5, 15)) +
   geom_scatterpie(cols = c("Eastern Region","Northwestern Region", "Western Region", "Central Region"), colour = "black", data = fall.stp.ab, mapping = aes(x = Lon.50., y = Lat.50., r = tot.abundance*10))
 
-################################################################################
-### In the spring migration, stopover and nonbreeding specific node compositions 
-################################################################################
+########################################################################################
+### In the spring migration, stopover and nonbreeding specific node compositions #######
+########################################################################################
 
 # Composition of nonbreeding nodes at the start of the migration
 spring.nbr.ab <- spring.stat.ab %>% group_by(geo_id) %>% filter(site_type == "Nonbreeding") %>%
@@ -1264,7 +1264,7 @@ ggplot(st_as_sf(wrld_simpl))+
   geom_scatterpie(cols = c("Eastern Region","Northwestern Region", "Western Region", "Central Region"), colour = "black", data = spring.stp.ab, mapping = aes(x = Lon.50., y = Lat.50., r = tot.abundance*10))
 
 ################################################################################
-# Export data from the network construction
+# Export data from the network construction ####################################
 ################################################################################
 
 # Save elements necessary to build Fall network
@@ -1293,170 +1293,3 @@ write.csv(spring.nbr.ab, "Network_construction/Spring.nbr.node.composition.csv")
 write.csv(spring.stp.ab, "Network_construction/Spring.stp.node.composition.csv")
 write.csv(spring.breed.ab, "Network_construction/Spring.abundance.per.bird.csv")
 
-##################################################################################
-#  Nonbreeding range sub network for the  fall migration 
-##################################################################################
-
-# Add a column with inter-cluster connections to our location dataset
-fall.stat.sub <- fall.stat %>% filter(Lat.50. < 13) %>% group_by(cluster) %>%
-  filter(length(cluster) >1) %>% ungroup() %>%
-  mutate(next.cluster = case_when(
-  lead(cluster) != cluster & lead(geo_id) == geo_id ~ lead(cluster),
-  .default = NA)) 
-
-# Create a dataframe with the edge info 
-fall.edge.df.sub <- fall.stat.sub %>% dplyr::select(cluster, next.cluster, geo_id, StartTime,
-                                            Lon.50., Lon.2.5., Lon.97.5., Lat.50.,
-                                            Lat.2.5., Lat.97.5., EndTime,
-                                            sitenum, duration, period,study.site,
-                                            Range_region, NB_count, period,
-                                            site_type) %>% filter(!is.na(next.cluster))
-
-# calculate node locations as the median locations of the points included within 
-# Note, we use the 50% quantile of the posterior distribution 
-fall.node.lon.sub <- fall.stat.sub %>% group_by(cluster) %>% 
-  summarize(node.lon = median(Lon.50.))
-
-fall.node.lat.sub <- fall.stat.sub%>% group_by(cluster) %>% 
-  summarize(node.lat = median(Lat.50.))
-
-# Create a layout with node locations 
-meta.fall.sub <- data.frame("vertex" = sort(unique(fall.stat.sub$cluster)), 
-                        #data.frame("vertex" = seq(min(fall.edge.df$cluster), max(fall.edge.df$cluster)), 
-                        "Lon.50." = fall.node.lon.sub$node.lon,
-                        "Lat.50." = fall.node.lat.sub$node.lat)
-
-fall.location.sub <- as.matrix(meta.fall.sub[, c("Lon.50.", "Lat.50.")])
-
-# Create the fall network
-fall.graph.sub <- graph_from_data_frame(fall.edge.df.sub, directed = T, vertices = meta.fall.sub)
-
-# Colour palette for site type
-type.palette <- rainbow(3)  
-
-# plot the fall network over North and South America
-plot(wrld_simpl, xlim = c(-80, -54),ylim = c(-0, 13))
-plot(fall.graph.sub, vertex.size = 200, vertex.size2 = 200,
-     edge.width = 1, edge.arrow.size = 0, edge.arrow.width = 0,  
-     layout = fall.location.sub, rescale = F, asp = 0, xlim = c(-170, -30),
-     ylim = c(-15, 70), add = T)
-
-# Add node weights 
-fall.edge.df.ab.sub <- merge(fall.edge.df.sub, dplyr::select(fall.breed.ab, geo_id, ab.unit, br.region.prop.total.population, br.polygon))
-
-# list of connections weighed by abundance unit
-# We add an edge type if optional spring edges were added to distinguish fall and spring edges 
-fall.con.ab.sub <- fall.edge.df.ab.sub %>% group_by(geo_id) %>%
-  group_by(cluster, next.cluster) %>% 
-  reframe(weight = sum(ab.unit), weight.n = n())
-
-# Create a dataframe with the proportion of individuals from each section of the blackpoll warbler's range in each node
-fall.stat.ab.sub <- fall.stat.sub %>% merge(fall.breed.ab[,c("geo_id", "ab.unit")], by = "geo_id") 
-
-fall.ab.by.origin.sub <- fall.stat.ab.sub %>% group_by(cluster, Breeding_region_MC) %>%
-  summarize(region.ab.units = sum(ab.unit), region.n = n_distinct(geo_id)) %>% ungroup() %>%
-  complete(cluster, Breeding_region_MC, fill = list(region.ab.units = 0)) %>%
-  complete(cluster, Breeding_region_MC, fill = list(region.n = 0)) %>%
-  group_by(cluster) %>% mutate (ab.weight = sum(region.ab.units ), n.weight = sum(region.n))
-
-# Convert data from wide to long
-fall.ab.by.origin.sub <- fall.ab.by.origin.sub %>% pivot_wider(names_from = Breeding_region_MC, values_from = c(region.ab.units, region.n)) %>%
-  rename(prop.ab.central = `region.ab.units_Central Region`,
-         prop.ab.eastern = `region.ab.units_Eastern Region`,
-         prop.ab.western = `region.ab.units_Western Region`,
-         prop.ab.northwestern = `region.ab.units_Northwestern Region`,
-         n.central = `region.n_Central Region`,
-         n.eastern = `region.n_Eastern Region`,
-         n.western = `region.n_Western Region`,
-         n.northwestern = `region.n_Northwestern Region`)
-
-# Merge abundance data with the node metadata
-meta.fall.ab.sub <- merge(meta.fall.sub, fall.ab.by.origin.sub,  by.x = "vertex", by.y = "cluster") 
-
-# Create weighed subgraph 
-fall.graph.sub.weighed <- graph_from_data_frame(fall.con.ab.sub, directed = T, vertices = meta.fall.ab.sub)
-
-save(fall.graph.sub.weighed, file = "Network_construction/Fall.sub.graph.R")
-write.csv(meta.fall.ab.sub, "Network_construction/Fall.node.metadata.sub.csv")
-
-##################################################################################
-#  Nonbreeding range sub network for the  spring migration 
-##################################################################################
-
-# Add a column with inter-cluster connections to our location dataset
-spring.stat.sub <- spring.stat %>% filter(Lat.50. < 13) %>% group_by(cluster) %>%
-  filter(length(cluster) >1) %>% ungroup() %>%
-  mutate(next.cluster = case_when(
-    lead(cluster) != cluster & lead(geo_id) == geo_id ~ lead(cluster),
-    .default = NA)) 
-
-# Create a dataframe with the edge info 
-spring.edge.df.sub <- spring.stat.sub %>% dplyr::select(cluster, next.cluster, geo_id, StartTime,
-                                                    Lon.50., Lon.2.5., Lon.97.5., Lat.50.,
-                                                    Lat.2.5., Lat.97.5., EndTime,
-                                                    sitenum, duration, period,study.site,
-                                                    Range_region, NB_count, period,
-                                                    site_type) %>% filter(!is.na(next.cluster))
-
-# calculate node locations as the median locations of the points included within 
-# Note, we use the 50% quantile of the posterior distribution 
-spring.node.lon.sub <- spring.stat.sub %>% group_by(cluster) %>% 
-  summarize(node.lon = median(Lon.50.))
-
-spring.node.lat.sub <- spring.stat.sub%>% group_by(cluster) %>% 
-  summarize(node.lat = median(Lat.50.))
-
-# Create a layout with node locations 
-meta.spring.sub <- data.frame("vertex" = sort(unique(spring.stat.sub$cluster)), 
-                            #data.frame("vertex" = seq(min(spring.edge.df$cluster), max(spring.edge.df$cluster)), 
-                            "Lon.50." = spring.node.lon.sub$node.lon,
-                            "Lat.50." = spring.node.lat.sub$node.lat)
-
-spring.location.sub <- as.matrix(meta.spring.sub[, c("Lon.50.", "Lat.50.")])
-
-# Create the spring network
-spring.graph.sub <- graph_from_data_frame(spring.edge.df.sub, directed = T, vertices = meta.spring.sub)
-
-# Colour palette for site type
-type.palette <- rainbow(3)  
-
-# plot the spring network over North and South America
-plot(wrld_simpl, xlim = c(-80, -54),ylim = c(-0, 13))
-plot(spring.graph.sub, vertex.size = 200, vertex.size2 = 200,
-     edge.width = 1, edge.arrow.size = 0, edge.arrow.width = 0,  
-     layout = spring.location.sub, rescale = F, asp = 0, xlim = c(-170, -30),
-     ylim = c(-15, 70), add = T)
-
-# Add node weights 
-spring.edge.df.ab.sub <- merge(spring.edge.df.sub, dplyr::select(spring.breed.ab, geo_id, ab.unit, br.region.prop.total.population, br.polygon))
-
-# list of connections weighed by abundance unit
-# We add an edge type if optional spring edges were added to distinguish spring and spring edges 
-spring.con.ab.sub <- spring.edge.df.ab.sub %>% group_by(geo_id) %>%
-  group_by(cluster, next.cluster) %>% 
-  reframe(weight = sum(ab.unit), weight.n = n())
-
-# Create a dataframe with the proportion of individuals from each section of the blackpoll warbler's range in each node
-spring.stat.ab.sub <- spring.stat.sub %>% merge(spring.breed.ab[,c("geo_id", "ab.unit")], by = "geo_id") 
-
-spring.ab.by.origin.sub <- spring.stat.ab.sub %>% group_by(cluster, Breeding_region_MC) %>%
-  summarize(region.ab.units = sum(ab.unit), region.n = n_distinct(geo_id)) %>% ungroup() %>%
-  complete(cluster, Breeding_region_MC, fill = list(region.ab.units = 0)) %>%
-  complete(cluster, Breeding_region_MC, fill = list(region.n = 0)) %>%
-  group_by(cluster) %>% mutate (ab.weight = sum(region.ab.units ), n.weight = sum(region.n))
-
-# Convert data from wide to long
-spring.ab.by.origin.sub <- spring.ab.by.origin.sub %>% pivot_wider(names_from = Breeding_region_MC, values_from = c(region.ab.units, region.n)) %>%
-  rename(prop.ab.central = `region.ab.units_Central Region`,
-         prop.ab.eastern = `region.ab.units_Eastern Region`,
-         n.central = `region.n_Central Region`,
-         n.eastern = `region.n_Eastern Region`)
-
-# Merge abundance data with the node metadata
-meta.spring.ab.sub <- merge(meta.spring.sub, spring.ab.by.origin.sub,  by.x = "vertex", by.y = "cluster") 
-
-# Create weighed subgraph 
-spring.graph.sub.weighed <- graph_from_data_frame(spring.con.ab.sub, directed = T, vertices = meta.spring.ab.sub)
-
-save(spring.graph.sub.weighed, file = "Network_construction/Spring.sub.graph.R")
-write.csv(meta.spring.ab.sub, "Network_construction/Spring.node.metadata.sub.csv")

@@ -1,4 +1,4 @@
-#Helper function for the geolocator primary analysis
+#Helper function for the geolocator analysis
 
 #load packages
 require(readr)
@@ -30,7 +30,7 @@ library(GeoLocTools)
 #setupGeolocation()
 
 # Set eBirdst key 
-#set_ebirdst_access_key("mk5l4atjq2bg", overwrite = TRUE)
+# set_ebirdst_access_key("-------", overwrite = TRUE)
 
 # thresholdOverLight############################################################
 

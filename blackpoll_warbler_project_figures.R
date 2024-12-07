@@ -1,4 +1,4 @@
-# Thesis figures 
+# Network metric calculations and figures 
 
 # Load libraries ----
 library(tidyverse)
@@ -18,7 +18,6 @@ library(ggpubr)
 library(patchwork)
 library(purrr)
 library(stringr)
-library(gt)
 library(shadowtext)
 library(PieGlyph)
 library(ggarchery)
@@ -33,24 +32,18 @@ library(clustAnalytics)
 library(pls)
 library(tnet)
 
-# ebird
+# ebirdst packge to load abundance and range raster ----
 library(ebirdst)
 
-# set ebirddist access key
-# set_ebirdst_access_key("bmedjn18aoku")
+# Load the location and network data generated using the "Network_construction" script ----
+geo.all <- read.csv("Network_construction/All.locations.csv")
 
-# Will need to run the network analysis and construction scripts ----
-source("Geolocator_data_analysis_scripts/Geolocator_analysis_helper_functions.R")
-
-# Load required data for the fall
+# Load required data for the fall 
 fall.graph <- read_graph("Network_construction/Fall.graph.edge.list.txt", directed = TRUE)
 meta.fall.ab <- read.csv("Network_construction/Fall.node.metadata.csv")
 fall.con.ab <- read.csv("Network_construction/Fall.edge.weights.csv")
 fall.stat <- read.csv("Network_construction/Fall.stationary.data.csv")
 fall.move <- read.csv("Network_construction/Fall.all.locations.csv")
-
-# bprw range polygon: need to be requested from BirdLife international (not in the repository)
-bpw_range <-  read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Birdlife_international_species_distribution/SppDataRequest.shp")
 
 # Load required data for the spring 
 spring.graph <- read_graph("Network_construction/Spring.graph.edge.list.txt", directed = TRUE)
@@ -58,6 +51,9 @@ meta.spring.ab <- read.csv("Network_construction/Spring.node.metadata.csv")
 spring.con.ab <- read.csv("Network_construction/Spring.edge.weights.csv")
 spring.stat <- read.csv("Network_construction/Spring.stationary.data.csv")
 spring.move <- read.csv("Network_construction/Spring.all.locations.csv")
+
+# bprw range polygon: need to be requested from BirdLife international (not in the repository)
+bpw_range <-  read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Birdlife_international_species_distribution/SppDataRequest.shp")
 
 # add cluster numbers tp fall and spring graph node attributes--- 
 V(fall.graph)$cluster.num <- meta.fall.ab$X
@@ -404,10 +400,11 @@ Lakes <- ne_download(scale = 110, type = "lakes", category = "physical")%>%
 equipol <- st_read("Analysis_input_data/Equinox_area_polygon/equipol.shp")
 
 # Load abundance propagation region from BirdLife international 
+# These polygons are not provided on github, and access must be requested here: https://datazone.birdlife.org/species/requestdis
 bpw.range.BLI <- st_read("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Birdlife_international_species_distribution/SppDataRequest.shp") %>% 
   mutate(seasonal = factor(seasonal, levels = c(2,4,3)))
 
-# Find its intersection with the Blackpoll warbler's breeding range 
+# Find the intersection of range polygons the map of america used for mapping (bpw.range.full) and the region in which the equinox affects location estimates (equi.region)
 sf_use_s2(FALSE)
 equi.region <- st_intersection(st_as_sf(America), bpw.range.BLI ) %>% st_intersection(equipol)
 bpw.range.full <- st_intersection(st_as_sf(America), st_union(bpw.range.BLI ))
@@ -452,7 +449,7 @@ fall.gplot <- ggplot(st_as_sf(America))+
         legend.key.spacing.y =  unit(-0.1, 'cm'))+
   guides(fill = guide_legend(override.aes = list(size = 4)))
 
-ref_data <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/Geolocator_reference_data_consolidated.csv")
+ref_data <- read.csv("Analysis_output_Data/Geolocator_reference_data_consolidated.csv")
 fall.stat <- fall.stat %>% merge(ref_data[,c("geo.id", "fall.equinox.date")], by.x = "geo_id", by.y = "geo.id") %>% mutate(equi_prox = difftime(StartTime, fall.equinox.date, units = "days"))
 fall.stat <- fall.stat %>% rowwise() %>% mutate(equi_prox = ifelse(abs(equi_prox) <= 14, "within_equi", "out_equi"))
 
@@ -562,10 +559,7 @@ spring.clustplot<- ggplot(st_as_sf(America))+
         legend.key.spacing.y =  unit(-0.1, 'cm'))
 
 ## Panel ----
-nodes.fig <- (fall.gplot | spring.gplot)/ (fall.clustplot |spring.clustplot) #+
-# plot_annotation(tag_levels = 'a') &
-# theme(plot.tag.position = c(0.05, 0.95),
-# plot.tag = element_text(face = 'bold', size = 10))
+nodes.fig <- (fall.gplot | spring.gplot)/ (fall.clustplot |spring.clustplot) 
 
 ggsave(plot = nodes.fig, filename = "nodes.figure.jpg" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures",
        units = "cm", width = 26*1.2, height = 13*1.2, dpi = "print", bg = "white")
@@ -1817,14 +1811,6 @@ for (i in unique(tpaths$geo_id)){
           legend.key = element_rect(colour = "transparent", fill = "white"))
 }
 
-# Create a panel of plots
-# function from : https://stackoverflow.com/questions/66688668/automatically-assemble-plots-for-patchwork-from-a-list-of-ggplots
-plot_a_list <- function(plots, nrows, ncols) {
-  
-  patchwork::wrap_plots(plots,
-                        nrow = nrows, ncol = ncols)
-}
-
 loc.ind.panel1 <- plot_a_list(dates.ind.lon[1:24], 6, 4)
 loc.ind.panel2 <- plot_a_list(dates.ind.lon[25:47], 6, 4)
 loc.ind.panel3 <- plot_a_list(dates.ind.lat[1:24], 6, 4)
@@ -1893,9 +1879,9 @@ spring.nbr.stp.plot <- ggplot(st_as_sf(America))+
 # Figure 15 Nonbreeding movements  ----
 
 # Run the script for nonbreeding movements 
-source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Blackpoll_warbler_mapping_scripts/Blackpoll_nonbreeding_movements.R")
+source("Blackpoll_warbler_mapping_scripts/Blackpoll_nonbreeding_movements.R")
 
-NB.move <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/nonbreeding.movements.csv")
+NB.move <- read.csv("Data/nonbreeding.movements.csv")
 NB.stat.mean <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/nonbreeding.mean.csv")
 
 ## Create new column measuring the stage of the nonbreeding season for individual birds ----

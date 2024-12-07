@@ -1,4 +1,4 @@
-# Plot of of nonbreeding movements 
+# Processing of nonbreeding movement data for plotting 
 
 #Load libraries
 library(tidyverse)
@@ -9,20 +9,19 @@ library(ggplot2)
 library(geosphere)
 library(terra)
 library(sf)
-#library(maptools)
 library(ebirdst)
 library(fmdates)
 
-source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis_helper_functions.R")
+source("Geolocator_data_analysis_scripts/Geolocator_analysis_helper_functions.R")
 
 # Import data ##################################################################
 
 # path to reference data file 
-ref_path <- "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv"
+ref_path <- "Analysis_Output_Data/Geolocator_reference_data_consolidated.csv"
 ref_data <- read.csv(ref_path)
 
 # location data 
-geo.all <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/All.locations.csv")
+geo.all <- read.csv("Network_construction/All.locations.csv")
 
 # data preparation ####################################################
 
@@ -32,16 +31,7 @@ NB.stat <- geo.all %>% dplyr::filter(sitenum > 0, site_type %in% c("Nonbreeding"
                    Recorded_North_South_mig %in% c("Both", "South and partial North") | geo_id == "WRMA04173") %>%
   ungroup()
 
-# # remove points for individuals that moved less than 250 km over the course of the wintering season 
-# NB.stat <- NB.stat %>% group_by(geo_id) %>% mutate(Lon.50.start = first(Lon.50.),
-#                                                    Lat.50.start = first(Lat.50.),
-#                                                    Lon.50.end = last(Lon.50.),
-#                                                    Lat.50.end = last(Lat.50.))%>%
-#   rowwise() %>%
-#   mutate(dist = distHaversine(c(Lon.50.start ,Lat.50.start), c(Lon.50.end, Lat.50.end)),.after = geo_id) %>%
-#   filter(dist > 250000 | dist == 0)
-
-# Modify the data so we have two points for each movement between two sites (which means that we will have duplicate points)
+# Modify the data so we have two points for each movement between two sites (which means that we will have duplicate points, for ease of plotting)
 NB.stat <- rbind(NB.stat, NB.stat)
 NB.stat <- NB.stat %>% arrange(geo_id, StartTime)
 
@@ -78,8 +68,8 @@ NB.stat.mean <-  geo.all %>% dplyr::filter(sitenum > 0, site_type %in% c("Nonbre
             mean.lon97.5 = mean(Lon.97.5.), mean.lat97.5 = mean(Lat.97.5.))
 
 # Save nonbreeding movement data ###############################################
-write.csv(NB.stat, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/nonbreeding.movements.csv")
-write.csv(NB.stat.mean, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/nonbreeding.mean.csv")
+write.csv(NB.stat, "Analysis_input_Data/nonbreeding.movements.csv")
+write.csv(NB.stat.mean, "Analysis_input_Data/nonbreeding.mean.csv")
 
   
 
