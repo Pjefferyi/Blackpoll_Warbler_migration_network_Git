@@ -29,7 +29,7 @@ Other sources of data used in this analysis include:
 If you would like to use the code in this repository but encounter some difficulties, you can reach out to me (the corresponding author of the manuscript) at jelanyduali@hotmail.com or jduali@uoguelph.ca
 
 
-## Running this analyisis 
+## Running this analysis 
 
 You'll need to perform these steps in order
 
