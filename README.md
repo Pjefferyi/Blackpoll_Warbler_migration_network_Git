@@ -28,6 +28,21 @@ Other sources of data used in this analysis include:
 
 If you would like to use the code in this repository but encounter some difficulties, you can reach out to me (the corresponding author of the manuscript) at jelanyduali@hotmail.com or jduali@uoguelph.ca
 
+
+## Running this analyisis 
+
+You'll need to perform these steps in order
+
+1. Download the geolocator data from eBird. Select the raw data (i.e., light level measurements)
+
+2. Using the geolocator analysis scripts, estimate the locations for each birds from the geolocator data 
+
+3. Use the "Network_construction.R"" script to build the networks 
+
+4. Use the "strenght of Strength_of_migratory_connectivity.R"" script to estimate the MC metric
+
+5. Run the "blackpoll_warbler_project_figures.R"" script to calculate the network metrics and generate the figures
+
 ## Index of folders and files containing the code used for different parts of the analysis: 
 
 ### Geolocator analysis 
