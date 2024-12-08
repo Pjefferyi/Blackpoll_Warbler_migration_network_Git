@@ -52,18 +52,17 @@ spring.con.ab <- read.csv("Network_construction/Spring.edge.weights.csv")
 spring.stat <- read.csv("Network_construction/Spring.stationary.data.csv")
 spring.move <- read.csv("Network_construction/Spring.all.locations.csv")
 
-# bprw range polygon: need to be requested from BirdLife international (not in the repository)
-bpw_range <-  read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Birdlife_international_species_distribution/SppDataRequest.shp")
+# calculate network metrics and other types of edge and node atributes ----
 
-# add cluster numbers tp fall and spring graph node attributes--- 
+# add cluster numbers tp fall and spring graph node attributes
 V(fall.graph)$cluster.num <- meta.fall.ab$X
 V(spring.graph)$cluster.num <- meta.spring.ab$X
 
-# add abundance weights to fall and spring graph node attributes--- 
+# add abundance weights to fall and spring graph node attributes
 E(fall.graph)$weight <- fall.con.ab$weight
 E(spring.graph)$weight <- spring.con.ab$weight
 
-# Other types of edge data ----
+# Other types of edge data
 edge.cols.fall <- fall.con.ab %>% mutate(col = case_when(
   edge.type == "fall" ~ adjustcolor("darkgray", alpha.f = 0.9),
   edge.type == "spring" ~ NA)) # edge types for the fall
@@ -152,7 +151,7 @@ undirected.fall.graph <- as.undirected(fall.graph, mode = "collapse",
 
 fall.label.prop <- cluster_label_prop(graph = undirected.fall.graph)
 fall.infomap <- cluster_infomap(fall.graph)
-fall.walktrap <- cluster_walktrap(fall.graph, steps = 7) #cluster_walktrap(fall.graph.disc, steps =6)
+fall.walktrap <- cluster_walktrap(fall.graph, steps = 7) 
 
 modularity(fall.graph, fall.label.prop$membership)
 modularity(fall.graph, fall.infomap$membership)
@@ -290,8 +289,6 @@ fall.stat.ab <- merge(fall.stat, fall.breed.ab[,c("ab.unit", "geo_id")], by = "g
 # Summed time spent in each node for the fall
 fall.use.time <- fall.stat.ab %>% 
   mutate(duration = ifelse(site_type != "Stopover", 0, duration)) %>%
-  # filter(!(cluster == 5 & study.site %in% c("Quebec","Mount Mansfield, Vermont, USA")),
-  #        !(cluster == 7 & study.site %in% c("Nova Scotia, Canada"))) %>%
   group_by(cluster, geo_id) %>%
   summarize(time.per.node.ind =sum(duration)) %>%
   summarize(time.per.node = mean(time.per.node.ind))
@@ -300,8 +297,6 @@ fall.use.time <- fall.stat.ab %>%
 fall.use.timeab <- fall.stat.ab %>%
   mutate(duration = ifelse(site_type != "Stopover", 0, duration),
          ab.unit = ifelse(site_type != "Stopover", 0, ab.unit )) %>%
-  # filter(!(cluster == 5 & study.site %in% c("Quebec","Mount Mansfield, Vermont, USA")),
-  #        !(cluster == 7 & study.site %in% c("Nova Scotia, Canada"))) %>%
   group_by(cluster, geo_id) %>%
   summarize(time.per.node = sum(duration), ab.units = unique(ab.unit)) %>%
   mutate(time.per.ab.ind = time.per.node * ab.units) %>%
@@ -385,6 +380,7 @@ V(spring.graph)$participation.coef <-  p.spring
 fall.gdata <- igraph::as_data_frame(fall.graph, what = "vertices") %>% mutate(cluster = seq(1:vcount(fall.graph)))
 spring.gdata <- igraph::as_data_frame(spring.graph, what = "vertices") %>% mutate(cluster = seq(1:vcount(spring.graph)))
 
+# uncomment these lines to save 
 # write.csv(fall.gdata, "Blackpoll_Warbler_migration_network_Git/Analysis_output_data/Network/fall.graph.data.csv")
 # write.csv(spring.gdata, "Blackpoll_Warbler_migration_network_Git/Analysis_output_data/Network/spring.graph.data.csv")
 
@@ -418,9 +414,7 @@ fall.gplot <- ggplot(st_as_sf(America))+
   geom_sf(data = bpw.range.BLI, aes(fill = as.factor(seasonal)),col = NA, alpha = 0.4) +
   scale_fill_manual(values = c("#440154FF", "#FDE725FF", "#21908CFF"), labels = c("Breeding", "Migration", "Nonbreeding"), name = "Seasonal ranges", guide = "none") +
   new_scale_fill()+
-  #geom_sf(data = equi.region, aes(fill = "#D9D5B2"), lwd = 0.2, alpha = 1) +
-  #scale_fill_manual(labels = c("Clustering restricted \nto longitude"), values = c("#D9D5B2"),guide = guide_legend(title = NULL))+
-  new_scale_fill()+
+   new_scale_fill()+
   coord_sf(xlim = c(-165, -50),ylim = c(-5, 70)) +
   geom_edges(data = fall.ggnet, mapping = aes(x = x, y = y, xend = xend, yend = yend, col = edge.type, lwd = weight),
              arrow = arrow(length = unit(6, "pt"), type = "closed", angle = 10))+
@@ -449,6 +443,7 @@ fall.gplot <- ggplot(st_as_sf(America))+
         legend.key.spacing.y =  unit(-0.1, 'cm'))+
   guides(fill = guide_legend(override.aes = list(size = 4)))
 
+# Get the timing of the equinox from the geolocator metadata file
 ref_data <- read.csv("Analysis_output_Data/Geolocator_reference_data_consolidated.csv")
 fall.stat <- fall.stat %>% merge(ref_data[,c("geo.id", "fall.equinox.date")], by.x = "geo_id", by.y = "geo.id") %>% mutate(equi_prox = difftime(StartTime, fall.equinox.date, units = "days"))
 fall.stat <- fall.stat %>% rowwise() %>% mutate(equi_prox = ifelse(abs(equi_prox) <= 14, "within_equi", "out_equi"))
@@ -487,7 +482,6 @@ fall.clustplot <- ggplot(st_as_sf(America))+
         axis.ticks.length = unit(0, "pt"),
         panel.grid.major=element_blank(),
         panel.grid.minor=element_blank(),
-        #panel.border = element_rect(colour = "black", fill=NA, size=0.5),
         plot.margin= unit(c(2,0,0,0), "pt"),
         legend.spacing.y = unit(-0.1, 'cm'),
         legend.key.spacing.y =  unit(-0.1, 'cm')) 
@@ -553,7 +547,6 @@ spring.clustplot<- ggplot(st_as_sf(America))+
         panel.grid.major=element_blank(),
         panel.grid.minor=element_blank(),
         axis.ticks.length = unit(0, "pt"),
-        #panel.border = element_rect(colour = "black", fill=NA, size=0.5),
         plot.margin = unit(c(2,0,0,0), "pt"),
         legend.spacing.y = unit(-0.1, 'cm'),
         legend.key.spacing.y =  unit(-0.1, 'cm'))
@@ -690,9 +683,6 @@ p2 <- spring.gplot.comp + inset_element(spring.gplot.comp.nbr,  0.01,  -0.05, 0.
 
 node.comp.insert <- (p1 | p2)
 
-#ggsave(plot = node.comp.fig, filename = "Node.comp.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
-#       units = "cm", width = 24*1.2, height = 10*1.2, dpi = "print", bg = "white")
-
 jpeg("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures/Node.comp.jpg", units = "cm", width = 25*1.2, height = 8*1.2, res = 300)
 node.comp.fig
 dev.off()
@@ -768,162 +758,6 @@ ggsave(plot = Migration.struct, filename = "migratory.structure.jpg" ,  path = "
 jpeg("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures/Migratory.structure.jpg", units = "cm", width = 24*1.2, height = 10*1.2*2, res = 400)
 Migration.struct 
 dev.off()
-
-# # Table 1: Significance of the spring and fall network communities ----
-# 
-# ## Significance of the Fall network communities ----
-# 
-# # create multiple rewired versions of the network, apply the clustering method, then calculate scoring functions
-# iter = 100
-# 
-# rand.data = NULL
-# 
-# for (i in seq(1,iter)){
-# 
-#   # Create randomized graph
-#   rewire.fall <- rewireCpp(g = fall.graph, weight_sel="max_weight", Q = 1)
-# 
-#   # cluster analysis
-#   rewire.cluster <- cluster_walktrap(rewire.fall)
-#   rewire.comms <-  rewire.cluster$membership
-# 
-#   # calculate scoring function
-#   rewire.score <- scoring_functions(rewire.fall, com = rewire.comms, weighted = T, type = "global")
-# 
-#   # Build data.frame with results
-#   if (is.null(rand.data)){
-#     rand.data <- as.data.frame(rewire.score)
-#   }else{
-#     rand.data <-rbind(rand.data,  as.data.frame(rewire.score))
-#   }
-# 
-#   print(paste0("progress: ", as.character(i), " to ", as.character(iter)))
-# }
-# 
-# # test whether scoring functions differ between the observed and randomized networks
-# score.test.fall <- as.data.frame(NULL)
-# 
-# # scoring functions for the observed graph
-# ob.score <- as.data.frame(scoring_functions(fall.graph, V(fall.graph)$walktrap.comm, weighted = T, type = "global"))
-# 
-# for (i in seq(1, length(colnames(rand.data)))){
-# 
-#   if (length(unique(rand.data[,i])) > 1){
-#     test.results <- t.test(rand.data[,i], mu = ob.score[,i])
-# 
-#     score.test.fall[i,"score.function"] <- colnames(rand.data)[i]
-#     score.test.fall[i,"observed.score"] <- ob.score[,i]
-#     score.test.fall[i,"random.function.mean"] <- mean(rand.data[,i], na.rm = T)
-#     score.test.fall[i, "random.function.se"] <- sd(rand.data[,i], na.rm = T)/sqrt(length(rand.data[,i][!is.na(rand.data[,i])]))
-#     score.test.fall[i,"statistic"] <- test.results$statistic
-#     score.test.fall[i,"parameter"] <- test.results$parameter
-#     score.test.fall[i,"p-value"] <- test.results$p.value
-#   }else{
-#     score.test.fall[i,"score.function"] <- colnames(rand.data)[i]
-#     score.test.fall[i,"observed.score"] <- ob.score[,i]
-#     score.test.fall[i,"random.function.mean"] <- mean (rand.data[,i])
-#     score.test.fall[i, "random.function.se"] <- sd(rand.data[,i], na.rm = T)/sqrt(length(rand.data[,i][!is.na(rand.data[,i])]))
-#     score.test.fall[i,"statistic"] <- NA
-#     score.test.fall[i,"parameter"] <- NA
-#     score.test.fall[i,"p-value"] <- NA
-#   }
-# }
-# 
-# # Save the fall score test results
-# write.csv(score.test.fall, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Table_data/fall.network.significance.test.csv")
-# 
-# ## Significance of the Spring network communities ----
-# 
-# # create multiple rewired versions of the network, apply the clustering method, then calculate scoring functions
-# iter = 100
-# 
-# rand.data = NULL
-# 
-# for (i in seq(1,iter)){
-# 
-#   # Create randomized graph
-#   rewire.spring <- rewireCpp(g = spring.graph, weight_sel="max_weight", Q = 1)
-# 
-#   # cluster analysis
-#   rewire.cluster <- cluster_walktrap(rewire.spring)
-#   rewire.comms <-  rewire.cluster$membership
-# 
-#   # calculate scoring function
-#   rewire.score <- scoring_functions(rewire.spring, com = rewire.comms, weighted = T, type = "global")
-# 
-#   # Build data.frame with results
-#   if (is.null(rand.data)){
-#     rand.data <- as.data.frame(rewire.score)
-#   }else{
-#     rand.data <-rbind(rand.data,  as.data.frame(rewire.score))
-#   }
-# 
-#   print(paste0("progress: ", as.character(i), " to ", as.character(iter)))
-# }
-# 
-# # test whether scoring functions differ between the observed and randomized networks
-# score.test.spring <- as.data.frame(NULL)
-# 
-# # scoring functions for the observed graph
-# ob.score <- as.data.frame(scoring_functions(spring.graph, V(spring.graph)$walktrap.comm, weighted = T, type = "global"))
-# 
-# for (i in seq(1, length(colnames(rand.data)))){
-# 
-#   if (length(unique(rand.data[,i])) > 1){
-#     test.results <- t.test(rand.data[,i], mu = ob.score[,i])
-# 
-#     score.test.spring [i,"score.function"] <- colnames(rand.data)[i]
-#     score.test.spring [i,"observed.score"] <- ob.score[,i]
-#     score.test.spring [i,"random.function.mean"] <- mean(rand.data[,i], na.rm = T)
-#     score.test.spring [i, "random.function.se"] <- sd(rand.data[,i], na.rm = T)/sqrt(length(rand.data[,i][!is.na(rand.data[,i])]))
-#     score.test.spring [i,"statistic"] <- test.results$statistic
-#     score.test.spring [i,"parameter"] <- test.results$parameter
-#     score.test.spring [i,"p-value"] <- test.results$p.value
-#   }else{
-#     score.test.spring[i,"score.function"] <- colnames(rand.data)[i]
-#     score.test.spring[i,"observed.score"] <- ob.score[,i]
-#     score.test.spring[i,"random.function.mean"] <- mean (rand.data[,i])
-#     score.test.spring[i, "random.function.se"] <- sd(rand.data[,i], na.rm = T)/sqrt(length(rand.data[,i][!is.na(rand.data[,i])]))
-#     score.test.spring[i,"statistic"] <- NA
-#     score.test.spring[i,"parameter"] <- NA
-#     score.test.spring[i,"p-value"] <- NA
-#   }
-# }
-# 
-# # Save the spring score test results
-# write.csv(score.test.spring, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Table_data/spring.network.significance.test.csv")
-# 
-# 
-# # Table 2: Stability of the spring and fall network communities ----
-# 
-# ## Assessment of community stability in the fall ------
-# 
-# # Stability metrics for observed network 
-# obs.stab <- boot_alg_list(g = undirected.spring.graph, alg_list = list(walktrap
-#               = cluster_walktrap))
-# 
-# # create multiple rewired versions of the network, apply the bootstrapping procedure to each one 
-# iter = 100
-# 
-# rand.data.stab.fall = NULL
-# 
-# for (i in seq(1,iter)){
-# 
-#   # Create randomized graph
-#   rewire.fall <- rewireCpp(g = fall.graph, weight_sel="max_weight", Q = 1)
-# 
-#   # boostrap stability
-#   rewire.stab.score <- boot_alg_list(g = rewire.fall, alg_list = list(walktrap = cluster_walktrap))
-# 
-#   # Build data.frame with results
-#   if (is.null(rand.data.stab.fall)){
-#     rand.data.stab.fall <- as.data.frame(rewire.stab.score )
-#   }else{
-#     rand.data.stab.fall <-rbind(rand.data.stab.fall,  as.data.frame(rewire.stab.score ))
-#   }
-# 
-#   print(paste0("progress: ", as.character(i), " to ", as.character(iter)))
-# }
 
 # Figure 4: Metrics of node importance ---- 
 
@@ -1018,8 +852,7 @@ spring.gplot.metric2 <- ggplot(st_as_sf(America))+
   scale_linewidth(range = c(0.1, 2), guide = "none")+
   geom_nodes(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, fill = time.spent.ab), shape=21, size  = 3)+
   scale_color_manual(values=c(adjustcolor("blue", alpha = 0), adjustcolor("black", alpha = 0.5)), guide = "none")+
-  #geom_text(data = spring.ggnet, mapping = aes(x = x, y = y, cex = node.weight, label = participation.coef))+
-  scale_fill_viridis_c(direction = -1, option = "magma", name = "Time-adjusted \nnode weight", begin  = 0.3,
+   scale_fill_viridis_c(direction = -1, option = "magma", name = "Time-adjusted \nnode weight", begin  = 0.3,
                        guide = guide_colorbar(frame.colour = "black"), limits = c(min(0), max(fall.gdata$time.spent.ab, fall.gdata$time.spent.ab)))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
@@ -1037,8 +870,6 @@ spring.gplot.metric2 <- ggplot(st_as_sf(America))+
 
 ## create panel ----
 metrics.fig <- (fall.gplot.betw | spring.gplot.betw)/ (fall.gplot.metric2| spring.gplot.metric2 ) #&
-# theme(plot.tag.position  = c(.10, .7)) & plot_annotation(tag_levels = list(c("(a)", "(b)", "(c)", "(d)")))&
-# theme(plot.tag = element_text(size= 10)) + theme(plot.margin = unit(c(0,0,0,0), "pt"))
 
 ggsave(plot = metrics.fig, filename = "nodes.metrics.jpg" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
        units = "cm", width = 24*1.2, height = 10*1.2, dpi = "print", bg = "white")
@@ -1274,7 +1105,7 @@ write_csv(spring.char, "C:/Users/Jelan/OneDrive/Desktop/University/University of
 #      ylim = c(-15, 70), vertex.label = NA, vertex.label.dist = 30, add = T)
 
 
-#  Figure 6: nonbreeding regions for the MC metric (supplementary) ----
+#  Figure 6: nonbreeding regions for the MC metric (supplementary materials) ----
 
 # Load the data for the first nonbreeding regions and generate the first nonbreeding sites 
 proj <- '+proj=aeqd +lat_0=0 +lon_0=-74'
@@ -1421,112 +1252,7 @@ ab.prop.regions.fig <- ggplot(st_as_sf(America))+
 ggsave(plot = ab.prop.regions.fig, filename = "abundance.prop.regions.jpg" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
        units = "cm", width = 24*1.2, height = 10*1.2, dpi = "print", bg = "white")
 
-# # Figure 8 individual migratory tracks for the fall migration  ----
-# 
-# # We create a list of plots
-# fall.ind <- list()
-# 
-# fall.stat <- fall.stat %>% arrange(geo_id, StartTime)
-# 
-# # We will use fall.stat
-# for (i in unique(fall.stat$geo_id)){
-#   
-#   ind.stat <- fall.stat[fall.stat$geo_id == i,] %>% filter(!is.na(StartTime))
-#   #ind.move <- fall.move[fall.move$geo_id == i,]
-#   ind.data.stat <- fall.stat[fall.stat$geo_id == i & fall.stat$sitenum !=0,]
-#   
-#   fall.ind[[i]] <- ggplot(st_as_sf(America))+
-#     geom_sf(colour = "black", fill = "white") +
-#     coord_sf(xlim = c(-170, -30),ylim = c(-15, 70)) +
-#     #coord_sf(xlim = c(min(ind.stat$Lon.50.)-15, max(ind.stat$Lon.50.)+15),ylim = c(min(ind.stat$Lat.50.)-15, max(ind.stat$Lat.50.)+15)) +
-#     geom_errorbar(data = ind.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, width = 1, alpha = 0.8, color = "black") +
-#     geom_errorbar(data = ind.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, width = 1, alpha = 0.8, color = "black") +
-#     geom_path(data = ind.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5, col = "blue") +
-#     geom_point(data =  ind.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = sitenum), col = "black", pch = 21, cex = 1.5)+
-#     scale_fill_continuous(low = "yellow", high = "purple")+
-#     ggtitle(i) +
-#     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-#           panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
-#           legend.position = "none",
-#           plot.title=element_text(size=8, vjust=-1),
-#           axis.title =element_blank(),
-#           axis.text =element_blank(),
-#           axis.ticks =element_blank(),
-#           axis.ticks.length = unit(0, "pt"),
-#           legend.spacing = unit(-5, "pt"),
-#           plot.margin = unit(c(0,0,0,0), "pt"),
-#           legend.key = element_rect(colour = "transparent", fill = "white"))
-#   
-# }
-# 
-# # Create a panel of plots 
-# # function from : https://stackoverflow.com/questions/66688668/automatically-assemble-plots-for-patchwork-from-a-list-of-ggplots 
-# plot_a_list <- function(plots, nrows, ncols) {
-#   
-#   patchwork::wrap_plots(plots, 
-#                         nrow = nrows, ncol = ncols)
-# }
-# 
-# fall.ind.panel1 <- plot_a_list(fall.ind[1:24], 6, 4)
-# fall.ind.panel2 <- plot_a_list(fall.ind[25:44], 6, 4)
-# 
-# ## Save the plots ----
-# ggsave(plot = fall.ind.panel1, filename = "individual.fall.movements1.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
-#        units = "cm", width = 24*1.2, height = 30*1.2, dpi = "print", bg = "white")
-# 
-# ggsave(plot = fall.ind.panel2, filename = "individual.fall.movements2.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
-#        units = "cm", width = 24*1.2, height = 30*1.2, dpi = "print", bg = "white")
-# 
-# # Figure 9 individual migratory tracks for the spring migration  ----
-# 
-# # We create a list of plots
-# spring.ind <- list()
-# 
-# spring.stat <- spring.stat %>% arrange(geo_id, StartTime)
-# 
-# # We will use spring.stat
-# for (i in unique(spring.stat$geo_id)){
-#   
-#   ind.stat <- spring.stat[spring.stat$geo_id == i,] %>% filter(!is.na(StartTime))
-#   ind.move <- spring.move[spring.move$geo_id == i,]
-#   ind.data.stat <- spring.stat[spring.stat$geo_id == i & spring.stat$sitenum !=0,]
-#   
-#   spring.ind[[i]] <- ggplot(st_as_sf(America))+
-#     geom_sf(colour = "black", fill = "white") +
-#     coord_sf(xlim = c(-170, -30),ylim = c(-15, 70)) +
-#     geom_errorbar(data = ind.stat, aes(x = Lon.50., ymin= Lat.2.5., ymax= Lat.97.5.), linewidth = 0.5, width = 1, alpha = 0.8, color = "black") +
-#     geom_errorbar(data = ind.stat, aes(y = Lat.50., xmin= Lon.2.5., xmax= Lon.97.5.), linewidth = 0.5, width = 1, alpha = 0.8, color = "black") +
-#     geom_path(data = ind.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id), alpha = 0.5, col = "blue") +
-#     geom_point(data =  ind.stat, mapping = aes(x = Lon.50., y = Lat.50., group = geo_id, fill = sitenum), col = "black", pch = 21, cex = 1.5)+
-#     scale_fill_continuous(low = "yellow", high = "purple")+
-#     ggtitle(i) +
-#     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-#           panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
-#           plot.title=element_text(size=8, vjust=-1),
-#           axis.title =element_blank(),
-#           axis.text =element_blank(),
-#           axis.ticks =element_blank(),
-#           axis.ticks.length = unit(0, "pt"),
-#           legend.spacing = unit(-5, "pt"),
-#           legend.position = "none",
-#           plot.margin = unit(c(0,0,0,0), "pt"),
-#           legend.key = element_rect(colour = "transparent", fill = "white"))
-#   
-# }
-# 
-# # Create a panel of plots 
-# spring.ind.panel1 <- plot_a_list(spring.ind[1:24], 6, 4)
-# spring.ind.panel2 <- plot_a_list(spring.ind[25:35], 6, 4)
-# 
-# ## Save the plots ----
-# ggsave(plot = spring.ind.panel1, filename = "individual.spring.movements1.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
-#        units = "cm", width = 24*1.2, height = 30*1.2, dpi = "print", bg = "white")
-# 
-# ggsave(plot = spring.ind.panel2, filename = "individual.spring.movements2.png" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
-#        units = "cm", width = 24*1.2, height = 30*1.2, dpi = "print", bg = "white")
-
-
-# Figure 10 individual migratory tracks for full year  ----
+# Figure 9 individual migratory tracks for full year  ----
 
 # We create a list of plots
 loc.ind <- list()
@@ -1638,7 +1364,7 @@ ggsave(plot = loc.ind.panel3, filename = "individual.movements3.jpg" ,  path = "
 ggsave(plot = loc.ind.panel4, filename = "individual.movements4.jpg" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures",
        units = "cm", width = 24*1.2, height = 32*1.2, dpi = "print", bg = "white")
 
-# Figure 11 group migratory tracks for full year  ----
+# Figure 10 group migratory tracks for full year  ----
 
 ## Migratory track for eastern breeders in the fall ----
 east.fall.data <- geo.all %>% filter(Breeding_region_MC == "Eastern Region") %>%
@@ -1748,7 +1474,7 @@ west.spring.mig.routes <- ggplot(st_as_sf(America))+
         plot.margin = unit(c(0,0,0,0), "pt"),
         legend.key = element_rect(colour = "transparent", fill = "white"))
 
-# Figure 12 threshold data and phenology dates ----
+# Figure 11 threshold data and phenology dates ----
 geo.all <- read.csv("Network_construction/All.locations.csv") %>% arrange(geo_id, StartTime)
 ref_path <- "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/Geolocator_reference_data_consolidated.csv"
 
@@ -1758,7 +1484,6 @@ timings <- geo.all %>% group_by(geo_id) %>% summarize(fall.br.departure = as.Dat
                                                       spring.br.arrival = as.Date(first(spring.br.arrival)),
                                                       nbr.departure = as.Date(first(nbr.departure)),
                                                       nbr.arrival = as.Date(first(nbr.arrival)))
-
 # We create a list of plots
 dates.ind.lon <- list()
 dates.ind.lat <- list()
@@ -1823,7 +1548,7 @@ ggsave(plot = loc.ind.panel1, filename = "Movement.timings.longitude1.jpg" ,  pa
 ggsave(plot = loc.ind.panel2, filename = "Movement.timings.longitude2.jpg" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures",
        units = "cm", width = 24*1.2, height = 30*1.2, dpi = "print", bg = "white")
 
-#Figure 14 stopovers in the nonbreeding range ----
+#Figure 12 stopovers in the nonbreeding range ----
 
 # Fall stopovers in the nonbreeding range
 fall.nbr.stp <- fall.stat %>% filter(Lat.50. < 13) %>% group_by(geo_id) %>%
@@ -1876,7 +1601,7 @@ spring.nbr.stp.plot <- ggplot(st_as_sf(America))+
         legend.key = element_rect(colour = "transparent", fill = "white"))
 
 
-# Figure 15 Nonbreeding movements  ----
+# Figure 13 Nonbreeding movements  ----
 
 # Run the script for nonbreeding movements 
 source("Blackpoll_warbler_mapping_scripts/Blackpoll_nonbreeding_movements.R")
@@ -2096,7 +1821,7 @@ nbr.move.plot <- (nbr.locations.plot/nbr.movements.plot)
 ggsave(plot = nbr.move.plot , filename = "nbr.movements.jpg" ,  path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Thesis_Documents/Figures", 
        units = "cm", width = 14*1.2, height = 20*1.2, dpi = "print", bg = "white")
 
-# Figure 16:  Flight by individuals with ID V8757-096 -----
+# Figure 14:  Flight by individuals with ID V8757-096 -----
 
 geo.id <- "V8757_096"
 
@@ -2153,7 +1878,7 @@ par(cex.lab= 1, cex.axis= 1)
 
 dev.off()
 
-# Figure 17: timing of migratory events ----
+# Figure 15: timing of migratory events ----
 
 ## Fall departure from North America (last node used in NA)
 fall.dep.nodes <- c(8, 7, 6, 5, 4)
@@ -2204,7 +1929,7 @@ spring.NA.arr.plot <- ggplot(data = spring.NA.arr, aes(y =  as.numeric(timing_do
   geom_boxplot()+
   coord_flip()
 
-#Figure 18: Stopovers in the carribean ---- 
+#Figure 16: Stopovers in the carribean ---- 
 
 # filter out stopovers in the carribean 
 fall.carib.stops <- fall.stat %>% group_by(geo_id) %>% filter(cluster %in% c(8, 9, 10))

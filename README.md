@@ -22,8 +22,11 @@ Other sources of data used in this analysis include:
 
 - Distribution polygons for the blackpoll warbler, used for plotting and for the spatial mask of the geolocator analysis. These were obtained via request to BirdLife International 	(https://datazone.birdlife.org/species/factsheet/blackpoll-warbler-setophaga-striata/distribution). This polygons can be substituted by range polygons from the eBird Status and 	Trends dataset, which are available upon request with the raster data describe below. 
 
-- Raster's of the blackpoll warbler's abundance across its breeding and nonbreeding range, which were obtained from the eBird Status and Trends database and are publicly available from ebird upon request (https://science.ebird.org/en/status-and-trends/species/bkpwar/downloads?week=1)
+- Raster of the blackpoll warbler's abundance across its breeding and nonbreeding range, which were obtained from the eBird Status and Trends database and are publicly available from ebird upon request (https://science.ebird.org/en/status-and-trends/species/bkpwar/downloads?week=1)
 
+## Contact information 
+
+If you would like to use the code in this repository but encounter some difficulties, you can reach out to me (the corresponding author of the manuscript) at jelanyduali@hotmail.com or jduali@uoguelph.ca
 
 ## Index of folders and files containing the code used for different parts of the analysis: 
 
@@ -32,6 +35,8 @@ Other sources of data used in this analysis include:
 See this folder for related scripts: https://github-com.subzero.lib.uoguelph.ca/Pjefferyi/Blackpoll_Warbler_migration_network_Git/tree/main/Geolocator_data_analysis_scripts
 
 The folder contains the scripts used to extract location data from each geolocator using the TwGeos and SGAT packages. There is one script per bird.
+
+The scripts share their names with the ID of the birds/geolocators as shown in movebank and the manuscript.  
 
 The script "Geolocator_analysis_helper_functions.R" is also located in the folder and contains functions used during the geolocator analysis as well as in other operations (notably to retriveve location data) 
 

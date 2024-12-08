@@ -21,7 +21,7 @@ library(rnaturalearth)
 library(igraph)
 
 # Load helper functions 
-source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis_helper_functions.R")
+source("Geolocator_data_analysis_scripts/Geolocator_analysis_helper_functions.R")
 
 # Load country boundary polygons 
 wrld <- as_Spatial(ne_countries(type = "countries", scale = "large"))
@@ -33,7 +33,7 @@ wrld <- as_Spatial(ne_countries(type = "countries", scale = "large"))
 ## Data preparation to estimate MC between the breeding site and first nonbreeding site ----
 
 ## Load required data generated when building the network
-fall.breed <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.abundance.per.bird.csv")
+fall.breed <- read.csv("Network_construction/Fall.abundance.per.bird.csv")
 
 # projection for the analysis: Azimuthal Equidistant projection 
 proj <- '+proj=aeqd +lat_0=0 +lon_0=-74'
@@ -46,10 +46,10 @@ fall.br.sf <- st_as_sf(fall.br, coords = c("Lon.50.", "Lat.50."), crs = crs(wrld
 fall.br.sf <- st_transform(fall.br.sf, crs(proj)) 
 
 # fall network nonbreeding points
-fall.stat <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.stationary.locations.csv")
-fall.con.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.edge.weights.csv")
+fall.stat <- read.csv("Network_construction/Fall.stationary.locations.csv")
+fall.con.ab <- read.csv("Network_construction/Fall.edge.weights.csv")
 
-fall.graph <- read_graph("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.graph.edge.list.txt", directed = TRUE)
+fall.graph <- read_graph("Network_construction/Fall.graph.edge.list.txt", directed = TRUE)
 E(fall.graph)$weight <- fall.con.ab$weight
 
 # filter to get nonbreeding sites 
@@ -61,15 +61,9 @@ fall.nbr.sf <- st_as_sf(fall.nbr, coords = c("Lon.50.", "Lat.50."), crs = st_crs
 fall.nbr.sf <- st_transform(fall.nbr.sf, st_crs(proj)) 
 
 # Origin sites(abundance region polygons)
-br.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Relative_abundance_propagation/bpw_abundance_regions_adjusted.shp") %>%
+br.regions <- read_sf("Analysis_input_data/Breeding_regions/bpw_abundance_regions.shp") %>%
   st_transform(crs(proj)) %>%
   st_cast("MULTIPOLYGON")
-
-# Target sites(polygons)
-# Uncomment to import polygons prepared in QGIS
-# fall.nbr.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/NonbreedingregionsV3.shp") %>%
-#   st_transform(CRS(proj))%>%
-#   st_cast("MULTIPOLYGON")
 
 # creating target sites in R based on the nonbreeding nodes
 
@@ -124,8 +118,8 @@ for (i in sort(unique(fall.nbr.sf$cluster))){
 fall.nbr.regions <- st_difference(fall.nbr.regions)
 
 # Save the first nonbreeding sites shapefile and the associated nonbreeding regions 
-write_sf(fall.nbr.regions, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/fall.nbr.regions.shp")
-write.csv(data.frame(fall.nbr.sf), "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/fall.nbr.sf.csv")
+write_sf(fall.nbr.regions, "Analysis_output_data/Migratory_connectivity_regions/fall.nbr.regions.shp")
+write.csv(data.frame(fall.nbr.sf), "Analysis_output_data/Migratory_connectivity_regions/fall.nbr.sf.csv")
 
 # Uncertainty and error estimation 
 # We will use daily location estimates from the grouped threshold model ran without stationary periods 
@@ -220,13 +214,13 @@ GL_psi_nbr1 <- estTransition(isGL=TRUE,
                         maxTries = 1000)
 
 # Save the output of estTransition
-save(GL_psi_nbr1, file = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_analysis/estTransition_ouput_nbr1.R")
-# load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_analysis/estTransition_ouput_nbr1.R")
+save(GL_psi_nbr1, file = "Analysis_output_data/MC_estimation/estTransition_ouput_nbr1.R")
+# load("Analysis_output_data/MC_estimation/estTransition_ouput_nbr1.R")
 
 ### Retrieve the relative abundance in each breeding site/region for the fall network ################################################################################
 
 # import breeding season abundance data
-bpw.breed.ab <- load_raster(path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_imports",
+bpw.breed.ab <- load_raster(path = "Analysis_input_data/eBird_imports",
                             species = "bkpwar",
                             product = "abundance",
                             period = "seasonal",
@@ -263,7 +257,7 @@ MC_metric_nbr1 <- estStrength(targetDist = fall.nbr.dists , # targetSites distan
                          sampleSize = nrow(fall.br.sf))
 
 # Save output
-save(MC_metric_nbr1, file = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_analysis/MC_metric_nbr1.R")
+save(MC_metric_nbr1, file = "Analysis_output_data/MC_estimation/MC_metric_nbr1.R")
 
 ### Estimate the Mantel correlation ##############################################
 
@@ -279,10 +273,13 @@ rM_metric_nbr1 <- estMantel(isGL= T,#Logical vector: light-level GL(T)/GPS(F)
                                  resampleProjection = crs(proj))
 
 #Save output 
-save(rM_metric_nbr1, file = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_analysis/rM_metric_nbr1.R")
+save(rM_metric_nbr1, file = "Analysis_output_data/MC_estimation/rm_metric_nbr1.R")
 
 
 ## Data preparation for MC between Breeding site and second nonbreeding site ----
+
+## Load required data generated when building the network
+spring.breed <- read.csv("Network_construction/spring.abundance.per.bird.csv")
 
 # spring network breeding points
 spring.br <- spring.breed %>% arrange(geo_id)
@@ -290,11 +287,11 @@ spring.br.sf <- st_as_sf(spring.br, coords = c("Lon.50.", "Lat.50."), crs = crs(
 spring.br.sf <- st_transform(spring.br.sf, crs(proj)) 
 
 # spring network nonbreeding points
-spring.stat <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/spring.stationary.locations.csv")
-spring.graph <- read_graph("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/spring.graph.edge.list.txt", directed = TRUE)
+spring.stat <- read.csv("Network_construction/spring.stationary.locations.csv")
+spring.graph <- read_graph("Network_construction/spring.graph.edge.list.txt", directed = TRUE)
 E(spring.graph)$weight <- spring.con.ab$weight
 
-# Filter to get the last nonbreeding site used before th espring migration 
+# Filter to get the last nonbreeding site used before the spring migration 
 spring.nbr <- spring.stat %>% group_by(geo_id) %>% 
   filter(period == "Non-breeding period") %>% filter(sitenum == min(sitenum))
 
@@ -326,16 +323,9 @@ geo.bias <- coef(mod)
 geo.vcov <- vcov(mod)
 
 # Origin sites  (polygons)
-spring.br.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Relative_abundance_propagation/bpw_abundance_regions_adjusted.shp") %>%
+spring.br.regions <- read_sf("Analysis_input_data/Breeding_regions/bpw_abundance_regions.shp") %>%
   st_transform(crs(proj)) %>%
   st_cast("MULTIPOLYGON")
-
-# Target sites(polygons)
-
-# Uncomment to import polygons prepared in QGIS
-# spring.nbr.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/NonbreedingregionsV3.shp") %>%
-#   st_transform(CRS(proj))%>%
-#   st_cast("MULTIPOLYGON")
 
 # creating target sites in R based on the nonbreeding nodes
 
@@ -388,8 +378,8 @@ for (i in unique(spring.nbr.sf$cluster)){
 spring.nbr.regions <- st_difference(spring.nbr.regions)
 
 # Save the second nonbreeding sites shapefile and the associated nonbreeding regions 
-write_sf(spring.nbr.regions, "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/spring.nbr.regions.shp")
-write.csv(data.frame(spring.nbr.sf), "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/spring.nbr.sf.csv")
+write_sf(spring.nbr.regions, "Analysis_output_data/Migratory_connectivity_regions/spring.nbr.regions.shp")
+write.csv(data.frame(spring.nbr.sf), "Analysis_output_data/Migratory_connectivity_regions/spring.nbr.sf.csv")
 
 ## Verify that the second nonbreeding sites and points makes sense
 
@@ -446,7 +436,7 @@ GL_psi_nbr2 <- estTransition(isGL=TRUE,
                         maxTries = 1000)
 
 # Save the output of estTransition
-save(GL_psi_nbr2, file = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_analysis/estTransition_ouput_nbr2.R")
+save(GL_psi_nbr2, file = "Analysis_output_data/MC_estimation/estTransition_ouput_nbr2.R")
 #load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_analysis/estTransition_ouput_nbr2.R")
 
 ### Retrieve the relative abundance in each breeding site/region for the fall network ################################################################################
@@ -481,8 +471,8 @@ MC_metric_nbr2 <- estStrength(targetDist = spring.nbr.dists , # targetSites dist
                               sampleSize = nrow(spring.br.sf))
 
 #Save output
-save(MC_metric_nbr2, file = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_analysis/MC_metric_nbr2.R")
-#load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_analysis/MC_metric_nbr2.R")
+save(MC_metric_nbr2, file = "Analysis_output_data/Migratory_connectivity_regions/MC_metric_nbr2.R")
+#load("Analysis_output_data/Migratory_connectivity_regions/MC_metric_nbr2.R")
 
 ### Estimate the Mantel correlation ##############################################
 
@@ -498,7 +488,7 @@ rM_metric_nbr2 <- estMantel(isGL= T,#Logical vector: light-level GL(T)/GPS(F)
                             resampleProjection = crs(proj))
 
 # Save output 
-save(rM_metric_nbr2, file = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_analysis/rM_metric_nbr2.R")
+save(rM_metric_nbr2, file = "Analysis_output_data/Migratory_connectivity_regions/rM_metric_nbr2.R")
 
 # Second assessment of migratory connectivity ----
 
@@ -509,13 +499,6 @@ save(rM_metric_nbr2, file = "C:/Users/Jelan/OneDrive/Desktop/University/Universi
 # This is to verify that the change of migratory connectivity is not due to a difference in our sample 
 fall.nbr.sf.test <- fall.nbr.sf %>% filter(geo_id %in% spring.nbr.sf$geo_id)
 fall.br.sf.test <- fall.br.sf %>% filter(geo_id %in% spring.br.sf$geo_id)
-
-# Target sites(polygons)
-
-# Uncomment to import polygons prepared in QGIS
-# fall.nbr.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/NonbreedingregionsV3.shp") %>%
-#   st_transform(CRS(proj))%>%
-#   st_cast("MULTIPOLYGON")
 
 # creating target sites in R based on the nonbreeding nodes
 
@@ -634,13 +617,13 @@ colnames(x) <- fall.nbr.regions$cluster
 rownames(x) <- br.regions$region
 
 # Save the output of estTransition
-save(GL_psi_nbr3, file = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_analysis/estTransition_ouput_nbr3.R")
-# load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_analysis/estTransition_ouput_nbr3.R")
+save(GL_psi_nbr3, file = "Analysis_output_data/MC_estimation/estTransition_ouput_nbr3.R")
+# load("Analysis_output_data/MC_estimation/estTransition_ouput_nbr3.R")
 
 ### Retrieve the relative abundance in each breeding site/region for the fall network ################################################################################
 
 # import breeding season abundance data
-bpw.breed.ab <- load_raster(path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_imports",
+bpw.breed.ab <- load_raster(path = "Analysis_input_data/eBird_imports",
                             species = "bkpwar",
                             product = "abundance",
                             period = "seasonal",
@@ -677,8 +660,8 @@ MC_metric_nbr3 <- estStrength(targetDist = fall.nbr.dists , # targetSites distan
                               sampleSize = nrow(fall.br.sf))
 
 # Save output
-save(MC_metric_nbr3, file = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_analysis/MC_metric_nbr3.R")
-# load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_analysis/MC_metric_nbr3.R")
+save(MC_metric_nbr3, file = "Analysis_output_data/MC_estimation/MC_metric_nbr3.R")
+# load("Analysis_output_data/MC_estimation/MC_metric_nbr3.R")
 
 ### Estimate the Mantel correlation ##############################################
 rM_metric_nbr3 <- estMantel(isGL= T,#Logical vector: light-level GL(T)/GPS(F)
@@ -726,16 +709,9 @@ geo.bias <- coef(mod)
 geo.vcov <- vcov(mod)
 
 # Origin sites  (polygons)
-spring.br.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Relative_abundance_propagation/bpw_abundance_regions_adjusted.shp") %>%
+spring.br.regions <- read_sf("Analysis_input_data/Breeding_regions/bpw_abundance_regions.shp") %>%
   st_transform(crs(proj)) %>%
   st_cast("MULTIPOLYGON")
-
-# Target sites(polygons)
-
-# Uncomment to import polygons prepared in QGIS
-# spring.nbr.regions <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Migratory connectivity_regions/Data/NonbreedingregionsV3.shp") %>%
-#   st_transform(CRS(proj))%>%
-#   st_cast("MULTIPOLYGON")
 
 # creating target sites in R based on the nonbreeding nodes
 
@@ -812,8 +788,8 @@ colnames(x) <- spring.nbr.regions$cluster
 rownames(x) <- spring.br.regions$region
 
 # Save the output of estTransition
-save(GL_psi_nbr4, file = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_analysis/estTransition_ouput_nbr4.R")
-#load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_analysis/estTransition_ouput_nbr4.R")
+save(GL_psi_nbr4, file = "Analysis_output_data/MC_estimation/estTransition_ouput_nbr4.R")
+#load("Analysis_output_data/MC_estimation/estTransition_ouput_nbr4.R")
 
 ### Retrieve the relative abundance in each breeding site/region for the fall network ################################################################################
 
@@ -848,7 +824,7 @@ MC_metric_nbr4 <- estStrength(targetDist = spring.nbr.dists , # targetSites dist
 
 #Save output
 save(MC_metric_nbr4, file = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_analysis/MC_metric_nbr4.R")
-#load("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_analysis/MC_metric_nbr4.R")
+#load("Analysis_output_data/MC_estimation/MC_metric_nbr4.R")
 
 ### Estimate the Mantel correlation ##############################################
 rM_metric_nbr4 <- estMantel(isGL= T,#Logical vector: light-level GL(T)/GPS(F)
@@ -863,4 +839,5 @@ rM_metric_nbr4 <- estMantel(isGL= T,#Logical vector: light-level GL(T)/GPS(F)
                             resampleProjection = crs(proj))
 
 #Save output 
-save(rM_metric_nbr2, file = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_analysis/rM_metric_nbr2.R")
+save(rM_metric_nbr4, file = "Analysis_output_data/MC_estimation/rM_metric_nbr4.R")
+#load("Analysis_output_data/MC_estimation/rM_metric_nbr4.R")
