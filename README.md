@@ -35,13 +35,15 @@ You'll need to perform these steps in order
 
 1. Download the geolocator data from eBird. Select the raw data (i.e., light level measurements)
 
-2. Using the geolocator analysis scripts, estimate the locations for each birds from the geolocator data 
+2. Clone this repository in Rstudio 
 
-3. Use the "Network_construction.R"" script to build the networks 
+4. Using the geolocator analysis scripts, estimate the locations for each birds from the geolocator data. You will need to modify the geolocator analysis script so they can read the raw light level data you have downloaded and ouput the location data in a desired location on your PC. All other scripts will need no modifications to run as long as the location data is generated, stored in "Network Construction", and named "All.locations.csv". 
 
-4. Use the "strenght of Strength_of_migratory_connectivity.R"" script to estimate the MC metric
+5. Use the "Network_construction.R"" script to build the networks 
 
-5. Run the "blackpoll_warbler_project_figures.R"" script to calculate the network metrics and generate the figures
+6. Use the "strenght of Strength_of_migratory_connectivity.R"" script to estimate the MC metric
+
+7. Run the "blackpoll_warbler_project_figures.R"" script to calculate the network metrics and generate the figures
 
 ## Index of folders and files containing the code used for different parts of the analysis: 
 
@@ -64,7 +66,7 @@ The folder Contains the script that combines the location data derived from the 
 The data generated during the construction process is also stored in the Network Construction folder. This includes edge lists for the networks constructed for the post- and pre-breeding migrations and estimates of relative abundance used to weight each nodes.  \
 The script includes code for a nonbreeidng movement network, but this network was not used in the analysis. 
 
-### Strenght of migratory connectivity metric 
+### Strength of migratory connectivity metric 
 
 The strength of migratory connectivity was calculated in this script (Strength_of_migratory_connectivity.R): https://github-com.subzero.lib.uoguelph.ca/Pjefferyi/Blackpoll_Warbler_migration_network_Git/blob/main/Strength_of_migratory_connectivity.R
 
