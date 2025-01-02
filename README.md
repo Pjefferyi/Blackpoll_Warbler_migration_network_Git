@@ -37,7 +37,7 @@ You'll need to perform these steps in order
 
 2. Clone this repository in Rstudio 
 
-4. Using the geolocator analysis scripts, estimate the locations for each birds from the geolocator data. You will need to modify the geolocator analysis script so they can read the raw light level data you have downloaded and ouput the location data in a desired location on your PC. All other scripts will need no modifications to run as long as the location data is generated, stored in "Network Construction", and named "All.locations.csv". 
+4. Using the geolocator analysis scripts, estimate the locations for each birds from the geolocator data. You will need to modify the geolocator analysis script so they can read the raw light level data you have downloaded and output the location data in a desired location on your PC. All other scripts will need no modifications to run as long as the location data is generated, detectable by the Findloc function (in Geolocator_analysis_helper_functions.R), processed in Network_construction.R,  and stored in "Network Construction", and named "All.locations.csv". Check the links below to identify these scripts.
 
 5. Use the "Network_construction.R"" script to build the networks 
 
@@ -55,7 +55,7 @@ The folder contains the scripts used to extract location data from each geolocat
 
 The scripts share their names with the ID of the birds/geolocators as shown in movebank and the manuscript.  
 
-The script "Geolocator_analysis_helper_functions.R" is also located in the folder and contains functions used during the geolocator analysis as well as in other operations (notably to retriveve location data) 
+The script "Geolocator_analysis_helper_functions.R" is also located in the folder and contains functions used during the geolocator analysis as well as in other operations (notably to retrieve location data after the geolocator analysis) 
 
 ### Network construction 
 
@@ -63,7 +63,7 @@ See this folder for related scripts (Network_construction.R): https://github-com
 
 The folder Contains the script that combines the location data derived from the geolocators to build the post- and pre-breeding migration network (Network_construction.R)
 
-The data generated during the construction process is also stored in the Network Construction folder. This includes edge lists for the networks constructed for the post- and pre-breeding migrations and estimates of relative abundance used to weight each nodes.  \
+The data generated during the construction process is also stored in the Network Construction folder. This includes edge lists for the networks constructed for the post- and pre-breeding migrations and estimates of relative abundance used to weight each nodes.
 The script includes code for a nonbreeidng movement network, but this network was not used in the analysis. 
 
 ### Strength of migratory connectivity metric 

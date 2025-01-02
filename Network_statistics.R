@@ -14,18 +14,18 @@ library(geosphere)
 library(circular)
 
 # Load the helper functions script  
-source("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Geolocator_data_analysis_scripts/Geolocator_analysis_helper_functions.R")
+source("Geolocator_data_analysis_scripts/Geolocator_analysis_helper_functions.R")
 
 # Load geolocator reference data 
-ref_path <- "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/Geolocator_reference_data_consolidated.csv"
+ref_path <- "Analysis_output_data/Geolocator_reference_data_consolidated.csv"
 ref_data <- read.csv(ref_path)
 
 # Load node data 
-fall.ndata <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/fall.graph.data.csv")
-spring.ndata <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/Spring.graph.data.csv")
+fall.ndata <- read.csv("Analysis_output_data/Network/fall.graph.data.csv")
+spring.ndata <- read.csv("Analysis_output_data/Network/spring.graph.data.csv")
 
 #Load movement data
-geo.all <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/All.locations.csv")
+geo.all <- read.csv("Network_construction/All.locations.csv")
 
 # filter reference data to include only geolocators used in the analysis 
 analysis_ref <- ref_data %>% dplyr::filter(geo.id %in% unique(geo.all$geo_id))
@@ -70,7 +70,6 @@ sd(analysis_ref$tol_days)
 hist(analysis_ref$tol_days, breaks = 15, main = "Histogram of interpolation periods",
      xlab = "Days before/after equinox")
 
-
 # calculate the range of node diameters ----
 
 # function to Calculate the geodesic distance between points and creates a distance matrix
@@ -86,8 +85,8 @@ geo.dist = function(df) {
 }
 
 # load fall migration data 
-fall.stat <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.stationary.data.csv")
-meta.fall.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.node.metadata.csv")
+fall.stat <- read.csv("Network_construction/Fall.stationary.data.csv")
+meta.fall.ab <- read.csv("Network_construction/Spring.stationary.data.csv")
 
 fall.stat <- merge(fall.stat, meta.fall.ab[,c("vertex", "node.type")], by.x = "cluster", by.y = "vertex")
 fall.stat <- fall.stat %>% filter(node.type != "Breeding") 
@@ -108,8 +107,8 @@ range(diameters)
 median(diameters)
 
 # load spring migration data 
-spring.stat <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/spring.stationary.data.csv")
-meta.spring.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/spring.node.metadata.csv")
+spring.stat <- read.csv("Network_construction/spring.stationary.data.csv")
+meta.spring.ab <- read.csv("Network_construction/spring.node.metadata.csv")
 
 spring.stat <- merge(spring.stat, meta.spring.ab[,c("vertex", "node.type")], by.x = "cluster", by.y = "vertex")
 spring.stat <- spring.stat %>% filter(node.type != "Breeding") 
@@ -132,9 +131,9 @@ median(diameters)
 # Results #####################################################################
 
 # Load fall and spring stationary sites 
-fall.stat <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.stationary.data.csv") %>%
+fall.stat <- read.csv("Network_construction/Fall.stationary.data.csv") %>%
   merge(fall.ndata, by.x = "cluster", by.y ="X") 
-spring.stat <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.stationary.data.csv") %>%
+spring.stat <- read.csv("Network_construction/Spring.stationary.data.csv") %>%
   merge(fall.ndata, by.x = "cluster", by.y ="X") 
 
 ## Number of stationary locations ----
@@ -182,19 +181,12 @@ spring.dist.succ <- spring.stat %>% group_by(geo_id) %>% mutate(Lon.50.next = le
 ## Number of nodes used ----
 
 # Load fall and spring inter node movement datasets
-fall.edge.df.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.intra.cluster.movements.csv")
-spring.edge.df.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.intra.cluster.movements.csv")
+fall.edge.df.ab <- read.csv("Network_construction/Fall.intra.cluster.movements.csv")
+spring.edge.df.ab <- read.csv("Network_construction/Spring.intra.cluster.movements.csv")
 
 # load node data
-meta.fall.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Fall.node.metadata.csv")
-meta.spring.ab <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Network_construction/Spring.node.metadata.csv")
-
-# # remove supplementary edges in inter node movements (edges used in community analysis)
-# mig.clusts.fall <- meta.fall.ab %>% dplyr::filter(node.type %in% c("Stopover", "Nonbreeding"))
-# fall.edge.df.ab  <- fall.edge.df.ab %>% filter(next.cluster < max(mig.clusts.fall$vertex))
-# 
-# mig.clusts.spring <- meta.spring.ab %>% dplyr::filter(node.type %in% c("Stopover", "Nonbreeding"))
-# spring.edge.df.ab  <- spring.edge.df.ab %>% filter(next.cluster < max(mig.clusts.spring$vertex))
+meta.fall.ab <- read.csv("Network_construction/Fall.node.metadata.csv")
+meta.spring.ab <- read.csv("Network_construction/Spring.node.metadata.csv")
 
 # merge internode movements and node data to gert classification for each node used 
 fall.edge.df.ab <- merge(fall.edge.df.ab, meta.fall.ab[,c("vertex","node.type")], by.x = "cluster", by.y = "vertex")
@@ -384,26 +376,21 @@ long.plot1 <- ggplot(data = analysis_ref, aes(x = deploy.longitude, y = nbr1.lon
   theme_bw() +
   theme(text = element_text(size = 14)) +
   labs(x = "Breeding longitude",
-       y = "First nonbreeding site longitude") # +
-#geom_text(label = geo.loc.data$geo_id, nudge_x = 5, nudge_y = 1)
+       y = "First nonbreeding site longitude")
 
 # run a regression model
 mod1.data <- analysis_ref %>% filter_at(vars(deploy.longitude, deploy.latitude, nbr1.lon),all_vars(!is.na(.)))
 mod1 <- glmmTMB(nbr1.lon ~ deploy.longitude +(1|study.site), data = mod1.data, na.action = "na.fail")
-# # mod1 <- plsr(nbr1.lon ~ deploy.latitude + deploy.longitude, data = mod1.data, scale = T, validation = "CV",
-# #              ncomp = 1, method = "oscorespls")
 mod1_2 <- glmmTMB(nbr1.lon ~ poly(deploy.longitude, degree = 2) + (1|study.site), data = mod1.data, na.action = "na.fail")
 summary(mod1_2)
-# check_model(mod1)
-# #with(mod1.data, table(study.site))
-# 
+
+# Check model assumptions with DHARma
 simulationOutput <- simulateResiduals(fittedModel =  mod1_2, plot = F, quantreg = T)
 plot(simulationOutput)
 plotResiduals(simulationOutput)
 testDispersion(simulationOutput)
 testZeroInflation(simulationOutput)
 
-# 
 effect_plot(mod1, pred = deploy.longitude, interval = TRUE, plot.points = TRUE,
             x.label = "Breeding longitude",
             y.label = "nonbreeding longitude")
@@ -428,19 +415,9 @@ long.plot2 <- ggplot(data = analysis_ref, aes(x = deploy.longitude, y = nbr2.lon
 # run a regression model
 mod2.data <- analysis_ref %>% filter_at(vars(deploy.longitude, deploy.latitude, nbr2.lon),all_vars(!is.na(.)))
 mod2 <- glmmTMB(nbr2.lon ~ deploy.longitude + (1|study.site), data = mod2.data, na.action = "na.fail")
-# mod2 <- lm(nbr2.lon ~ deploy.longitude, data = mod2.data, na.action = "na.fail")
 summary(mod2)
-# check_model(mod2)
-# 
-# # mod1.data.reg1 <- mod1.data %>% filter(Breeding_region_MC == "Eastern Region")
-# # cor(mod1.data.reg1$deploy.latitude, mod1.data.reg1$deploy.longitude)
-# # mod1.data.reg2 <- mod1.data %>% filter(Breeding_region_MC == "Central Region")
-# # plot(mod1.data.reg2$deploy.latitude, mod1.data.reg2$deploy.longitude)
-# # mod1.data.reg3 <- mod1.data %>% filter(Breeding_region_MC == "Western Region")
-# # plot(mod1.data.reg3$deploy.latitude, mod1.data.reg3$deploy.longitude)
-# # mod1.data.reg4 <- mod1.data %>% filter(Breeding_region_MC == "Northwestern Region")
-# # cor(mod1.data.reg4$deploy.latitude, mod1.data.reg4$deploy.longitude)
-# 
+
+# Check model assumptions with DHARma
 simulationOutput <- simulateResiduals(fittedModel =  mod2, plot = F)
 plot(simulationOutput)
 
@@ -468,10 +445,9 @@ lat.plot1 <- ggplot(data = analysis_ref, aes(x = deploy.latitude, y = nbr1.lat))
 mod3.data <- analysis_ref %>% filter_at(vars(deploy.latitude, nbr1.lat),all_vars(!is.na(.)))
 mod3 <- glmmTMB(nbr1.lat ~ deploy.latitude + (1|study.site), data = mod3.data )
 mod3_2 <- glmmTMB(nbr1.lat ~ poly(deploy.latitude, degree = 2) + (1|study.site), data = mod3.data, na.action = "na.fail")
-# plot(nbr1.lat ~ deploy.latitude, data = mod3.data )
 summary(mod3_2)
-# check_model(mod3)
-# 
+
+# Check model assumptions with DHARma
 simulationOutput <- simulateResiduals(fittedModel =  mod3, plot = F)
 plot(simulationOutput)
 
@@ -499,30 +475,15 @@ cor.test(mod3.data$nbr1.lat, mod3.data$deploy.latitude, method = "spearman", exa
 # run a regression model
 mod4.data <- analysis_ref %>% filter_at(vars(deploy.latitude, nbr2.lat),all_vars(!is.na(.)))
 mod4 <- glmmTMB(nbr2.lat ~ deploy.latitude + (1|study.site), data = mod4.data, na.action = "na.fail")
-# mod4 <- lm(nbr2.lat ~ deploy.latitude, data = mod4.data )
-# plot(nbr2.lat ~ deploy.latitude, data = mod4.data )
 summary(mod4)
-# check_model(mod4)
-# 
+
+# Check model assumptions with DHARma
 simulationOutput <- simulateResiduals(fittedModel =  mod4, plot = F)
 plot(simulationOutput)
 
 effect_plot(mod4, pred = deploy.latitude, interval = TRUE, plot.points = TRUE, 
             x.label = "Breeding latitude",
             y.label = "Nonbreeding latitude")
-# 
-# x <- analysis_ref$nbr2.lon[!is.na(analysis_ref$nbr2.lon)]
-# y <- analysis_ref$deploy.longitude[!is.na(analysis_ref$nbr2.lon)]
-# cor(x,y, method = "pearson")
-# 
-# ## Plot the first nonbreeding latitude against the breeding longitude ----
-# lonlat.plot1 <- ggplot(data = analysis_ref, aes(x = deploy.longitude, y = nbr1.lat)) + 
-#   geom_point() + 
-#   geom_smooth(method = "lm", se = F, colour="black", size=0.5, linetype = "dashed") + 
-#   theme_bw() +
-#   theme(text = element_text(size = 14)) +
-#   labs(x = "Breeding longitude",
-#        y = "First nonbreeding site latitude")
 
 # spearman's rank correlation
 cor.test(mod4.data$nbr2.lat, mod4.data$deploy.latitude, method = "spearman", exact = F)
@@ -530,8 +491,8 @@ cor.test(mod4.data$nbr2.lat, mod4.data$deploy.latitude, method = "spearman", exa
 ## network metric scores by nodes ----
 
 #load network data
-fall.gdata <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/fall.graph.data.csv")
-spring.gdata <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/spring.graph.data.csv")
+fall.gdata <- read.csv("Analysis_output_data/Network/fall.graph.data.csv")
+spring.gdata <- read.csv("Analysis_output_data/Network/spring.graph.data.csv")
 
 # merge with fall graph data with fall.stat region names 
 fall.stat.clusters <- fall.stat %>%
@@ -548,11 +509,6 @@ ggplot(data = fall.gdata, aes(y = bridge.indegree, x = factor(cluster), fill = n
   geom_col()+
   coord_flip()
 
-# There are no spring region names, but I may add some at a later date
-# spring.stat.regions <- spring.stat %>% mutate(cluster.region = ifelse(is.na(cluster.region), as.character(cluster), cluster.region)) %>%
-#   group_by(cluster) %>% summarise(cluster.region = unique(cluster.region))
-#spring.gdata <-  merge(spring.gdata, spring.stat.regions, by = "cluster")
-
 # Plot betweenness scores
 ggplot(data = spring.gdata, aes(y = betweenness, x = as.factor(cluster), fill = node.type))+
   geom_col()+
@@ -566,8 +522,8 @@ ggplot(data = spring.gdata, aes(y = bridge.indegree, x = as.factor(cluster), fil
 ## nonbreeding movement stats  ----
 
 # read nonbreeding movement data generated with this script C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Blackpoll_warbler_mapping_scripts/Blackpoll_nonbreeding_movements.R
-NB.move <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/nonbreeding.movements.csv")
-NB.stat.mean <- read.csv("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_Warbler_migration_network_Git/Data/nonbreeding.mean.csv")
+NB.move <- read.csv("Analysis_output_data/Network/nonbreeding.movements.csv")
+NB.stat.mean <- read.csv("Analysis_output_data/Network/nonbreeding.mean.csv")
 
 # Update reference and location data with the status of each individual: whether or not they performed nonbreeding movements 
 analysis_ref <- analysis_ref %>% mutate(move.status = ifelse(geo_id %in% NB.move$geo_id, "mover", "nonmover")) %>%
@@ -577,7 +533,6 @@ geo.all.nbr <- geo.all %>% mutate(move.status = ifelse(geo_id %in% NB.move$geo_i
 
 ## How many birds performed nonbreeding movements? ----
 analysis_ref %>% group_by(move.status) %>% summarize(n = n())
-#View(NB.mover.cat %>% group_by(status) %>% summarize(geo_id = unique(geo_id)))
 
 ## test whether the probability of nonbreeding movements was influenced by the longitude of the first nonbreeding site occupied ---- 
 nbr.locations <- geo.all.nbr  %>% filter(NB_count == 1)  
@@ -650,26 +605,6 @@ NB.all <- geo.all %>% group_by(geo_id) %>% filter(NB_count == min(NB_count, na.r
 mean(circular(NB.all$course, units = "degrees"))
 rayleigh.test(circular(NB.all$bearing, units = "degrees"))
 
-nrow(NB.all[abs(NB.all$bearing) < 90,])
-nrow(NB.all)
-
-# ggplot(st_as_sf(wrld_simpl))+
-#   geom_sf(colour = "black", fill = "#F7F7F7", lwd = 0.3) +
-#   coord_sf(xlim = c(-95, -45),ylim = c(-10, 15)) +
-#   geom_arrowsegment(data = NB.all[month(NB.all$EndTime) %in% c(2,3,4, 5),], mapping = aes(x = Lon.50., y = Lat.50., xend = Lon.50.next, yend = Lat.50.next),
-#                     arrows = arrow(end = "last", type = "closed", length = unit(0.1, "inches")), arrow_positions = 1, lwd = 0.6)+
-#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-#         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
-#         plot.title=element_text(size=8, vjust=-1),
-#         legend.position = c(0.14, 0.4),
-#         axis.title =element_blank(),
-#         axis.text =element_blank(),
-#         axis.ticks =element_blank(),
-#         axis.ticks.length = unit(0, "pt"),
-#         legend.spacing = unit(-5, "pt"),
-#         plot.margin = unit(c(0,0,0,0), "pt"),
-#         legend.key = element_rect(colour = "transparent", fill = "white"))
-
 # Average arrival and departure dates in the nonbreeding grounds ----
 
 # average date of arrival from the nonbreeding grounds 
@@ -680,13 +615,13 @@ as.Date(avg.nbr.arr, origin = "2020-01-01")
 avg.nbr.dep <- mean(yday(geo.all$nbr.departure), na.rm = T)
 as.Date(avg.nbr.dep, origin = "2020-01-01")
 
-# Transoceanic crossings ----
+# Plot stopovers estimated in the Carribean ----
 
 # shapefile with fall stationary locations
 fall.stat.sf <- st_as_sf(fall.stat, coords = c("Lon.50.", "Lat.50."), crs = crs(wrld_simpl))
 
 # load Caribbean polygon 
-caribb.poly <- read_sf("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/Mapping_components/Data/Caribb.poly.shp") %>%
+caribb.poly <- read_sf("Analysis_input_data/Carribean_area_polygon/Caribb.poly.shp") %>%
   st_transform(st_crs(fall.stat.sf))
 
 caribb.countries <- st_as_sf(wrld_simpl[wrld_simpl$SUBREGION == 29,])

@@ -1257,7 +1257,7 @@ ggsave(plot = ab.prop.regions.fig, filename = "abundance.prop.regions.jpg" ,  pa
 # We create a list of plots
 loc.ind <- list()
 
-#Load locations processed during the netwrok construction
+#Load locations processed during the network construction
 geo.all <- read.csv("Network_construction/All.locations.csv") %>% arrange(geo_id, StartTime) %>%
   group_by(geo_id) %>%
   mutate(period = ifelse(sitenum == 1 & geo_id != "WRMA04173", "Breeding", period),
@@ -1635,20 +1635,6 @@ NB.move <- NB.move %>% mutate(month = case_when(month(StartTime) %in% c(10, 12) 
                                                 month(StartTime)%in% c(4, 5) ~ "April - May"),                       
                               month = factor(month, levels = c("October-December", "January - March", "April - May")))
 
-## Calculate the mean confidence interval for nonbreeding stationary sites of individuals that did not move 
-# NB.locs.stat <- geo.all %>% dplyr::filter(sitenum > 0, site_type %in% c("Nonbreeding"),
-#                                      period %in% c("Non-breeding period"),
-#                                      Recorded_North_South_mig %in% c("Both", "South and partial North") | geo_id == "WRMA04173") %>%
-#   mutate(move.start = lag(EndTime),
-#              move.end = StartTime,
-#              start.lon = lag(Lon.50.),
-#              start.lat = lag(Lat.50.),
-#              end.lon = Lon.50.,
-#              end.lat = Lat.50.)%>%
-#   rowwise() %>%
-#   mutate(dist = distHaversine(c(Lon.50.,Lat.50.), c(start.lon, start.lat)),.after = geo_id) %>%
-#   filter(dist >= 250000)
-
 # calculate difference between upper and lower limits of credible interval
 NB.stat.mean$lat.diff.north <- distHaversine(cbind(0,NB.stat.mean$mean.lat97.5), cbind(0,NB.stat.mean$mean.lat))
 NB.stat.mean$lat.diff.south <- distHaversine(cbind(0,NB.stat.mean$mean.lat2.5), cbind(0,NB.stat.mean$mean.lat))
@@ -1694,46 +1680,7 @@ m.ex.pt$mean.east.lim <- destPoint(c(m.ex.pt$Lon.50., m.ex.pt$Lat.50.), b = 90, 
 m.ex.pt$mean.west.lim <- destPoint(c(m.ex.pt$Lon.50., m.ex.pt$Lat.50.), b = 270, d = m.west.unc)[1]
 
 
-# Nonbreeding movement directions ----
-
-# nbr.move.plot <- ggplot(st_as_sf(wrld_simpl))+
-#   geom_sf(colour = "black", fill = "#F7F7F7", lwd = 0.3) +
-#   coord_sf(xlim = c(-95, -48),ylim = c(-8, 15)) +
-#   geom_errorbar(data = ex.pt, aes(x = mean.lon, ymin= mean.south.lim , ymax= mean.north.lim ), linewidth = 0.4, width= 0.5, alpha = 0.8, color = "black") +
-#   geom_errorbar(data = ex.pt, aes(y = mean.lat, xmin= mean.west.lim, xmax=  mean.east.lim), linewidth = 0.4, width = 0.5, alpha = 0.8, color = "black") +
-#   geom_errorbar(data = m.ex.pt, aes(x = Lon.50., ymin= mean.south.lim , ymax= mean.north.lim ), linewidth = 0.4, width= 0.5, alpha = 0.8, color = "black") +
-#   geom_errorbar(data = m.ex.pt, aes(y = Lat.50., xmin= mean.west.lim, xmax=  mean.east.lim), linewidth = 0.4, width = 0.5, alpha = 0.8, color = "black") +
-#   #geom_errorbar(data = NB.move, aes(x = Lon.50., ymin= Lat.2.5. , ymax= Lat.97.5. ), linewidth = 0.4, width= 0.5, alpha = 1, color = "black") +
-#   #geom_errorbar(data =NB.move, aes(y = Lat.50., xmin= Lon.2.5., xmax=  Lon.97.5.), linewidth = 0.4, width = 0.5, alpha = 1, color = "black") +
-#   geom_point(data = NB.stat.mean, mapping = aes(x =  mean.lon, y =  mean.lat,fill = "darkgray"), colour = "black", cex = 2.7, shape = 21, stroke = 0.5) +
-#   scale_fill_manual(values = c("darkgray"),label = c("Stationary individuals"), name = "") +
-#   new_scale_fill()+
-#   geom_arrowsegment(data = NB.move, mapping = aes(x = start.lon, y = start.lat, xend = end.lon, yend = end.lat,
-#                                                   col = nbr.stage.common , 
-#                                                   fill = nbr.stage.common,
-#                                                   linetype = equinox.nbr.move),
-#                     arrows = arrow(end = "last", type = "closed", length = unit(0.1, "inches")), arrow_positions = 1, lwd = 0.6)+
-#   scale_fill_viridis( begin = 0, end = 0.9, breaks = c("Early" = 0.25, "Middle" = 0.50, "Late" = 0.75),
-#                       name = "Timing")+
-#   scale_color_viridis( begin = 0, end = 0.9, guide = "none")+
-#   scale_linetype_manual(values = c("dashed", "solid"), guide = "none")+
-#   #geom_text(data = NB.stat, mapping = aes(x = Lon.50., y = Lat.50., label = geo_id), cex = 2.5)+
-#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-#         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill = NA),
-#         text = element_text(size = 14),
-#         plot.title=element_text(size=8, vjust=-1),
-#         legend.position = c(0.14, 0.4),
-#         axis.title =element_blank(),
-#         #axis.text =element_blank(),
-#         #axis.ticks =element_blank(),
-#         #axis.ticks.length = unit(0, "pt"),
-#         legend.spacing = unit(-5, "pt"),
-#         #plot.margin = unit(c(0,0,0,0), "pt"),
-#         legend.key = element_rect(colour = "transparent", fill = "white"))+
-#   guides(fill = guide_colourbar(order=1))
-
-
-# For the next plot, we will need to combine the data on nonbreeding movements. 
+# Modify the nonbreeding movement dataset so that there is a first and last lcoation for all movements. which is needed to plot segments
 mover_point_last <- NB.move %>% dplyr::select(geo_id, Lon.50., Lat.50., Lat.2.5., Lon.2.5., Lat.97.5., Lon.97.5.) %>%
   mutate(type = "mover_last")
 mover_points_first <- NB.move %>% dplyr::select(geo_id, start.lon, start.lon.2.5, start.lon.97.5, start.lat, start.lat.2.5, start.lat.97.5) %>%
