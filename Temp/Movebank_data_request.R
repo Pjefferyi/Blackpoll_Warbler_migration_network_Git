@@ -91,6 +91,7 @@ year(location_set[year(location_set$twilight) %in% c(2012, 2013),]$twilight) <- 
 
 # Save
 write.csv(location_set, "C:/Users/Jelan/OneDrive/Desktop/Blpw_location_estimates.csv")
+save(location_set, file = "C:/Users/Jelan/OneDrive/Desktop/Blpw_location_estimates.R")
 
 # Plot a sample 
 world_countries <- ne_countries(type = "countries", scale = "large")
