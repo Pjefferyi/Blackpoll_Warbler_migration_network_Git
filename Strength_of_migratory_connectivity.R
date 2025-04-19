@@ -273,7 +273,7 @@ rM_metric_nbr1 <- estMantel(isGL= T,#Logical vector: light-level GL(T)/GPS(F)
                                  resampleProjection = crs(proj))
 
 #Save output 
-save(rM_metric_nbr1, file = "Analysis_output_data/MC_estimation/rm_metric_nbr1.R")
+save(rM_metric_nbr1, file = "Analysis_output_data/MC_estimation/rM_metric_nbr1.R")
 
 
 ## Data preparation for MC between Breeding site and second nonbreeding site ----
@@ -471,7 +471,7 @@ MC_metric_nbr2 <- estStrength(targetDist = spring.nbr.dists , # targetSites dist
                               sampleSize = nrow(spring.br.sf))
 
 #Save output
-save(MC_metric_nbr2, file = "Analysis_output_data/Migratory_connectivity_regions/MC_metric_nbr2.R")
+save(MC_metric_nbr2, file = "Analysis_output_data/MC_estimation/MC_metric_nbr2.R")
 #load("Analysis_output_data/Migratory_connectivity_regions/MC_metric_nbr2.R")
 
 ### Estimate the Mantel correlation ##############################################
@@ -488,7 +488,7 @@ rM_metric_nbr2 <- estMantel(isGL= T,#Logical vector: light-level GL(T)/GPS(F)
                             resampleProjection = crs(proj))
 
 # Save output 
-save(rM_metric_nbr2, file = "Analysis_output_data/Migratory_connectivity_regions/rM_metric_nbr2.R")
+save(rM_metric_nbr2, file = "Analysis_output_data/MC_estimation/rM_metric_nbr2.R")
 
 # Second assessment of migratory connectivity ----
 
@@ -675,6 +675,10 @@ rM_metric_nbr3 <- estMantel(isGL= T,#Logical vector: light-level GL(T)/GPS(F)
                             maxTries = 1000,
                             resampleProjection = crs(proj))
 
+
+#Save output 
+save(rM_metric_nbr3, file = "Analysis_output_data/MC_estimation/rM_metric_nbr4.R")
+#load("Analysis_output_data/MC_estimation/rM_metric_nbr4.R")
 
 ## Estimate MC between the breeding site and second nonbreeding site ----
 

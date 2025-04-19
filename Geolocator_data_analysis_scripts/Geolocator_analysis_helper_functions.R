@@ -525,135 +525,6 @@ earthseaMask <- function(xlim, ylim, n = 2, pacific=FALSE, index) {
 # arguments must be defined using geolocator data
 #mask <- earthseaMask(xlim, ylim, n = 10, index=index)
 
-# earthseaMask2 ####################################################################
-
-# Function to create a spatial mask
-# Unlike with the earthseaMask, earthseaMask2 uses weekly abundance raster to estimate stationary locations
-# The raster used is selected based on the week during which the stationary period started
-# Thus is possible because eBird abundance data is available at a weekly scale 
-
-earthseaMask2 <- function(xlim, ylim, pacific=FALSE, index, twl, res = "lr") {
-  
-  if (pacific) {wrld_simpl <- nowrapRecenter(wrld_simpl, avoidGEOS = TRUE)}
-  
-  #load weekly rasters of blackpoll warbler abundance (only uncommon if want to import a different abundance raster)
-  ab.ras <- load_raster(path = "C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_imports/2022",
-                        species = "bkpwar",
-                        product = "abundance",
-                        period = "weekly",
-                        resolution = res)
-  
-  # names for each week as a number
-  names(ab.ras) <- as.numeric(strftime(names(ab.ras), format = "%W"))
-  
-  #project the abundance rasters
-  ab.ras.pr <- terra::project(ab.ras, as.character(crs(wrld_simpl)))
-  
-  values(ab.ras.pr)[is.nan(values(ab.ras.pr)) | values(ab.ras.pr) ==0 ] <- NA
-  values(ab.ras.pr)[values(ab.ras.pr) > 0] <- 1
-  
-  # get bincodes linking geolocator twilight measurement times to the weeks of  
-  # each abundance layer 
-  t.datetime <- (twl %>% filter(group != lag(group, default = -1)))$Twilight
-  t.weeks <- week(t.datetime)
-  t.code <- .bincode(t.weeks, as.numeric(names(ab.ras.pr)))
-  
-  xbin = seq(xmin(ab.ras.pr),xmax(ab.ras.pr),length=ncol(ab.ras.pr)+1)
-  ybin = seq(ymin(ab.ras.pr),ymax(ab.ras.pr),length=nrow(ab.ras.pr)+1)
-  ab.arr <- as.array(ab.ras.pr)
-  
-  # If the bird becomes stationary, the prior for a location is selected from an eBird 
-  # relative abundance raster for the week during which the bird arrived at the location 
-  # While the bird is moving, the prior always has a value of 0
-  function(p){
-    
-    ifelse(stationary == 1, 
-           ab.arr[cbind(length(ybin)-.bincode(p[,2],ybin), .bincode(p[,1],xbin), t.code)], 1)
-  }
-}
-
-# Test calls  for earthseaMask3  ###############################################
-
-# arguments must be defined using geolocator data
-# mask <- earthseaMask2(xlim, ylim, n = 10, index=index)
-
-# earthseaMask3 ####################################################################
-
-# Function to create a spatial mask
-
-# Unlike with the earthseaMask, earthseaMask3 uses weekly abundance raster to estimate stationary locations
-# The raster used is selected based on the week during which the stationary period started
-# This is possible because eBird abundance data is available at a weekly scale 
-# The span parameter sets the number of weeks during which the analyssis is performed 
-
-earthseaMask3 <- function(xlim, ylim, pacific=FALSE, index, twl, res = "lr", span = 3) {
-  
-  if (pacific) {wrld_simpl <- nowrapRecenter(wrld_simpl, avoidGEOS = TRUE)}
-  
-  #load weekly rasters of blackpoll warbler abundance (only uncommon if want to import a different abundance raster)
-  ab.ras <- load_raster("C:/Users/Jelan/OneDrive/Desktop/University/University of Guelph/Thesis/Blackpoll_data/geo_spatial_data/eBird_imports/2021/bkpwar",
-                        product = "abundance",
-                        period = "weekly",
-                        resolution = res)
-  
-  # names for each week as a number
-  names(ab.ras) <- as.numeric(strftime(names(ab.ras), format = "%W"))
-  
-  #project the abundance rasters
-  ab.ras.pr <- terra::project(ab.ras, as.character(crs(wrld_simpl)))
-  
-  
-  #values(ab.ras.pr)[is.nan(values(ab.ras.pr)) | values(ab.ras.pr) ==0] <- NA
-  values(ab.ras.pr)[is.nan(values(ab.ras.pr))] <- NA
-  
-  # get bincodes linking geolocator twilight measurement times to the weeks of  
-  # each abundance layer 
-  t.datetime <- (twl %>% filter(group != lag(group, default = -1)))$Twilight
-  t.datetime.list <- list(t.datetime)
-  
-  # get the time of weeks surrounding those where locations where recorded (within a certain number of week defined by the span argument)
-  for (i in seq(1, span)){
-    
-    up.week <- list(t.datetime + days(7 * i))
-    down.week <- list(t.datetime - days(7 * i))
-    
-    t.datetime.list <- append(t.datetime.list, c(up.week, down.week))
-  }
-  
-  # convert dates to weeks of year 
-  t.weeks.list <- lapply(t.datetime.list, week)
-  
-  # bincodes for the weeks during which relative abundance data is provided 
-  t.code.list <- lapply(t.weeks.list, .bincode, as.numeric(names(ab.ras.pr)), include.lowest = T)
-  
-  #create bins for locations lon and lat 
-  xbin = seq(xmin(ab.ras.pr),xmax(ab.ras.pr),length=ncol(ab.ras.pr)+1)
-  ybin = seq(ymin(ab.ras.pr),ymax(ab.ras.pr),length=nrow(ab.ras.pr)+1)
-  
-  #convert the relatvie abundance rasterstack to an array 
-  ab.arr <- as.array(ab.ras.pr)
-  
-  # If the bird becomes stationary, the prior for a location is selected from an eBird 
-  # relative abundance raster for the week during which the bird arrived at the location 
-  # While the bird is moving, the prior always has a value of 1
-  
-  function(p){
-    
-    prior.list <- list()
-    for (i in seq(1, length(t.code.list))){
-      prior.list <- append(prior.list, list(ab.arr[cbind(length(ybin)-.bincode(p[,2],ybin), .bincode(p[,1],xbin), t.code.list[[i]])]))
-    }
-    
-    ifelse(index == 1, 
-           rowMeans(do.call(cbind, prior.list), na.rm = T), NA)
-  }
-}
-
-# Test calls  for earthseaMask3  ###############################################
-
-# arguments must be defined using geolocator data
-# mask <- earthseaMask3(xlim, ylim, n = 10, index=index)
-
 # runGeoScripts ################################################################
 
 #Function to run all geolocator analysis scripts
@@ -685,7 +556,7 @@ paths <- list.files("C:/Users/Jelan/OneDrive/Desktop/University/University of Gu
 
 # insertLoc ####################################################################
 
-# Function to add stopovers over the carribean that were undetected due to the equinox 
+# Function to add stopovers over the carribean that were undetected due to the equinox and that were identified by inspecting plots of longitude estimates and light-level measurements  
 
 insertLoc <- function(data, lat.at.loc, start.date, end.date, period, thresh.locs, twl, geo_id, sep1, sep2){
   
@@ -743,7 +614,7 @@ insertLoc <- function(data, lat.at.loc, start.date, end.date, period, thresh.loc
 
 # Function to cluster stationary location estimates
 # Clusters are made smaller until a certain minimum value is reached
-# This value should be selected on the basis of geolocator uncertainty (~ 300)
+# This mimunum value should be selected on the basis of geolocator uncertainty
 
 # This function is based on the methods described by Lagasse et al. 2022: https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0270957#sec015
 # It returns a number of clusters: k 

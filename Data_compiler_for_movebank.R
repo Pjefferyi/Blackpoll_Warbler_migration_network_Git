@@ -24,7 +24,7 @@ twl_df <- data.frame()
 for (i in seq(1:length(folder_paths))){
 
   # read twl data
-  if (geos_prep[geos_prep$geo.id == geo_names[i],]$tag.model %in% c("MK-6",  "MK-6040",   "ML-6740")){
+  if (geos_prep[geos_prep$geo.id == geo_names[i],]$tag.model %in% c("MK-6",  "MK-6040",   "ML-6740", "ML-6440", "ML-6040")){
   lig <- readLig(paste0(folder_paths[i],"/Raw_light_data_", geo_names[i], ".lig"), skip = 1)
 
   lig <- lig %>% dplyr::select(Date, Light)
